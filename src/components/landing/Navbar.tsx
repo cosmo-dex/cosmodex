@@ -187,7 +187,7 @@ export default function Navbar() {
           {!isMobile && (
             <div style={{ display: "flex", alignItems: "center", gap: "6px", flexShrink: 0 }}>
               <a
-                href="#signup"
+                href="/onboarding"
                 style={{
                   display: "inline-flex", alignItems: "center", gap: "6px",
                   padding: "8px 18px", borderRadius: "100px",
@@ -306,7 +306,7 @@ export default function Navbar() {
                 background: "linear-gradient(90deg,transparent,rgba(255,255,255,0.08),transparent)" }} />
 
               <a
-                href="#signup"
+                href="/onboarding"
                 style={{
                   display: "flex", justifyContent: "center",
                   padding: "12px", borderRadius: "12px",

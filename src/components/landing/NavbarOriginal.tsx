@@ -154,7 +154,7 @@ export default function Navbar() {
           {/* ── CTA (desktop) ── */}
           {!isMobile && (
             <a
-              href="#signup"
+              href="/onboarding"
               style={{
                 display: "inline-flex", alignItems: "center",
                 padding: "9px 22px", borderRadius: "100px",
@@ -279,7 +279,7 @@ export default function Navbar() {
                 background: "linear-gradient(90deg,transparent,rgba(255,255,255,0.08),transparent)" }} />
 
               <a
-                href="#signup"
+                href="/onboarding"
                 style={{
                   display: "flex", justifyContent: "center",
                   padding: "12px", borderRadius: "12px",

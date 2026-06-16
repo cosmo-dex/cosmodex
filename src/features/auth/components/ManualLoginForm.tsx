@@ -1,9 +1,11 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { signInUser } from '@/features/auth/actions/manual-auth';
 
 export function ManualLoginForm() {
+  const router = useRouter();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -23,9 +25,11 @@ export function ManualLoginForm() {
     if (result.error) {
       setError(result.error);
       setLoading(false);
+      return;
     }
-    // On success, the server action revalidates the path and the Server Component will fetch the user session
-    // So we don't necessarily need to push to router here if we stay on /login, it will just re-render.
+
+    router.push('/dashboard');
+    router.refresh();
   };
 
   return (

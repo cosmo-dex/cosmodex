@@ -2,6 +2,8 @@ export type ExperienceLevel = 'Beginner' | 'Intermediate' | 'Advanced';
 
 export interface OnboardingData {
   authMethod?: 'Email' | 'Google' | 'GitHub';
+  email: string;
+  password: string;
   username: string;
   avatarId: string | null;
   experienceLevel: ExperienceLevel | null;

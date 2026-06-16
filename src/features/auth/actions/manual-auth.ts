@@ -2,100 +2,100 @@
 
 import { createClient } from '@/lib/supabase/server';
 import { prisma } from '@/lib/prisma';
-import { revalidatePath } from 'next/cache';
 
-const PREMADE_AVATARS = {
-  male: '/avatars/default-male.png',
-  female: '/avatars/default-female.png',
-  other: '/avatars/default-neutral.png',
+export type AuthResult = {
+  error?: string;
+  success?: boolean;
+  message?: string;
+  hasSession?: boolean;
 };
 
-export async function signUpUser(formData: FormData) {
+export type ExistenceResult = {
+  exists: boolean;
+  error?: string;
+};
+
+function buildUsername(raw: string): string {
+  return raw.replace(/[^a-zA-Z0-9_]/g, '_').slice(0, 30);
+}
+
+function parseJson(raw: string): string[] {
+  try {
+    return JSON.parse(raw || '[]');
+  } catch {
+    return [];
+  }
+}
+
+export async function signUpUser(formData: FormData): Promise<AuthResult> {
   const email = formData.get('email') as string;
   const password = formData.get('password') as string;
   const username = formData.get('username') as string;
-  const gender = (formData.get('gender') as string) || 'other';
+  const avatarId = formData.get('avatarId') as string;
+  const experienceLevel = formData.get('experienceLevel') as string;
+  const interestsRaw = formData.get('interests') as string;
 
   if (!email || !password || !username) {
-    return { error: 'Email, username, and password are required.' };
-  }
-
-  // 0. Pre-check Prisma to prevent Supabase/Prisma inconsistency
-  const existingUser = await prisma.users.findFirst({
-    where: {
-      OR: [
-        { email },
-        { username }
-      ]
-    }
-  });
-
-  if (existingUser) {
-    if (existingUser.email === email) return { error: 'Email is already in use.' };
-    if (existingUser.username === username) return { error: 'Username is already taken.' };
+    return { error: 'Email, password, and username are required.' };
   }
 
   const supabase = await createClient();
-
-  // 1. Sign up with Supabase Auth
-  const { data: authData, error: authError } = await supabase.auth.signUp({
+  const { data, error } = await supabase.auth.signUp({
     email,
     password,
     options: {
       data: {
-        user_name: username,
+        username,
+        avatarId: avatarId || null,
+        experienceLevel: experienceLevel || null,
+        interests: parseJson(interestsRaw),
       },
     },
   });
 
-  if (authError) {
-    return { error: authError.message };
+  if (error) {
+    return { error: error.message };
   }
 
-  if (!authData.user) {
-    return { error: 'Unknown error occurred during signup.' };
+  const user = data.user;
+  if (!user) {
+    return { success: true, hasSession: false, message: 'Check your email to confirm your account.' };
   }
 
-  // 2. Select pre-made avatar based on gender
-  const avatarUrl = PREMADE_AVATARS[gender as keyof typeof PREMADE_AVATARS] || PREMADE_AVATARS['other'];
-
-  // 3. Sync user to Prisma database
   try {
-    await prisma.users.create({
-      data: {
-        id: authData.user.id,
+    await prisma.users.upsert({
+      where: { email },
+      update: {
+        username: buildUsername(username),
+        avatar_url: avatarId || null,
+        last_login_at: new Date(),
+      },
+      create: {
+        id: user.id,
         email,
-        username,
+        username: buildUsername(username),
         auth_provider: 'email',
-        avatar_url: avatarUrl,
+        avatar_url: avatarId || null,
         role: 'student',
+        last_login_at: new Date(),
       },
     });
   } catch (dbError) {
-    console.error('Error syncing user to database:', dbError);
-    return { error: 'Failed to create user profile in the database. Username or email might be taken.' };
+    console.error('[signUpUser] DB sync failed:', dbError);
   }
 
-  // 4. Prevent auto-login: Sign the user out immediately just in case Supabase auto-logged them in (if email confirmations are off).
-  await supabase.auth.signOut();
+  const hasSession = !!data.session;
 
-  // If session is null, Supabase requires email verification.
-  if (!authData.session) {
-    return { 
-      success: true, 
-      message: 'Signup successful! Please check your email to verify your account before logging in.'
-    };
-  }
-
-  revalidatePath('/login');
-  
-  return { 
-    success: true, 
-    message: 'Signup successful! You can now log in.'
+  return {
+    success: true,
+    hasSession,
+    message: hasSession
+      ? 'Account created!'
+      : 'Account created! Please check your email to verify before logging in.',
   };
 }
 
-export async function signInUser(formData: FormData) {
+export async function signInUser(formData: FormData): Promise<AuthResult> {
   const email = formData.get('email') as string;
   const password = formData.get('password') as string;
 
@@ -104,16 +104,75 @@ export async function signInUser(formData: FormData) {
   }
 
   const supabase = await createClient();
-
-  const { error } = await supabase.auth.signInWithPassword({
-    email,
-    password,
-  });
+  const { error } = await supabase.auth.signInWithPassword({ email, password });
 
   if (error) {
-    return { error: error.message };
+    return { error: 'Invalid credentials or account inactive.' };
   }
 
-  revalidatePath('/login');
-  return { success: true, redirectUrl: '/login' };
+  try {
+    await prisma.users.updateMany({
+      where: { email },
+      data: { last_login_at: new Date() },
+    });
+  } catch {
+  }
+
+  return { success: true };
+}
+
+export async function saveOnboardingProfile(
+  avatarId: string,
+  experienceLevel: string,
+  interests: string[]
+): Promise<AuthResult> {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+
+  if (!user) {
+    return { error: 'Not authenticated. Please log in again.' };
+  }
+
+  const { error: metaError } = await supabase.auth.updateUser({
+    data: { avatarId, experienceLevel, interests },
+  });
+
+  if (metaError) {
+    return { error: metaError.message };
+  }
+
+  try {
+    await prisma.users.update({
+      where: { id: user.id },
+      data: { avatar_url: avatarId || null },
+    });
+  } catch (dbError) {
+    console.error('[saveOnboardingProfile] DB sync failed (non-fatal):', dbError);
+  }
+
+  return { success: true };
+}
+
+export async function checkEmailExists(email: string): Promise<ExistenceResult> {
+  try {
+    const user = await prisma.users.findUnique({
+      where: { email },
+      select: { id: true },
+    });
+    return { exists: !!user };
+  } catch (err) {
+    return { exists: false, error: String(err) };
+  }
+}
+
+export async function checkUsernameExists(username: string): Promise<ExistenceResult> {
+  try {
+    const user = await prisma.users.findFirst({
+      where: { username },
+      select: { id: true },
+    });
+    return { exists: !!user };
+  } catch (err) {
+    return { exists: false, error: String(err) };
+  }
 }
