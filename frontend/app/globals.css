@@ -1,0 +1,207 @@
+@font-face {
+  font-family: 'Hitchcut';
+  src: url('/fonts/Hitchcut-Regular.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Lato';
+  src: url('/fonts/lato/Lato-Regular.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Lato';
+  src: url('/fonts/lato/Lato-Bold.ttf') format('truetype');
+  font-weight: 700;
+  font-style: normal;
+}
+
+:root {
+  --bg-dark: #090214;
+  --bg-base: #0B0A10;
+  --surface-1: #13111C;
+  --surface-2: #1C1929;
+  
+  --primary-purple: #A855F7;
+  --primary-pink: #EC4899;
+  --secondary-violet: #8B5CF6;
+  --accent-blue: #4F7CFF;
+  
+  --glow-accent-1: #D95FD1;
+  --glow-accent-2: #8D37D6;
+  
+  --text-white: #ffffff;
+  --text-secondary: #A6ACC8;
+  --text-subtle: #6B728C;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: 'Lato', sans-serif;
+  background: linear-gradient(180deg, var(--bg-dark) 0%, var(--bg-base) 100%);
+  color: var(--text-white);
+  overflow: hidden;
+  height: 100vh;
+  width: 100vw;
+}
+
+.canvas-container {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+  pointer-events: none;
+}
+
+/* Ambient Bloom Background */
+.ambient-bloom {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 100vw;
+  height: 100vh;
+  background: 
+    radial-gradient(circle at 50% 50%, rgba(217, 95, 209, 0.05) 0%, transparent 60%),
+    radial-gradient(circle at 50% 50%, rgba(141, 55, 214, 0.08) 0%, transparent 80%);
+  z-index: -1;
+  pointer-events: none;
+}
+
+/* Circular Player Frames */
+.circular-frame {
+  position: relative;
+  width: 180px;
+  height: 180px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 2px solid rgba(217, 95, 209, 0.2);
+  box-shadow: 
+    0 16px 40px rgba(0, 0, 0, 0.6),
+    inset 0 0 30px rgba(217, 95, 209, 0.1),
+    0 0 30px rgba(168, 85, 247, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.circular-frame:hover {
+  border-color: rgba(217, 95, 209, 0.4);
+  background: rgba(255, 255, 255, 0.06);
+  box-shadow: 
+    0 20px 50px rgba(0, 0, 0, 0.7),
+    inset 0 0 40px rgba(217, 95, 209, 0.2),
+    0 0 40px rgba(168, 85, 247, 0.4);
+}
+
+.glow-text {
+  font-family: 'Hitchcut', sans-serif;
+  text-transform: uppercase;
+  color: var(--text-white);
+  filter: drop-shadow(0 0 15px rgba(168, 85, 247, 0.5));
+  text-shadow: 0 0 10px rgba(168, 85, 247, 0.4);
+}
+
+/* Enter Battle Button */
+.btn-primary {
+  background: linear-gradient(135deg, #E873C3 0%, #D95FD1 35%, #C453D6 65%, #8D37D6 100%);
+  color: var(--text-white);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  padding: 16px 48px;
+  border-radius: 9999px;
+  font-family: 'Hitchcut', sans-serif;
+  font-size: 1.3rem;
+  letter-spacing: 2px;
+  cursor: pointer;
+  box-shadow: 0 0 20px rgba(232, 115, 195, 0.35), 0 0 40px rgba(217, 95, 209, 0.25);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  animation: breathingGlow 4s infinite alternate;
+}
+
+.btn-primary:hover {
+  transform: scale(1.04) translateY(-2px);
+  filter: brightness(1.15);
+  box-shadow: 0 0 30px rgba(232, 115, 195, 0.6), 0 0 60px rgba(217, 95, 209, 0.45);
+}
+
+@keyframes breathingGlow {
+  0% { box-shadow: 0 0 15px rgba(217, 95, 209, 0.2), inset 0 0 10px rgba(255, 255, 255, 0.05); }
+  100% { box-shadow: 0 0 30px rgba(217, 95, 209, 0.4), inset 0 0 15px rgba(255, 255, 255, 0.1); }
+}
+
+/* VS Portal Elements */
+.vs-portal-ring {
+  position: absolute;
+  border-radius: 50%;
+  border: 2px solid transparent;
+}
+
+.vs-portal-ring-outer {
+  width: 280px;
+  height: 280px;
+  border-top-color: var(--primary-purple);
+  border-bottom-color: var(--primary-pink);
+  animation: rotatePortalOuter 12s linear infinite;
+  box-shadow: 0 0 30px rgba(168, 85, 247, 0.3);
+}
+
+.vs-portal-ring-inner {
+  width: 240px;
+  height: 240px;
+  border-left-color: var(--primary-pink);
+  border-right-color: var(--primary-purple);
+  animation: rotatePortalInner 8s linear infinite reverse;
+  box-shadow: inset 0 0 20px rgba(236, 72, 153, 0.2);
+}
+
+@keyframes rotatePortalOuter {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+@keyframes rotatePortalInner {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.portal-pulse {
+  position: absolute;
+  width: 220px;
+  height: 220px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(168, 85, 247, 0.15) 0%, transparent 70%);
+  animation: pulsePortal 6s ease-in-out infinite alternate;
+}
+
+@keyframes pulsePortal {
+  0% { transform: scale(1); opacity: 0.6; }
+  100% { transform: scale(1.2); opacity: 1; }
+}
+
+/* Localized Glows for Portal */
+.portal-localized-glow {
+  position: absolute;
+  top: 50%;
+  width: 150px;
+  height: 4px;
+  background: radial-gradient(circle, var(--primary-purple) 0%, transparent 80%);
+  opacity: 0.6;
+  filter: blur(4px);
+  z-index: 1;
+}
+.glow-left { left: 0; transform: translateY(-50%); }
+.glow-right { right: 0; transform: translateY(-50%); }
