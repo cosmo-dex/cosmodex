@@ -24,6 +24,7 @@ jobs:
       # --- NOTIFICATION: PR OPENED ---
       - name: Discord Alert - PR Opened
         if: github.event_name == 'pull_request' && github.event.action == 'opened'
+        continue-on-error: true
         run: |
           MSG="🚀 **New Pull Request!** \n**Author:** ${{ github.actor }}\n**Title:** ${{ github.event.pull_request.title }}\n**Link:** ${{ github.event.pull_request.html_url }}"
           curl -H "Content-Type: application/json" -d "{\"content\": \"$MSG\"}" ${{ secrets.DISCORD_WEBHOOK }}
@@ -54,6 +55,7 @@ jobs:
       # --- NOTIFICATION: BUILD FAILED ---
       - name: Discord Alert - Quality Gate Failed
         if: failure() 
+        continue-on-error: true
         run: |
           MSG="🚨 **CRITICAL: Quality Gate Failed!**\nCode from **${{ github.actor }}** failed linting or type-checking. Deployment blocked.\n**Check logs:** https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
           curl -H "Content-Type: application/json" -d "{\"content\": \"$MSG\"}" ${{ secrets.DISCORD_WEBHOOK }}
@@ -78,6 +80,7 @@ jobs:
 
       # --- NOTIFICATION: PR MERGED / DEPLOY STARTING ---
       - name: Discord Alert - Merge & Deploy Started
+        continue-on-error: true
         run: |
           MSG="✅ **Code Merged to Main!**\nStarting Vercel Production Deployment for **${{ github.repository }}**..."
           curl -H "Content-Type: application/json" -d "{\"content\": \"$MSG\"}" ${{ secrets.DISCORD_WEBHOOK }}
@@ -111,6 +114,7 @@ jobs:
       # --- NOTIFICATION: DEPLOY SUCCESS ---
       - name: Discord Alert - Deploy Success
         if: success()
+        continue-on-error: true
         run: |
           MSG="🎉 **Deployment Successful!**\nYour latest code is now live in production."
           curl -H "Content-Type: application/json" -d "{\"content\": \"$MSG\"}" ${{ secrets.DISCORD_WEBHOOK }}
@@ -118,6 +122,7 @@ jobs:
       # --- NOTIFICATION: DEPLOY FAILED ---
       - name: Discord Alert - Deploy Failed
         if: failure()
+        continue-on-error: true
         run: |
           MSG="🔥 **URGENT: Deployment Failed!**\nThe Vercel build crashed during deployment.\n**Check Vercel Logs:** https://vercel.com/${{ secrets.VERCEL_ORG_ID }}"
           curl -H "Content-Type: application/json" -d "{\"content\": \"$MSG\"}" ${{ secrets.DISCORD_WEBHOOK }}
