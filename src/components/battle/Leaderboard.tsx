@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import LeaderboardTable from './LeaderboardTable';
 
 interface LeaderboardEntry {
   rank: number;
@@ -19,14 +20,6 @@ export default function Leaderboard() {
   const [error, setError] = useState<string | null>(null);
   const [reloadTrigger, setReloadTrigger] = useState(0);
 
-  const handleModeChange = (newMode: 'code' | 'mcq') => {
-    if (newMode !== mode) {
-      setMode(newMode);
-      setLoading(true);
-      setError(null);
-    }
-  };
-
   const handleRetry = () => {
     setLoading(true);
     setError(null);
@@ -36,29 +29,45 @@ export default function Leaderboard() {
   useEffect(() => {
     let ignore = false;
 
-    fetch(`/api/battle/leaderboard?mode=${mode}`)
-      .then((res) => {
-        if (!res.ok) throw new Error('Failed to load leaderboard');
-        return res.json();
-      })
-      .then((data) => {
+    async function fetchLeaderboard() {
+      try {
+        setLoading(true);
+
+        const res = await fetch(`/api/battle/leaderboard?mode=${mode}`);
+
+        if (!res.ok) {
+          throw new Error('Failed to load leaderboard');
+        }
+
+        const data = await res.json();
+
         if (!ignore) {
           if (Array.isArray(data)) {
             setEntries(data);
+            setError(null);
           } else {
-            setError(data.error || 'Failed to load leaderboard data');
+            setEntries([]);
+            setError(data.error || 'Unable to load leaderboard');
           }
         }
-      })
-      .catch((err) => {
+      } catch (err) {
         if (!ignore) {
-          console.error('[Leaderboard Error]', err);
-          setError(err.message || 'Error connecting to server');
+          console.error(err);
+          setEntries([]);
+          setError(
+            err instanceof Error
+              ? err.message
+              : 'Something went wrong.'
+          );
         }
-      })
-      .finally(() => {
-        if (!ignore) setLoading(false);
-      });
+      } finally {
+        if (!ignore) {
+          setLoading(false);
+        }
+      }
+    }
+
+    fetchLeaderboard();
 
     return () => {
       ignore = true;
@@ -66,79 +75,67 @@ export default function Leaderboard() {
   }, [mode, reloadTrigger]);
 
   return (
-    <div style={{ width: '100%', maxWidth: '800px', margin: '0 auto' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-        <h2 style={{ fontSize: '20px', fontWeight: 'bold', color: '#fff' }}>Leaderboard</h2>
-        <div style={{ display: 'flex', gap: '8px' }}>
+    <section className="mx-auto w-full max-w-7xl px-6 py-8">
+
+      {/* Header */}
+
+      <div className="mb-8 flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
+
+        <div>
+          <h1 className="text-4xl font-bold text-white tracking-wide">
+            Leaderboard
+          </h1>
+
+          <p className="mt-2 text-sm text-gray-400">
+            Compete with the best players across the platform.
+          </p>
+        </div>
+
+        {/* Battle Mode Switch */}
+
+        <div className="flex rounded-xl border border-[#2B2F38] bg-[#111318] p-1">
+
           <button
-            onClick={() => handleModeChange('code')}
-            style={{
-              padding: '6px 16px',
-              borderRadius: '6px',
-              border: '1px solid #333',
-              background: mode === 'code' ? '#7c3aed' : '#111',
-              color: '#fff',
-              cursor: 'pointer',
-              fontWeight: 600,
-            }}
+            onClick={() => setMode('code')}
+            className={`rounded-lg px-6 py-3 text-sm font-semibold transition-all duration-200
+              ${
+                mode === 'code'
+                  ? 'bg-violet-600 text-white shadow-lg'
+                  : 'text-gray-400 hover:text-white'
+              }`}
           >
             Code Battle
           </button>
+
           <button
-            onClick={() => handleModeChange('mcq')}
-            style={{
-              padding: '6px 16px',
-              borderRadius: '6px',
-              border: '1px solid #333',
-              background: mode === 'mcq' ? '#7c3aed' : '#111',
-              color: '#fff',
-              cursor: 'pointer',
-              fontWeight: 600,
-            }}
+            onClick={() => setMode('mcq')}
+            className={`rounded-lg px-6 py-3 text-sm font-semibold transition-all duration-200
+              ${
+                mode === 'mcq'
+                  ? 'bg-violet-600 text-white shadow-lg'
+                  : 'text-gray-400 hover:text-white'
+              }`}
           >
             MCQ Battle
           </button>
+
         </div>
+
       </div>
 
-      {loading ? (
-        <div style={{ padding: '24px', textAlign: 'center', color: '#888' }}>Loading leaderboard...</div>
-      ) : error ? (
-        <div style={{ padding: '24px', textAlign: 'center', color: '#f87171', background: 'rgba(239,68,68,0.1)', borderRadius: '8px', border: '1px solid #ef4444' }}>
-          <p style={{ margin: '0 0 12px' }}>{error}</p>
-          <button
-            onClick={handleRetry}
-            style={{ padding: '6px 16px', background: '#7c3aed', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }}
-          >
-            Retry
-          </button>
-        </div>
-      ) : entries.length === 0 ? (
-        <div style={{ padding: '24px', textAlign: 'center', color: '#888' }}>No leaderboard entries found</div>
-      ) : (
-        <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', color: '#eee' }}>
-          <thead>
-            <tr style={{ borderBottom: '1px solid #333', color: '#aaa' }}>
-              <th style={{ padding: '10px' }}>Rank</th>
-              <th style={{ padding: '10px' }}>User</th>
-              <th style={{ padding: '10px' }}>ELO</th>
-              <th style={{ padding: '10px' }}>W / L / D</th>
-            </tr>
-          </thead>
-          <tbody>
-            {entries.map((entry) => (
-              <tr key={entry.userId || entry.rank} style={{ borderBottom: '1px solid #222' }}>
-                <td style={{ padding: '10px', fontWeight: 'bold' }}>#{entry.rank}</td>
-                <td style={{ padding: '10px' }}>{entry.username || 'Anonymous'}</td>
-                <td style={{ padding: '10px', color: '#a78bfa', fontWeight: 'bold' }}>{entry.elo}</td>
-                <td style={{ padding: '10px' }}>
-                  {entry.wins}W - {entry.losses}L - {entry.draws}D
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      )}
-    </div>
+      {/* Leaderboard Card */}
+
+      <div className="rounded-2xl border border-[#2B2F38] bg-[#0F1117] p-6 shadow-2xl">
+
+        <LeaderboardTable
+          loading={loading}
+          error={error}
+          entries={entries}
+          onRetry={handleRetry}
+        />
+
+      </div>
+
+    </section>
   );
 }
