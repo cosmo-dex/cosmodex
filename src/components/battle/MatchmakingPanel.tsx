@@ -61,7 +61,7 @@ export default function MatchmakingPanel({ socket, userId, username, onMatchFoun
 
   // Fetch player stats
   useEffect(() => {
-    fetch("/api/battle/user-stats")
+    fetch("/api/user/stats")
       .then((res) => {
         if (!res.ok) throw new Error("Failed to load stats");
         return res.json();
@@ -352,6 +352,7 @@ export default function MatchmakingPanel({ socket, userId, username, onMatchFoun
       {(queueState === "queuing" || queueState === "matched") && (
         <MatchmakingCinematic
           username={username}
+          userElo={isCode ? stats?.elo : stats?.mcqElo}
           phase={phase}
           opponent={opponent}
           onEnterBattle={handleEnterBattle}
