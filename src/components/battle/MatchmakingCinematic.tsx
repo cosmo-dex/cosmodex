@@ -1,8 +1,10 @@
 "use client";
 
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useSyncExternalStore } from 'react';
+import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Rocket, X } from 'lucide-react';
+import RisingStars from '@/component/RisingStar';
 
 interface MatchmakingCinematicProps {
   username: string;
@@ -23,6 +25,11 @@ export default function MatchmakingCinematic({
 }: MatchmakingCinematicProps) {
   const [fusionPulse, setFusionPulse] = useState(false);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const mounted = useSyncExternalStore(
+    () => () => {},
+    () => true,
+    () => false
+  );
 
   // Trigger fusion pulse when phase changes to MATCH_FOUND
   useEffect(() => {
@@ -171,9 +178,108 @@ export default function MatchmakingCinematic({
 
   const easeInOutCubic: [number, number, number, number] = [0.65, 0, 0.35, 1];
 
-  return (
-    <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', overflow: 'hidden', zIndex: 9999, background: '#050508' }}>
-      <canvas ref={canvasRef} className="canvas-container" />
+  if (!mounted) return null;
+
+  return createPortal(
+    <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', overflow: 'hidden', zIndex: 9999, background: 'radial-gradient(circle at 50% 100%, #1a0b2e 0%, #080312 100%)' }}>
+      {/* Background exact match copy */}
+      <div className="absolute inset-[-10%] w-[120%] h-[120%] pointer-events-none z-0">
+        <RisingStars />
+
+        {/* Nebula dust / subtle colored clouds */}
+        <div className="absolute top-0 left-0 w-full h-full">
+          <motion.div
+            animate={{
+              scale: [1, 1.1, 1],
+              opacity: [1, 0.8, 1],
+              rotate: [-45, -40, -45]
+            }}
+            transition={{ duration: 15, repeat: Infinity, ease: "easeInOut" }}
+            className="absolute top-[20%] left-[30%] w-[40rem] h-[30rem] bg-indigo-900/20 rounded-[100%] blur-[100px] mix-blend-screen"
+          />
+          <motion.div
+            animate={{
+              scale: [1, 1.2, 1],
+              opacity: [0.8, 1, 0.8],
+              x: [0, 20, 0],
+              y: [0, -20, 0]
+            }}
+            transition={{ duration: 20, repeat: Infinity, ease: "easeInOut", delay: 2 }}
+            className="absolute bottom-[10%] right-[20%] w-[35rem] h-[25rem] bg-fuchsia-900/10 rounded-[100%] blur-[120px] mix-blend-screen"
+          />
+          <motion.div
+            animate={{
+              scale: [1, 1.15, 1],
+              opacity: [0.9, 0.7, 0.9],
+              x: [0, -15, 0],
+              y: [0, 15, 0]
+            }}
+            transition={{ duration: 18, repeat: Infinity, ease: "easeInOut", delay: 5 }}
+            className="absolute top-[-10%] left-[-10%] w-[40rem] h-[40rem] bg-pink-900/10 rounded-[100%] blur-[100px] mix-blend-screen"
+          />
+        </div>
+
+        {/* Small stars layers */}
+        <motion.div
+          animate={{ x: [0, -30, 0], y: [0, -15, 0] }}
+          transition={{ duration: 40, repeat: Infinity, ease: "linear" }}
+          className="absolute inset-[-10%]" style={{
+            backgroundImage: 'radial-gradient(1px 1px at 20px 30px, #ffffff, rgba(0,0,0,0)), radial-gradient(1px 1px at 40px 70px, #ffffff, rgba(0,0,0,0)), radial-gradient(1px 1px at 50px 160px, #ffffff, rgba(0,0,0,0)), radial-gradient(1px 1px at 90px 40px, #ffffff, rgba(0,0,0,0)), radial-gradient(1px 1px at 130px 80px, #ffffff, rgba(0,0,0,0)), radial-gradient(1px 1px at 160px 120px, #ffffff, rgba(0,0,0,0))',
+            backgroundRepeat: 'repeat',
+            backgroundSize: '200px 200px',
+            opacity: 0.4
+          }}
+        />
+        <motion.div
+          animate={{ x: [0, 20, 0], y: [0, 20, 0] }}
+          transition={{ duration: 50, repeat: Infinity, ease: "linear" }}
+          className="absolute inset-[-10%]" style={{
+            backgroundImage: 'radial-gradient(1.5px 1.5px at 10px 10px, #e0b0ff, rgba(0,0,0,0)), radial-gradient(1.5px 1.5px at 150px 150px, #fuchsia, rgba(0,0,0,0))',
+            backgroundRepeat: 'repeat',
+            backgroundSize: '300px 300px',
+            opacity: 0.3
+          }}
+        />
+
+        {/* Twinkling Stars */}
+        <motion.div
+          animate={{ opacity: [0.2, 0.9, 0.2] }}
+          transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+          className="absolute inset-0" style={{
+            backgroundImage: 'radial-gradient(2px 2px at 80px 120px, rgba(255,255,255,0.9), rgba(0,0,0,0)), radial-gradient(2px 2px at 250px 50px, rgba(158,0,246,0.8), rgba(0,0,0,0)), radial-gradient(2px 2px at 180px 300px, rgba(0,255,233,0.9), rgba(0,0,0,0))',
+            backgroundRepeat: 'repeat',
+            backgroundSize: '350px 350px'
+          }}
+        />
+        <motion.div
+          animate={{ opacity: [0.9, 0.2, 0.9] }}
+          transition={{ duration: 4, repeat: Infinity, ease: "easeInOut", delay: 1.5 }}
+          className="absolute inset-0" style={{
+            backgroundImage: 'radial-gradient(2px 2px at 120px 220px, rgba(255,220,100,0.9), rgba(0,0,0,0)), radial-gradient(2.5px 2.5px at 300px 180px, rgba(255,255,255,1), rgba(0,0,0,0)), radial-gradient(1.5px 1.5px at 40px 350px, rgba(255,100,200,0.8), rgba(0,0,0,0))',
+            backgroundRepeat: 'repeat',
+            backgroundSize: '450px 450px'
+          }}
+        />
+
+        {/* Subtle Shooting Stars */}
+        <motion.div
+          className="absolute h-[1px] bg-gradient-to-r from-transparent via-white to-transparent shadow-[0_0_8px_rgba(255,255,255,0.8)] pointer-events-none"
+          style={{ width: "150px", rotate: -35, top: "10%", right: "-10%" }}
+          animate={{
+            x: [0, -1200],
+            y: [0, 800],
+            opacity: [0, 1, 0]
+          }}
+          transition={{
+            duration: 2.5,
+            repeat: Infinity,
+            repeatDelay: 6,
+            ease: "linear"
+          }}
+        />
+      </div>
+
+      <canvas ref={canvasRef} className="canvas-container" style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', pointerEvents: 'none', zIndex: 1 }} />
       <div className="ambient-bloom" />
 
       {/* Cancel Matchmaking Button */}
@@ -488,6 +594,7 @@ export default function MatchmakingCinematic({
         </AnimatePresence>
 
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
