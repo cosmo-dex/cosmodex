@@ -1,20 +1,18 @@
-import Navbar from '@/components/navbar/Navbar';
-import Leaderboard from '@/components/battle/Leaderboard';
-import type { Metadata } from 'next';
+import type { Metadata } from "next";
+import Navbar from "@/components/navbar/Navbar";
+import Leaderboard from "@/components/leaderboard/Leaderboard";
 
 export const metadata: Metadata = {
-  title: 'Leaderboard | Cosmodex',
-  description: 'View the top ranked arena players',
+  title: "Leaderboard — CosmoDex Galactic Legends",
+  description:
+    "See the top CosmoDex coders ranked by XP across MCQ battles, code battles and global standings.",
 };
 
 export default function LeaderboardPage() {
   return (
-    <main style={{ minHeight: '100vh', background: '#050508', color: '#fff', paddingTop: '80px', paddingBottom: '40px' }}>
+    <div className="min-h-screen bg-[#090214] text-white">
       <Navbar />
-      <div style={{ maxWidth: '900px', margin: '0 auto', padding: '0 20px' }}>
-        <h1 style={{ fontSize: '28px', fontWeight: 'bold', marginBottom: '24px' }}>Battle Arena Leaderboard</h1>
-        <Leaderboard />
-      </div>
-    </main>
+      <Leaderboard />
+    </div>
   );
 }
