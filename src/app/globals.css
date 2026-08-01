@@ -1990,5 +1990,76 @@ h6 {
 .monaco-editor .inputarea.ime-input,
 .monaco-editor .monaco-scrollable-element {
   background-color: #000000 !important;
+}/* ── Leaderboard migration tokens ─────────────────────────── */
+@theme {
+  --color-cosmo-bg: #090214;
+  --color-cosmo-border: rgba(255, 255, 255, 0.1);
+  --color-text-accent: #e873c3;
+  --color-text-accent-bright: #e873c3;
+  --color-bg-elevated: #1c1929;
+  --color-bg-hover: #252136;
+  --color-border-medium: rgba(255, 255, 255, 0.14);
+  --color-success: #3dcb7f;
+  --color-danger: #e85d5d;
+  --shadow-card: 0 4px 24px rgba(0, 0, 0, 0.4);
+  --shadow-glow: 0 0 40px rgba(217, 95, 209, 0.2);
 }
+
+:root {
+  --accent-gradient: linear-gradient(135deg, #e873c3 0%, #d95fd1 35%, #c453d6 65%, #8d37d6 100%);
+  --gradient-1: linear-gradient(135deg, #ffa249, #9e00f6);
+  --gradient-2: linear-gradient(135deg, #00ffe9, #2e3192);
+  --gradient-3: linear-gradient(135deg, #ff7f83, #2700f6);
+}
+
+@utility text-gradient-accent {
+  background: var(--accent-gradient);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+@utility ring-gradient-1 {
+  background: var(--gradient-1);
+}
+
+@utility ring-gradient-2 {
+  background: var(--gradient-2);
+}
+
+@utility ring-gradient-3 {
+  background: var(--gradient-3);
+}
+
+@utility card-surface {
+  background: linear-gradient(180deg, rgba(34, 31, 61, 0.4) 0%, rgba(26, 24, 53, 0.8) 100%);
+  border: 1px solid var(--color-border-subtle);
+  box-shadow: var(--shadow-bento);
+  backdrop-filter: blur(12px);
+}
+
+@utility starfield {
+  background:
+    radial-gradient(ellipse 70% 45% at 50% -5%, rgba(217, 95, 209, 0.18), transparent 70%),
+    radial-gradient(ellipse 55% 40% at 88% 18%, rgba(0, 255, 233, 0.07), transparent 70%),
+    radial-gradient(ellipse 50% 40% at 8% 65%, rgba(141, 55, 214, 0.14), transparent 70%),
+    var(--color-cosmo-bg);
+}
+
+@utility animate-float {
+  animation: cosmo-float 5s ease-in-out infinite;
+}
+
+@keyframes cosmo-twinkle {
+  0%, 100% { opacity: 0.15; }
+  50% { opacity: 0.9; }
+}
+
+@keyframes cosmo-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+
+
+
 
