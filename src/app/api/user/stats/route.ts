@@ -23,7 +23,7 @@ export async function GET(req: NextRequest) {
     }
 
     // Fetch all data in parallel
-    const [arenaStats, userBadges, recentProgress, enrollments] = await Promise.all([
+    const [arenaStats, user, battleStats, userBadges, recentProgress, enrollments] = await Promise.all([
       // Arena stats: streak, total XP, problems solved
       prisma.arena_stats.findUnique({
         where: { user_id: userId },
@@ -33,6 +33,28 @@ export async function GET(req: NextRequest) {
           total_xp: true,
           total_solved: true,
           last_played_at: true,
+        },
+      }),
+
+      // User basic info
+      prisma.users.findUnique({
+        where: { id: userId },
+        select: {
+          username: true,
+          level: true,
+          experience_level: true,
+        },
+      }),
+
+      // Battle stats
+      prisma.battle_user_stats.findUnique({
+        where: { user_id: userId },
+        select: {
+          elo_rating: true,
+          mcq_elo_rating: true,
+          wins: true,
+          losses: true,
+          draws: true,
         },
       }),
 
@@ -115,6 +137,14 @@ export async function GET(req: NextRequest) {
     activities.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
 
     return NextResponse.json({
+      username: user?.username ?? '',
+      level: user?.level ?? 1,
+      experienceLevel: user?.experience_level ?? 'Beginner',
+      elo: battleStats?.elo_rating ?? 1000,
+      mcqElo: battleStats?.mcq_elo_rating ?? 1000,
+      wins: battleStats?.wins ?? 0,
+      losses: battleStats?.losses ?? 0,
+      draws: battleStats?.draws ?? 0,
       streak: arenaStats?.current_streak ?? 0,
       bestStreak: arenaStats?.best_streak ?? 0,
       arenaXp: arenaStats?.total_xp ?? 0,
