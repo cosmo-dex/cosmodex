@@ -23,7 +23,7 @@ export async function GET(req: NextRequest) {
     }
 
     // Fetch all data in parallel
-    const [arenaStats, user, battleStats, userBadges, recentProgress, enrollments] = await Promise.all([
+    const [arenaStats, user, battleStats, userBadges, recentProgress, enrollments, recentCodeMatches, recentMcqMatches] = await Promise.all([
       // Arena stats: streak, total XP, problems solved
       prisma.arena_stats.findUnique({
         where: { user_id: userId },
@@ -100,7 +100,41 @@ export async function GET(req: NextRequest) {
         orderBy: { enrolled_at: 'desc' },
         take: 5,
       }),
+
+      // Recent Code Battle matches
+      prisma.battle_matches.findMany({
+        where: { OR: [{ player1_id: userId }, { player2_id: userId }] },
+        orderBy: { started_at: 'desc' },
+        take: 5,
+      }),
+
+      // Recent MCQ Battle matches
+      prisma.battle_mcq_matches.findMany({
+        where: { OR: [{ player1_id: userId }, { player2_id: userId }] },
+        orderBy: { started_at: 'desc' },
+        take: 5,
+      }),
     ]);
+
+    // Build recent battle match history (max 2 items)
+    const recentMatches = [...recentCodeMatches, ...recentMcqMatches]
+      .sort((a, b) => new Date(b.started_at ?? 0).getTime() - new Date(a.started_at ?? 0).getTime())
+      .slice(0, 2)
+      .map((m) => {
+        const isWin = m.winner_id === userId;
+        const isDraw = !m.winner_id && m.status === 'COMPLETED';
+        const eloChange = isWin ? '+25' : (isDraw ? '0' : '-15');
+        const duration = m.ended_at && m.started_at ? Math.max(1, Math.round((new Date(m.ended_at).getTime() - new Date(m.started_at).getTime()) / 1000)) : 180;
+        const mins = Math.floor(duration / 60);
+        const secs = duration % 60;
+        return {
+          id: m.id,
+          isWin,
+          isDraw,
+          eloChange,
+          time: `${mins}m${secs < 10 ? '0' : ''}${secs}s`,
+        };
+      });
 
     // Build activity feed from progress + badge events
     type ActivityItem = {
@@ -136,15 +170,39 @@ export async function GET(req: NextRequest) {
     // Sort by timestamp desc
     activities.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
 
+    // Dynamic fallback calculation for wins/losses/draws from actual match tables
+    const allMatches = [...recentCodeMatches, ...recentMcqMatches];
+    const calcWins = allMatches.filter((m) => m.winner_id === userId).length;
+    const calcLosses = allMatches.filter((m) => m.winner_id && m.winner_id !== userId).length;
+    const calcDraws = allMatches.filter((m) => !m.winner_id && m.status === 'COMPLETED').length;
+
+    const wins = (battleStats?.wins && battleStats.wins > 0) ? battleStats.wins : calcWins;
+    const losses = (battleStats?.losses && battleStats.losses > 0) ? battleStats.losses : calcLosses;
+    const draws = (battleStats?.draws && battleStats.draws > 0) ? battleStats.draws : calcDraws;
+
+    // Calculate real average match duration
+    const completedDurations = allMatches
+      .map((m) => (m.ended_at && m.started_at ? Math.max(1, Math.round((new Date(m.ended_at).getTime() - new Date(m.started_at).getTime()) / 1000)) : null))
+      .filter((d): d is number => d !== null);
+
+    const avgSecsTotal = completedDurations.length > 0
+      ? Math.round(completedDurations.reduce((acc, curr) => acc + curr, 0) / completedDurations.length)
+      : 255;
+
+    const avgMins = Math.floor(avgSecsTotal / 60);
+    const avgSecsRem = avgSecsTotal % 60;
+    const avgTime = `${avgMins}m${avgSecsRem < 10 ? '0' : ''}${avgSecsRem}s`;
+
     return NextResponse.json({
       username: user?.username ?? '',
       level: user?.level ?? 1,
       experienceLevel: user?.experience_level ?? 'Beginner',
       elo: battleStats?.elo_rating ?? 1000,
       mcqElo: battleStats?.mcq_elo_rating ?? 1000,
-      wins: battleStats?.wins ?? 0,
-      losses: battleStats?.losses ?? 0,
-      draws: battleStats?.draws ?? 0,
+      wins,
+      losses,
+      draws,
+      avgTime,
       streak: arenaStats?.current_streak ?? 0,
       bestStreak: arenaStats?.best_streak ?? 0,
       arenaXp: arenaStats?.total_xp ?? 0,
@@ -159,6 +217,7 @@ export async function GET(req: NextRequest) {
         earnedAt: ub.earned_at?.toISOString() ?? null,
       })),
       activities: activities.slice(0, 8),
+      recentMatches,
       enrollments: enrollments.map((e) => ({
         id: e.id,
         languageId: e.languages.id,
