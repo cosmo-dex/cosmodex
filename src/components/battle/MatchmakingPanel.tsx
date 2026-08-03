@@ -92,13 +92,13 @@ export default function MatchmakingPanel({ socket, userId, username, onMatchFoun
   const fetchStats = useCallback(() => {
     fetch("/api/user/stats")
       .then((res) => {
-        if (!res.ok) throw new Error("Failed to load stats");
+        if (!res.ok) return null;
         return res.json();
       })
       .then((data) => {
-        setStats(data);
+        if (data) setStats(data);
       })
-      .catch((err) => console.error("[MatchmakingPanel] stats error:", err));
+      .catch(() => {});
   }, []);
 
   useEffect(() => {

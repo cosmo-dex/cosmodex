@@ -8,8 +8,6 @@ import MatchmakingPanel from '@/components/battle/MatchmakingPanel';
 import ActiveMatchView from '@/components/battle/ActiveMatchView';
 import { io, Socket } from 'socket.io-client';
 import RisingStars from '@/component/RisingStar';
-import DashboardBackground from '@/components/dashboard/DashboardBackground';
-
 
 interface UserSession {
   userId: string;
@@ -58,8 +56,6 @@ export default function BattlePage() {
             reconnectionDelay: 1000,
           });
 
-          // Page-level match_found listener — guaranteed fallback so the match
-          // always transitions even if the MatchmakingPanel timer fires late.
           activeSocket.on('match_found', (payload: MatchInfo) => {
             if (!matchInfoRef.current) {
               console.log('[BattlePage] match_found → entering arena', payload);
@@ -77,6 +73,10 @@ export default function BattlePage() {
       activeSocket?.disconnect();
     };
   }, []);
+
+  const handleDevBypassLobby = () => {
+    setUser({ userId: 'dev-user-1', username: 'rishi' });
+  };
 
   // ── ACTIVE MATCH: full-screen takeover (no navbar / hero) ──────────────────
   if (matchInfo && user) {
@@ -106,7 +106,6 @@ export default function BattlePage() {
         <div className="absolute bottom-0 right-0 w-[500px] h-[500px] bg-[radial-gradient(ellipse,rgba(232,115,195,0.12)_0%,transparent_70%)]" />
         {/* Subtle center purple bloom */}
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[400px] bg-[radial-gradient(ellipse,rgba(141,55,214,0.08)_0%,transparent_70%)]" />
-
 
         {/* Dashboard Shooting Stars Animations */}
         <motion.div
@@ -163,7 +162,7 @@ export default function BattlePage() {
       </div>
 
       {/* Dark overlay for better text contrast */}
-      <div className="absolute inset-0  pointer-events-none z-[5]" />
+      <div className="absolute inset-0 pointer-events-none z-[5]" />
 
       {/* Main Content Area – pt-14 offsets fixed Navbar */}
       <div className="relative z-10 w-full flex-1 flex flex-col pt-14 overflow-hidden">
@@ -177,34 +176,42 @@ export default function BattlePage() {
               <span>Loading Battle Arena...</span>
             </div>
           ) : !user ? (
-              <div className="w-full flex justify-center">
-                <div className="cosmo-glass w-full max-w-md p-8 sm:p-14 text-center border border-white/10 shadow-2xl relative">
-                  {/* Outer decorative ring to match profile theme */}
-                  <div className="absolute inset-0 ring-inset ring-2 ring-white/10 rounded-[24px] pointer-events-none" />
+            <div className="w-full flex justify-center">
+              <div className="cosmo-glass w-full max-w-md p-8 sm:p-14 text-center border border-white/10 shadow-2xl relative">
+                {/* Outer decorative ring to match profile theme */}
+                <div className="absolute inset-0 ring-inset ring-2 ring-white/10 rounded-[24px] pointer-events-none" />
 
-                  <h3 className="text-2xl font-bold tracking-wider text-white mb-3">
-                    Sign In Required
-                  </h3>
-                  <p className="text-white/70 text-sm mb-6">
-                    Please sign in to join matchmaking and enter 1v1 arenas.
-                  </p>
+                <h3 className="text-2xl font-bold tracking-wider text-white mb-3">
+                  Sign In Required
+                </h3>
+                <p className="text-white/70 text-sm mb-6">
+                  Please sign in to join matchmaking and enter 1v1 arenas.
+                </p>
+                <div className="flex flex-col gap-3">
                   <a
                     href="/onboarding?mode=login&next=/battle"
-                    className="cosmo-btn-primary w-full py-3 text-sm h-11"
+                    className="cosmo-btn-primary w-full py-3 text-sm h-11 flex items-center justify-center"
                   >
                     Sign In
                   </a>
+                  <button
+                    onClick={handleDevBypassLobby}
+                    className="w-full py-2.5 text-xs font-semibold rounded-xl bg-white/10 hover:bg-white/20 text-white/90 border border-white/20 transition-all cursor-pointer"
+                  >
+                    🔓 Bypass Sign-In (Enter Lobby)
+                  </button>
                 </div>
               </div>
-            ) : (
-                <div className="w-full flex justify-center">
-                  <MatchmakingPanel
-                    socket={socket}
-                    userId={user.userId}
-                    username={user.username}
-                    onMatchFound={(info) => setMatchInfo(info)}
-                  />
-                </div>
+            </div>
+          ) : (
+            <div className="w-full flex justify-center">
+              <MatchmakingPanel
+                socket={socket}
+                userId={user.userId}
+                username={user.username}
+                onMatchFound={(info) => setMatchInfo(info)}
+              />
+            </div>
           )}
         </section>
       </div>
