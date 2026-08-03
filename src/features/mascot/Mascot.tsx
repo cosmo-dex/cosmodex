@@ -127,7 +127,7 @@ export default function Mascot() {
     transition: { duration: 4, repeat: Infinity, times: [0, 0.85, 0.9, 0.95, 1], ease: "easeInOut" as const }
   };
 
-  if (pathname === '/onboarding' || pathname?.startsWith('/onboarding/')) {
+  if (pathname === '/onboarding' || pathname?.startsWith('/onboarding/') || pathname?.startsWith('/battle')) {
     return null;
   }
 

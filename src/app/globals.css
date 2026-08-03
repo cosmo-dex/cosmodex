@@ -1128,9 +1128,9 @@ h6 {
 
 /* BATTLE ARENA — CODING PAGE STYLES */
 
-/* ── Hide navbar overflow on arena ─────────────────── */
+/* ── Hide navbar overflow on arena & allow starry background ─── */
 .arena-active {
-  background: #0a0812 !important;
+  background: transparent !important;
 }
 
 /* ── Game Wrapper (fills viewport below navbar) ─────── */
@@ -1145,7 +1145,7 @@ h6 {
   overflow: hidden;
   position: relative;
   z-index: 10;
-  background: #0a0812;
+  background: transparent;
 }
 
 /* ── TOP BAR ───────────────────────────────────────── */
@@ -2058,6 +2058,15 @@ h6 {
 @keyframes cosmo-float {
   0%, 100% { transform: translateY(0); }
   50% { transform: translateY(-8px); }
+}
+
+/* Hide Next.js dev build activity indicator badge completely */
+#nextjs-dev-indicator,
+nextjs-portal,
+[data-nextjs-dialog-overlay],
+[data-nextjs-toast-wrapper],
+next-route-announcer {
+  display: none !important;
 }
 
 

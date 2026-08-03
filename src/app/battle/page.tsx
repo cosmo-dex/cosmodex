@@ -56,8 +56,6 @@ export default function BattlePage() {
             reconnectionDelay: 1000,
           });
 
-          // Page-level match_found listener — guaranteed fallback so the match
-          // always transitions even if the MatchmakingPanel timer fires late.
           activeSocket.on('match_found', (payload: MatchInfo) => {
             if (!matchInfoRef.current) {
               console.log('[BattlePage] match_found → entering arena', payload);
@@ -75,6 +73,11 @@ export default function BattlePage() {
       activeSocket?.disconnect();
     };
   }, []);
+
+
+  const handleDevBypassLobby = () => {
+    setUser({ userId: 'dev-user-1', username: 'rishi' });
+  };
 
   // ── ACTIVE MATCH: full-screen takeover (no navbar / hero) ──────────────────
   if (matchInfo && user) {
@@ -122,112 +125,10 @@ export default function BattlePage() {
             transition={{ duration: 20, repeat: Infinity, ease: "easeInOut", delay: 2 }}
             className="absolute bottom-[10%] right-[20%] w-[35rem] h-[25rem] bg-fuchsia-900/10 rounded-[100%] blur-[120px] mix-blend-screen"
           />
-          <motion.div
-            animate={{
-              scale: [1, 1.15, 1],
-              opacity: [0.9, 0.7, 0.9],
-              x: [0, -15, 0],
-              y: [0, 15, 0]
-            }}
-            transition={{ duration: 18, repeat: Infinity, ease: "easeInOut", delay: 5 }}
-            className="absolute top-[-10%] left-[-10%] w-[40rem] h-[40rem] bg-pink-900/10 rounded-[100%] blur-[100px] mix-blend-screen"
-          />
         </div>
-
-        {/* Small stars layers */}
-        <motion.div
-          animate={{ x: [0, -30, 0], y: [0, -15, 0] }}
-          transition={{ duration: 40, repeat: Infinity, ease: "linear" }}
-          className="absolute inset-[-10%]" style={{
-            backgroundImage: 'radial-gradient(1px 1px at 20px 30px, #ffffff, rgba(0,0,0,0)), radial-gradient(1px 1px at 40px 70px, #ffffff, rgba(0,0,0,0)), radial-gradient(1px 1px at 50px 160px, #ffffff, rgba(0,0,0,0)), radial-gradient(1px 1px at 90px 40px, #ffffff, rgba(0,0,0,0)), radial-gradient(1px 1px at 130px 80px, #ffffff, rgba(0,0,0,0)), radial-gradient(1px 1px at 160px 120px, #ffffff, rgba(0,0,0,0))',
-            backgroundRepeat: 'repeat',
-            backgroundSize: '200px 200px',
-            opacity: 0.4
-          }}
-        />
-        <motion.div
-          animate={{ x: [0, 20, 0], y: [0, 20, 0] }}
-          transition={{ duration: 50, repeat: Infinity, ease: "linear" }}
-          className="absolute inset-[-10%]" style={{
-            backgroundImage: 'radial-gradient(1.5px 1.5px at 10px 10px, #e0b0ff, rgba(0,0,0,0)), radial-gradient(1.5px 1.5px at 150px 150px, #fuchsia, rgba(0,0,0,0))',
-            backgroundRepeat: 'repeat',
-            backgroundSize: '300px 300px',
-            opacity: 0.3
-          }}
-        />
-
-        {/* Twinkling Stars */}
-        <motion.div
-          animate={{ opacity: [0.2, 0.9, 0.2] }}
-          transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-          className="absolute inset-0" style={{
-            backgroundImage: 'radial-gradient(2px 2px at 80px 120px, rgba(255,255,255,0.9), rgba(0,0,0,0)), radial-gradient(2px 2px at 250px 50px, rgba(158,0,246,0.8), rgba(0,0,0,0)), radial-gradient(2px 2px at 180px 300px, rgba(0,255,233,0.9), rgba(0,0,0,0))',
-            backgroundRepeat: 'repeat',
-            backgroundSize: '350px 350px'
-          }}
-        />
-        <motion.div
-          animate={{ opacity: [0.9, 0.2, 0.9] }}
-          transition={{ duration: 4, repeat: Infinity, ease: "easeInOut", delay: 1.5 }}
-          className="absolute inset-0" style={{
-            backgroundImage: 'radial-gradient(2px 2px at 120px 220px, rgba(255,220,100,0.9), rgba(0,0,0,0)), radial-gradient(2.5px 2.5px at 300px 180px, rgba(255,255,255,1), rgba(0,0,0,0)), radial-gradient(1.5px 1.5px at 40px 350px, rgba(255,100,200,0.8), rgba(0,0,0,0))',
-            backgroundRepeat: 'repeat',
-            backgroundSize: '450px 450px'
-          }}
-        />
-
-        {/* Subtle Shooting Stars */}
-        <motion.div
-          className="absolute h-[1px] bg-gradient-to-r from-transparent via-white to-transparent shadow-[0_0_8px_rgba(255,255,255,0.8)] pointer-events-none"
-          style={{ width: "150px", rotate: -35, top: "10%", right: "-10%" }}
-          animate={{
-            x: [0, -1200],
-            y: [0, 800],
-            opacity: [0, 1, 0]
-          }}
-          transition={{
-            duration: 2.5,
-            repeat: Infinity,
-            repeatDelay: 6,
-            ease: "linear"
-          }}
-        />
-        <motion.div
-          className="absolute h-[1px] bg-gradient-to-r from-transparent via-white to-transparent shadow-[0_0_8px_rgba(255,255,255,0.6)] pointer-events-none"
-          style={{ width: "100px", rotate: -35, top: "40%", right: "-5%" }}
-          animate={{
-            x: [0, -1000],
-            y: [0, 700],
-            opacity: [0, 0.7, 0]
-          }}
-          transition={{
-            duration: 2,
-            repeat: Infinity,
-            repeatDelay: 9,
-            ease: "linear"
-          }}
-        />
-        <motion.div
-          className="absolute h-[1px] bg-gradient-to-r from-transparent via-white to-transparent shadow-[0_0_8px_rgba(255,255,255,0.9)] pointer-events-none"
-          style={{ width: "200px", rotate: -35, top: "-5%", right: "30%" }}
-          animate={{
-            x: [0, -1500],
-            y: [0, 1000],
-            opacity: [0, 1, 0]
-          }}
-          transition={{
-            duration: 3,
-            repeat: Infinity,
-            repeatDelay: 14,
-            ease: "linear"
-          }}
-        />
       </div>
 
-      {/* Dark overlay for better text contrast */}
-      <div className="absolute inset-0  pointer-events-none z-[5]" />
-
-      {/* Main Content Area – pt-16 offsets fixed 64px Navbar */}
+      {/* Main Content Area */}
       <div className="relative z-10 w-full flex-1 flex flex-col pt-16">
         <Navbar />
         <BattleArenaHero />
@@ -239,37 +140,43 @@ export default function BattlePage() {
               <span>Loading Battle Arena...</span>
             </div>
           ) : !user ? (
-              <div className="-mt-8 sm:-mt-10 w-full flex justify-center">
-                <div className="cosmo-glass w-full max-w-md p-10 sm:p-20 text-center border border-white/10 shadow-2xl relative">
-                  {/* Outer decorative ring to match profile theme */}
-                  <div className="absolute inset-0 ring-inset ring-2 ring-white/10 rounded-[24px] pointer-events-none" />
-
-                  <h3 className="text-2xl font-bold tracking-wider text-white mb-3">
-                    Sign In Required
-                  </h3>
-                  <p className="text-white/70 text-sm mb-6">
-                    Please sign in to join matchmaking and enter 1v1 arenas.
-                  </p>
+            <div className="-mt-8 sm:-mt-10 w-full flex flex-col items-center">
+              <div className="cosmo-glass w-full max-w-md p-10 sm:p-14 text-center border border-white/10 shadow-2xl relative rounded-2xl">
+                <h3 className="text-2xl font-bold tracking-wider text-white mb-3">
+                  Sign In Required
+                </h3>
+                <p className="text-white/70 text-sm mb-6">
+                  Please sign in to join matchmaking and enter 1v1 arenas.
+                </p>
+                <div className="flex flex-col gap-3">
                   <a
                     href="/onboarding?mode=login&next=/battle"
-                    className="cosmo-btn-primary w-full py-3 text-sm h-11"
+                    className="cosmo-btn-primary w-full py-3 text-sm h-11 flex items-center justify-center"
                   >
                     Sign In
                   </a>
+                  <button
+                    onClick={handleDevBypassLobby}
+                    className="w-full py-2.5 text-xs font-semibold rounded-xl bg-white/10 hover:bg-white/20 text-white/90 border border-white/20 transition-all cursor-pointer"
+                  >
+                    🔓 Bypass Sign-In (Enter Lobby)
+                  </button>
                 </div>
               </div>
-            ) : (
-                <div className="-mt-8 sm:-mt-12 w-full flex justify-center">
-                  <MatchmakingPanel
-                    socket={socket}
-                    userId={user.userId}
-                    username={user.username}
-                    onMatchFound={(info) => setMatchInfo(info)}
-                  />
-                </div>
+            </div>
+          ) : (
+            <div className="-mt-8 sm:-mt-12 w-full flex justify-center">
+              <MatchmakingPanel
+                socket={socket}
+                userId={user.userId}
+                username={user.username}
+                onMatchFound={(info) => setMatchInfo(info)}
+              />
+            </div>
           )}
         </section>
       </div>
+
     </div>
   );
 }

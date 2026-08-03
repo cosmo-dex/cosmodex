@@ -3,6 +3,11 @@
 import { useEffect, useState, useRef } from 'react';
 import { Socket } from 'socket.io-client';
 import Editor, { Monaco } from '@monaco-editor/react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { CheckCircle2, Trophy, Swords, Zap } from 'lucide-react';
+import { cn } from '@/lib/utils';
+import DashboardBackground from '@/components/dashboard/DashboardBackground';
+import { Starfield } from '../leaderboard/Starfield';
 
 const STARTERS: Record<string, string> = {
   python: "# Write your solution here\n",
@@ -10,9 +15,8 @@ const STARTERS: Record<string, string> = {
   cpp: "#include <bits/stdc++.h>\nusing namespace std;\nint main() {\n  // Write your solution here\n  return 0;\n}",
 };
 
-const AVATARS = ["🥷", "🧙", "🧑‍💻", "👾", "🤖", "🦸", "⚡", "🔥", "🐉", "🦊"];
 function getAvatar(name: string) {
-  return AVATARS[(name || "?").charCodeAt(0) % AVATARS.length];
+  return (name || "?").charAt(0).toUpperCase();
 }
 
 const fmt = (s: number) =>
@@ -209,6 +213,7 @@ export default function ActiveMatchView({ socket, matchInfo, userId, username, o
   // Match outcome
   const [matchResult, setMatchResult] = useState<{ winnerId: string | null; reason: string } | null>(null);
   const draftRestoredRef = useRef(false);
+
 
   // Drag resizer
   useEffect(() => {
@@ -528,58 +533,54 @@ export default function ActiveMatchView({ socket, matchInfo, userId, username, o
     const won = matchResult.winnerId === userId;
     const draw = !matchResult.winnerId;
     return (
-      <div className="fixed inset-0 z-[9999] bg-[#050508] text-text-primary flex flex-col font-fira overflow-hidden">
-        <div className="flex flex-col items-center justify-center gap-6 pt-16 flex-1 relative z-10 px-5 text-center">
-          <div className="text-[80px] animate-[pop_0.6s_ease]">
+      <div className="fixed inset-0 z-[9999] bg-[#050508] text-text-primary flex flex-col font-fira overflow-hidden items-center justify-center p-4">
+        {/* Ambient background spotlight glow */}
+        <div className={cn(
+          "absolute size-[500px] rounded-full blur-[140px] pointer-events-none opacity-40 animate-pulse",
+          draw ? "bg-amber-500" : won ? "bg-emerald-500" : "bg-rose-600"
+        )} />
+
+        <div className="relative z-10 max-w-md w-full bg-gradient-to-b from-[#180f33]/90 via-[#0e0724]/95 to-[#060212]/98 border border-white/15 p-8 md:p-10 rounded-3xl shadow-[0_20px_60px_-15px_rgba(0,0,0,0.8)] backdrop-blur-2xl text-center flex flex-col items-center">
+          {/* Top light line */}
+          <div className={cn(
+            "absolute inset-x-0 top-0 h-[2px] bg-gradient-to-r",
+            draw ? "from-transparent via-amber-400 to-transparent" : won ? "from-transparent via-emerald-400 to-transparent" : "from-transparent via-rose-500 to-transparent"
+          )} />
+
+          <div className="text-7xl mb-4 animate-[bounce_1s_infinite]">
             {draw ? "🤝" : won ? "🏆" : "💀"}
           </div>
-          <div
-            className={`text-4xl font-black tracking-widest ${draw
-                ? "text-[#F5C842]"
-                : won
-                  ? "text-[#3DCB7F]"
-                  : "text-[#E85D5D]"
-              }`}
+
+          <h2
+            className={cn(
+              "text-4xl md:text-5xl font-black tracking-widest uppercase mb-2 drop-shadow-lg",
+              draw ? "text-amber-400 drop-shadow-[0_0_15px_rgba(245,200,66,0.5)]" : won ? "text-emerald-400 drop-shadow-[0_0_20px_rgba(52,211,153,0.6)]" : "text-rose-500 drop-shadow-[0_0_20px_rgba(244,63,94,0.6)]"
+            )}
           >
             {draw ? "DRAW" : won ? "VICTORY" : "DEFEATED"}
-          </div>
-          <div className="text-sm text-text-secondary max-w-[400px] leading-relaxed">
+          </h2>
+
+          <p className="text-sm text-text-muted mb-6 leading-relaxed max-w-xs">
             {draw
               ? "Both fighters competed hard. The battle ends in a draw."
               : won
                 ? "You defeated your opponent! Your ELO has been updated."
                 : `${matchInfo.opponentUsername} won this battle. Keep practicing!`}
-          </div>
-          <div className="flex gap-4 flex-wrap justify-center mt-2">
-            <div className="cosmo-glass-panel p-5 px-7 min-w-[120px] shadow-lg text-center">
-              <div className="text-3xl font-black text-white">
+          </p>
+
+          <div className="flex gap-4 w-full justify-center mb-8">
+            <div className="flex-1 bg-white/[0.05] border border-white/10 p-4 rounded-2xl backdrop-blur-md shadow-inner">
+              <div className="text-3xl font-black text-amber-400">
                 {isMcq ? myPlayerMcq?.score || 0 : myPlayerCode?.points || 0}
               </div>
-              <div className="text-[10px] text-text-muted mt-1.5 uppercase tracking-wide font-bold">
-                Points
+              <div className="text-[11px] text-text-muted mt-1 uppercase tracking-widest font-bold">
+                Points Earned
               </div>
             </div>
-            {!isMcq && (
-              <>
-                <div className="cosmo-glass-panel p-5 px-7 min-w-[120px] shadow-lg text-center">
-                  <div className="text-3xl font-black text-white">{myPlayerCode?.lives || 0}</div>
-                  <div className="text-[10px] text-text-muted mt-1.5 uppercase tracking-wide font-bold">
-                    Lives Left
-                  </div>
-                </div>
-                <div className="cosmo-glass-panel p-5 px-7 min-w-[120px] shadow-lg text-center">
-                  <div className="text-3xl font-black text-white">
-                    {myPlayerCode?.submissionsCount || 0}
-                  </div>
-                  <div className="text-[10px] text-text-muted mt-1.5 uppercase tracking-wide font-bold">
-                    Submissions
-                  </div>
-                </div>
-              </>
-            )}
           </div>
+
           <button
-            className="cosmo-btn-primary mt-4 px-10 py-3.5 text-[15px]"
+            className="w-full py-4 rounded-2xl bg-gradient-to-r from-purple-600 via-fuchsia-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white font-black tracking-wider uppercase text-sm shadow-[0_0_25px_rgba(192,38,211,0.5)] transition-all duration-300 hover:scale-[1.02] cursor-pointer"
             onClick={onLeave}
           >
             Back to Arena
@@ -591,95 +592,250 @@ export default function ActiveMatchView({ socket, matchInfo, userId, username, o
 
   // ── MAIN ARENA VIEW (FULLSCREEN TAKEOVER, NO NAVBAR) ──────────────────────
   return (
-    <div className="fixed inset-0 z-[9999] w-screen h-screen bg-[#050508] text-text-primary flex flex-col font-fira overflow-hidden arena-active">
-      <div className="arena-game-wrapper" style={{ paddingTop: 0, height: '100vh' }}>
-        {/* Topbar */}
-        <div className="arena-topbar">
-          <div className="arena-topbar-left">
-            <span className={`arena-stage-badge ${isBoss ? "boss" : ""}`}>
-              {isMcq ? `MCQ Round ${mcqState?.currentRound ?? 1} / 5` : isBoss ? "⚔ BOSS" : `Stage ${myStage} / 6`}
-            </span>
-            <span className="arena-problem-title">
-              {isMcq ? mcqState?.currentQuestion?.category || 'MCQ Speed Battle' : activeProblem.title}
+    <div className="fixed inset-0 z-[9999] w-screen h-screen bg-[#060212] text-text-primary flex flex-col font-fira overflow-hidden arena-active">
+      {/* Cosmodex Cosmic Starry Space Background */}
+      <DashboardBackground />
+      <Starfield />
+
+      {/* Cosmic Nebula Ambient Glows */}
+      <div className="pointer-events-none absolute inset-0 z-0 overflow-hidden">
+        <div className="absolute top-[10%] left-[15%] w-[45rem] h-[45rem] bg-purple-600/25 rounded-full blur-[130px] animate-pulse" />
+        <div className="absolute bottom-[10%] right-[15%] w-[40rem] h-[40rem] bg-fuchsia-600/20 rounded-full blur-[140px] animate-pulse" />
+        <div className="absolute top-[35%] right-[30%] w-[30rem] h-[30rem] bg-cyan-600/15 rounded-full blur-[110px]" />
+      </div>
+
+      <div className="arena-game-wrapper relative z-10 flex flex-col h-full" style={{ paddingTop: 0, height: '100vh' }}>
+        {/* Topbar matching redesign image */}
+        <div className="relative w-full h-16 bg-[#080312]/90 border-b border-purple-900/30 backdrop-blur-xl px-6 flex items-center justify-between z-30 shadow-md">
+          {/* Left: Round Badge */}
+          <div className="flex items-center gap-3">
+            <span className="px-4 py-1.5 rounded-full text-xs font-mono font-bold uppercase tracking-wider bg-purple-500/10 backdrop-blur-md text-purple-200 border border-purple-400/30 shadow-[inset_0_1px_1px_rgba(255,255,255,0.2),0_4px_16px_rgba(168,85,247,0.15)] flex items-center gap-2">
+              <span className="w-1.5 h-1.5 rounded-full bg-purple-400 animate-pulse" />
+              ROUND {mcqState?.currentRound ?? 1} / 5
             </span>
           </div>
-          <div className="arena-topbar-right">
-            {!isMcq && execResult?.status === "ACCEPTED" && (
-              <span className="arena-solved-badge">
-                ✅ Solved! Waiting for opponent…
-              </span>
-            )}
-            {!isMcq && (
-              <span
-                className={`arena-timer ${(myTimeRemaining || 0) <= 10
-                  ? "danger"
-                  : (myTimeRemaining || 0) <= 30
-                    ? "warning"
-                    : ""
-                  }`}
-              >
-                ⏱ {fmt(myTimeRemaining || 0)}
-              </span>
-            )}
-            <button
-              onClick={handleForfeit}
-              className="px-3 py-1 bg-white/5 hover:bg-red-500/20 text-red-400 border border-red-500/30 rounded text-xs font-bold transition-all cursor-pointer"
-            >
-              Forfeit
-            </button>
+
+          {/* Center: MCQ Speed Battle Title */}
+          <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center justify-center">
+            <span className="font-display text-xl md:text-3xl text-white uppercase tracking-[0.08em]">
+              MCQ <span style={{ background: 'linear-gradient(135deg, #E873C3 0%, #D95FD1 35%, #C453D6 65%, #8D37D6 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>SPEED</span> BATTLE
+            </span>
           </div>
+
+          <motion.button
+            whileHover={{
+              scale: 1.06,
+              y: -1,
+              boxShadow: "0 0 12px rgba(236,72,153,0.4), 0 0 20px rgba(217,70,239,0.2)"
+            }}
+            whileTap={{ scale: 0.94 }}
+            onClick={handleForfeit}
+            className="group relative overflow-hidden px-6 py-1.5 rounded-full border border-pink-500/60 hover:border-pink-400 bg-pink-500/10 hover:bg-gradient-to-r hover:from-pink-600/30 hover:to-fuchsia-600/40 text-pink-400 hover:text-pink-100 text-xs font-mono font-bold tracking-widest uppercase transition-colors duration-300 cursor-pointer shadow-[0_0_12px_rgba(217,70,239,0.3)] backdrop-blur-md"
+          >
+            {/* Shimmer Light Beam Effect */}
+            <span className="absolute inset-0 -translate-x-full group-hover:translate-x-full bg-gradient-to-r from-transparent via-white/30 to-transparent transition-transform duration-700 ease-in-out pointer-events-none" />
+            <span className="relative z-10 drop-shadow-[0_0_8px_rgba(236,72,153,0.8)]">FORFEIT</span>
+          </motion.button>
         </div>
 
         {/* Content Area */}
         {isMcq ? (
-          /* MCQ QUESTION VIEW */
-          <div className="p-8 max-w-4xl mx-auto flex-1 flex flex-col justify-center">
-            <div className="bg-[#110f19] border border-white/10 rounded-2xl p-8 shadow-2xl">
+          /* MCQ QUESTION VIEW - EXACT MATCH FOR USER REDESIGN PIC */
+          <div className="p-4 md:p-6 max-w-4xl mx-auto flex-1 flex flex-col justify-center w-full relative z-10 font-sans">
+            {/* 5-Segment Round Progress Bar */}
+            <div className="flex gap-2.5 mb-5 w-full">
+              {Array.from({ length: 5 }, (_, i) => {
+                const roundNum = i + 1;
+                const currentRound = mcqState?.currentRound ?? 1;
+                const isCompleted = roundNum <= currentRound;
+                return (
+                  <div
+                    key={i}
+                    className={cn(
+                      "h-1.5 flex-1 rounded-full transition-all duration-500",
+                      isCompleted
+                        ? "bg-gradient-to-r from-pink-500 to-fuchsia-500 shadow-[0_0_10px_rgba(217,70,239,0.7)]"
+                        : "bg-white/10"
+                    )}
+                  />
+                );
+              })}
+            </div>
+
+            {/* Score Cards (You vs Opponent) */}
+            <div className="grid grid-cols-2 gap-4 mb-6 w-full relative z-10">
+              {/* You Card */}
+              <motion.div
+                whileHover={{
+                  scale: 1.02,
+                  y: -1,
+                  boxShadow: "0 0 20px rgba(217,70,239,0.3)"
+                }}
+                className="relative overflow-hidden rounded-2xl border border-pink-500/40 bg-gradient-to-r from-pink-950/60 to-[#120a26]/80 p-4 shadow-[0_0_20px_rgba(217,70,239,0.15)] backdrop-blur-xl flex items-center justify-between group transition-shadow duration-300"
+              >
+                <div className="absolute -top-10 -left-10 w-24 h-24 bg-pink-500/20 blur-[30px] rounded-full pointer-events-none" />
+                {/* Shimmer Light Beam Effect */}
+                <span className="absolute inset-0 -translate-x-full group-hover:translate-x-full bg-gradient-to-r from-transparent via-white/10 to-transparent transition-transform duration-1000 ease-in-out pointer-events-none" />
+                <div className="flex items-center gap-3 relative z-10">
+                  <div className="size-10 rounded-full bg-pink-500/20 border border-pink-500/50 flex items-center justify-center text-lg shadow-[0_0_10px_rgba(217,70,239,0.3)]">
+                    {getAvatar(username)}
+                  </div>
+                  <div className="flex flex-col">
+                    <span className="text-[10px] font-bold tracking-widest text-pink-300/80 uppercase">YOU</span>
+                    <span className="text-sm font-mono font-bold text-white truncate max-w-[100px]">{username.toUpperCase()}</span>
+                  </div>
+                </div>
+                <div className="text-4xl font-mono font-black text-pink-400 drop-shadow-[0_0_12px_rgba(217,70,239,0.6)] relative z-10">
+                  {myPlayerMcq?.score || 1}
+                </div>
+              </motion.div>
+
+              {/* Opponent Card */}
+              <motion.div
+                whileHover={{
+                  scale: 1.02,
+                  y: -1,
+                  boxShadow: "0 0 20px rgba(6,182,212,0.3)"
+                }}
+                className="relative overflow-hidden rounded-2xl border border-cyan-500/40 bg-gradient-to-l from-cyan-950/60 to-[#120a26]/80 p-4 shadow-[0_0_20px_rgba(6,182,212,0.15)] backdrop-blur-xl flex items-center justify-between flex-row-reverse group transition-shadow duration-300"
+              >
+                <div className="absolute -bottom-10 -right-10 w-24 h-24 bg-cyan-500/20 blur-[30px] rounded-full pointer-events-none" />
+                {/* Shimmer Light Beam Effect */}
+                <span className="absolute inset-0 -translate-x-full group-hover:translate-x-full bg-gradient-to-r from-transparent via-white/10 to-transparent transition-transform duration-1000 ease-in-out pointer-events-none" />
+                <div className="flex items-center gap-3 flex-row-reverse relative z-10">
+                  <div className="size-10 rounded-full bg-cyan-500/20 border border-cyan-500/50 flex items-center justify-center text-lg shadow-[0_0_10px_rgba(6,182,212,0.3)]">
+                    {getAvatar(matchInfo.opponentUsername)}
+                  </div>
+                  <div className="flex flex-col items-end">
+                    <span className="text-[10px] font-bold tracking-widest text-cyan-300/80 uppercase">OPPONENT</span>
+                    <span className="text-sm font-mono font-bold text-white truncate max-w-[100px] text-right">{matchInfo.opponentUsername.toUpperCase()}</span>
+                  </div>
+                </div>
+                <div className="text-4xl font-mono font-black text-cyan-400 drop-shadow-[0_0_12px_rgba(6,182,212,0.6)] relative z-10">
+                  {oppPlayerMcq?.score || 0}
+                </div>
+              </motion.div>
+            </div>
+
+            {/* Main Question Card */}
+            <div className="relative overflow-hidden rounded-3xl border border-purple-500/30 bg-[#0e0720]/95 p-6 md:p-8 shadow-[0_15px_40px_-10px_rgba(0,0,0,0.8)] backdrop-blur-2xl">
               {mcqState?.currentQuestion ? (
                 <>
-                  <div className="text-xs text-[#A78BFA] font-bold uppercase tracking-widest mb-3 flex justify-between">
-                    <span>{mcqState.currentQuestion.category} • {mcqState.currentQuestion.difficulty}</span>
-                    <span>Opponent Score: {oppPlayerMcq?.score || 0}</span>
+                  <div className="flex items-center justify-between gap-4 mb-4 flex-wrap">
+                    <div className="flex items-center gap-2">
+                      <span className="px-3.5 py-1 rounded-full text-xs font-mono font-bold uppercase tracking-wider bg-purple-900/60 text-purple-300 border border-purple-500/40">
+                        {mcqState.currentQuestion.category}
+                      </span>
+                      <span className={cn(
+                        "px-3.5 py-1 rounded-full text-xs font-mono font-bold uppercase tracking-wider border",
+                        mcqState.currentQuestion.difficulty === 'HARD' ? "bg-red-950/60 text-red-400 border-red-500/40" :
+                        mcqState.currentQuestion.difficulty === 'MEDIUM' ? "bg-amber-950/60 text-amber-400 border-amber-500/40" :
+                        "bg-emerald-950/60 text-emerald-400 border-emerald-500/40"
+                      )}>
+                        {mcqState.currentQuestion.difficulty}
+                      </span>
+                      <div className="flex items-center gap-1 bg-purple-500/10 px-3 py-1 rounded-full border border-purple-500/30 shadow-[0_0_12px_rgba(168,85,247,0.2)] text-xs font-mono font-bold text-purple-300">
+                        <span>🔥</span>
+                        <span>STREAK</span>
+                        <span className="text-purple-400 font-black">· 3</span>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-3">
+                      {/* XP Badge */}
+                      <div className="flex items-center gap-1 bg-amber-500/10 px-3 py-1 rounded-full border border-amber-500/30 shadow-[0_0_12px_rgba(245,158,11,0.25)]">
+                        <span className="text-amber-400 text-xs animate-pulse">⚡</span>
+                        <span className="text-amber-300 font-mono font-black text-xs tracking-wider">
+                          {isMcq ? (myPlayerMcq?.score ? myPlayerMcq.score * 240 : 240) : myPlayerCode?.points || 0} XP
+                        </span>
+                      </div>
+
+                      <span className="h-4 w-px bg-white/20" />
+
+                      {/* Timer */}
+                      <div className="text-xs font-mono font-bold text-red-400 tracking-wider flex items-center gap-1.5 bg-red-950/80 border border-red-500/40 px-3.5 py-1 rounded-full shadow-[0_0_12px_rgba(239,68,68,0.25)]">
+                        <span className="text-[11px] font-bold text-red-400">TIME</span>
+                        <span className="text-sm font-black text-red-300">05s</span>
+                      </div>
+                    </div>
                   </div>
-                  <h3 className="text-2xl font-bold text-white mb-8 leading-snug">
+
+                  {/* Pink Accent Line */}
+                  <div className="h-1 w-32 bg-gradient-to-r from-pink-500 to-fuchsia-600 rounded-full shadow-[0_0_10px_rgba(217,70,239,0.7)] mb-6" />
+
+                  <h3 className="text-xl md:text-3xl font-black text-white mb-8 leading-snug tracking-wide">
                     {mcqState.currentQuestion.question}
                   </h3>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+                  {/* 2x2 Choice Cards */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                     {mcqState.currentQuestion.options.map((option: string, idx: number) => {
-                      let btnStyle = "bg-white/5 border-white/10 text-white hover:bg-white/10";
+                      const letter = String.fromCharCode(65 + idx);
+                      let cardStyle = "bg-[#130b29]/60 border-white/10 text-white hover:border-fuchsia-500/70 hover:bg-[#1e1045]";
+                      let badgeStyle = "bg-white/10 text-white/60 group-hover:bg-[#d946ef] group-hover:text-white group-hover:scale-110";
+
                       if (selectedAnswer === idx) {
-                        btnStyle = "bg-[#7c3aed] border-[#a78bfa] text-white";
+                        cardStyle = "border-2 border-pink-500 bg-[#240c3c] text-white";
+                        badgeStyle = "bg-[#d946ef] text-white font-black";
                       }
+
                       if (roundReveal) {
                         if (idx === roundReveal.correctIndex) {
-                          btnStyle = "bg-[#16a34a] border-[#4ade80] text-white";
+                          cardStyle = "border-2 border-emerald-400 bg-emerald-950/80 text-white";
+                          badgeStyle = "bg-emerald-500 text-white font-black";
                         } else if (selectedAnswer === idx && idx !== roundReveal.correctIndex) {
-                          btnStyle = "bg-[#dc2626] border-[#f87171] text-white";
+                          cardStyle = "border-2 border-rose-500 bg-rose-950/80 text-white";
+                          badgeStyle = "bg-rose-500 text-white font-black";
                         }
                       }
 
                       return (
-                        <button
+                        <motion.button
                           key={idx}
+                          initial={{ opacity: 0, y: 15 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ delay: idx * 0.05, duration: 0.2 }}
+                          whileHover={
+                            selectedAnswer === null && !roundReveal
+                              ? {
+                                  y: -8,
+                                  scale: 1.03,
+                                  transition: { duration: 0.12, ease: "easeOut" }
+                                }
+                              : {}
+                          }
+                          whileTap={selectedAnswer === null && !roundReveal ? { scale: 0.97, y: -2, transition: { duration: 0.05 } } : {}}
                           onClick={() => handleMcqAnswer(idx)}
                           disabled={selectedAnswer !== null || roundReveal !== null}
-                          className={`p-5 rounded-xl border text-left font-medium transition-all ${btnStyle}`}
+                          className={cn(
+                            "group relative p-5 rounded-2xl border text-left font-semibold transition-colors transition-border duration-100 ease-out flex items-center gap-4 cursor-pointer backdrop-blur-md overflow-hidden",
+                            cardStyle
+                          )}
                         >
-                          <span className="font-mono text-sm opacity-60 mr-2">{String.fromCharCode(65 + idx)}.</span> {option}
-                        </button>
+                          <span className={cn(
+                            "size-8 rounded-full shrink-0 flex items-center justify-center font-mono text-xs font-bold transition-all duration-100 ease-out",
+                            badgeStyle
+                          )}>
+                            {letter}
+                          </span>
+                          <span className="text-sm md:text-base leading-snug flex-1">{option}</span>
+                        </motion.button>
                       );
                     })}
                   </div>
 
                   {roundReveal && (
-                    <div className="p-4 bg-white/5 rounded-xl border border-white/10 text-center text-sm text-text-secondary">
-                      Round Over! Correct Answer: <strong className="text-[#3DCB7F]">{String.fromCharCode(65 + roundReveal.correctIndex)}</strong>. Loading next round...
+                    <div className="p-4 bg-emerald-500/10 border border-emerald-500/30 rounded-2xl text-center text-sm font-medium text-emerald-200 backdrop-blur-md flex items-center justify-center gap-2">
+                      <CheckCircle2 className="size-5 text-emerald-400" />
+                      <span>Round Over! Correct Answer: <strong className="text-emerald-300 font-bold">{String.fromCharCode(65 + roundReveal.correctIndex)}</strong></span>
                     </div>
                   )}
                 </>
               ) : (
-                <div className="text-center text-text-muted py-12 font-mono">Waiting for next question...</div>
+                <div className="text-center text-text-muted py-12 font-mono flex items-center justify-center gap-3">
+                  <div className="animate-spin rounded-full h-5 w-5 border-t-2 border-b-2 border-purple-400"></div>
+                  <span>Waiting for next question...</span>
+                </div>
               )}
             </div>
           </div>
@@ -1052,29 +1208,29 @@ export default function ActiveMatchView({ socket, matchInfo, userId, username, o
           </div>
         )}
 
-        {/* Bottom Status Bar */}
-        <div className="arena-bottom-bar">
-          <div className="arena-bottom-left">
-            <div className="flex items-center gap-2 bg-[#F5C842]/10 px-3 py-1 rounded-full border border-[#F5C842]/30">
-              <span className="text-[#F5C842] text-sm">🌟</span>
-              <span className="text-[#F5C842] font-black text-sm tracking-widest">
-                {isMcq ? myPlayerMcq?.score || 0 : myPlayerCode?.points || 0} XP
+        {/* Futuristic Glassmorphic Bottom Status Bar */}
+        {!isMcq && (
+          <div className="relative z-50 w-full h-14 bg-[#080312]/95 border-t border-purple-900/40 backdrop-blur-xl px-6 flex items-center justify-between shrink-0 shadow-[0_-4px_25px_rgba(0,0,0,0.8)]">
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2 text-xs font-mono font-bold text-purple-300/80">
+                <span className="tracking-widest">STREAK</span>
+                <span className="text-purple-400 font-black">· 3</span>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-3">
+              <span className="font-mono font-bold text-white text-xs tracking-wider">
+                {activeProblem.title}
+              </span>
+              <span className="px-3 py-1 rounded-full bg-purple-950/90 text-purple-300 border border-purple-500/40 text-xs font-mono font-bold tracking-wider shadow-[0_0_10px_rgba(168,85,247,0.2)]">
+                STAGE {myStage} / 6
+              </span>
+              <span className="px-3 py-1 rounded-full bg-pink-950/80 text-pink-300 border border-pink-500/40 text-xs font-mono font-bold tracking-wider">
+                {myPlayerCode?.lives ?? 5} LIVES
               </span>
             </div>
-            <div className="h-4 w-px bg-white/10" />
-            <span className="arena-bottom-title font-bold text-white text-sm">
-              {isMcq ? 'MCQ Speed Battle' : activeProblem.title}
-            </span>
-            <span className="arena-bottom-stage text-xs text-text-muted uppercase tracking-widest font-bold">
-              {isMcq ? `Round ${mcqState?.currentRound ?? 1} / 5` : `Stage ${myStage} / 6`}
-            </span>
           </div>
-          <div className="arena-bottom-right">
-            {!isMcq && (
-              <span className="arena-bottom-lives">{myPlayerCode?.lives ?? 5} lives</span>
-            )}
-          </div>
-        </div>
+        )}
 
         {/* Overlay: Waiting for Opponent */}
         {waitTimer > 0 && (

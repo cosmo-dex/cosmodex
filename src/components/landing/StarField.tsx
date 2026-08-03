@@ -35,9 +35,9 @@ export default function StarField() {
       starsRef.current = Array.from({ length: count }, () => ({
         x: Math.random() * canvas.width,
         y: Math.random() * canvas.height,
-        size: Math.random() * 1.8 + 0.2,
-        opacity: Math.random() * 0.7 + 0.1,
-        speed: Math.random() * 0.05 + 0.01,
+        size: Math.random() * 2.5 + 0.8,
+        opacity: Math.random() * 0.4 + 0.6,
+        speed: Math.random() * 0.08 + 0.02,
         twinkleSpeed: Math.random() * 0.02 + 0.005,
         twinkleOffset: Math.random() * Math.PI * 2,
       }));
@@ -48,6 +48,17 @@ export default function StarField() {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
       starsRef.current.forEach((star) => {
+        // Move star UPWARD towards top
+        star.y -= star.speed * 8;
+        star.x += Math.sin(time * 0.001 + star.twinkleOffset) * 0.2;
+
+        if (star.y < -10) {
+          star.y = canvas.height + 10;
+          star.x = Math.random() * canvas.width;
+        }
+        if (star.x < -10) star.x = canvas.width + 10;
+        if (star.x > canvas.width + 10) star.x = -10;
+
         const twinkle = Math.sin(time * star.twinkleSpeed + star.twinkleOffset);
         const opacity = star.opacity * (0.5 + 0.5 * twinkle);
 
