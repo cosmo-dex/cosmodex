@@ -74,7 +74,6 @@ export default function BattlePage() {
     };
   }, []);
 
-
   const handleDevBypassLobby = () => {
     setUser({ userId: 'dev-user-1', username: 'rishi' });
   };
@@ -96,52 +95,92 @@ export default function BattlePage() {
 
   // ── LOBBY / MATCHMAKING ───────────────────────────────────────────────────
   return (
-    <div className="relative w-screen h-screen overflow-hidden bg-[#0a0518] text-white flex flex-col">
-      {/* Background exact match via CSS */}
-      <div className="absolute inset-[-10%] w-[120%] h-[120%] pointer-events-none z-0">
-        {/* Core dark space gradient */}
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_100%,#1a0b2e_0%,#080312_100%)] opacity-90" />
+    <div className="relative w-screen h-screen overflow-hidden bg-[#050508] text-white flex flex-col starfield">
+      {/* Background: Leaderboard-style dark space gradient */}
+      <div className="absolute inset-0 pointer-events-none z-0 overflow-hidden">
+        {/* Deep dark base matching leaderboard */}
+        <div className="absolute inset-0 bg-[#050508]" />
+        {/* Radial purple glow top-left */}
+        <div className="absolute -top-32 -left-32 w-[600px] h-[600px] bg-[radial-gradient(ellipse,rgba(124,58,237,0.22)_0%,transparent_70%)]" />
+        {/* Radial fuchsia glow bottom-right */}
+        <div className="absolute bottom-0 right-0 w-[500px] h-[500px] bg-[radial-gradient(ellipse,rgba(232,115,195,0.12)_0%,transparent_70%)]" />
+        {/* Subtle center purple bloom */}
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[400px] bg-[radial-gradient(ellipse,rgba(141,55,214,0.08)_0%,transparent_70%)]" />
+
+        {/* Dashboard Shooting Stars Animations */}
+        <motion.div
+          className="absolute h-[1px] bg-gradient-to-r from-transparent via-white to-transparent shadow-[0_0_8px_rgba(255,255,255,0.8)]"
+          style={{ width: "150px", rotate: -35, top: "10%", right: "-10%" }}
+          animate={{
+            x: [0, -1200],
+            y: [0, 800],
+            opacity: [0, 1, 0]
+          }}
+          transition={{
+            duration: 2.5,
+            repeat: Infinity,
+            repeatDelay: 4,
+            ease: "linear"
+          }}
+        />
+        <motion.div
+          className="absolute h-[1px] bg-gradient-to-r from-transparent via-[#00FFE9] to-transparent shadow-[0_0_10px_rgba(0,255,233,0.8)]"
+          style={{ width: "120px", rotate: -35, top: "35%", right: "-5%" }}
+          animate={{
+            x: [0, -1100],
+            y: [0, 750],
+            opacity: [0, 0.8, 0]
+          }}
+          transition={{
+            duration: 2.2,
+            repeat: Infinity,
+            repeatDelay: 7,
+            ease: "linear"
+          }}
+        />
+        <motion.div
+          className="absolute h-[1px] bg-gradient-to-r from-transparent via-[#E873C3] to-transparent shadow-[0_0_10px_rgba(232,115,195,0.9)]"
+          style={{ width: "180px", rotate: -35, top: "-5%", right: "25%" }}
+          animate={{
+            x: [0, -1400],
+            y: [0, 950],
+            opacity: [0, 1, 0]
+          }}
+          transition={{
+            duration: 3,
+            repeat: Infinity,
+            repeatDelay: 10,
+            ease: "linear"
+          }}
+        />
 
         <RisingStars />
 
-        {/* Nebula dust / subtle colored clouds */}
-        <div className="absolute top-0 left-0 w-full h-full">
-          <motion.div
-            animate={{
-              scale: [1, 1.1, 1],
-              opacity: [1, 0.8, 1],
-              rotate: [-45, -40, -45]
-            }}
-            transition={{ duration: 15, repeat: Infinity, ease: "easeInOut" }}
-            className="absolute top-[20%] left-[30%] w-[40rem] h-[30rem] bg-indigo-900/20 rounded-[100%] blur-[100px] mix-blend-screen"
-          />
-          <motion.div
-            animate={{
-              scale: [1, 1.2, 1],
-              opacity: [0.8, 1, 0.8],
-              x: [0, 20, 0],
-              y: [0, -20, 0]
-            }}
-            transition={{ duration: 20, repeat: Infinity, ease: "easeInOut", delay: 2 }}
-            className="absolute bottom-[10%] right-[20%] w-[35rem] h-[25rem] bg-fuchsia-900/10 rounded-[100%] blur-[120px] mix-blend-screen"
-          />
-        </div>
+        {/* Lightweight static ambient glows */}
+        <div className="absolute top-[15%] left-[30%] w-[35rem] h-[22rem] bg-indigo-900/15 rounded-full blur-[90px]" />
+        <div className="absolute bottom-[10%] right-[20%] w-[30rem] h-[20rem] bg-fuchsia-900/10 rounded-full blur-[100px]" />
       </div>
 
-      {/* Main Content Area */}
-      <div className="relative z-10 w-full flex-1 flex flex-col pt-16">
+      {/* Dark overlay for better text contrast */}
+      <div className="absolute inset-0 pointer-events-none z-[5]" />
+
+      {/* Main Content Area – pt-14 offsets fixed Navbar */}
+      <div className="relative z-10 w-full flex-1 flex flex-col pt-14 overflow-hidden">
         <Navbar />
         <BattleArenaHero />
 
-        <section className="w-full max-w-4xl mx-auto flex-1 flex flex-col items-center justify-center px-4 py-6">
+        <section className="w-full max-w-[1360px] mx-auto flex-1 flex flex-col items-center justify-center px-4 sm:px-6 pt-1 pb-3 overflow-hidden">
           {loading ? (
             <div className="text-center p-10 text-white/50 flex flex-col items-center gap-3">
               <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-[#D95FD1]"></div>
               <span>Loading Battle Arena...</span>
             </div>
           ) : !user ? (
-            <div className="-mt-8 sm:-mt-10 w-full flex flex-col items-center">
-              <div className="cosmo-glass w-full max-w-md p-10 sm:p-14 text-center border border-white/10 shadow-2xl relative rounded-2xl">
+            <div className="w-full flex justify-center">
+              <div className="cosmo-glass w-full max-w-md p-8 sm:p-14 text-center border border-white/10 shadow-2xl relative">
+                {/* Outer decorative ring to match profile theme */}
+                <div className="absolute inset-0 ring-inset ring-2 ring-white/10 rounded-[24px] pointer-events-none" />
+
                 <h3 className="text-2xl font-bold tracking-wider text-white mb-3">
                   Sign In Required
                 </h3>
@@ -165,7 +204,7 @@ export default function BattlePage() {
               </div>
             </div>
           ) : (
-            <div className="-mt-8 sm:-mt-12 w-full flex justify-center">
+            <div className="w-full flex justify-center">
               <MatchmakingPanel
                 socket={socket}
                 userId={user.userId}
@@ -176,7 +215,6 @@ export default function BattlePage() {
           )}
         </section>
       </div>
-
     </div>
   );
 }
