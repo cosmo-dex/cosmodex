@@ -5,6 +5,10 @@ import { motion, useAnimation } from "framer-motion";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useMascotStore } from "@/hooks/useMascotStore";
+
+
+import Assistant from "./Assistant";
+
 import mascotBody from "./Mascot - Without Eyes.png";
 import mascotPupil from "./Mascot - Pupil.png";
 
@@ -27,6 +31,25 @@ export default function Mascot() {
   const controls = useAnimation();
 
   const { message, position } = useMascotStore();
+
+/* ==========================================================
+    Assistant State
+========================================================== */
+
+const [chatOpen, setChatOpen] = useState(false);
+
+const [messages, setMessages] = useState<
+  {
+    text: string;
+    isUser: boolean;
+  }[]
+>([]);
+
+const [inputValue, setInputValue] = useState("");
+
+const [fullScreen, setFullScreen] = useState(false);
+
+const [isTyping, setIsTyping] = useState(false);
   const [isIdle, setIsIdle] = useState(false);
   const idleTimer = useRef<NodeJS.Timeout | null>(null);
 
@@ -126,6 +149,75 @@ export default function Mascot() {
     scaleY: [1, 1, 0.1, 1, 1],
     transition: { duration: 4, repeat: Infinity, times: [0, 0.85, 0.9, 0.95, 1], ease: "easeInOut" as const }
   };
+  /* ==========================================================
+    Assistant Chat Logic
+
+    NOTE:
+    Replace the simulated response with your backend API
+    when the AI agent is integrated.
+========================================================== */
+
+const sendMessage = async () => {
+  if (!inputValue.trim()) return;
+
+  const question = inputValue.trim();
+
+  // Add user message
+  setMessages((prev) => [
+    ...prev,
+    {
+      text: question,
+      isUser: true,
+    },
+  ]);
+
+  setInputValue("");
+  setIsTyping(true);
+
+  try {
+    /*
+    ==========================================================
+    BACKEND INTEGRATION
+
+    Replace this with:
+
+    const res = await fetch("/api/chat", {
+      method: "POST",
+      body: JSON.stringify({ message: question }),
+    });
+
+    const data = await res.json();
+
+    ==========================================================
+    */
+
+    // Temporary fake response
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+
+    const reply =
+      "👋 Hi! I'm Cosmo. Backend integration is coming soon.";
+
+    setMessages((prev) => [
+      ...prev,
+      {
+        text: reply,
+        isUser: false,
+      },
+    ]);
+  } catch (error) {
+    console.error("Assistant Error:", error);
+
+    setMessages((prev) => [
+      ...prev,
+      {
+        text: "Something went wrong. Please try again.",
+        isUser: false,
+      },
+    ]);
+  } finally {
+    setIsTyping(false);
+  }
+};
 
   if (pathname === '/onboarding' || pathname?.startsWith('/onboarding/') || pathname?.startsWith('/battle')) {
     return null;
@@ -157,7 +249,22 @@ export default function Mascot() {
           {message}
         </div>
 
-        <motion.div className="absolute w-full h-full">
+       <motion.div
+  className="absolute w-full h-full cursor-pointer"
+
+  whileHover={{
+    scale: 1.03,
+    y: -2,
+  }}
+
+  whileTap={{
+    scale: 0.97,
+  }}
+
+  onClick={() => {
+    setChatOpen(true);
+  }}
+>
           <Image
             src={mascotBody}
             alt="Mascot Body"
@@ -179,7 +286,25 @@ export default function Mascot() {
             </motion.div>
           </div>
         </motion.div>
-      </motion.div>
+            </motion.div>
+
+      {/* ==========================================================
+          Assistant
+      ========================================================== */}
+
+      <Assistant
+        chatOpen={chatOpen}
+        fullScreen={fullScreen}
+        messages={messages}
+        inputValue={inputValue}
+        isTyping={isTyping}
+        onClose={() => setChatOpen(false)}
+        onSend={sendMessage}
+        onInputChange={setInputValue}
+        onToggleFullscreen={() =>
+          setFullScreen((prev) => !prev)
+        }
+      />
     </div>
   );
 }
