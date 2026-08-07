@@ -9,7 +9,7 @@ const ADMIN_PANELS = [
     role: 'super_admin',
     label: 'Super Admin',
     subtitle: 'Full platform control',
-    description: 'User management, RBAC role assignment, audit logs, and admin account creation.',
+    description: 'User management, RBAC role assignment, events, and admin account creation.',
     icon: Shield,
     gradient: 'from-[#E873C3] via-[#D95FD1] to-[#8D37D6]',
     glow: 'rgba(232,115,195,0.4)',

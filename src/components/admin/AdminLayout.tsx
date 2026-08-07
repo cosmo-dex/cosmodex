@@ -16,6 +16,7 @@ import {
   Menu,
   X,
   ChevronRight,
+  CalendarDays,
 } from 'lucide-react';
 
 interface AdminUser {
@@ -35,8 +36,8 @@ const NAV_BY_ROLE: Record<string, NavItem[]> = {
   super_admin: [
     { label: 'Overview', href: '/super-admin', icon: LayoutDashboard },
     { label: 'User Management', href: '/super-admin/users', icon: Users },
+    { label: 'Events', href: '/super-admin/events', icon: CalendarDays },
     { label: 'Create Admin', href: '/super-admin/create-admin', icon: UserPlus },
-    { label: 'Audit Logs', href: '/super-admin/logs', icon: ScrollText },
     { label: 'Change Password', href: '/super-admin/change-password', icon: Key },
   ],
   learning_admin: [

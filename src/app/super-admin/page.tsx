@@ -6,13 +6,13 @@ import Link from 'next/link';
 import {
   Users,
   Swords,
-  ScrollText,
   UserPlus,
   TrendingUp,
   Shield,
   Activity,
   Ban,
   ChevronRight,
+  CalendarDays,
 } from 'lucide-react';
 
 interface PlatformStats {
@@ -66,8 +66,8 @@ function StatCard({
 
 const QUICK_LINKS = [
   { label: 'Manage Users', desc: 'Search, role changes, ban/unban', href: '/super-admin/users', icon: Users, color: '#E873C3' },
+  { label: 'Events', desc: 'Create and manage hackathons, contests & more', href: '/super-admin/events', icon: CalendarDays, color: '#8D37D6' },
   { label: 'Create Admin', desc: 'Provision learning or arena admin accounts', href: '/super-admin/create-admin', icon: UserPlus, color: '#4ECDC4' },
-  { label: 'Audit Logs', desc: 'View all administrative actions', href: '/super-admin/logs', icon: ScrollText, color: '#F5A623' },
 ];
 
 export default function SuperAdminPage() {
