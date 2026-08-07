@@ -11,6 +11,7 @@ import {
   Users,
   Menu,
   X,
+  CalendarDays,
 } from "lucide-react";
 
 const navItems = [
@@ -26,6 +27,7 @@ const navItems = [
     href: "#",
   },
   { label: "Battle", icon: Hammer, href: "/battle" },
+  { label: "Events", icon: CalendarDays, href: "/events" },
   { label: "Leaderboard", icon: Users, href: "/leaderboard" },
 ];
 

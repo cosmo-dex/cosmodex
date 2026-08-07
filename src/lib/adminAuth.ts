@@ -66,37 +66,11 @@ export async function verifyAdminSession(
 }
 
 /**
- * Logs an admin action to the admin_activity_log table.
+ * Audit logging removed per requirements.
  */
-export async function logAdminActivity(params: {
-  actorId: string;
-  actorRole: string;
-  section: string;
-  action: string;
-  targetTable?: string;
-  targetId?: string;
-  oldValue?: object | null;
-  newValue?: object | null;
-  ipAddress?: string;
-}) {
-  try {
-    await prisma.admin_activity_log.create({
-      data: {
-        actor_id: params.actorId,
-        actor_role: params.actorRole,
-        section: params.section,
-        action: params.action,
-        target_table: params.targetTable ?? null,
-        target_id: params.targetId ?? null,
-        old_value_json: params.oldValue ?? undefined,
-        new_value_json: params.newValue ?? undefined,
-        ip_address: params.ipAddress ?? null,
-      },
-    });
-  } catch (err) {
-    // Non-blocking — log errors should never break the main action
-    console.error('[logAdminActivity] Failed to write audit log:', err);
-  }
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export async function logAdminActivity(..._args: unknown[]) {
+  // No-op
 }
 
 /**
