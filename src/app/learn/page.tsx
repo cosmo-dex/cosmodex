@@ -8,10 +8,6 @@ import CourseCard, { CourseData } from "@/components/learn/CourseCard";
 import {
   Search,
   X,
-  Globe,
-  Code2,
-  Cpu,
-  Compass,
   ChevronLeft,
   ChevronRight,
 } from "lucide-react";
