@@ -49,7 +49,64 @@
   --font-mono: var(--font-mono), ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
   --font-lato: Lato, sans-serif;
   --font-ayaha: var(--font-ayaha), cursive;
+}
 
+/* ── Global Smooth Scroll & Lenis Kinetic Inertia Support ── */
+html {
+  scroll-behavior: smooth;
+  color-scheme: dark;
+}
+
+html.lenis, html.lenis body {
+  height: auto;
+}
+
+.lenis.lenis-smooth {
+  scroll-behavior: auto !important;
+}
+
+.lenis.lenis-smooth [data-lenis-prevent] {
+  overscroll-behavior: contain;
+}
+
+.lenis.lenis-stopped {
+  overflow: hidden;
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(5, 4, 13, 0.7);
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(0, 255, 233, 0.25);
+  border-radius: 9999px;
+  border: 2px solid rgba(5, 4, 13, 0.8);
+  transition: background 0.3s ease;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 255, 233, 0.5);
+  box-shadow: 0 0 12px rgba(0, 255, 233, 0.5);
+}
+
+.custom-sidebar-scrollbar::-webkit-scrollbar {
+  width: 5px;
+}
+
+.custom-sidebar-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(0, 255, 233, 0.2);
+}
+
+.custom-sidebar-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 255, 233, 0.4);
+}
+
+@theme {
   /* ── Landing / Global Colors ───────────────────────────── */
   --color-cosmo-bg: #090214;
   --color-cosmo-surface: rgba(20, 8, 45, 0.65);
@@ -2067,6 +2124,67 @@ nextjs-portal,
 [data-nextjs-toast-wrapper],
 next-route-announcer {
   display: none !important;
+}
+
+/* Custom sidebar scrollbar for Python Galaxy Learn page */
+.custom-sidebar-scrollbar::-webkit-scrollbar {
+  width: 5px;
+}
+.custom-sidebar-scrollbar::-webkit-scrollbar-track {
+  background: rgba(9, 5, 24, 0.4);
+  border-radius: 10px;
+}
+.custom-sidebar-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(0, 255, 233, 0.25);
+  border-radius: 10px;
+}
+.custom-sidebar-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 255, 233, 0.5);
+}
+
+/* Animated moving dots along galaxy path trail */
+@keyframes move-dots-cyan {
+  from {
+    stroke-dashoffset: 0;
+  }
+  to {
+    stroke-dashoffset: -24px;
+  }
+}
+
+@keyframes move-dots-purple {
+  from {
+    stroke-dashoffset: 12px;
+  }
+  to {
+    stroke-dashoffset: -12px;
+  }
+}
+
+.animate-dots-cyan {
+  animation: move-dots-cyan 2s linear infinite;
+}
+
+.animate-dots-purple {
+  animation: move-dots-purple 2s linear infinite;
+}
+
+/* Slow expanding cosmic ripple wave effect for planet click */
+@keyframes ripple {
+  0% {
+    transform: scale(0.85);
+    opacity: 0.95;
+    box-shadow: 0 0 15px rgba(0, 255, 233, 0.8);
+  }
+  50% {
+    opacity: 0.65;
+    box-shadow: 0 0 30px rgba(168, 85, 247, 0.7);
+  }
+  100% {
+    transform: scale(2.6);
+    opacity: 0;
+    box-shadow: 0 0 45px rgba(0, 255, 233, 0);
+  }
 }
 
 
