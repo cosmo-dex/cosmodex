@@ -11,6 +11,7 @@ import {
   Menu,
   X,
   CalendarDays,
+  Code2,
 } from "lucide-react";
 
 const navItems = [
@@ -136,12 +137,11 @@ export default function Navbar() {
                     </h4>
 
                     {/* Python Course Link with Refined Subtle Glassmorphism */}
-                    <div
-                      role="button"
-                      tabIndex={0}
-                      onClick={() => handleNavigate('/learn/python')}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter' || e.key === ' ') handleNavigate('/learn/python');
+                    <Link
+                      href="/learn/python"
+                      onClick={() => {
+                        setActiveDropdown(null);
+                        setMobileOpen(false);
                       }}
                       className="flex gap-3.5 items-center group p-3 rounded-xl bg-white/[0.03] border border-white/8 hover:border-white/20 hover:bg-white/[0.07] backdrop-blur-md transition-all duration-200 cursor-pointer"
                     >
@@ -156,16 +156,19 @@ export default function Navbar() {
                           Learn the basics of programming with beginner-friendly exercises.
                         </p>
                       </div>
-                    </div>
+                    </Link>
 
                     {/* All Courses Button */}
-                    <button
-                      type="button"
-                      onClick={() => handleNavigate('/learn')}
-                      className="mt-1 w-full py-2.5 bg-[#E873C3]/15 hover:bg-[#E873C3]/25 border border-[#E873C3]/40 text-[#E873C3] text-center text-xs font-bold rounded-lg transition-all shadow-[0_0_15px_rgba(232,115,195,0.2)] cursor-pointer"
+                    <Link
+                      href="/learn"
+                      onClick={() => {
+                        setActiveDropdown(null);
+                        setMobileOpen(false);
+                      }}
+                      className="mt-1 w-full py-2.5 bg-[#E873C3]/15 hover:bg-[#E873C3]/25 border border-[#E873C3]/40 text-[#E873C3] text-center text-xs font-bold rounded-lg transition-all shadow-[0_0_15px_rgba(232,115,195,0.2)] cursor-pointer text-center block"
                     >
                       All Courses &gt;
-                    </button>
+                    </Link>
                   </div>
                 </div>
               )}
