@@ -219,13 +219,7 @@ const sendMessage = async () => {
   }
 };
 
-  if (
-    pathname === '/onboarding' ||
-    pathname?.startsWith('/onboarding/') ||
-    pathname?.startsWith('/battle') ||
-    pathname === '/learn/python' ||
-    pathname?.startsWith('/learn/python')
-  ) {
+  if (pathname === '/onboarding' || pathname?.startsWith('/onboarding/') || pathname?.startsWith('/battle')) {
     return null;
   }
 

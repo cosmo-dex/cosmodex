@@ -1,23 +1,21 @@
 "use client";
 
-import React, { useState, ReactNode } from "react";
+import { useState } from "react";
 import { motion } from "framer-motion";
-import Link from "next/link";
 
 export interface CourseData {
   id: string;
   courseNumber: string;
   title: string;
   description: string;
-  level: string;
+  level: "BEGINNER" | "INTERMEDIATE" | "ADVANCED";
   thumbnail: string;
-  pixelArtBanner?: ReactNode;
-  href?: string;
+  pixelArtBanner?: React.ReactNode;
 }
 
-export interface CourseCardProps {
+interface CourseCardProps {
   course: CourseData;
-  index?: number;
+  index: number;
 }
 
 // Solid Filled Signal Level Icon
@@ -29,17 +27,17 @@ const SignalBarsIcon = () => (
   </svg>
 );
 
-export default function CourseCard({ course, index = 0 }: CourseCardProps) {
+export default function CourseCard({ course }: CourseCardProps) {
   const [imgError, setImgError] = useState(false);
 
-  const cardContent = (
+  return (
     <motion.div
       initial={{ opacity: 0, y: 15 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: "-30px" }}
       whileHover={{ y: -10 }}
       transition={{ duration: 0.15, ease: "easeOut", delay: 0 }}
-      className="group relative flex flex-col overflow-hidden bg-[#090e1a] border border-white/80 border-l-3 border-b-3 border-0 hover:border-white/50 rounded-[8px] cursor-pointer transition-colors duration-150 h-full"
+      className="group relative flex flex-col overflow-hidden bg-[#090e1a] border border-white/80 border-l-3 border-b-3 border-0 hover:border-white/50 rounded-[8px] cursor-pointer transition-colors duration-150"
     >
       {/* Highlight screen overlay on whole card component */}
       <div className="absolute inset-0 bg-white/5 opacity-0 group-hover:opacity-100 transition-opacity duration-150 pointer-events-none z-30" />
@@ -94,14 +92,4 @@ export default function CourseCard({ course, index = 0 }: CourseCardProps) {
       </div>
     </motion.div>
   );
-
-  if (course.href) {
-    return (
-      <Link href={course.href} className="block h-full">
-        {cardContent}
-      </Link>
-    );
-  }
-
-  return cardContent;
 }
