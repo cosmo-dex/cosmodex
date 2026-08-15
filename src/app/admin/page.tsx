@@ -8,7 +8,7 @@ import { Shield, BookOpen, Swords, Eye, EyeOff, Loader2, Lock, Sparkles, KeyRoun
 
 const ADMIN_PANELS = [
   {
-    role: 'SUPER_ADMIN',
+    role: 'super_admin',
     label: 'Super Admin',
     subtitle: 'Full platform control',
     description: 'User management, RBAC role assignment, events, and admin account creation.',
@@ -20,7 +20,7 @@ const ADMIN_PANELS = [
     href: '/super-admin',
   },
   {
-    role: 'LEARNING_ADMIN',
+    role: 'learning_admin',
     label: 'Learning Admin',
     subtitle: 'Curriculum management',
     description: 'Manage languages, modules, topics, exercises, and badges for the learning platform.',
@@ -32,7 +32,7 @@ const ADMIN_PANELS = [
     href: '/learning-admin',
   },
   {
-    role: 'ARENA_ADMIN',
+    role: 'arena_admin',
     label: 'Battle Arena Admin',
     subtitle: 'Arena & match control',
     description: 'Manage battle problems, test cases, ELO ratings, and monitor active matches.',
