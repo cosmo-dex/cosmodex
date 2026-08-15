@@ -55,7 +55,14 @@ export default function CompletionStep({ data }: CompletionStepProps) {
 
         setTimeout(() => {
           if (isMounted.current) {
-            router.push('/dashboard');
+            let destination = '/dashboard';
+            if (typeof window !== 'undefined') {
+              const nextParam = new URLSearchParams(window.location.search).get('next');
+              if (nextParam && nextParam.startsWith('/') && !nextParam.startsWith('//') && !nextParam.includes('\\')) {
+                destination = nextParam;
+              }
+            }
+            router.push(destination);
           }
         }, 3000);
       } catch {

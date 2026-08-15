@@ -54,13 +54,19 @@ export default function OnboardingFlow() {
           oauthRes.json(),
         ]);
 
+        const nextParam = searchParams.get('next');
+        const destination =
+          nextParam && nextParam.startsWith('/') && !nextParam.startsWith('//') && !nextParam.includes('\\')
+            ? nextParam
+            : '/dashboard';
+
         if (sessionData.user) {
-          window.location.href = '/dashboard';
+          window.location.href = destination;
           return;
         }
 
         if (oauthPendingData.exists) {
-          window.location.href = '/dashboard';
+          window.location.href = destination;
           return;
         }
 

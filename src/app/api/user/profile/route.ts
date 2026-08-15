@@ -1,26 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import prisma from '@/lib/prisma';
-
-const SESSION_COOKIE = 'cosmo_session';
+import { verifySession, signSession, SESSION_COOKIE, SESSION_COOKIE_OPTIONS, type SessionPayload } from '@/lib/session';
 
 export async function GET(req: NextRequest) {
   try {
     const sessionCookie = req.cookies.get(SESSION_COOKIE);
-    if (!sessionCookie?.value) {
-      return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
-    }
+    const session = await verifySession(sessionCookie?.value);
 
-    let userId: string;
-    try {
-      const session = JSON.parse(sessionCookie.value);
-      userId = session.userId;
-    } catch {
-      return NextResponse.json({ error: 'Invalid session' }, { status: 401 });
+    if (!session || !session.userId) {
+      return NextResponse.json({ error: 'Not authenticated or invalid session' }, { status: 401 });
     }
 
     const user = await prisma.users.findUnique({
-      where: { id: userId },
+      where: { id: session.userId },
       select: {
         id: true,
         username: true,
@@ -49,18 +42,14 @@ export async function PATCH(req: NextRequest) {
   try {
     const cookieStore = await cookies();
     const sessionCookie = cookieStore.get(SESSION_COOKIE);
-    if (!sessionCookie?.value) {
-      return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
+    const session = await verifySession(sessionCookie?.value);
+
+    if (!session || !session.userId) {
+      return NextResponse.json({ error: 'Not authenticated or invalid session' }, { status: 401 });
     }
 
-    let sessionData: Record<string, unknown>;
-    let userId: string;
-    try {
-      sessionData = JSON.parse(sessionCookie.value);
-      userId = sessionData.userId as string;
-    } catch {
-      return NextResponse.json({ error: 'Invalid session' }, { status: 401 });
-    }
+    const userId = session.userId;
+    const sessionData: SessionPayload = session;
 
     const body = await req.json();
     const { username, interests } = body as {
@@ -104,20 +93,14 @@ export async function PATCH(req: NextRequest) {
       },
     });
 
-    // Refresh session cookie with updated values
-    const newSession = JSON.stringify({
+    // Refresh signed session cookie with updated values
+    const signedToken = await signSession({
       ...sessionData,
       username: updatedUser.username,
       interests: updatedUser.interests,
     });
 
-    cookieStore.set(SESSION_COOKIE, newSession, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      maxAge: 60 * 60 * 24 * 7,
-      path: '/',
-    });
+    cookieStore.set(SESSION_COOKIE, signedToken, SESSION_COOKIE_OPTIONS);
 
     return NextResponse.json({ success: true, user: updatedUser });
   } catch (err) {

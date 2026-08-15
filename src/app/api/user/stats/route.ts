@@ -1,12 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
-
-const SESSION_COOKIE = 'cosmo_session';
+import { verifySession, SESSION_COOKIE } from '@/lib/session';
 
 export async function GET(req: NextRequest) {
   try {
     const sessionCookie = req.cookies.get(SESSION_COOKIE);
-    if (!process.env.DATABASE_URL || !sessionCookie?.value) {
+    const session = await verifySession(sessionCookie?.value);
+
+    if (!process.env.DATABASE_URL || !session?.userId) {
       return NextResponse.json({
         username: 'rishi',
         level: 1,
@@ -27,17 +28,7 @@ export async function GET(req: NextRequest) {
       });
     }
 
-    let userId: string;
-    try {
-      const session = JSON.parse(sessionCookie.value);
-      userId = session.userId;
-    } catch {
-      return NextResponse.json({ error: 'Invalid session' }, { status: 401 });
-    }
-
-    if (!userId) {
-      return NextResponse.json({ error: 'No user ID in session' }, { status: 401 });
-    }
+    const userId: string = session.userId;
 
     // Fetch all data in parallel
     const [arenaStats, user, battleStats, userBadges, recentProgress, enrollments, recentCodeMatches, recentMcqMatches] = await Promise.all([

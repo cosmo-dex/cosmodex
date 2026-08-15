@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server';
-
-const SESSION_COOKIE = 'cosmo_session';
+import { SESSION_COOKIE } from '@/lib/session';
 
 const AUTH_COOKIES = [
   'authjs.session-token',

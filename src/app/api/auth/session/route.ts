@@ -1,17 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
-
-const SESSION_COOKIE = 'cosmo_session';
+import { verifySession, SESSION_COOKIE } from '@/lib/session';
 
 export async function GET(req: NextRequest) {
   try {
     const sessionCookie = req.cookies.get(SESSION_COOKIE);
+    const user = await verifySession(sessionCookie?.value);
 
-    if (!sessionCookie?.value) {
-      return NextResponse.json({ user: null }, { status: 200 });
-    }
-
-    const user = JSON.parse(sessionCookie.value);
-    return NextResponse.json({ user });
+    return NextResponse.json({ user: user ?? null }, { status: 200 });
   } catch {
     return NextResponse.json({ user: null }, { status: 200 });
   }

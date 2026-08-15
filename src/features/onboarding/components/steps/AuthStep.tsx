@@ -57,7 +57,14 @@ export default function AuthStep({ onNext, updateData }: AuthStepProps) {
           return;
         }
 
-        router.push('/dashboard');
+        let destination = '/dashboard';
+        if (typeof window !== 'undefined') {
+          const nextParam = new URLSearchParams(window.location.search).get('next');
+          if (nextParam && nextParam.startsWith('/') && !nextParam.startsWith('//') && !nextParam.includes('\\')) {
+            destination = nextParam;
+          }
+        }
+        router.push(destination);
         return;
       }
 

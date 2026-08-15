@@ -2,8 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { hash } from 'bcryptjs';
 import prisma from '@/lib/prisma';
 import { cookies } from 'next/headers';
+import { signSession, SESSION_COOKIE, SESSION_COOKIE_OPTIONS } from '@/lib/session';
 
-const SESSION_COOKIE = 'cosmo_session';
 const SALT_ROUNDS = 12;
 
 export async function POST(req: NextRequest) {
@@ -79,7 +79,7 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    const sessionPayload = JSON.stringify({
+    const signedToken = await signSession({
       userId: newUser.id,
       username: newUser.username,
       email: newUser.email,
@@ -93,13 +93,7 @@ export async function POST(req: NextRequest) {
     });
 
     const cookieStore = await cookies();
-    cookieStore.set(SESSION_COOKIE, sessionPayload, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      maxAge: 60 * 60 * 24 * 7,
-      path: '/',
-    });
+    cookieStore.set(SESSION_COOKIE, signedToken, SESSION_COOKIE_OPTIONS);
 
     return NextResponse.json({
       success: true,

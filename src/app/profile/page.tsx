@@ -1,12 +1,12 @@
 import { cookies } from 'next/headers';
 import prisma from '@/lib/prisma';
 import ProfileContent from './ProfileContent';
-
-const SESSION_COOKIE = 'cosmo_session';
+import { verifySession, SESSION_COOKIE } from '@/lib/session';
 
 export default async function ProfilePage() {
   const cookieStore = await cookies();
-  const session = cookieStore.get(SESSION_COOKIE);
+  const sessionCookie = cookieStore.get(SESSION_COOKIE);
+  const parsed = await verifySession(sessionCookie?.value);
 
   // Default fallback values
   let userId: string | null = null;
@@ -21,20 +21,15 @@ export default async function ProfilePage() {
   let badgeCount = 0;
   let badges: Array<{ id: string; name: string; description: string | null; earnedAt: string | null }> = [];
 
-  if (session?.value) {
-    try {
-      const parsed = JSON.parse(session.value);
-      userId = parsed.userId || null;
-      username = parsed.username || username;
-      email = parsed.email || '';
-      createdAt = parsed.createdAt || null;
-      interests = parsed.interests || [];
-      xpTotal = parsed.xpTotal ?? xpTotal;
-      level = parsed.level ?? level;
-      experienceLevel = parsed.experienceLevel || experienceLevel;
-    } catch (e) {
-      console.error('[profile] Error parsing session cookie:', e);
-    }
+  if (parsed) {
+    userId = parsed.userId || null;
+    username = parsed.username || username;
+    email = parsed.email || '';
+    createdAt = parsed.createdAt || null;
+    interests = parsed.interests || [];
+    xpTotal = parsed.xpTotal ?? xpTotal;
+    level = parsed.level ?? level;
+    experienceLevel = parsed.experienceLevel || experienceLevel;
   }
 
   // Fetch live data from DB

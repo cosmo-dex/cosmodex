@@ -2,8 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { compare } from 'bcryptjs';
 import prisma from '@/lib/prisma';
 import { cookies } from 'next/headers';
+import { signSession, SESSION_COOKIE, SESSION_COOKIE_OPTIONS } from '@/lib/session';
 
-const SESSION_COOKIE = 'cosmo_session';
 const ALLOWED_ADMIN_ROLES = ['super_admin', 'learning_admin', 'arena_admin'];
 
 export async function POST(req: NextRequest) {
@@ -64,7 +64,7 @@ export async function POST(req: NextRequest) {
       data: { last_login_at: new Date() },
     });
 
-    const sessionPayload = JSON.stringify({
+    const signedToken = await signSession({
       userId: user.id,
       username: user.username,
       email: user.email,
@@ -78,13 +78,7 @@ export async function POST(req: NextRequest) {
     });
 
     const cookieStore = await cookies();
-    cookieStore.set(SESSION_COOKIE, sessionPayload, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      maxAge: 60 * 60 * 24 * 7, // 7 days
-      path: '/',
-    });
+    cookieStore.set(SESSION_COOKIE, signedToken, SESSION_COOKIE_OPTIONS);
 
     return NextResponse.json({
       success: true,
