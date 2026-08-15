@@ -1,13 +1,12 @@
 'use client';
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import Navbar from '@/components/navbar/Navbar';
-import { motion, AnimatePresence } from 'framer-motion';
 import {
   CalendarDays, Trophy, Users, Clock, Search,
-  Zap, Hammer, BookOpen, Star, ChevronRight, ChevronDown, Filter,
-  UserCheck, UsersRound, Flame, Lock, Globe, BadgeCheck, Check
+  Zap, Hammer, BookOpen, Star, ChevronRight, Filter,
+  UserCheck, UsersRound, Flame, Lock, Globe, BadgeCheck
 } from 'lucide-react';
 
 interface EventCard {
@@ -214,89 +213,6 @@ const PARTICIPATION_FILTERS = [
   { key: 'team', label: '👥 Team' },
 ];
 
-function CustomDropdown({
-  options,
-  value,
-  onChange,
-  activeColor = "#E873C3",
-}: {
-  options: { key: string; label: string }[];
-  value: string;
-  onChange: (val: string) => void;
-  activeColor?: string;
-}) {
-  const [isOpen, setIsOpen] = useState(false);
-  const dropdownRef = useRef<HTMLDivElement>(null);
-
-  const selectedOption = options.find((o) => o.key === value) || options[0];
-
-  useEffect(() => {
-    function handleClickOutside(e: MouseEvent) {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
-        setIsOpen(false);
-      }
-    }
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
-
-  return (
-    <div ref={dropdownRef} className="relative inline-block text-left">
-      <button
-        type="button"
-        onClick={() => setIsOpen((prev) => !prev)}
-        className={`px-3.5 py-2.5 rounded-xl bg-[#130d2a] border text-xs font-mono font-bold flex items-center justify-between gap-2.5 transition-all duration-300 cursor-pointer ${
-          isOpen
-            ? "border-[#E873C3] text-white shadow-[0_0_15px_rgba(232,115,195,0.3)]"
-            : "border-white/10 text-white/80 hover:border-white/25 hover:text-white"
-        }`}
-      >
-        <span>{selectedOption.label}</span>
-        <ChevronDown
-          size={14}
-          className={`text-white/50 transition-transform duration-300 ${
-            isOpen ? "rotate-180 text-[#E873C3]" : ""
-          }`}
-        />
-      </button>
-
-      <AnimatePresence>
-        {isOpen && (
-          <motion.div
-            initial={{ opacity: 0, y: -6, scale: 0.96 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -6, scale: 0.96 }}
-            transition={{ duration: 0.18, ease: "easeOut" }}
-            className="absolute left-0 sm:right-0 sm:left-auto mt-2 w-44 bg-[#0e0826]/95 border border-purple-500/30 rounded-xl p-1.5 backdrop-blur-xl shadow-[0_12px_40px_rgba(0,0,0,0.85)] z-50 flex flex-col gap-1"
-          >
-            {options.map((opt) => {
-              const isSelected = opt.key === value;
-              return (
-                <button
-                  key={opt.key}
-                  type="button"
-                  onClick={() => {
-                    onChange(opt.key);
-                    setIsOpen(false);
-                  }}
-                  className={`w-full px-3 py-2 rounded-lg text-xs font-mono font-bold transition-all flex items-center justify-between cursor-pointer ${
-                    isSelected
-                      ? "bg-[#E873C3]/20 text-[#E873C3] border border-[#E873C3]/40"
-                      : "text-white/70 hover:text-white hover:bg-white/10 border border-transparent"
-                  }`}
-                >
-                  <span>{opt.label}</span>
-                  {isSelected && <Check size={14} className="text-[#E873C3]" />}
-                </button>
-              );
-            })}
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </div>
-  );
-}
-
 export default function EventsPage() {
   const [events, setEvents] = useState<EventCard[]>([]);
   const [loading, setLoading] = useState(true);
@@ -307,6 +223,7 @@ export default function EventsPage() {
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [total, setTotal] = useState(0);
+  const [showFilters, setShowFilters] = useState(false);
 
   const liveCount = events.filter(e => e.status === 'ongoing').length;
 
@@ -358,7 +275,7 @@ export default function EventsPage() {
               </span>
               {' '}Win.
             </h1>
-            <p className="text-white/55 text-base md:text-lg leading-relaxed max-w-xl mx-auto mb-8">
+            <p className="text-white/50 text-base md:text-lg leading-relaxed max-w-xl mx-auto mb-8">
               Join hackathons, coding contests, and workshops on CosmoDex. Level up your skills, build real projects, and earn prizes.
             </p>
             <div className="flex items-center justify-center gap-6 text-sm text-white/40">
@@ -372,90 +289,91 @@ export default function EventsPage() {
         </div>
 
         <div className="max-w-7xl mx-auto px-6 sm:px-10 flex flex-col gap-7">
-          {/* ── Sleek, Minimal Filter & Search Control Bar ── */}
-          <div className="flex flex-col gap-4 bg-[#090518]/90 border border-white/10 rounded-2xl p-4 backdrop-blur-xl shadow-lg">
-            {/* Top Row: Search Input + Custom Status & Mode Dropdowns */}
-            <div className="flex flex-col md:flex-row items-center justify-between gap-3">
-              {/* Search Bar */}
-              <div className="relative w-full md:flex-1">
-                <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-white/30" />
+          {/* Search + Filter bar */}
+          <div className="flex flex-col gap-3">
+            <div className="flex gap-3">
+              <div className="relative flex-1">
+                <Search size={15} className="absolute left-4 top-1/2 -translate-y-1/2 text-white/30" />
                 <input
                   value={search}
                   onChange={e => { setSearch(e.target.value); setPage(1); }}
                   placeholder="Search events, hackathons, contests..."
-                  className="w-full pl-10 pr-9 py-2.5 bg-[#130d2a] border border-white/10 rounded-xl text-xs sm:text-sm text-white placeholder:text-white/30 outline-none focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0 focus:border-[#E873C3] focus:shadow-[0_0_15px_rgba(232,115,195,0.25)] transition-all duration-300 font-sans"
+                  className="w-full pl-11 pr-4 py-3 bg-white/[0.04] border border-white/[0.08] rounded-xl text-sm text-white placeholder:text-white/30 focus:outline-none focus:border-[#E873C3]/50 transition-colors"
                 />
-                {search && (
-                  <button
-                    onClick={() => { setSearch(''); setPage(1); }}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-white/40 hover:text-white transition-colors cursor-pointer"
-                  >
-                    ✕
-                  </button>
-                )}
               </div>
-
-              {/* Status & Mode Dropdowns + Reset */}
-              <div className="flex flex-wrap items-center gap-2.5 w-full md:w-auto shrink-0">
-                {/* Custom Status Dropdown */}
-                <CustomDropdown
-                  options={STATUS_FILTERS}
-                  value={statusFilter}
-                  onChange={(val) => { setStatusFilter(val); setPage(1); }}
-                  activeColor="#E873C3"
-                />
-
-                {/* Custom Mode Dropdown */}
-                <CustomDropdown
-                  options={PARTICIPATION_FILTERS}
-                  value={participationFilter}
-                  onChange={(val) => { setParticipationFilter(val); setPage(1); }}
-                  activeColor="#4ECDC4"
-                />
-
-                {/* Reset Filters button */}
-                {(typeFilter || statusFilter || participationFilter || search) && (
-                  <button
-                    onClick={() => {
-                      setTypeFilter('');
-                      setStatusFilter('');
-                      setParticipationFilter('');
-                      setSearch('');
-                      setPage(1);
-                    }}
-                    className="px-3.5 py-2.5 rounded-xl text-xs font-mono font-bold text-red-400 bg-red-500/10 border border-red-500/20 hover:bg-red-500/20 transition-all cursor-pointer"
-                  >
-                    Reset ✕
-                  </button>
-                )}
-              </div>
+              <button
+                onClick={() => setShowFilters(f => !f)}
+                className={`flex items-center gap-2 px-4 py-3 rounded-xl text-sm font-bold border transition-all ${showFilters ? 'bg-[#E873C3]/15 border-[#E873C3]/40 text-[#E873C3]' : 'bg-white/[0.04] border-white/[0.08] text-white/50 hover:text-white'}`}
+              >
+                <Filter size={14} /> Filters
+              </button>
             </div>
 
-            {/* Bottom Row: Smooth Sliding Type Pills */}
-            <div className="flex flex-wrap items-center gap-2 pt-1 border-t border-white/5">
-              {TYPE_FILTERS.map((f) => {
-                const isActive = typeFilter === f.key;
-                return (
-                  <button
-                    key={f.key}
-                    onClick={() => { setTypeFilter(f.key); setPage(1); }}
-                    className={`relative px-4 py-2 rounded-xl text-xs font-mono font-bold tracking-wider transition-colors duration-200 border cursor-pointer ${
-                      isActive
-                        ? "text-white border-[#E873C3]"
-                        : "bg-[#130d2a]/60 text-white/60 border-white/5 hover:border-white/20 hover:text-white"
-                    }`}
-                  >
-                    {isActive && (
-                      <motion.div
-                        layoutId="eventsTypePill"
-                        className="absolute inset-0 bg-gradient-to-r from-[#E873C3] to-[#8D37D6] rounded-xl shadow-[0_0_15px_rgba(232,115,195,0.4)] z-0"
-                        transition={{ type: "spring", stiffness: 400, damping: 30 }}
-                      />
-                    )}
-                    <span className="relative z-10">{f.label}</span>
-                  </button>
-                );
-              })}
+            {/* Expanded filters */}
+            {showFilters && (
+              <div className="flex flex-wrap gap-2 p-4 bg-white/[0.02] border border-white/[0.06] rounded-xl">
+                <div className="flex flex-wrap gap-1.5">
+                  <span className="text-[10px] font-bold text-white/30 uppercase tracking-wider self-center mr-1">Type</span>
+                  {TYPE_FILTERS.map(f => (
+                    <button key={f.key} onClick={() => { setTypeFilter(f.key); setPage(1); }}
+                      className="px-3 py-1.5 rounded-full text-xs font-bold transition-all duration-200"
+                      style={typeFilter === f.key
+                        ? { background: 'linear-gradient(135deg,#E873C3,#8D37D6)', color: '#fff' }
+                        : { background: 'rgba(255,255,255,0.04)', color: 'rgba(255,255,255,0.45)', border: '1px solid rgba(255,255,255,0.08)' }
+                      }>
+                      {f.label}
+                    </button>
+                  ))}
+                </div>
+                <div className="w-px bg-white/10 mx-2 self-stretch" />
+                <div className="flex flex-wrap gap-1.5">
+                  <span className="text-[10px] font-bold text-white/30 uppercase tracking-wider self-center mr-1">Status</span>
+                  {STATUS_FILTERS.map(f => (
+                    <button key={f.key} onClick={() => { setStatusFilter(f.key); setPage(1); }}
+                      className="px-3 py-1.5 rounded-full text-xs font-bold transition-all duration-200"
+                      style={statusFilter === f.key
+                        ? { background: 'rgba(232,115,195,0.2)', color: '#E873C3', border: '1px solid rgba(232,115,195,0.4)' }
+                        : { background: 'rgba(255,255,255,0.04)', color: 'rgba(255,255,255,0.45)', border: '1px solid rgba(255,255,255,0.08)' }
+                      }>
+                      {f.label}
+                    </button>
+                  ))}
+                </div>
+                <div className="w-px bg-white/10 mx-2 self-stretch" />
+                <div className="flex flex-wrap gap-1.5">
+                  <span className="text-[10px] font-bold text-white/30 uppercase tracking-wider self-center mr-1">Mode</span>
+                  {PARTICIPATION_FILTERS.map(f => (
+                    <button key={f.key} onClick={() => { setParticipationFilter(f.key); setPage(1); }}
+                      className="px-3 py-1.5 rounded-full text-xs font-bold transition-all duration-200"
+                      style={participationFilter === f.key
+                        ? { background: 'rgba(78,205,196,0.2)', color: '#4ECDC4', border: '1px solid rgba(78,205,196,0.4)' }
+                        : { background: 'rgba(255,255,255,0.04)', color: 'rgba(255,255,255,0.45)', border: '1px solid rgba(255,255,255,0.08)' }
+                      }>
+                      {f.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Compact quick filters (always visible) */}
+            <div className="flex flex-wrap gap-1.5">
+              {TYPE_FILTERS.filter(f => f.key).map(f => (
+                <button key={f.key} onClick={() => { setTypeFilter(typeFilter === f.key ? '' : f.key); setPage(1); }}
+                  className="px-3 py-1 rounded-full text-xs font-bold transition-all duration-200"
+                  style={typeFilter === f.key
+                    ? { background: 'linear-gradient(135deg,#E873C3,#8D37D6)', color: '#fff' }
+                    : { background: 'rgba(255,255,255,0.04)', color: 'rgba(255,255,255,0.4)', border: '1px solid rgba(255,255,255,0.08)' }
+                  }>
+                  {f.label}
+                </button>
+              ))}
+              {(typeFilter || statusFilter || participationFilter) && (
+                <button onClick={() => { setTypeFilter(''); setStatusFilter(''); setParticipationFilter(''); setPage(1); }}
+                  className="px-3 py-1 rounded-full text-xs font-bold text-red-400/70 border border-red-500/20 hover:bg-red-500/10 transition-all">
+                  Clear filters ✕
+                </button>
+              )}
             </div>
           </div>
 

@@ -613,7 +613,7 @@ export default function LearnPage() {
                   setAllCoursesPage(0);
                 }}
                 placeholder="Search courses (e.g. Python, HTML, flexbox)..."
-                className="w-full bg-[#131d31] border border-[#22314e] focus:border-[#E873C3] rounded-xl pl-10 pr-9 py-2.5 text-sm text-white placeholder-[#64748b] outline-none focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0 focus:shadow-[0_0_15px_rgba(232,115,195,0.35)] transition-all duration-300 font-sans"
+                className="w-full bg-[#131d31] border border-[#22314e] focus:border-[#E873C3] rounded-lg pl-10 pr-9 py-2.5 text-sm text-white placeholder-[#64748b] outline-none transition-all font-sans"
               />
               {searchQuery && (
                 <button
@@ -629,32 +629,21 @@ export default function LearnPage() {
             </div>
 
             <div className="flex flex-wrap items-center gap-2 w-full md:w-auto">
-              {categories.map((cat) => {
-                const isActive = selectedCategory === cat;
-                return (
-                  <button
-                    key={cat}
-                    onClick={() => {
-                      setSelectedCategory(cat);
-                      setAllCoursesPage(0);
-                    }}
-                    className={`relative px-4 py-2 rounded-xl text-xs font-mono font-bold tracking-wider transition-colors duration-200 border cursor-pointer ${
-                      isActive
-                        ? "text-black border-[#E873C3]"
-                        : "bg-[#131d31] text-[#94a3b8] border-[#22314e] hover:border-white/40 hover:text-white"
+              {categories.map((cat) => (
+                <button
+                  key={cat}
+                  onClick={() => {
+                    setSelectedCategory(cat);
+                    setAllCoursesPage(0);
+                  }}
+                  className={`px-3.5 py-1.5 rounded-lg text-xs font-mono font-bold tracking-wider transition-all border ${selectedCategory === cat
+                      ? "bg-[#E873C3] text-black border-[#E873C3] shadow-[0_0_15px_rgba(232,115,195,0.4)]"
+                      : "bg-[#131d31] text-[#94a3b8] border-[#22314e] hover:border-white/40 hover:text-white"
                     }`}
-                  >
-                    {isActive && (
-                      <motion.div
-                        layoutId="activeCategoryPill"
-                        className="absolute inset-0 bg-[#E873C3] rounded-xl shadow-[0_0_15px_rgba(232,115,195,0.5)] z-0"
-                        transition={{ type: "spring", stiffness: 400, damping: 30 }}
-                      />
-                    )}
-                    <span className="relative z-10">{cat}</span>
-                  </button>
-                );
-              })}
+                >
+                  {cat}
+                </button>
+              ))}
             </div>
           </div>
 
