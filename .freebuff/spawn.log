@@ -1,0 +1,11 @@
+ALIVE pid=37824
+---STDOUT---
+ƒ-ý Next.js 16.2.6 (Turbopack)
+- Local:         http://localhost:3000
+- Network:       http://192.168.56.1:3000
+- Environments: .env
+ƒo" Ready in 1353ms
+
+ƒ-< Compiling /onboarding ...
+ GET /onboarding?mode=login&next=%2Fleaderboard 200 in 6.9s (next.js: 6.1s, proxy.ts: 285ms, application-code: 527ms)
+---STDERR---
