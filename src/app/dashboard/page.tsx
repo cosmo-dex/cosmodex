@@ -9,12 +9,12 @@ import ProfileCard from "@/components/dashboard/ProfileCard";
 import ActivityFeed from "@/components/dashboard/ActivityFeed";
 import CrewPromoCard from "@/components/dashboard/CrewPromoCard";
 import Footer from "@/components/dashboard/Footer";
-
-const SESSION_COOKIE = 'cosmo_session';
+import { verifySession, SESSION_COOKIE } from '@/lib/session';
 
 export default async function DashboardPage() {
   const cookieStore = await cookies();
-  const session = cookieStore.get(SESSION_COOKIE);
+  const sessionCookie = cookieStore.get(SESSION_COOKIE);
+  const user = await verifySession(sessionCookie?.value);
 
   let username = 'Explorer';
   let level = 1;
@@ -23,18 +23,13 @@ export default async function DashboardPage() {
   let experienceLevel: string | null = 'Beginner';
   let userId: string | null = null;
 
-  if (session?.value) {
-    try {
-      const user = JSON.parse(session.value);
-      username = user.username || username;
-      level = user.level ?? level;
-      xpTotal = user.xpTotal ?? xpTotal;
-      avatarId = user.avatarId || null;
-      experienceLevel = user.experienceLevel || experienceLevel;
-      userId = user.userId || null;
-    } catch (e) {
-      console.error('Error parsing session cookie:', e);
-    }
+  if (user) {
+    username = user.username || username;
+    level = user.level ?? level;
+    xpTotal = user.xpTotal ?? xpTotal;
+    avatarId = user.avatarId || null;
+    experienceLevel = user.experienceLevel || experienceLevel;
+    userId = user.userId || null;
   }
 
   // Fetch dynamic data server-side in parallel

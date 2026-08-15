@@ -3,8 +3,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import prisma from '@/lib/prisma';
 import { cookies } from 'next/headers';
-
-const SESSION_COOKIE = 'cosmo_session';
+import { signSession, SESSION_COOKIE, SESSION_COOKIE_OPTIONS } from '@/lib/session';
 
 export async function GET() {
   try {
@@ -55,7 +54,7 @@ export async function GET() {
         data: { last_login_at: new Date() },
       });
 
-      const sessionPayload = JSON.stringify({
+      const signedToken = await signSession({
         userId: user.id,
         username: user.username,
         email: user.email,
@@ -69,13 +68,7 @@ export async function GET() {
       });
 
       const cookieStore = await cookies();
-      cookieStore.set(SESSION_COOKIE, sessionPayload, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'lax',
-        maxAge: 60 * 60 * 24 * 7,
-        path: '/',
-      });
+      cookieStore.set(SESSION_COOKIE, signedToken, SESSION_COOKIE_OPTIONS);
 
       return NextResponse.json({
         exists: true,

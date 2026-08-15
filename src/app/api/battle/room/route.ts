@@ -1,20 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
+import { verifySession, SESSION_COOKIE } from '@/lib/session';
 
 const BATTLE_URL = process.env.BATTLE_ARENA_URL || 'http://localhost:3001';
-const SESSION_COOKIE = 'cosmo_session';
 
 export async function POST(req: NextRequest) {
   let isAuth = false;
 
-  // 1. Check cosmo_session cookie
+  // 1. Check cosmo_session cookie with cryptographic signature
   const sessionCookie = req.cookies.get(SESSION_COOKIE);
-  if (sessionCookie?.value) {
-    try {
-      JSON.parse(sessionCookie.value);
-      isAuth = true;
-    } catch {}
+  const user = await verifySession(sessionCookie?.value);
+  if (user?.userId) {
+    isAuth = true;
   }
 
   // 2. Fallback to NextAuth session

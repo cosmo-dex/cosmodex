@@ -1,4 +1,5 @@
 import { NextResponse, type NextRequest } from 'next/server';
+import { verifySession, SESSION_COOKIE, type SessionPayload } from '@/lib/session';
 
 const ADMIN_ROLE_ROUTES: Record<string, string[]> = {
   '/super-admin': ['super_admin'],
@@ -24,9 +25,6 @@ const PROTECTED_API_PREFIXES = [
   '/api/admin',
 ];
 
-const SESSION_COOKIE = 'cosmo_session';
-
-
 function getSafeRedirectUrl(target: string | null, fallback: string): string {
   if (!target) return fallback;
   if (target.startsWith('/') && !target.startsWith('//') && !target.includes('\\')) {
@@ -39,15 +37,7 @@ export async function middleware(request: NextRequest) {
   const { pathname, search } = request.nextUrl;
 
   const sessionCookie = request.cookies.get(SESSION_COOKIE);
-  let user: { userId?: string; role?: string; email?: string; username?: string } | null = null;
-
-  if (sessionCookie?.value) {
-    try {
-      user = JSON.parse(sessionCookie.value);
-    } catch {
-      user = null;
-    }
-  }
+  const user: SessionPayload | null = await verifySession(sessionCookie?.value);
 
   const isProtectedApi = PROTECTED_API_PREFIXES.some((prefix) => pathname.startsWith(prefix));
   if (isProtectedApi) {

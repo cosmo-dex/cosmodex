@@ -3,8 +3,8 @@ import jwt from 'jsonwebtoken';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import prisma from '@/lib/prisma';
+import { verifySession, SESSION_COOKIE } from '@/lib/session';
 
-const SESSION_COOKIE = 'cosmo_session';
 const JWT_SECRET = process.env.JWT_SECRET || 'secret';
 
 export async function GET(req: NextRequest) {
@@ -13,17 +13,11 @@ export async function GET(req: NextRequest) {
   let role: string = 'student';
 
   const sessionCookie = req.cookies.get(SESSION_COOKIE);
-  if (sessionCookie?.value) {
-    try {
-      const parsed = JSON.parse(sessionCookie.value);
-      if (parsed.userId && parsed.username) {
-        userId = parsed.userId;
-        username = parsed.username;
-        role = parsed.role ?? 'student';
-      }
-    } catch {
-      // Fall through to NextAuth check below
-    }
+  const parsed = await verifySession(sessionCookie?.value);
+  if (parsed?.userId && parsed?.username) {
+    userId = parsed.userId;
+    username = parsed.username;
+    role = parsed.role ?? 'student';
   }
 
   if (!userId || !username) {

@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
+import { verifySession, SESSION_COOKIE } from '@/lib/session';
 
-export const SESSION_COOKIE = 'cosmo_session';
+export { SESSION_COOKIE };
 
 export type AdminRole = 'super_admin' | 'learning_admin' | 'arena_admin';
 
@@ -17,25 +18,11 @@ export async function verifyAdminSession(
   allowedRoles: AdminRole[],
 ): Promise<{ user: SessionUser } | { error: NextResponse }> {
   const sessionCookie = req.cookies.get(SESSION_COOKIE);
+  const session = await verifySession(sessionCookie?.value);
 
-  if (!sessionCookie?.value) {
+  if (!session || !session.userId || !session.role) {
     return {
-      error: NextResponse.json({ error: 'Not authenticated' }, { status: 401 }),
-    };
-  }
-
-  let session: SessionUser;
-  try {
-    session = JSON.parse(sessionCookie.value) as SessionUser;
-  } catch {
-    return {
-      error: NextResponse.json({ error: 'Invalid session' }, { status: 401 }),
-    };
-  }
-
-  if (!session.userId || !session.role) {
-    return {
-      error: NextResponse.json({ error: 'Invalid session data' }, { status: 401 }),
+      error: NextResponse.json({ error: 'Not authenticated or invalid session' }, { status: 401 }),
     };
   }
 
