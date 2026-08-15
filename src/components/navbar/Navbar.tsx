@@ -6,7 +6,6 @@ import { useState, useEffect } from "react";
 import {
   ChevronDown,
   BookOpen,
-  Code2,
   Hammer,
   Users,
   Menu,
@@ -130,32 +129,44 @@ export default function Navbar() {
               )}
 
               {item.isMegaMenu && activeDropdown === item.label && (
-                <div className="absolute top-full left-0 mt-2 w-[320px] bg-[#050508] py-5 px-6 animate-fade-in flex flex-col gap-5 rounded-xl border border-[#E873C3]/20 shadow-[0_10px_40px_rgba(0,0,0,0.8),_0_0_20px_rgba(232,115,195,0.15)]">
-                  <h4 className="text-[11px] font-bold text-[#E873C3] uppercase tracking-widest">Recommended</h4>
+                <div className="absolute top-full left-0 pt-1.5 w-[320px] z-50">
+                  <div className="bg-[#050508] py-5 px-6 animate-fade-in flex flex-col gap-4 rounded-xl border border-white/12 shadow-[0_10px_30px_rgba(0,0,0,0.9)]">
+                    <h4 className="text-[11px] font-bold text-white/50 uppercase tracking-widest">
+                      Recommended
+                    </h4>
 
-                  <Link href="#" className="flex gap-4 items-start group">
-                    <div className="w-12 h-12 rounded-lg bg-[#2e1065]/50 shrink-0 border border-[#8b5cf6]/30 overflow-hidden flex items-center justify-center">
-                      <BookOpen size={24} className="text-[#8b5cf6]" />
+                    {/* Python Course Link with Refined Subtle Glassmorphism */}
+                    <div
+                      role="button"
+                      tabIndex={0}
+                      onClick={() => handleNavigate('/learn/python')}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') handleNavigate('/learn/python');
+                      }}
+                      className="flex gap-3.5 items-center group p-3 rounded-xl bg-white/[0.03] border border-white/8 hover:border-white/20 hover:bg-white/[0.07] backdrop-blur-md transition-all duration-200 cursor-pointer"
+                    >
+                      <div className="w-10 h-10 rounded-lg bg-purple-950/60 border border-purple-500/20 shrink-0 flex items-center justify-center group-hover:border-purple-400/40 group-hover:bg-purple-900/40 transition-colors">
+                        <BookOpen size={20} className="text-purple-300 group-hover:text-white transition-colors" />
+                      </div>
+                      <div>
+                        <h5 className="text-sm font-bold text-white group-hover:text-[#E873C3] transition-colors">
+                          Python
+                        </h5>
+                        <p className="text-xs text-white/50 group-hover:text-white/75 transition-colors mt-0.5 leading-snug">
+                          Learn the basics of programming with beginner-friendly exercises.
+                        </p>
+                      </div>
                     </div>
-                    <div>
-                      <h5 className="text-sm font-bold text-white group-hover:text-[#E873C3] transition-colors">Python</h5>
-                      <p className="text-xs text-white/60 mt-1 leading-snug">Learn the basics of programming with beginner-friendly exercises.</p>
-                    </div>
-                  </Link>
 
-                  <Link href="#" className="flex gap-4 items-start group">
-                    <div className="w-12 h-12 rounded-lg bg-blue-500/20 shrink-0 border border-blue-500/30 overflow-hidden flex items-center justify-center">
-                      <Code2 size={24} className="text-blue-400" />
-                    </div>
-                    <div>
-                      <h5 className="text-sm font-bold text-white group-hover:text-[#E873C3] transition-colors">GitHub Copilot</h5>
-                      <p className="text-xs text-white/60 mt-1 leading-snug">Learn how to use GitHub Copilot which helps you write code faster and with less effort.</p>
-                    </div>
-                  </Link>
-
-                  <Link href="/learn" className="mt-2 w-full py-2 bg-[#E873C3]/10 border border-[#E873C3]/30 text-[#E873C3] text-center text-xs font-bold rounded-md hover:bg-[#E873C3]/20 transition-colors shadow-[0_0_15px_rgba(232,115,195,0.15)]">
-                    All Courses &gt;
-                  </Link>
+                    {/* All Courses Button */}
+                    <button
+                      type="button"
+                      onClick={() => handleNavigate('/learn')}
+                      className="mt-1 w-full py-2.5 bg-[#E873C3]/15 hover:bg-[#E873C3]/25 border border-[#E873C3]/40 text-[#E873C3] text-center text-xs font-bold rounded-lg transition-all shadow-[0_0_15px_rgba(232,115,195,0.2)] cursor-pointer"
+                    >
+                      All Courses &gt;
+                    </button>
+                  </div>
                 </div>
               )}
             </div>
