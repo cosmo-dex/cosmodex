@@ -49,6 +49,7 @@
   --font-mono: var(--font-mono), ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
   --font-lato: Lato, sans-serif;
   --font-ayaha: var(--font-ayaha), cursive;
+}
 
 /* ── Global Smooth Scroll & Lenis Kinetic Inertia Support ── */
 html {
@@ -107,7 +108,6 @@ html.lenis body {
 }
 
 @theme {
->>>>>>> e8e475a (refactor: UI design polish, mascot drag bounds, and type safety fixes)
   /* ── Landing / Global Colors ───────────────────────────── */
   --color-cosmo-bg: #090214;
   --color-cosmo-surface: rgba(20, 8, 45, 0.65);
@@ -2214,4 +2214,3 @@ next-route-announcer {
     box-shadow: 0 0 45px rgba(0, 255, 233, 0);
   }
 }
->>>>>>> e8e475a (refactor: UI design polish, mascot drag bounds, and type safety fixes)
