@@ -23,7 +23,6 @@ export default function RisingStars({
       }).join(',');
     };
 
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     setStars({
       small: generateStars(size),
       medium: generateStars(Math.floor(size / 2)),
@@ -32,21 +31,21 @@ export default function RisingStars({
   }, [size, width, height]);
 
   if (!stars) {
-    return <div className="absolute inset-0 overflow-hidden w-screen h-[45vh] bg-gradient-to-b from-20% to-80% pointer-events-none z-0" />;
+    return <div className="fixed inset-0 overflow-hidden w-full h-full pointer-events-none z-0" />;
   }
 
   return (
-    <div className="absolute inset-0 overflow-hidden w-screen h-[45vh] bg-gradient-to-b from-20% to-80% pointer-events-none z-0">
+    <div className="fixed inset-0 overflow-hidden w-full h-full pointer-events-none z-0">
       <div
-        className="rising-stars__small animate-risingstar [animation-duration:333s] w-px h-px bg-transparent absolute"
+        className="rising-stars__small animate-risingstar [animation-duration:40s] w-px h-px bg-transparent absolute opacity-80"
         style={{ boxShadow: stars.small }}
       />
       <div
-        className="rising-stars__medium animate-risingstar [animation-duration:666s] w-[2px] h-[2px] bg-transparent absolute"
+        className="rising-stars__medium animate-risingstar [animation-duration:65s] w-[2px] h-[2px] bg-transparent absolute opacity-85"
         style={{ boxShadow: stars.medium }}
       />
       <div
-        className="rising-stars__large animate-risingstar [animation-duration:999s] w-[3px] h-[3px] bg-transparent absolute"
+        className="rising-stars__large animate-risingstar [animation-duration:95s] w-[3px] h-[3px] bg-transparent absolute opacity-90"
         style={{ boxShadow: stars.large }}
       />
     </div>
