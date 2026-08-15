@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { motion } from "framer-motion";
+import Link from "next/link";
 
 export interface CourseData {
   id: string;
@@ -31,14 +32,15 @@ export default function CourseCard({ course }: CourseCardProps) {
   const [imgError, setImgError] = useState(false);
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 15 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, margin: "-30px" }}
-      whileHover={{ y: -10 }}
-      transition={{ duration: 0.15, ease: "easeOut", delay: 0 }}
-      className="group relative flex flex-col overflow-hidden bg-[#090e1a] border border-white/80 border-l-3 border-b-3 border-0 hover:border-white/50 rounded-[8px] cursor-pointer transition-colors duration-150"
-    >
+    <Link href={`/learn/${course.id}/theory/in-the-beginning`} className="block">
+      <motion.div
+        initial={{ opacity: 0, y: 15 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true, margin: "-30px" }}
+        whileHover={{ y: -10 }}
+        transition={{ duration: 0.15, ease: "easeOut", delay: 0 }}
+        className="group relative flex flex-col overflow-hidden bg-[#090e1a] border border-white/80 border-l-3 border-b-3 border-0 hover:border-white/50 rounded-[8px] cursor-pointer transition-colors duration-150"
+      >
       {/* Highlight screen overlay on whole card component */}
       <div className="absolute inset-0 bg-white/5 opacity-0 group-hover:opacity-100 transition-opacity duration-150 pointer-events-none z-30" />
 
@@ -49,6 +51,7 @@ export default function CourseCard({ course }: CourseCardProps) {
             {course.pixelArtBanner}
           </div>
         ) : !imgError && course.thumbnail ? (
+          // eslint-disable-next-line @next/next/no-img-element
           <img
             src={course.thumbnail}
             alt={course.title}
@@ -91,5 +94,6 @@ export default function CourseCard({ course }: CourseCardProps) {
         </div>
       </div>
     </motion.div>
+    </Link>
   );
 }
