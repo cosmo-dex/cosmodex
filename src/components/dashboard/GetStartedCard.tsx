@@ -50,7 +50,7 @@ export default function GetStartedCard({ enrollments = [] }: GetStartedCardProps
 
             <div className="flex items-center gap-3 w-full sm:w-auto shrink-0 mt-4 sm:mt-0 justify-end">
               <Link
-                href="/onboarding"
+                href="/learn"
                 className="cosmo-btn-primary py-2.5 px-6 rounded-xl text-sm"
               >
                 Start Onboarding

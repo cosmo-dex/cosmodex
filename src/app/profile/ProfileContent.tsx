@@ -1,27 +1,8 @@
 "use client";
-import { useState, useTransition } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import {
-  Calendar,
-  Edit,
-  Shield,
-  Award,
-  Flame,
-  Plus,
-  X,
-  Globe,
-  Link as LinkIcon,
-  MessageCircle,
-  Share2,
-  CheckCircle2,
-  Loader2,
-  Swords,
-  Trophy,
-  Lock,
-} from 'lucide-react';
-import Navbar from '@/components/navbar/Navbar';
-import DashboardBackground from '@/components/dashboard/DashboardBackground';
-import Footer from '@/components/dashboard/Footer';
+import { useState, useTransition, useEffect } from 'react';
+import { motion, AnimatePresence } from 'motion/react';
+import { Calendar, Edit, Zap, Shield, Award, Flame, Plus, X, Globe, Link, MessageCircle, Video, Share2, CheckCircle2, Star, Loader2 } from 'lucide-react';
+import RisingStars from '../../component/RisingStar';
 
 const ONBOARDING_SKILLS = [
   'Python',
@@ -170,18 +151,36 @@ export default function ProfileContent({
     avatarUrl: initialAvatarUrl,
     skills: initialInterests,
     socials: {
-      github: 'github.com/explorer',
-      twitter: 'x.com/cosmodex',
+      github: '',
       linkedin: '',
-      discord: 'discord.gg/cosmodex',
-      portfolio: '',
-    },
+      twitter: '',
+      instagram: '',
+      youtube: '',
+      twitch: ''
+    }
   });
 
   const [editData, setEditData] = useState(profile);
   const [tempSkills, setTempSkills] = useState<string[]>(initialInterests);
   const [customSkillInput, setCustomSkillInput] = useState('');
   const [isSavingSkills, setIsSavingSkills] = useState(false);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const savedSocials = localStorage.getItem(`cosmo_socials_${initialUsername}`);
+      if (savedSocials) {
+        try {
+          const parsed = JSON.parse(savedSocials);
+          setProfile(prev => ({
+            ...prev,
+            socials: { ...prev.socials, ...parsed }
+          }));
+        } catch (e) {
+          console.error('Failed to parse saved socials:', e);
+        }
+      }
+    }
+  }, [initialUsername]);
 
   const handleSaveProfile = () => {
     setSaveError(null);
@@ -207,6 +206,11 @@ export default function ProfileContent({
           ...editData,
           name: editData.username,
         });
+
+        if (typeof window !== 'undefined') {
+          localStorage.setItem(`cosmo_socials_${initialUsername}`, JSON.stringify(editData.socials));
+        }
+
         setIsEditing(false);
       } catch {
         setSaveError('Network error. Please try again.');
@@ -649,39 +653,69 @@ export default function ProfileContent({
             </div>
 
             {/* Socials Card */}
-            <div className="cosmo-glass-panel p-6 border border-white/10 rounded-3xl">
-              <h3 className="font-bold font-display text-white mb-4 text-lg tracking-wide drop-shadow-sm">
-                Social Links
-              </h3>
-              <div className="flex flex-col gap-2.5">
+            <div className="cosmo-glass-panel p-6 border border-white/10">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="font-bold font-display text-white text-lg tracking-wide drop-shadow-sm">Socials</h3>
+                <button
+                  onClick={() => {
+                    setEditData(profile);
+                    setSaveError(null);
+                    setIsEditing(true);
+                  }}
+                  className="text-xs font-bold text-fuchsia-400 hover:text-fuchsia-300 transition-colors flex items-center gap-1 bg-fuchsia-500/10 border border-fuchsia-500/20 px-2.5 py-1 rounded-lg"
+                >
+                  <Plus size={14} /> Add
+                </button>
+              </div>
+
+              <div className="flex flex-col gap-3">
                 {Object.entries(profile.socials).map(([network, url]) => {
                   if (!url) return null;
 
-                  let Icon = Globe;
-                  const label = network.toUpperCase();
-                  if (network === 'github') Icon = Globe;
-                  if (network === 'twitter') Icon = MessageCircle;
-                  if (network === 'linkedin') Icon = LinkIcon;
-                  if (network === 'discord') Icon = Share2;
+                  let Icon = Zap;
+                  let label = '';
+                  if (network === 'github') { Icon = Globe; label = 'GitHub'; }
+                  if (network === 'linkedin') { Icon = Link; label = 'LinkedIn'; }
+                  if (network === 'twitter') { Icon = MessageCircle; label = 'X (Twitter)'; }
+                  if (network === 'instagram') { Icon = Share2; label = 'Instagram'; }
+                  if (network === 'youtube') { Icon = Video; label = 'YouTube'; }
+                  if (network === 'twitch') { Icon = Video; label = 'Twitch'; }
+
+                  const cleanUrl = url.startsWith('http') ? url : `https://${url}`;
 
                   return (
                     <a
                       key={network}
-                      href={url.startsWith('http') ? url : `https://${url}`}
+                      href={cleanUrl}
                       target="_blank"
                       rel="noreferrer"
-                      className="flex items-center justify-between px-3.5 py-2.5 rounded-xl border border-white/10 bg-white/[0.04] text-slate-300 hover:border-[#E873C3]/50 hover:bg-[#E873C3]/10 hover:text-white transition-all text-xs font-medium cursor-pointer"
+                      className="flex items-center justify-between text-white/80 hover:text-white transition-colors bg-white/5 border border-white/10 p-3 rounded-xl hover:bg-white/10 group"
                     >
-                      <div className="flex items-center gap-2.5">
-                        <Icon size={16} className="text-[#E873C3]" />
-                        <span>{label}</span>
+                      <div className="flex items-center gap-3">
+                        <Icon size={18} className="text-fuchsia-400 group-hover:scale-110 transition-transform" />
+                        <span className="text-sm font-semibold">{label}</span>
                       </div>
-                      <span className="font-mono text-[10px] text-slate-400 truncate max-w-[120px]">
+                      <span className="text-xs text-white/40 group-hover:text-white/60 font-mono truncate max-w-[140px]">
                         {url.replace(/^https?:\/\//, '')}
                       </span>
                     </a>
                   );
                 })}
+
+                {Object.values(profile.socials).every(val => !val) && (
+                  <p className="text-sm text-white/60 font-medium mb-2">No social links added yet.</p>
+                )}
+
+                <button
+                  onClick={() => {
+                    setEditData(profile);
+                    setSaveError(null);
+                    setIsEditing(true);
+                  }}
+                  className="cosmo-glass hover:bg-white/15 hover:-translate-y-0.5 transition-all w-full border border-white/20 py-2.5 rounded-xl text-sm font-semibold flex items-center justify-center gap-2 text-white shadow-lg mt-2"
+                >
+                  <Plus size={16} strokeWidth={2.5} /> Add Social Links
+                </button>
               </div>
             </div>
           </div>
@@ -819,29 +853,34 @@ export default function ProfileContent({
 
                   {/* Social Links */}
                   <div className="pt-4 border-t border-white/10 space-y-4">
-                    <h3 className="text-white font-bold text-sm">Social Links</h3>
-                    <div className="grid grid-cols-1 gap-3">
-                      {Object.keys(editData.socials).map((network) => (
-                        <div key={network}>
-                          <label className="block text-xs font-mono uppercase tracking-wider text-slate-400 mb-1">
-                            {network}
-                          </label>
-                          <input
-                            type="text"
-                            placeholder={`${network}.com/username`}
-                            value={
-                              editData.socials[network as keyof typeof editData.socials]
-                            }
-                            onChange={(e) =>
-                              setEditData({
+                    <h3 className="text-white font-medium">Social Links</h3>
+                    <div className="grid grid-cols-1 gap-4">
+                      {Object.keys(editData.socials).map(network => {
+                        const placeholders: Record<string, string> = {
+                          github: 'github.com/username',
+                          linkedin: 'linkedin.com/in/username',
+                          twitter: 'x.com/username',
+                          instagram: 'instagram.com/username',
+                          youtube: 'youtube.com/@channel',
+                          twitch: 'twitch.tv/username',
+                        };
+
+                        return (
+                          <div key={network} className="relative">
+                            <label className="block text-xs font-medium text-white/50 mb-1 uppercase tracking-wider">{network}</label>
+                            <input
+                              type="text"
+                              placeholder={placeholders[network] || `${network}.com/username`}
+                              value={editData.socials[network as keyof typeof editData.socials]}
+                              onChange={e => setEditData({
                                 ...editData,
-                                socials: { ...editData.socials, [network]: e.target.value },
-                              })
-                            }
-                            className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-2 text-white focus:outline-none focus:border-[#E873C3] transition-colors text-sm"
-                          />
-                        </div>
-                      ))}
+                                socials: { ...editData.socials, [network]: e.target.value }
+                              })}
+                              className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-2.5 text-white focus:outline-none focus:border-fuchsia-500 transition-colors text-sm"
+                            />
+                          </div>
+                        );
+                      })}
                     </div>
                   </div>
                 </div>
