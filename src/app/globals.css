@@ -41,7 +41,6 @@
   font-style: normal;
   font-display: swap;
 }
-
 @theme {
   /* ── Fonts ──────────────────────────────────────────────── */
   --font-sans: var(--font-body), ui-sans-serif, system-ui, sans-serif;
@@ -128,7 +127,62 @@
   --animate-pulse-slow: pulse 3s ease-in-out infinite;
   --animate-bounce-subtle: bounce-subtle 2s ease-in-out infinite;
   --animate-float: float 6s ease-in-out infinite;
-  --animate-pulse-glow: pulse-glow 4s ease-in-out infinite;
+}
+
+/* ── Global Smooth Scroll & Lenis Kinetic Inertia Support ── */
+html {
+  scroll-behavior: smooth;
+  color-scheme: dark;
+}
+
+html.lenis,
+html.lenis body {
+  height: auto;
+}
+
+.lenis.lenis-smooth {
+  scroll-behavior: auto !important;
+}
+
+.lenis.lenis-smooth [data-lenis-prevent] {
+  overscroll-behavior: contain;
+}
+
+.lenis.lenis-stopped {
+  overflow: hidden;
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(5, 4, 13, 0.7);
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(0, 255, 233, 0.25);
+  border-radius: 9999px;
+  border: 2px solid rgba(5, 4, 13, 0.8);
+  transition: background 0.3s ease;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 255, 233, 0.5);
+  box-shadow: 0 0 12px rgba(0, 255, 233, 0.5);
+}
+
+.custom-sidebar-scrollbar::-webkit-scrollbar {
+  width: 5px;
+}
+
+.custom-sidebar-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(0, 255, 233, 0.2);
+}
+
+.custom-sidebar-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 255, 233, 0.4);
 }
 
 @keyframes risingstar {
@@ -427,24 +481,28 @@ h6 {
   align-items: center;
   gap: 8px;
   padding: 14px 32px;
-  border-radius: 12px;
+  border-radius: 14px;
   font-size: 15px;
   font-weight: 700;
   letter-spacing: -0.01em;
   color: #ffffff;
-  background: linear-gradient(135deg, #ff2d78, #9b30ff);
+  background: linear-gradient(135deg, #ff2d78 0%, #d946ef 50%, #9b30ff 100%);
   text-decoration: none;
-  transition: transform 0.22s ease, box-shadow 0.22s ease, filter 0.22s ease;
+  transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.25s cubic-bezier(0.4, 0, 0.2, 1), filter 0.25s ease;
   font-family: var(--font-body), 'Fira Code', monospace;
-  box-shadow: 0 8px 32px rgba(255, 45, 120, 0.38);
-  border: none;
+  box-shadow: 0 0 20px rgba(255, 45, 120, 0.35),
+    0 0 45px rgba(155, 48, 255, 0.25),
+    0 4px 16px rgba(0, 0, 0, 0.35);
+  border: 1px solid rgba(255, 255, 255, 0.18);
   cursor: pointer;
 }
 
 .btn-primary:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 14px 44px rgba(255, 45, 120, 0.55);
-  filter: brightness(1.08);
+  transform: translateY(-2px) scale(1.02);
+  box-shadow: 0 0 30px rgba(255, 45, 120, 0.6),
+    0 0 65px rgba(155, 48, 255, 0.45),
+    0 6px 22px rgba(0, 0, 0, 0.45);
+  filter: brightness(1.1);
 }
 
 /* Secondary outlined button */
@@ -1990,7 +2048,9 @@ h6 {
 .monaco-editor .inputarea.ime-input,
 .monaco-editor .monaco-scrollable-element {
   background-color: #000000 !important;
-}/* ── Leaderboard migration tokens ─────────────────────────── */
+}
+
+/* ── Leaderboard migration tokens ─────────────────────────── */
 @theme {
   --color-cosmo-bg: #090214;
   --color-cosmo-border: rgba(255, 255, 255, 0.1);
@@ -2051,13 +2111,27 @@ h6 {
 }
 
 @keyframes cosmo-twinkle {
-  0%, 100% { opacity: 0.15; }
-  50% { opacity: 0.9; }
+
+  0%,
+  100% {
+    opacity: 0.15;
+  }
+
+  50% {
+    opacity: 0.9;
+  }
 }
 
 @keyframes cosmo-float {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-8px); }
+
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-8px);
+  }
 }
 
 /* Hide Next.js dev build activity indicator badge completely */
@@ -2069,6 +2143,70 @@ next-route-announcer {
   display: none !important;
 }
 
+/* Custom sidebar scrollbar for Python Galaxy Learn page */
+.custom-sidebar-scrollbar::-webkit-scrollbar {
+  width: 5px;
+}
 
+.custom-sidebar-scrollbar::-webkit-scrollbar-track {
+  background: rgba(9, 5, 24, 0.4);
+  border-radius: 10px;
+}
 
+.custom-sidebar-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(0, 255, 233, 0.25);
+  border-radius: 10px;
+}
 
+.custom-sidebar-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 255, 233, 0.5);
+}
+
+/* Animated moving dots along galaxy path trail */
+@keyframes move-dots-cyan {
+  from {
+    stroke-dashoffset: 0;
+  }
+
+  to {
+    stroke-dashoffset: -24px;
+  }
+}
+
+@keyframes move-dots-purple {
+  from {
+    stroke-dashoffset: 12px;
+  }
+
+  to {
+    stroke-dashoffset: -12px;
+  }
+}
+
+.animate-dots-cyan {
+  animation: move-dots-cyan 2s linear infinite;
+}
+
+.animate-dots-purple {
+  animation: move-dots-purple 2s linear infinite;
+}
+
+/* Slow expanding cosmic ripple wave effect for planet click */
+@keyframes ripple {
+  0% {
+    transform: scale(0.85);
+    opacity: 0.95;
+    box-shadow: 0 0 15px rgba(0, 255, 233, 0.8);
+  }
+
+  50% {
+    opacity: 0.65;
+    box-shadow: 0 0 30px rgba(168, 85, 247, 0.7);
+  }
+
+  100% {
+    transform: scale(2.6);
+    opacity: 0;
+    box-shadow: 0 0 45px rgba(0, 255, 233, 0);
+  }
+}

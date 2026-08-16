@@ -1,0 +1,47 @@
+{
+  "title": "Milestone: Space Adventure — Combining Variables, Loops & Logic",
+  "sections": [
+    {
+      "heading": "What a Checkpoint Project Is",
+      "content": [
+        "Unlike the single-concept exercises in Stations 01–04, a **checkpoint project** doesn't teach anything new — it asks you to combine everything you've learned so far into one working program. This is where isolated skills turn into real problem-solving ability.",
+        "The **Space Explorer Game** is a text-based adventure: the player makes choices, the story branches based on those choices, and the game tracks state (like fuel, health, or progress) as it goes — all built from concepts you already know."
+      ]
+    },
+    {
+      "heading": "Planning Before You Code",
+      "content": [
+        "Before writing a single line, sketch your game's structure: What are the key decision points? What variables need to persist across the game (e.g. `fuel = 100`, `player_name`, `current_location`)? What ends the game — running out of fuel, reaching a destination, or making a fatal choice?",
+        "A simple flow works well: **Intro → Loop (present choice → get input → branch logic → update state) → End condition → Game over / Win message**. Mapping this out on paper first will save you far more time than diving straight into code."
+      ]
+    },
+    {
+      "heading": "Variables: Tracking Game State",
+      "content": [
+        "Your game needs variables that change as the player progresses — this is exactly what Station 02 prepared you for. Example: `fuel = 100`, `oxygen = 100`, `has_key = False`. Each decision the player makes should update one or more of these.",
+        "Use **type conversion** (`int(input(...))`) wherever you need numeric input from the player, and **f-strings** to display the current game state clearly: `print(f\"Fuel remaining: {fuel}\")`."
+      ]
+    },
+    {
+      "heading": "Control Flow: Branching the Story",
+      "content": [
+        "Every meaningful choice in your game is an `if`/`elif`/`else` block from Station 03. Example:\n```python\nchoice = input(\"Explore the asteroid or return to ship? \")\nif choice == \"explore\":\n    fuel -= 20\n    print(\"You find a strange artifact...\")\nelif choice == \"return\":\n    print(\"You dock safely.\")\nelse:\n    print(\"Invalid choice, try again.\")\n```",
+        "Nesting conditions inside each other lets you build multi-layered story branches — a choice inside a choice — which is what gives a text adventure its sense of depth."
+      ]
+    },
+    {
+      "heading": "Loops: Keeping the Game Running",
+      "content": [
+        "A `while` loop (Station 04) is what keeps your game alive turn after turn, until an end condition is met: `while fuel > 0 and not game_over:`. Each pass through the loop presents a new choice, updates state, and checks whether the game should end.",
+        "Use `break` to exit immediately on a win or loss condition (e.g. reaching the destination, or fuel hitting zero), so the game ends cleanly instead of looping forever."
+      ]
+    },
+    {
+      "heading": "Putting It All Together",
+      "content": [
+        "There's no single correct way to build this — the goal is to prove you can combine **variables** (state), **control flow** (decisions), and **loops** (repetition) into one cohesive program.",
+        "Start small: get a basic loop with one choice working first, then layer in more branches, more variables, and a proper win/lose ending. Building incrementally and testing often will save you from debugging one giant tangled block of code at the end."
+      ]
+    }
+  ]
+}

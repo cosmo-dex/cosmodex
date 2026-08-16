@@ -1,5 +1,5 @@
 generator client {
-  provider = "prisma-client-js"
+  provider      = "prisma-client-js"
   binaryTargets = ["native", "rhel-openssl-3.0.x"]
 }
 
@@ -7,7 +7,6 @@ datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
-
 
 model arena_questions {
   id                String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
@@ -272,7 +271,20 @@ model users {
   arena_sessions                                                 arena_sessions[]
   arena_stats                                                    arena_stats?
   arena_submissions                                              arena_submissions[]
+  battle_matches_p1                                              battle_matches[]        @relation("BattlePlayer1Relation")
+  battle_matches_p2                                              battle_matches[]        @relation("BattlePlayer2Relation")
+  battle_matches_winner                                          battle_matches[]        @relation("BattleWinnerRelation")
+  battle_mcq_matches_p1                                          battle_mcq_matches[]    @relation("BattleMcqPlayer1Relation")
+  battle_mcq_matches_p2                                          battle_mcq_matches[]    @relation("BattleMcqPlayer2Relation")
+  battle_mcq_matches_winner                                      battle_mcq_matches[]    @relation("BattleMcqWinnerRelation")
+  battle_submissions                                             battle_submissions[]
+  battle_user_stats                                              battle_user_stats?
   enrollments                                                    enrollments[]
+  event_leaderboard                                              event_leaderboard[]
+  event_questions                                                event_questions[]
+  event_registrations                                            event_registrations[]
+  event_user_responses                                           event_user_responses[]
+  events_created                                                 events[]                @relation("EventsCreatedBy")
   module_completions                                             module_completions[]
   modules                                                        modules[]
   progress                                                       progress[]
@@ -284,85 +296,72 @@ model users {
   user_role_assignments_user_role_assignments_assigned_byTousers user_role_assignments[] @relation("user_role_assignments_assigned_byTousers")
   user_role_assignments_user_role_assignments_user_idTousers     user_role_assignments[] @relation("user_role_assignments_user_idTousers")
 
-  // Battle Arena relations
-  battle_user_stats         battle_user_stats?
-  battle_matches_p1         battle_matches[]     @relation("BattlePlayer1Relation")
-  battle_matches_p2         battle_matches[]     @relation("BattlePlayer2Relation")
-  battle_matches_winner     battle_matches[]     @relation("BattleWinnerRelation")
-  battle_submissions        battle_submissions[]
-  battle_mcq_matches_p1     battle_mcq_matches[] @relation("BattleMcqPlayer1Relation")
-  battle_mcq_matches_p2     battle_mcq_matches[] @relation("BattleMcqPlayer2Relation")
-  battle_mcq_matches_winner battle_mcq_matches[] @relation("BattleMcqWinnerRelation")
-
-  // Events relations
-  events_created       events[]              @relation("EventsCreatedBy")
-  event_registrations  event_registrations[]
-  event_leaderboard    event_leaderboard[]
+  // Notifications relations
+  notifications_created                                          notifications[]         @relation("NotificationsCreatedBy")
+  notifications_received                                         notifications[]         @relation("NotificationsTargetUser")
+  user_notification_states                                       user_notification_states[]
 
   @@index([username])
 }
 
-// ─── Events System ────────────────────────────────────────────────────────────
-
 model events {
-  id                    String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  created_by            String?   @db.Uuid
+  id                    String                 @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  created_by            String?                @db.Uuid
   title                 String
-  slug                  String    @unique
+  slug                  String                 @unique
   tagline               String?
   description           String?
-  event_type            String    // 'hackathon' | 'coding_contest' | 'workshop' | 'challenge'
+  event_type            String
   banner_url            String?
-  status                String    @default("draft") // 'draft' | 'published' | 'ongoing' | 'ended' | 'archived'
-  registration_open     Boolean?  @default(false)
+  status                String                 @default("draft")
+  registration_open     Boolean?               @default(false)
   max_participants      Int?
   prize_pool            String?
-  tags_json             Json?     @default("[]")
-  rules_json            Json?     @default("[]")
-  timeline_json         Json?     @default("[]")
-  faqs_json             Json?     @default("[]")
-  sponsors_json         Json?     @default("[]")
-  starts_at             DateTime? @db.Timestamptz(6)
-  ends_at               DateTime? @db.Timestamptz(6)
-  registration_deadline DateTime? @db.Timestamptz(6)
-  created_at            DateTime? @default(now()) @db.Timestamptz(6)
-  updated_at            DateTime? @default(now()) @db.Timestamptz(6)
-
-  participation_type    String?   @default("individual") // 'individual' | 'team'
-  min_team_size         Int?      @default(1)
-  max_team_size         Int?      @default(4)
-  enter_event_url       String?   // live arena / quiz / submission link shown during active event
-  rounds_json           Json?     @default("[]") // [{id, title, description, type, starts_at, ends_at, action_url, status}]
-  prizes_json           Json?     @default("[]") // [{rank, title, prize, perks, badge_name}]
-  eligibility           String?   @default("Open to All") // e.g. "Students only", "Open to All"
-  registration_fee      String?   @default("Free") // e.g. "Free", "₹99"
-  submission_config     Json?     @default("{}") // {mode: "platform"|"google_form"|"external_link", google_form_url, external_link_url, required_fields[]}
-
-  users               users?                @relation("EventsCreatedBy", fields: [created_by], references: [id], onUpdate: NoAction)
-  event_registrations event_registrations[]
-  event_leaderboard   event_leaderboard[]
+  tags_json             Json?                  @default("[]")
+  rules_json            Json?                  @default("[]")
+  timeline_json         Json?                  @default("[]")
+  faqs_json             Json?                  @default("[]")
+  sponsors_json         Json?                  @default("[]")
+  starts_at             DateTime?              @db.Timestamptz(6)
+  ends_at               DateTime?              @db.Timestamptz(6)
+  registration_deadline DateTime?              @db.Timestamptz(6)
+  created_at            DateTime?              @default(now()) @db.Timestamptz(6)
+  updated_at            DateTime?              @default(now()) @db.Timestamptz(6)
+  eligibility           String?                @default("Open to All")
+  enter_event_url       String?
+  max_team_size         Int?                   @default(4)
+  min_team_size         Int?                   @default(1)
+  participation_type    String?                @default("individual")
+  prizes_json           Json?                  @default("[]")
+  registration_fee      String?                @default("Free")
+  rounds_json           Json?                  @default("[]")
+  submission_config     Json?                  @default("{}")
+  results_published     Boolean?               @default(false)
+  event_leaderboard     event_leaderboard[]
+  event_questions       event_questions[]
+  event_registrations   event_registrations[]
+  event_user_responses  event_user_responses[]
+  users                 users?                 @relation("EventsCreatedBy", fields: [created_by], references: [id], onUpdate: NoAction)
 
   @@index([slug])
   @@index([status])
 }
 
 model event_registrations {
-  id            String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  event_id      String    @db.Uuid
-  user_id       String    @db.Uuid
-  team_name     String?
-  email         String?
-  status        String    @default("registered")
-  registered_at DateTime? @default(now()) @db.Timestamptz(6)
-
-  details_json          Json?     @default("{}")
-  team_code             String?
-  team_members_json     Json?     @default("[]")
-  submission_url        String?
-  submission_details_json Json?   @default("{}")
-
-  events events @relation(fields: [event_id], references: [id], onDelete: Cascade)
-  users  users  @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  id                      String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  event_id                String    @db.Uuid
+  user_id                 String    @db.Uuid
+  team_name               String?
+  status                  String    @default("registered")
+  registered_at           DateTime? @default(now()) @db.Timestamptz(6)
+  submission_details_json Json?     @default("{}")
+  submission_url          String?
+  team_code               String?
+  team_members_json       Json?     @default("[]")
+  details_json            Json?     @default("{}")
+  email                   String?
+  events                  events    @relation(fields: [event_id], references: [id], onDelete: Cascade)
+  users                   users     @relation(fields: [user_id], references: [id], onDelete: Cascade)
 
   @@unique([event_id, user_id])
   @@index([event_id])
@@ -377,14 +376,12 @@ model event_leaderboard {
   rank          Int?
   metadata_json Json?     @default("{}")
   updated_at    DateTime? @default(now()) @db.Timestamptz(6)
-
-  events events @relation(fields: [event_id], references: [id], onDelete: Cascade)
-  users  users  @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  events        events    @relation(fields: [event_id], references: [id], onDelete: Cascade)
+  users         users     @relation(fields: [user_id], references: [id], onDelete: Cascade)
 
   @@unique([event_id, user_id])
   @@index([event_id])
 }
-
 
 model battle_user_stats {
   id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
@@ -396,22 +393,23 @@ model battle_user_stats {
   draws          Int      @default(0)
   created_at     DateTime @default(now()) @db.Timestamptz(6)
   updated_at     DateTime @default(now()) @db.Timestamptz(6)
-
-  users users @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  users          users    @relation(fields: [user_id], references: [id], onDelete: Cascade)
 }
 
 model battle_problems {
-  id              String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  title           String
-  description     String
-  difficulty      String
-  base_points     Int
-  time_limit_sec  Int      @default(2)
-  memory_limit_mb Int      @default(128)
-  created_at      DateTime @default(now()) @db.Timestamptz(6)
-
-  test_cases         battle_test_cases[]
+  id                 String               @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  title              String
+  description        String
+  difficulty         String
+  base_points        Int
+  time_limit_sec     Int                  @default(2)
+  memory_limit_mb    Int                  @default(128)
+  created_at         DateTime             @default(now()) @db.Timestamptz(6)
+  task_id            String?
+  starter_codes_json Json?                @default("{}")
+  tags_json          Json?                @default("[]")
   battle_submissions battle_submissions[]
+  test_cases         battle_test_cases[]
 }
 
 model battle_test_cases {
@@ -420,24 +418,22 @@ model battle_test_cases {
   input      String
   expected   String
   is_public  Boolean         @default(false)
-
-  problem battle_problems @relation(fields: [problem_id], references: [id], onDelete: Cascade)
+  problem    battle_problems @relation(fields: [problem_id], references: [id], onDelete: Cascade)
 }
 
 model battle_matches {
-  id            String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  player1_id    String    @db.Uuid
-  player2_id    String    @db.Uuid
-  winner_id     String?   @db.Uuid
-  started_at    DateTime  @default(now()) @db.Timestamptz(6)
-  ended_at      DateTime? @db.Timestamptz(6)
-  status        String
-  player1_score Int       @default(0)
-  player2_score Int       @default(0)
-
-  player1            users          @relation("BattlePlayer1Relation", fields: [player1_id], references: [id])
-  player2            users          @relation("BattlePlayer2Relation", fields: [player2_id], references: [id])
-  winner             users?         @relation("BattleWinnerRelation", fields: [winner_id], references: [id])
+  id                 String               @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  player1_id         String               @db.Uuid
+  player2_id         String               @db.Uuid
+  winner_id          String?              @db.Uuid
+  started_at         DateTime             @default(now()) @db.Timestamptz(6)
+  ended_at           DateTime?            @db.Timestamptz(6)
+  status             String
+  player1_score      Int                  @default(0)
+  player2_score      Int                  @default(0)
+  player1            users                @relation("BattlePlayer1Relation", fields: [player1_id], references: [id])
+  player2            users                @relation("BattlePlayer2Relation", fields: [player2_id], references: [id])
+  winner             users?               @relation("BattleWinnerRelation", fields: [winner_id], references: [id])
   battle_submissions battle_submissions[]
 
   @@index([player1_id])
@@ -446,20 +442,19 @@ model battle_matches {
 }
 
 model battle_submissions {
-  id           String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  user_id      String    @db.Uuid
-  problem_id   String    @db.Uuid
-  match_id     String?   @db.Uuid
+  id           String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  user_id      String          @db.Uuid
+  problem_id   String          @db.Uuid
+  match_id     String?         @db.Uuid
   code         String
   language     String
   status       String
-  passed_count Int       @default(0)
-  total_count  Int       @default(0)
-  created_at   DateTime  @default(now()) @db.Timestamptz(6)
-
-  user    users           @relation(fields: [user_id], references: [id], onDelete: Cascade)
-  problem battle_problems @relation(fields: [problem_id], references: [id], onDelete: Cascade)
-  match   battle_matches? @relation(fields: [match_id], references: [id], onDelete: SetNull)
+  passed_count Int             @default(0)
+  total_count  Int             @default(0)
+  created_at   DateTime        @default(now()) @db.Timestamptz(6)
+  match        battle_matches? @relation(fields: [match_id], references: [id])
+  problem      battle_problems @relation(fields: [problem_id], references: [id], onDelete: Cascade)
+  user         users           @relation(fields: [user_id], references: [id], onDelete: Cascade)
 
   @@index([user_id])
   @@index([problem_id])
@@ -477,13 +472,128 @@ model battle_mcq_matches {
   player1_score Int       @default(0)
   player2_score Int       @default(0)
   total_rounds  Int       @default(5)
-
-  player1 users  @relation("BattleMcqPlayer1Relation", fields: [player1_id], references: [id])
-  player2 users  @relation("BattleMcqPlayer2Relation", fields: [player2_id], references: [id])
-  winner  users? @relation("BattleMcqWinnerRelation", fields: [winner_id], references: [id])
+  player1       users     @relation("BattleMcqPlayer1Relation", fields: [player1_id], references: [id])
+  player2       users     @relation("BattleMcqPlayer2Relation", fields: [player2_id], references: [id])
+  winner        users?    @relation("BattleMcqWinnerRelation", fields: [winner_id], references: [id])
 
   @@index([player1_id])
   @@index([player2_id])
   @@index([winner_id])
+}
+
+model battle_mcq_questions {
+  id            String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  task_id       String?
+  question      String
+  options_json  Json      @default("[]")
+  correct_index Int
+  difficulty    String
+  category      String
+  created_at    DateTime? @default(now()) @db.Timestamptz(6)
+}
+
+model event_question_options {
+  id                   String                 @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  question_id          String                 @db.Uuid
+  option_text          String
+  is_correct           Boolean                @default(false)
+  display_order        Int                    @default(0)
+  event_questions      event_questions        @relation(fields: [question_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  event_user_responses event_user_responses[]
+
+  @@index([question_id])
+}
+
+model event_questions {
+  id                     String                   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  event_id               String                   @db.Uuid
+  created_by             String?                  @db.Uuid
+  question_type          String
+  title                  String
+  question_text          String?
+  code_snippet           String?
+  difficulty             String?
+  marks                  Int                      @default(5)
+  display_order          Int                      @default(0)
+  input_format           String?
+  output_format          String?
+  constraints            String?
+  sample_io_json         Json?                    @default("[]")
+  explanation            String?
+  created_at             DateTime                 @default(now()) @db.Timestamptz(6)
+  updated_at             DateTime                 @default(now()) @db.Timestamptz(6)
+  event_question_options event_question_options[]
+  users                  users?                   @relation(fields: [created_by], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  events                 events                   @relation(fields: [event_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  event_user_responses   event_user_responses[]
+
+  @@index([event_id])
+  @@index([question_type])
+}
+
+model event_user_responses {
+  id                     String                  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  event_id               String                  @db.Uuid
+  question_id            String                  @db.Uuid
+  user_id                String                  @db.Uuid
+  selected_option        String?
+  option_id              String?                 @db.Uuid
+  is_correct             Boolean?                @default(false)
+  code_text              String?
+  language_code          String?
+  score_awarded          Int?                    @default(0)
+  submitted_at           DateTime?               @default(now()) @db.Timestamptz(6)
+  events                 events                  @relation(fields: [event_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  event_question_options event_question_options? @relation(fields: [option_id], references: [id], onUpdate: NoAction)
+  event_questions        event_questions         @relation(fields: [question_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  users                  users                   @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@unique([event_id, question_id, user_id], map: "event_user_responses_unique")
+  @@index([event_id])
+  @@index([question_id])
+  @@index([user_id])
+}
+
+model notifications {
+  id                       String                     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  title                    String
+  description              String?
+  type                     String?                    @default("info")
+  link                     String?
+  target_type              String?                    @default("all")
+  target_role              String?
+  target_user_id           String?                    @db.Uuid
+  created_by               String?                    @db.Uuid
+  is_active                Boolean?                   @default(true)
+  created_at               DateTime?                  @default(now()) @db.Timestamptz(6)
+  updated_at               DateTime?                  @default(now()) @db.Timestamptz(6)
+
+  creator                  users?                     @relation("NotificationsCreatedBy", fields: [created_by], references: [id], onUpdate: NoAction)
+  target_user              users?                     @relation("NotificationsTargetUser", fields: [target_user_id], references: [id], onDelete: Cascade)
+  user_notification_states user_notification_states[]
+
+  @@index([target_type])
+  @@index([target_user_id])
+  @@index([created_at])
+  @@index([is_active])
+}
+
+model user_notification_states {
+  id              String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  user_id         String        @db.Uuid
+  notification_id String        @db.Uuid
+  is_read         Boolean       @default(false)
+  read_at         DateTime?     @db.Timestamptz(6)
+  is_cleared      Boolean       @default(false)
+  cleared_at      DateTime?     @db.Timestamptz(6)
+  created_at      DateTime?     @default(now()) @db.Timestamptz(6)
+  updated_at      DateTime?     @default(now()) @db.Timestamptz(6)
+
+  users           users         @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  notifications   notifications @relation(fields: [notification_id], references: [id], onDelete: Cascade)
+
+  @@unique([user_id, notification_id])
+  @@index([user_id])
+  @@index([notification_id])
 }
 

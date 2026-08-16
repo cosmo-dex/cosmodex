@@ -1,0 +1,47 @@
+{
+  "title": "Final Capstone Project: Full Python Application",
+  "sections": [
+    {
+      "heading": "What This Project Represents",
+      "content": [
+        "This capstone brings together everything from all nine previous stations output, variables, control flow, loops, lists, functions, classes, and modules into a single, comprehensive terminal application.",
+        "Unlike earlier exercises that focused on one concept at a time, this project has no fixed shape you're building a real, working piece of software, which means you'll also need to make design decisions: how to structure your code, what features to include, and how the different parts talk to each other."
+      ]
+    },
+    {
+      "heading": "Planning Your Application",
+      "content": [
+        "Before writing code, decide on a concept your app will be built around something with enough depth to naturally use most of the concepts you've learned. Good options: a personal finance tracker, a library/inventory manager, a quiz game, or a to-do list manager with saved history.",
+        "Sketch the **core features** first (the minimum that makes the app functional), then list **stretch features** you'd add if time allows. This mirrors how real software gets planned an MVP (Minimum Viable Product) first, polish after."
+      ]
+    },
+    {
+      "heading": "Structuring with Classes",
+      "content": [
+        "Station 08's OOP concepts are the backbone of a well-organized app. Model your core data as a **class** e.g. a `Task` class for a to-do app, or an `Account` class for a finance tracker with `__init__` setting up its attributes and methods handling its behavior.",
+        "Where relevant, use a class to represent the *whole app's state* too e.g. a `TaskManager` class holding a **list** (Station 05) of `Task` objects, with methods like `add_task()`, `remove_task()`, and `list_tasks()` that operate on that internal list."
+      ]
+    },
+    {
+      "heading": "Driving Logic with Functions, Loops & Conditions",
+      "content": [
+        "Break your app into small, focused **functions** (Station 07) rather than one giant block of code a function to display a menu, a function to handle each menu option, a function to validate input. This makes your code far easier to debug and extend.",
+        "A **while loop** (Station 04) should drive your app's main menu, keeping it running until the user chooses to exit combined with **if/elif/else** (Station 03) to route the user's menu choice to the correct function."
+      ]
+    },
+    {
+      "heading": "Handling Input & Output Cleanly",
+      "content": [
+        "Use `input()` for every point where the user interacts with your app, and always validate it check the user entered a valid menu number, or a positive amount for a transaction, using `if` checks and `try`/`except` where appropriate to catch invalid input without crashing.",
+        "Use **f-strings** consistently for output, and consider adding a `modules` (Station 09) touch a `datetime` timestamp on each logged action, or `random` for any element of chance your app might include."
+      ]
+    },
+    {
+      "heading": "Testing & Iterating",
+      "content": [
+        "Test each feature as you build it, not just at the end add one function, run it, confirm it works, then move to the next. This catches bugs early instead of facing a wall of errors after writing 200 lines at once.",
+        "Once your core features work reliably, revisit your stretch-feature list. A capstone doesn't need to be huge it needs to be **complete and working**, demonstrating that you can independently plan, structure, and build a real Python application from the ground up."
+      ]
+    }
+  ]
+}

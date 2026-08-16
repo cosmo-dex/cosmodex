@@ -3,9 +3,10 @@
 import { useState } from "react";
 import Link from "next/link";
 import { AnimatePresence, motion } from "framer-motion";
-import { List, Check, ChevronLeft, ChevronRight, X } from "lucide-react";
+import { List, Check, ChevronLeft, ChevronRight, X, Rocket } from "lucide-react";
 import confetti from "canvas-confetti";
 import { TheoryExercise } from "@/data/theoryExercisesData";
+import { PYTHON_COURSE_CHAPTERS } from "@/data/courses/python";
 
 interface TheoryFooterProps {
   exercise: TheoryExercise;
@@ -88,8 +89,16 @@ export default function TheoryFooter({
           </button>
         </div>
 
-        {/* Right: Back & Next Navigation Buttons */}
+        {/* Right: Back & Next Navigation Buttons + Galaxy Sandbox */}
         <div className="flex items-center gap-2 sm:gap-3">
+          <Link
+            href={`/learn/python#${exercise.id || ""}`}
+            className="px-3.5 py-2 rounded-xl border border-cyan-500/40 bg-cyan-500/10 text-cyan-300 hover:border-cyan-400 hover:bg-cyan-500/20 text-xs font-mono font-semibold uppercase tracking-wider transition-all flex items-center gap-1.5 shadow-[0_0_12px_rgba(0,255,233,0.15)]"
+            title="Go to Exercises"
+          >
+            <Rocket size={15} className="text-cyan-400" />
+            <span className="hidden sm:inline">Exercise</span>
+          </Link>
           {exercise.prevLessonId ? (
             <Link
               href={`/learn/${exercise.courseId}/theory/${exercise.prevLessonId}`}
@@ -144,6 +153,7 @@ export default function TheoryFooter({
 
             {/* Fast GPU-Accelerated Sliding Drawer Panel */}
             <motion.aside
+              data-lenis-prevent
               initial={{ x: "-100%" }}
               animate={{ x: 0 }}
               exit={{ x: "-100%" }}
@@ -151,7 +161,7 @@ export default function TheoryFooter({
               className="fixed top-0 bottom-0 left-0 z-50 w-80 sm:w-96 bg-[#080d19] border-r border-[#1b263b] shadow-[10px_0_30px_rgba(0,0,0,0.9)] flex flex-col p-6 font-sans will-change-transform"
             >
               {/* Drawer Header */}
-              <div className="flex items-center justify-between border-b border-white/10 pb-4 mb-6">
+              <div className="flex items-center justify-between border-b border-white/10 pb-4 mb-6 shrink-0">
                 <div>
                   <h3 className="text-lg font-bold text-white font-sans tracking-tight">
                     {exercise.courseTitle} Exercises
@@ -170,50 +180,41 @@ export default function TheoryFooter({
               </div>
 
               {/* Exercises List */}
-              <div className="flex-1 overflow-y-auto space-y-3 pr-1">
-                <Link
-                  href={`/learn/${exercise.courseId}/theory/in-the-beginning`}
-                  onClick={() => setDrawerOpen(false)}
-                  className={`flex items-center justify-between p-3.5 rounded-xl border transition-all ${
-                    exercise.id === "in-the-beginning"
-                      ? "bg-[#E873C3]/15 border-[#E873C3]/60 text-white shadow-[0_0_15px_rgba(232,115,195,0.2)] font-bold"
-                      : "bg-[#0d1527] border-white/10 text-slate-300 hover:border-[#E873C3]/50 hover:bg-[#E873C3]/10 hover:text-white"
-                  }`}
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="w-7 h-7 rounded-lg bg-white/[0.06] border border-white/10 flex items-center justify-center font-mono text-xs font-bold text-slate-300">
-                      01
-                    </div>
-                    <span className="text-xs font-sans font-bold">
-                      In The Beginning...
-                    </span>
-                  </div>
-                  <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-purple-500/20 text-purple-300 border border-purple-500/30">
-                    10 XP
-                  </span>
-                </Link>
+              <div
+                data-lenis-prevent
+                className="flex-1 overflow-y-auto space-y-3 pr-1 pb-12 overscroll-contain touch-pan-y custom-sidebar-scrollbar"
+              >
+                {PYTHON_COURSE_CHAPTERS.map((ch, idx) => {
+                  const lessonId = ch.theoryLessonId || ch.id;
+                  const isCurrent = exercise.id === lessonId || exercise.id === ch.id;
+                  const numStr = String(idx + 1).padStart(2, "0");
+                  const displayTitle = ch.documentation?.title || ch.title;
 
-                <Link
-                  href={`/learn/${exercise.courseId}/theory/command-line-basics`}
-                  onClick={() => setDrawerOpen(false)}
-                  className={`flex items-center justify-between p-3.5 rounded-xl border transition-all ${
-                    exercise.id === "command-line-basics"
-                      ? "bg-[#E873C3]/15 border-[#E873C3]/60 text-white shadow-[0_0_15px_rgba(232,115,195,0.2)] font-bold"
-                      : "bg-[#0d1527] border-white/10 text-slate-300 hover:border-[#E873C3]/50 hover:bg-[#E873C3]/10 hover:text-white"
-                  }`}
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="w-7 h-7 rounded-lg bg-white/[0.06] border border-white/10 flex items-center justify-center font-mono text-xs font-bold text-slate-300">
-                      02
-                    </div>
-                    <span className="text-xs font-sans font-bold">
-                      Setting Up Your Workspace
-                    </span>
-                  </div>
-                  <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-purple-500/20 text-purple-300 border border-purple-500/30">
-                    10 XP
-                  </span>
-                </Link>
+                  return (
+                    <Link
+                      key={ch.id}
+                      href={`/learn/${exercise.courseId || "py-1"}/theory/${lessonId}`}
+                      onClick={() => setDrawerOpen(false)}
+                      className={`flex items-center justify-between p-3.5 rounded-xl border transition-all ${
+                        isCurrent
+                          ? "bg-[#E873C3]/15 border-[#E873C3]/60 text-white shadow-[0_0_15px_rgba(232,115,195,0.2)] font-bold"
+                          : "bg-[#0d1527] border-white/10 text-slate-300 hover:border-[#E873C3]/50 hover:bg-[#E873C3]/10 hover:text-white"
+                      }`}
+                    >
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div className="w-7 h-7 rounded-lg bg-white/[0.06] border border-white/10 flex items-center justify-center font-mono text-xs font-bold text-slate-300 shrink-0">
+                          {numStr}
+                        </div>
+                        <span className="text-xs font-sans font-bold truncate">
+                          {displayTitle}
+                        </span>
+                      </div>
+                      <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-purple-500/20 text-purple-300 border border-purple-500/30 shrink-0 ml-2">
+                        {ch.xpValue || 10} XP
+                      </span>
+                    </Link>
+                  );
+                })}
               </div>
             </motion.aside>
           </>

@@ -93,7 +93,7 @@ export default function Footer() {
           <div className="flex flex-col gap-4">
             <h4 className="text-text-secondary text-xs font-bold tracking-widest uppercase mb-2">Company</h4>
             {footerLinks.company.map((link) => (
-              <Link key={link} href="#" className="text-text-primary hover:text-white text-sm transition-colors w-fit">
+              <Link key={link} href="/events" className="text-text-primary hover:text-white text-sm transition-colors w-fit">
                 {link}
               </Link>
             ))}
@@ -103,7 +103,7 @@ export default function Footer() {
           <div className="flex flex-col gap-4">
             <h4 className="text-text-secondary text-xs font-bold tracking-widest uppercase mb-2">Practice</h4>
             {footerLinks.practice.map((link) => (
-              <Link key={link} href="#" className="text-text-primary hover:text-white text-sm transition-colors w-fit">
+              <Link key={link} href="/battle" className="text-text-primary hover:text-white text-sm transition-colors w-fit">
                 {link}
               </Link>
             ))}
@@ -113,7 +113,7 @@ export default function Footer() {
           <div className="flex flex-col gap-4 lg:col-span-1">
             <h4 className="text-text-secondary text-xs font-bold tracking-widest uppercase mb-2">Learn</h4>
             {footerLinks.learn1.map((link) => (
-              <Link key={link} href="#" className="text-text-primary hover:text-white text-sm transition-colors w-fit">
+              <Link key={link} href="/learn" className="text-text-primary hover:text-white text-sm transition-colors w-fit">
                 {link}
               </Link>
             ))}
@@ -122,7 +122,7 @@ export default function Footer() {
           {/* Learn Column 2 */}
           <div className="flex flex-col gap-4 lg:col-span-1 lg:mt-8">
             {footerLinks.learn2.map((link) => (
-              <Link key={link} href="#" className="text-text-primary hover:text-white text-sm transition-colors w-fit">
+              <Link key={link} href="/learn" className="text-text-primary hover:text-white text-sm transition-colors w-fit">
                 {link}
               </Link>
             ))}
@@ -135,8 +135,8 @@ export default function Footer() {
 
           <div className="flex items-center gap-4 text-xs text-text-secondary">
             <span>© 2026 CosmoDex, Inc.</span>
-            <Link href="#" className="hover:text-white transition-colors">Terms</Link>
-            <Link href="#" className="hover:text-white transition-colors">Privacy Policy</Link>
+            <Link href="/events" className="hover:text-white transition-colors">Terms</Link>
+            <Link href="/events" className="hover:text-white transition-colors">Privacy Policy</Link>
           </div>
 
           <div className="flex items-center gap-3">
