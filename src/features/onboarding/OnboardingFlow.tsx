@@ -58,7 +58,7 @@ export default function OnboardingFlow() {
         const destination =
           nextParam && nextParam.startsWith('/') && !nextParam.startsWith('//') && !nextParam.includes('\\')
             ? nextParam
-            : '/learn';
+            : '/dashboard';
 
         if (sessionData.user) {
           window.location.href = destination;
