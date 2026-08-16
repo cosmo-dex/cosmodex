@@ -21,13 +21,8 @@ const navItems = [
   {
     label: "Learn",
     icon: BookOpen,
-    href: "/learn",
+    href: "#",
     isMegaMenu: true,
-  },
-  {
-    label: "Practice",
-    icon: Code2,
-    href: "/learn",
   },
   {
     label: "Battle",
@@ -184,27 +179,44 @@ export default function Navbar() {
                   }
                 }}
               >
-                <Link
-                  href={item.href}
-                  onClick={closeMenus}
-                  className="nav-link group flex items-center gap-1.5"
-                >
-                  <Icon
-                    size={15}
-                    className="opacity-70 transition-opacity group-hover:opacity-100"
-                  />
-
-                  <span>{item.label}</span>
-
-                  {item.isMegaMenu && (
-                    <ChevronDown
-                      size={13}
-                      className={`transition-transform duration-200 ${
-                        isOpen ? "rotate-180" : ""
-                      }`}
+                {item.href === "#" ? (
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setActiveDropdown(isOpen ? null : item.label)
+                    }
+                    className="nav-link group flex items-center gap-1.5"
+                    aria-expanded={isOpen}
+                  >
+                    <Icon
+                      size={15}
+                      className="opacity-70 transition-opacity group-hover:opacity-100"
                     />
-                  )}
-                </Link>
+
+                    <span>{item.label}</span>
+
+                    {item.isMegaMenu && (
+                      <ChevronDown
+                        size={13}
+                        className={`transition-transform duration-200 ${
+                          isOpen ? "rotate-180" : ""
+                        }`}
+                      />
+                    )}
+                  </button>
+                ) : (
+                  <Link
+                    href={item.href}
+                    className="nav-link group flex items-center gap-1.5"
+                  >
+                    <Icon
+                      size={15}
+                      className="opacity-70 transition-opacity group-hover:opacity-100"
+                    />
+
+                    <span>{item.label}</span>
+                  </Link>
+                )}
 
                 {/* Learn dropdown */}
                 {item.isMegaMenu && isOpen && (
