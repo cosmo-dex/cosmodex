@@ -1,0 +1,47 @@
+{
+  "title": "Modules: Using Python's Built-in Toolkits",
+  "sections": [
+    {
+      "heading": "What is a Module?",
+      "content": [
+        "A **module** is simply a file containing pre-written Python code functions, classes, and variables that you can reuse in your own program instead of writing everything from scratch.",
+        "Python comes with a huge **standard library** of built-in modules for common tasks: generating randomness, doing advanced math, working with dates, and interacting with your operating system. You bring a module into your file using the `import` keyword."
+      ]
+    },
+    {
+      "heading": "Importing Modules",
+      "content": [
+        "The basic form is `import module_name`, placed at the very top of your file. Once imported, you access anything inside it using dot notation: `module_name.function_name()`.",
+        "You can also import just one specific function from a module `from random import choice` which lets you call it directly as `choice(...)` without the module prefix. Both styles are common; the full `import module_name` form is generally clearer for beginners since it's obvious where each function came from."
+      ]
+    },
+    {
+      "heading": "The random Module",
+      "content": [
+        "`import random` gives you tools for randomness. Key functions: `random.randint(a, b)` returns a random whole number between `a` and `b` (inclusive), `random.choice(list)` picks one random item from a list, and `random.shuffle(list)` randomly reorders a list **in place**.",
+        "This is exactly what the **Random Module** exercise focuses on — using these functions to build something like a dice roller or random name picker, reinforcing the `random` usage you first touched in Station 03's Coin Flip and Magic 8-Ball."
+      ]
+    },
+    {
+      "heading": "The math Module",
+      "content": [
+        "`import math` gives you more advanced mathematical tools beyond the basic `+ - * /` operators: `math.sqrt(x)` for square roots, `math.floor(x)` and `math.ceil(x)` for rounding down/up, `math.pi` for a precise value of π, and `math.factorial(x)` for factorials.",
+        "The **Math Utility** exercise builds a small toolkit of functions using these for example, calculating a circle's area with `math.pi * radius ** 2`, or rounding results cleanly using `math.floor()` instead of manual logic."
+      ]
+    },
+    {
+      "heading": "The datetime Module",
+      "content": [
+        "`import datetime` lets you work with dates and times. `datetime.datetime.now()` returns the current date and time; you can then format it into readable text using `.strftime()`, e.g. `now.strftime(\"%Y-%m-%d %H:%M:%S\")` gives a clean timestamp string.",
+        "This directly powers the **Datetime Timestamp** exercise capturing 'right now' and formatting it into something human-readable, a pattern used everywhere from logging app activity to timestamping messages."
+      ]
+    },
+    {
+      "heading": "A Note on the os Module",
+      "content": [
+        "Your station description also mentions `os`, which lets you interact with the operating system reading environment variables, checking file paths, and listing directory contents (`os.listdir()`, `os.getcwd()`).",
+        "It's not tied to a specific exercise here, but it's worth knowing it exists: as you build bigger projects (especially your Capstone Project next), `os` becomes useful for tasks like saving data to files or checking if a save file already exists before creating a new one."
+      ]
+    }
+  ]
+}

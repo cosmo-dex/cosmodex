@@ -221,13 +221,14 @@ export default function Navbar() {
                 {/* Learn dropdown */}
                 {item.isMegaMenu && isOpen && (
                   <div
-                    className="absolute left-0 top-full mt-2 w-[330px] rounded-xl border border-[#E873C3]/20 bg-[#050508] p-5 shadow-[0_15px_50px_rgba(0,0,0,0.8),0_0_25px_rgba(232,115,195,0.12)]"
+                    className="absolute left-0 top-full pt-2"
                     onMouseEnter={() => setActiveDropdown(item.label)}
                     onMouseLeave={() => setActiveDropdown(null)}
                   >
-                    <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#E873C3]">
-                      Recommended
-                    </p>
+                    <div className="w-[330px] rounded-xl border border-[#E873C3]/20 bg-[#050508] p-5 shadow-[0_15px_50px_rgba(0,0,0,0.8),0_0_25px_rgba(232,115,195,0.12)]">
+                      <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#E873C3]">
+                        Recommended
+                      </p>
 
                     <h4 className="mt-1 text-sm font-bold text-white">
                       Start learning today
@@ -235,7 +236,7 @@ export default function Navbar() {
 
                     {/* Python */}
                     <Link
-                      href="/learn"
+                      href="/learn/python"
                       onClick={closeMenus}
                       className="group mt-5 flex gap-4 rounded-lg p-2 transition-colors hover:bg-white/[0.04]"
                     >
@@ -258,31 +259,6 @@ export default function Navbar() {
                       </div>
                     </Link>
 
-                    {/* GitHub Copilot */}
-                    <Link
-                      href="/learn"
-                      onClick={closeMenus}
-                      className="group mt-3 flex gap-4 rounded-lg p-2 transition-colors hover:bg-white/[0.04]"
-                    >
-                      <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg border border-blue-500/30 bg-blue-500/10">
-                        <Code2
-                          size={22}
-                          className="text-blue-400"
-                        />
-                      </div>
-
-                      <div>
-                        <h5 className="text-sm font-bold text-white group-hover:text-[#E873C3]">
-                          GitHub Copilot
-                        </h5>
-
-                        <p className="mt-1 text-xs leading-relaxed text-white/55">
-                          Learn how AI coding assistants can help
-                          you write code faster.
-                        </p>
-                      </div>
-                    </Link>
-
                     <Link
                       href="/learn"
                       onClick={closeMenus}
@@ -291,7 +267,8 @@ export default function Navbar() {
                       All Courses →
                     </Link>
                   </div>
-                )}
+                </div>
+              )}
               </div>
             );
           })}
