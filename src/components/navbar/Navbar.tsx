@@ -335,31 +335,7 @@ export default function Navbar() {
           )}
 
           {/* Notification (Positioned at the very end after Log out / Join Crew button) */}
-          <NotificationBell
-            notifications={[
-              {
-                id: "welcome",
-                title: "Welcome to CosmoDex!",
-                description:
-                  "Explore courses, practice coding, and join exciting battles.",
-                time: "Just now",
-              },
-              {
-                id: "course",
-                title: "New course available",
-                description:
-                  "Check out the latest learning content in Learn.",
-                time: "5 min ago",
-              },
-              {
-                id: "challenge",
-                title: "New coding challenge",
-                description:
-                  "A fresh challenge is waiting for you in Practice.",
-                time: "1 hour ago",
-              },
-            ]}
-          />
+          <NotificationBell />
 
           {/* Mobile button */}
           <button
