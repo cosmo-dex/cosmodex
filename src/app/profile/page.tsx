@@ -21,6 +21,9 @@ export default async function ProfilePage() {
   let badgeCount = 0;
   let badges: Array<{ id: string; name: string; description: string | null; earnedAt: string | null }> = [];
 
+  let arenaWins = 0;
+  let arenaLosses = 0;
+
   if (parsed) {
     userId = parsed.userId || null;
     username = parsed.username || username;
@@ -35,7 +38,7 @@ export default async function ProfilePage() {
   // Fetch live data from DB
   if (userId) {
     try {
-      const [dbUser, arenaStats, userBadges] = await Promise.all([
+      const [dbUser, arenaStats, battleStats, userBadges] = await Promise.all([
         prisma.users.findUnique({
           where: { id: userId },
           select: {
@@ -51,6 +54,10 @@ export default async function ProfilePage() {
         prisma.arena_stats.findUnique({
           where: { user_id: userId },
           select: { current_streak: true },
+        }),
+        prisma.battle_user_stats.findUnique({
+          where: { user_id: userId },
+          select: { wins: true, losses: true },
         }),
         prisma.user_badges.findMany({
           where: { user_id: userId },
@@ -71,6 +78,8 @@ export default async function ProfilePage() {
       }
 
       streak = arenaStats?.current_streak ?? 0;
+      arenaWins = battleStats?.wins ?? 0;
+      arenaLosses = battleStats?.losses ?? 0;
       badgeCount = userBadges.length;
       badges = userBadges.map((ub) => ({
         id: ub.id,
@@ -103,6 +112,10 @@ export default async function ProfilePage() {
       badges={badges}
       starPoints={starPoints}
       rankThreshold={rankThreshold}
+      bio="Full-Stack Cosmo Coder 🌌 Grinding Python, React & AI algorithms on CosmoDeX."
+      avatarUrl="/images/mascot.png"
+      arenaWins={arenaWins}
+      arenaLosses={arenaLosses}
     />
   );
 }

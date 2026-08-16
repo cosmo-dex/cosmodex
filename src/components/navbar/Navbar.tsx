@@ -6,6 +6,8 @@ import { useEffect, useState } from "react";
 import {
   ChevronDown,
   BookOpen,
+  LayoutDashboard,
+  Code2,
   Hammer,
   Users,
   Menu,
@@ -36,6 +38,11 @@ const navItems = [
     label: "Leaderboard",
     icon: Users,
     href: "/leaderboard",
+  },
+  {
+    label: "Dashboard",
+    icon: LayoutDashboard,
+    href: "/dashboard",
   },
 ];
 
@@ -272,7 +279,62 @@ export default function Navbar() {
         ===================================== */}
         <div className="flex items-center gap-2">
 
-          {/* Notification */}
+          {/* User */}
+          {user ? (
+            <Link
+              href="/profile"
+              className="flex items-center gap-2 pl-1 group cursor-pointer"
+              title="View Profile"
+            >
+              <span className="hidden max-w-[120px] truncate text-sm font-bold text-white/80 group-hover:text-[#E873C3] transition-colors lg:inline">
+                {user.username}
+              </span>
+
+              <div className="flex h-8 w-8 items-center justify-center overflow-hidden rounded-full border border-[#E873C3]/70 bg-[#15151c] shadow-[0_0_12px_rgba(232,115,195,0.25)] group-hover:border-[#E873C3] group-hover:shadow-[0_0_18px_rgba(232,115,195,0.5)] transition-all">
+                <Image
+                  src="/images/mascot.png"
+                  alt="User avatar"
+                  width={32}
+                  height={32}
+                  className="h-full w-full object-cover"
+                />
+              </div>
+            </Link>
+          ) : (
+            <Link
+              href="/profile"
+              className="flex h-8 w-8 items-center justify-center overflow-hidden rounded-full border border-white/10 bg-[#15151c] opacity-60 hover:opacity-100 hover:border-[#E873C3]/50 transition-all cursor-pointer"
+              title="View Profile"
+            >
+              <Image
+                src="/images/mascot.png"
+                alt="Guest avatar"
+                width={32}
+                height={32}
+                className="h-full w-full object-cover"
+              />
+            </Link>
+          )}
+
+          {/* Auth */}
+          {user ? (
+            <button
+              type="button"
+              onClick={handleLogout}
+              className="hidden h-9 items-center rounded-md border border-white/10 bg-white/[0.03] px-4 text-sm font-bold text-white/90 transition hover:bg-white/[0.07] sm:inline-flex"
+            >
+              Log out
+            </button>
+          ) : (
+            <Link
+              href="/onboarding"
+              className="dashboard-btn-primary hidden h-9 items-center px-4 text-sm sm:inline-flex"
+            >
+              Join Crew
+            </Link>
+          )}
+
+          {/* Notification (Positioned at the very end after Log out / Join Crew button) */}
           <NotificationBell
             notifications={[
               {
@@ -298,53 +360,6 @@ export default function Navbar() {
               },
             ]}
           />
-
-          {/* User */}
-          {user ? (
-            <div className="flex items-center gap-2 pl-1">
-              <span className="hidden max-w-[120px] truncate text-sm font-bold text-white/80 lg:inline">
-                {user.username}
-              </span>
-
-              <div className="flex h-8 w-8 items-center justify-center overflow-hidden rounded-full border border-[#E873C3]/70 bg-[#15151c] shadow-[0_0_12px_rgba(232,115,195,0.25)]">
-                <Image
-                  src="/images/mascot.png"
-                  alt="User avatar"
-                  width={32}
-                  height={32}
-                  className="h-full w-full object-cover"
-                />
-              </div>
-            </div>
-          ) : (
-            <div className="flex h-8 w-8 items-center justify-center overflow-hidden rounded-full border border-white/10 bg-[#15151c] opacity-60">
-              <Image
-                src="/images/mascot.png"
-                alt="Guest avatar"
-                width={32}
-                height={32}
-                className="h-full w-full object-cover"
-              />
-            </div>
-          )}
-
-          {/* Auth */}
-          {user ? (
-            <button
-              type="button"
-              onClick={handleLogout}
-              className="hidden h-9 items-center rounded-md border border-white/10 bg-white/[0.03] px-4 text-sm font-bold text-white/90 transition hover:bg-white/[0.07] sm:inline-flex"
-            >
-              Log out
-            </button>
-          ) : (
-            <Link
-              href="/onboarding"
-              className="dashboard-btn-primary hidden h-9 items-center px-4 text-sm sm:inline-flex"
-            >
-              Join Crew
-            </Link>
-          )}
 
           {/* Mobile button */}
           <button
