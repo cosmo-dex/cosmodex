@@ -1,0 +1,11 @@
+{
+  "id": "ch-7",
+  "number": 8,
+  "stationNumber": "STATION 08",
+  "title": "CLASSES & OBJECTS",
+  "description": "Learn Object-Oriented Programming (OOP), __init__, self, methods, and attributes.",
+  "xpValue": 110,
+  "planetType": "swirl",
+  "isUnlocked": false,
+  "theoryLessonId": "ch-7"
+}

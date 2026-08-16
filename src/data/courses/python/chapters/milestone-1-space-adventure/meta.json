@@ -1,0 +1,12 @@
+{
+  "id": "milestone-1",
+  "number": 5,
+  "stationNumber": "CHECKPOINT 01",
+  "title": "MILESTONE: SPACE ADVENTURE",
+  "description": "Combine variables, loops, and logic to build a text-based Space Explorer game.",
+  "xpValue": 120,
+  "planetType": "grid-web",
+  "isMilestone": true,
+  "isUnlocked": false,
+  "theoryLessonId": "milestone-1"
+}

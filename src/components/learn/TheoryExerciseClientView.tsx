@@ -69,6 +69,7 @@ export default function TheoryExerciseClientView({
         courseId={exercise.courseId}
         exerciseIndex={exercise.exerciseIndex}
         totalExercises={exercise.totalExercises}
+        exerciseId={exercise.id}
       />
 
       {/* Main Content Area (pt-36 ensures content starts below both fixed headers) */}
@@ -77,9 +78,12 @@ export default function TheoryExerciseClientView({
           {/* Main Exercise Display Title (e.g. 01. In The Beginning...) */}
           <div className="space-y-2 border-b border-white/10 pb-6">
             <h1 className="text-3xl sm:text-4xl md:text-5xl font-mono font-black tracking-tight text-white filter drop-shadow-[0_0_20px_rgba(255,255,255,0.2)]">
-              <span className="text-[#E873C3] mr-3 drop-shadow-[0_0_15px_rgba(232,115,195,0.5)]">
-                {exercise.chapterNumber}.
-              </span>
+              {!exercise.title.startsWith(exercise.chapterNumber) &&
+                !exercise.title.startsWith(`${Number(exercise.chapterNumber)}.`) && (
+                  <span className="text-[#E873C3] mr-3 drop-shadow-[0_0_15px_rgba(232,115,195,0.5)]">
+                    {exercise.chapterNumber}.
+                  </span>
+                )}
               {exercise.title}
             </h1>
           </div>
