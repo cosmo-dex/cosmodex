@@ -4,7 +4,6 @@ import Navbar from "@/components/navbar/Navbar";
 import DashboardBackground from "@/components/dashboard/DashboardBackground";
 import WelcomeBanner from "@/components/dashboard/WelcomeBanner";
 import GetStartedCard from "@/components/dashboard/GetStartedCard";
-import CourseSuggestions from "@/components/dashboard/CourseSuggestions";
 import Achievements from "@/components/dashboard/Achievements";
 import ProfileCard from "@/components/dashboard/ProfileCard";
 import ActivityFeed from "@/components/dashboard/ActivityFeed";
@@ -141,7 +140,6 @@ export default async function DashboardPage() {
           <div className="lg:col-span-2 flex flex-col gap-8">
             <WelcomeBanner username={username} />
             <GetStartedCard enrollments={enrollments} />
-            <CourseSuggestions />
             <Achievements badges={badges} />
             
             {/* Subscription Promo inside left column to avoid empty space */}
