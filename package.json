@@ -3,10 +3,14 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "next dev --webpack",
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
+    "typecheck": "tsc --noEmit",
+    "validate": "prisma validate",
+    "check": "prisma generate && prisma validate && tsc --noEmit && eslint",
+    "test": "pnpm run check",
     "prepare": "husky",
     "postinstall": "prisma generate"
   },

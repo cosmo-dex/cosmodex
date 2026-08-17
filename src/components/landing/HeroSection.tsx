@@ -37,7 +37,6 @@ export default function HeroSection() {
   const headlineRef = useRef<HTMLHeadingElement>(null);
   const descRef = useRef<HTMLParagraphElement>(null);
   const ctaRef = useRef<HTMLDivElement>(null);
-  const scrollRef = useRef<HTMLDivElement>(null);
 
   const rafRef = useRef<number>(0);
 
@@ -327,61 +326,6 @@ export default function HeroSection() {
           >
             {/* Free to start · No credit card · Join thousands of learners */}
           </motion.p>
-        </motion.div>
-
-        {/* ── Scroll Indicator ── */}
-        <motion.div
-          ref={scrollRef}
-          initial={{ opacity: 0 }}
-          animate={{ opacity: mounted ? 1 : 0 }}
-          transition={{ delay: 1.7, duration: 0.8 }}
-          style={{
-            position: "absolute",
-            bottom: "48px",
-            left: "50%",
-            transform: "translateX(-50%)",
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            gap: "10px",
-            pointerEvents: "none",
-          }}
-        >
-          <span
-            style={{
-              fontSize: "10px",
-              fontWeight: 500,
-              letterSpacing: "0.14em",
-              textTransform: "uppercase",
-              color: "rgba(240,230,255,0.25)",
-              fontFamily: "var(--font-body), 'Fira Code', monospace",
-            }}
-          >
-            Scroll to explore
-          </span>
-          {/* Mouse icon */}
-          <div
-            style={{
-              width: "22px",
-              height: "36px",
-              borderRadius: "11px",
-              border: "1.5px solid rgba(255,255,255,0.12)",
-              display: "flex",
-              alignItems: "flex-start",
-              justifyContent: "center",
-              padding: "5px",
-            }}
-          >
-            <div
-              className="animate-scroll-bounce"
-              style={{
-                width: "3px",
-                height: "7px",
-                borderRadius: "1.5px",
-                background: "linear-gradient(180deg, #ff2d78, #9b30ff)",
-              }}
-            />
-          </div>
         </motion.div>
       </div>
     </section>

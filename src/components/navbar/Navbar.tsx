@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import {
   ChevronDown,
   BookOpen,
+  LayoutDashboard,
   Code2,
   Hammer,
   Users,
@@ -20,13 +21,8 @@ const navItems = [
   {
     label: "Learn",
     icon: BookOpen,
-    href: "/learn",
+    href: "#",
     isMegaMenu: true,
-  },
-  {
-    label: "Practice",
-    icon: Code2,
-    href: "/learn",
   },
   {
     label: "Battle",
@@ -42,6 +38,11 @@ const navItems = [
     label: "Leaderboard",
     icon: Users,
     href: "/leaderboard",
+  },
+  {
+    label: "Dashboard",
+    icon: LayoutDashboard,
+    href: "/dashboard",
   },
 ];
 
@@ -178,38 +179,56 @@ export default function Navbar() {
                   }
                 }}
               >
-                <Link
-                  href={item.href}
-                  onClick={closeMenus}
-                  className="nav-link group flex items-center gap-1.5"
-                >
-                  <Icon
-                    size={15}
-                    className="opacity-70 transition-opacity group-hover:opacity-100"
-                  />
-
-                  <span>{item.label}</span>
-
-                  {item.isMegaMenu && (
-                    <ChevronDown
-                      size={13}
-                      className={`transition-transform duration-200 ${
-                        isOpen ? "rotate-180" : ""
-                      }`}
+                {item.href === "#" ? (
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setActiveDropdown(isOpen ? null : item.label)
+                    }
+                    className="nav-link group flex items-center gap-1.5"
+                    aria-expanded={isOpen}
+                  >
+                    <Icon
+                      size={15}
+                      className="opacity-70 transition-opacity group-hover:opacity-100"
                     />
-                  )}
-                </Link>
+
+                    <span>{item.label}</span>
+
+                    {item.isMegaMenu && (
+                      <ChevronDown
+                        size={13}
+                        className={`transition-transform duration-200 ${
+                          isOpen ? "rotate-180" : ""
+                        }`}
+                      />
+                    )}
+                  </button>
+                ) : (
+                  <Link
+                    href={item.href}
+                    className="nav-link group flex items-center gap-1.5"
+                  >
+                    <Icon
+                      size={15}
+                      className="opacity-70 transition-opacity group-hover:opacity-100"
+                    />
+
+                    <span>{item.label}</span>
+                  </Link>
+                )}
 
                 {/* Learn dropdown */}
                 {item.isMegaMenu && isOpen && (
                   <div
-                    className="absolute left-0 top-full mt-2 w-[330px] rounded-xl border border-[#E873C3]/20 bg-[#050508] p-5 shadow-[0_15px_50px_rgba(0,0,0,0.8),0_0_25px_rgba(232,115,195,0.12)]"
+                    className="absolute left-0 top-full pt-2"
                     onMouseEnter={() => setActiveDropdown(item.label)}
                     onMouseLeave={() => setActiveDropdown(null)}
                   >
-                    <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#E873C3]">
-                      Recommended
-                    </p>
+                    <div className="w-[330px] rounded-xl border border-[#E873C3]/20 bg-[#050508] p-5 shadow-[0_15px_50px_rgba(0,0,0,0.8),0_0_25px_rgba(232,115,195,0.12)]">
+                      <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#E873C3]">
+                        Recommended
+                      </p>
 
                     <h4 className="mt-1 text-sm font-bold text-white">
                       Start learning today
@@ -217,7 +236,7 @@ export default function Navbar() {
 
                     {/* Python */}
                     <Link
-                      href="/learn"
+                      href="/learn/python"
                       onClick={closeMenus}
                       className="group mt-5 flex gap-4 rounded-lg p-2 transition-colors hover:bg-white/[0.04]"
                     >
@@ -240,31 +259,6 @@ export default function Navbar() {
                       </div>
                     </Link>
 
-                    {/* GitHub Copilot */}
-                    <Link
-                      href="/learn"
-                      onClick={closeMenus}
-                      className="group mt-3 flex gap-4 rounded-lg p-2 transition-colors hover:bg-white/[0.04]"
-                    >
-                      <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg border border-blue-500/30 bg-blue-500/10">
-                        <Code2
-                          size={22}
-                          className="text-blue-400"
-                        />
-                      </div>
-
-                      <div>
-                        <h5 className="text-sm font-bold text-white group-hover:text-[#E873C3]">
-                          GitHub Copilot
-                        </h5>
-
-                        <p className="mt-1 text-xs leading-relaxed text-white/55">
-                          Learn how AI coding assistants can help
-                          you write code faster.
-                        </p>
-                      </div>
-                    </Link>
-
                     <Link
                       href="/learn"
                       onClick={closeMenus}
@@ -273,7 +267,8 @@ export default function Navbar() {
                       All Courses →
                     </Link>
                   </div>
-                )}
+                </div>
+              )}
               </div>
             );
           })}
@@ -284,41 +279,18 @@ export default function Navbar() {
         ===================================== */}
         <div className="flex items-center gap-2">
 
-          {/* Notification */}
-          <NotificationBell
-            notifications={[
-              {
-                id: "welcome",
-                title: "Welcome to CosmoDex!",
-                description:
-                  "Explore courses, practice coding, and join exciting battles.",
-                time: "Just now",
-              },
-              {
-                id: "course",
-                title: "New course available",
-                description:
-                  "Check out the latest learning content in Learn.",
-                time: "5 min ago",
-              },
-              {
-                id: "challenge",
-                title: "New coding challenge",
-                description:
-                  "A fresh challenge is waiting for you in Practice.",
-                time: "1 hour ago",
-              },
-            ]}
-          />
-
           {/* User */}
           {user ? (
-            <div className="flex items-center gap-2 pl-1">
-              <span className="hidden max-w-[120px] truncate text-sm font-bold text-white/80 lg:inline">
+            <Link
+              href="/profile"
+              className="flex items-center gap-2 pl-1 group cursor-pointer"
+              title="View Profile"
+            >
+              <span className="hidden max-w-[120px] truncate text-sm font-bold text-white/80 group-hover:text-[#E873C3] transition-colors lg:inline">
                 {user.username}
               </span>
 
-              <div className="flex h-8 w-8 items-center justify-center overflow-hidden rounded-full border border-[#E873C3]/70 bg-[#15151c] shadow-[0_0_12px_rgba(232,115,195,0.25)]">
+              <div className="flex h-8 w-8 items-center justify-center overflow-hidden rounded-full border border-[#E873C3]/70 bg-[#15151c] shadow-[0_0_12px_rgba(232,115,195,0.25)] group-hover:border-[#E873C3] group-hover:shadow-[0_0_18px_rgba(232,115,195,0.5)] transition-all">
                 <Image
                   src="/images/mascot.png"
                   alt="User avatar"
@@ -327,9 +299,13 @@ export default function Navbar() {
                   className="h-full w-full object-cover"
                 />
               </div>
-            </div>
+            </Link>
           ) : (
-            <div className="flex h-8 w-8 items-center justify-center overflow-hidden rounded-full border border-white/10 bg-[#15151c] opacity-60">
+            <Link
+              href="/profile"
+              className="flex h-8 w-8 items-center justify-center overflow-hidden rounded-full border border-white/10 bg-[#15151c] opacity-60 hover:opacity-100 hover:border-[#E873C3]/50 transition-all cursor-pointer"
+              title="View Profile"
+            >
               <Image
                 src="/images/mascot.png"
                 alt="Guest avatar"
@@ -337,7 +313,7 @@ export default function Navbar() {
                 height={32}
                 className="h-full w-full object-cover"
               />
-            </div>
+            </Link>
           )}
 
           {/* Auth */}
@@ -357,6 +333,9 @@ export default function Navbar() {
               Join Crew
             </Link>
           )}
+
+          {/* Notification (Positioned at the very end after Log out / Join Crew button) */}
+          <NotificationBell />
 
           {/* Mobile button */}
           <button

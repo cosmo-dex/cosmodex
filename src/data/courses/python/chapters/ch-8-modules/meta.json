@@ -1,0 +1,11 @@
+{
+  "id": "ch-8",
+  "number": 9,
+  "stationNumber": "STATION 09",
+  "title": "MODULES",
+  "description": "Import built-in Python modules like math, random, datetime, and os.",
+  "xpValue": 100,
+  "planetType": "striped-banded",
+  "isUnlocked": false,
+  "theoryLessonId": "ch-8"
+}
