@@ -1,6 +1,5 @@
 import { cookies } from 'next/headers';
 import prisma from '@/lib/prisma';
-import Navbar from "@/components/navbar/Navbar";
 import DashboardBackground from "@/components/dashboard/DashboardBackground";
 import WelcomeBanner from "@/components/dashboard/WelcomeBanner";
 import GetStartedCard from "@/components/dashboard/GetStartedCard";
@@ -32,7 +31,7 @@ export default async function DashboardPage() {
     userId = user.userId || null;
   }
 
-  // Fetch dynamic data server-side in parallel
+  // Fetch dynamic data server-side in parallel with fast timeout fallback
   let streak = 0;
   let badgeCount = 0;
   let badges: Array<{ id: string; name: string; description: string | null; earnedAt: string | null }> = [];
@@ -47,14 +46,16 @@ export default async function DashboardPage() {
 
   if (userId) {
     try {
-      const [arenaStats, userBadges, recentProgress, userEnrollments] = await Promise.all([
+      const dbQueryPromise = Promise.all([
         prisma.arena_stats.findUnique({
           where: { user_id: userId },
           select: { current_streak: true, total_xp: true, total_solved: true },
         }),
         prisma.user_badges.findMany({
           where: { user_id: userId },
-          include: {
+          select: {
+            id: true,
+            earned_at: true,
             badges: { select: { name: true, description: true, badge_type: true } },
           },
           orderBy: { earned_at: 'desc' },
@@ -62,7 +63,10 @@ export default async function DashboardPage() {
         }),
         prisma.progress.findMany({
           where: { user_id: userId, is_correct: true },
-          include: {
+          select: {
+            id: true,
+            completed_at: true,
+            xp_earned: true,
             modules: {
               select: {
                 title: true,
@@ -75,13 +79,23 @@ export default async function DashboardPage() {
         }),
         prisma.enrollments.findMany({
           where: { user_id: userId, is_active: true },
-          include: {
+          select: {
+            id: true,
             languages: { select: { id: true, name: true, code: true, icon_url: true } },
             modules: { select: { title: true } },
           },
           orderBy: { enrolled_at: 'desc' },
           take: 5,
         }),
+      ]);
+
+      const timeoutPromise = new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error('DB Query Timeout')), 1200)
+      );
+
+      const [arenaStats, userBadges, recentProgress, userEnrollments] = await Promise.race([
+        dbQueryPromise,
+        timeoutPromise,
       ]);
 
       streak = arenaStats?.current_streak ?? 0;
@@ -130,10 +144,9 @@ export default async function DashboardPage() {
 
   return (
     <div className="min-h-screen bg-[#080312] flex flex-col relative overflow-x-hidden">
-      <Navbar />
       <DashboardBackground />
 
-      <main className="mx-auto w-full max-w-[1200px] px-4 sm:px-6 py-8 pt-24 relative flex-1 z-10 flex flex-col gap-8">
+      <main className="mx-auto w-full max-w-[1200px] px-4 sm:px-6 py-8 pt-20 relative flex-1 z-10 flex flex-col gap-8">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
           
           {/* Left Column (Main Content) */}

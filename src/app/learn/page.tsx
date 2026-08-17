@@ -5,11 +5,13 @@ import Navbar from "@/components/navbar/Navbar";
 import Footer from "@/components/landing/Footer";
 import { motion, AnimatePresence } from "framer-motion";
 import CourseCard, { CourseData } from "@/components/learn/CourseCard";
+import Link from "next/link";
 import {
   Search,
   X,
   ChevronLeft,
   ChevronRight,
+  LayoutDashboard,
 } from "lucide-react";
 import RisingStars from "@/component/RisingStar";
 
@@ -527,13 +529,23 @@ export default function LearnPage() {
       {/* Main Content Container */}
       <div className="relative z-10 pb-20 px-4 sm:px-8 max-w-[1140px] mx-auto space-y-16">
         {/* ── Main Page Heading Section ── */}
-        <div className="text-left border-b border-white/10 pb-6">
-          <h1 className="text-3xl sm:text-4xl font-sans font-bold text-white tracking-tight mb-2">
-            Learn with CosmoDeX
-          </h1>
-          <p className="text-sm sm:text-base text-[#94a3b8] font-sans leading-relaxed">
-            Explore interactive courses and master programming step by step.
-          </p>
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-white/10 pb-6">
+          <div className="text-left">
+            <h1 className="text-3xl sm:text-4xl font-sans font-bold text-white tracking-tight mb-2">
+              Learn with CosmoDeX
+            </h1>
+            <p className="text-sm sm:text-base text-[#94a3b8] font-sans leading-relaxed">
+              Explore interactive courses and master programming step by step.
+            </p>
+          </div>
+          <Link
+            href="/dashboard"
+            prefetch={true}
+            className="inline-flex items-center gap-2.5 px-5 py-2.5 rounded-xl font-sans font-bold text-xs sm:text-sm text-white bg-gradient-to-r from-[#E873C3] via-[#C453D6] to-[#8D37D6] hover:from-[#f085ce] hover:to-[#9a42e4] border border-[#E873C3]/50 shadow-[0_0_20px_rgba(232,115,195,0.4)] hover:shadow-[0_0_30px_rgba(232,115,195,0.6)] transition-all cursor-pointer shrink-0 active:scale-95"
+          >
+            <LayoutDashboard size={18} />
+            <span>Go to Dashboard</span>
+          </Link>
         </div>
 
         {/* ── TRACK 1: WEB DEVELOPMENT (With Arrow Pagination) ── */}

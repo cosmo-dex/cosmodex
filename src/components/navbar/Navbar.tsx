@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import {
   ChevronDown,
@@ -12,11 +13,17 @@ import {
   Menu,
   X,
   CalendarDays,
+  LayoutDashboard,
 } from "lucide-react";
 
 import { NotificationBell } from "../notification/notification-bell";
 
 const navItems = [
+  {
+    label: "Dashboard",
+    icon: LayoutDashboard,
+    href: "/dashboard",
+  },
   {
     label: "Learn",
     icon: BookOpen,
@@ -56,9 +63,14 @@ interface UserSession {
 }
 
 export default function Navbar() {
+  const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
   const [user, setUser] = useState<UserSession | null>(null);
+
+  const visibleNavItems = navItems.filter(
+    (item) => !(item.href === "/dashboard" && pathname === "/dashboard")
+  );
 
   /* ----------------------------------------
      SESSION
@@ -159,7 +171,7 @@ export default function Navbar() {
             DESKTOP NAVIGATION
         ===================================== */}
         <nav className="hidden items-center gap-1 md:flex">
-          {navItems.map((item) => {
+          {visibleNavItems.map((item) => {
             const Icon = item.icon;
             const isOpen = activeDropdown === item.label;
 
@@ -180,6 +192,7 @@ export default function Navbar() {
               >
                 <Link
                   href={item.href}
+                  prefetch={true}
                   onClick={closeMenus}
                   className="nav-link group flex items-center gap-1.5"
                 >
@@ -377,7 +390,7 @@ export default function Navbar() {
       {mobileOpen && (
         <div className="animate-fade-in border-t border-white/[0.08] bg-[#050508]/95 px-4 py-4 shadow-2xl backdrop-blur-xl md:hidden">
           <div className="space-y-1">
-            {navItems.map((item) => {
+            {visibleNavItems.map((item) => {
               const Icon = item.icon;
 
               return (

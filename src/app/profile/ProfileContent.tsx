@@ -1,7 +1,9 @@
 "use client";
 import { useState, useTransition } from 'react';
+import { useRouter } from 'next/navigation';
+import NextLink from 'next/link';
 import { motion, AnimatePresence } from 'motion/react';
-import { Calendar, Edit, Zap, Shield, Award, Flame, Plus, X, Globe, Link, MessageCircle, Video, Share2, CheckCircle2, Star, Loader2 } from 'lucide-react';
+import { Calendar, Edit, Zap, Shield, Award, Flame, Plus, X, Globe, Link, MessageCircle, Video, Share2, CheckCircle2, Star, Loader2, ArrowLeft, LayoutDashboard } from 'lucide-react';
 import RisingStars from '../../component/RisingStar';
 
 const ONBOARDING_SKILLS = [
@@ -57,6 +59,7 @@ export default function ProfileContent({
   starPoints,
   rankThreshold,
 }: ProfileContentProps) {
+  const router = useRouter();
   const [activeTab, setActiveTab] = useState('overview');
   const [isEditing, setIsEditing] = useState(false);
   const [isAddingSkill, setIsAddingSkill] = useState(false);
@@ -277,7 +280,32 @@ export default function ProfileContent({
 
       {/* Main Content Area */}
       <div className="relative z-10 w-full h-full overflow-y-auto px-4 py-8 sm:px-8 custom-scrollbar">
-        <div className="w-full h-12 mb-8"></div>
+        {/* Top Navigation Bar with Back Button */}
+        <div className="w-full max-w-5xl mx-auto flex items-center justify-between mb-6 pt-2">
+          <button
+            onClick={() => {
+              if (typeof window !== 'undefined' && window.history.length > 1) {
+                router.back();
+              } else {
+                router.push('/dashboard');
+              }
+            }}
+            className="cosmo-glass-panel px-4 py-2 rounded-xl text-xs sm:text-sm font-sans font-bold text-white/90 hover:text-white border border-white/15 hover:border-[#E873C3]/50 hover:bg-[#E873C3]/10 transition-all flex items-center gap-2 shadow-lg group active:scale-95 cursor-pointer z-30"
+            title="Go Back"
+          >
+            <ArrowLeft size={18} className="group-hover:-translate-x-1 transition-transform" />
+            <span>Back</span>
+          </button>
+
+          <NextLink
+            href="/dashboard"
+            prefetch={true}
+            className="cosmo-glass-panel px-4 py-2 rounded-xl text-xs sm:text-sm font-sans font-bold text-white/90 hover:text-white border border-white/15 hover:border-[#E873C3]/50 hover:bg-[#E873C3]/10 transition-all flex items-center gap-2 shadow-lg group active:scale-95 cursor-pointer z-30"
+          >
+            <LayoutDashboard size={16} />
+            <span className="hidden sm:inline">Dashboard</span>
+          </NextLink>
+        </div>
 
         <div className="w-full max-w-5xl mx-auto flex flex-col lg:flex-row gap-6 lg:gap-8 pb-32">
 
