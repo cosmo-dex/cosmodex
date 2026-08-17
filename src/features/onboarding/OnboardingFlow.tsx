@@ -85,7 +85,7 @@ export default function OnboardingFlow() {
       }
     }
     checkSession();
-  }, []);
+  }, [searchParams]);
 
   const currentStep = STEPS[stepIndex];
 

@@ -1,5 +1,5 @@
 "use client";
-import { useState, useTransition, useEffect } from 'react';
+import { useState, useTransition } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Calendar, Edit, Zap, Shield, Award, Flame, Plus, X, Globe, Link, MessageCircle, Video, Share2, CheckCircle2, Star, Loader2 } from 'lucide-react';
 import RisingStars from '../../component/RisingStar';
@@ -63,38 +63,36 @@ export default function ProfileContent({
   const [isPending, startTransition] = useTransition();
   const [saveError, setSaveError] = useState<string | null>(null);
 
-  const [profile, setProfile] = useState({
-    name: initialUsername,
-    username: initialUsername,
-    skills: initialInterests,
-    socials: {
+  const [profile, setProfile] = useState(() => {
+    let initialSocials = {
       github: '',
       linkedin: '',
       twitter: '',
       instagram: '',
       youtube: '',
       twitch: ''
-    }
-  });
+    };
 
-  const [editData, setEditData] = useState(profile);
-
-  useEffect(() => {
     if (typeof window !== 'undefined') {
       const savedSocials = localStorage.getItem(`cosmo_socials_${initialUsername}`);
       if (savedSocials) {
         try {
-          const parsed = JSON.parse(savedSocials);
-          setProfile(prev => ({
-            ...prev,
-            socials: { ...prev.socials, ...parsed }
-          }));
+          initialSocials = { ...initialSocials, ...JSON.parse(savedSocials) };
         } catch (e) {
           console.error('Failed to parse saved socials:', e);
         }
       }
     }
-  }, [initialUsername]);
+
+    return {
+      name: initialUsername,
+      username: initialUsername,
+      skills: initialInterests,
+      socials: initialSocials,
+    };
+  });
+
+  const [editData, setEditData] = useState(profile);
 
   const handleSaveProfile = () => {
     setSaveError(null);
