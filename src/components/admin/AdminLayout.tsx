@@ -17,6 +17,7 @@ import {
   X,
   ChevronRight,
   CalendarDays,
+  Bell,
 } from 'lucide-react';
 
 interface AdminUser {
@@ -36,12 +37,14 @@ const NAV_BY_ROLE: Record<string, NavItem[]> = {
   super_admin: [
     { label: 'Overview', href: '/super-admin', icon: LayoutDashboard },
     { label: 'User Management', href: '/super-admin/users', icon: Users },
+    { label: 'Notifications', href: '/super-admin/notifications', icon: Bell },
     { label: 'Events', href: '/super-admin/events', icon: CalendarDays },
     { label: 'Create Admin', href: '/super-admin/create-admin', icon: UserPlus },
     { label: 'Change Password', href: '/super-admin/change-password', icon: Key },
   ],
   learning_admin: [
     { label: 'Overview', href: '/learning-admin', icon: LayoutDashboard },
+    { label: 'Notifications', href: '/super-admin/notifications', icon: Bell },
     { label: 'Change Password', href: '/learning-admin/change-password', icon: Key },
   ],
   arena_admin: [
@@ -49,6 +52,7 @@ const NAV_BY_ROLE: Record<string, NavItem[]> = {
     { label: 'Battle Problems', href: '/arena-admin/problems', icon: Swords },
     { label: 'Match Monitor', href: '/arena-admin/matches', icon: ScrollText },
     { label: 'ELO Ladder', href: '/arena-admin/stats', icon: Users },
+    { label: 'Notifications', href: '/super-admin/notifications', icon: Bell },
     { label: 'Change Password', href: '/arena-admin/change-password', icon: Key },
   ],
 };

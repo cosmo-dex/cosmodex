@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 
 interface TheoryHeaderProps {
@@ -8,6 +9,7 @@ interface TheoryHeaderProps {
   courseId?: string;
   exerciseIndex?: number;
   totalExercises?: number;
+  exerciseId?: string;
 }
 
 export default function TheoryHeader({
@@ -15,16 +17,32 @@ export default function TheoryHeader({
   courseId,
   exerciseIndex,
   totalExercises,
+  exerciseId,
 }: TheoryHeaderProps) {
+  const router = useRouter();
+
+  const handleBack = (e: React.MouseEvent) => {
+    if (window.history.length > 1) {
+      e.preventDefault();
+      router.back();
+    }
+  };
+
+  const fallbackHref =
+    courseId === "py-1" || courseId === "python"
+      ? `/learn/python${exerciseId ? `#${exerciseId}` : ""}`
+      : `/learn/${courseId || ""}`;
+
   return (
     <header className="fixed top-16 left-0 right-0 z-30 bg-[#080d19] border-b border-[#1b263b] px-4 sm:px-8 py-3 flex items-center justify-between font-sans shadow-md">
       {/* Left: Back Arrow & Exercise Counter */}
       <div className="flex items-center gap-3">
         {courseId && (
           <Link
-            href={`/learn`}
+            href={fallbackHref}
+            onClick={handleBack}
             className="p-2 rounded-xl border border-white/10 bg-white/[0.04] text-slate-400 hover:border-[#E873C3]/50 hover:bg-[#E873C3]/10 hover:text-[#E873C3] transition-all cursor-pointer"
-            title="Back to Courses"
+            title="Back to Station Map"
           >
             <ArrowLeft size={16} />
           </Link>

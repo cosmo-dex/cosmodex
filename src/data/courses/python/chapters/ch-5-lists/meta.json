@@ -1,0 +1,11 @@
+{
+  "id": "ch-5",
+  "number": 6,
+  "stationNumber": "STATION 05",
+  "title": "LISTS",
+  "description": "Store collection sequences, slice items, append elements, and sort lists.",
+  "xpValue": 90,
+  "planetType": "moon-crater",
+  "isUnlocked": false,
+  "theoryLessonId": "ch-5"
+}

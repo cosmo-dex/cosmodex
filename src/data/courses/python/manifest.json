@@ -1,0 +1,16 @@
+{
+  "courseId": "py-1",
+  "courseTitle": "Python Galaxy Expedition",
+  "chaptersOrder": [
+    "ch-1-hello-world",
+    "ch-2-variables",
+    "ch-3-control-flow",
+    "ch-4-loops",
+    "milestone-1-space-adventure",
+    "ch-5-lists",
+    "ch-6-functions",
+    "ch-7-classes",
+    "ch-8-modules",
+    "milestone-2-capstone"
+  ]
+}
