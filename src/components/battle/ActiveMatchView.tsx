@@ -3,8 +3,8 @@
 import { useEffect, useState, useRef } from 'react';
 import { Socket } from 'socket.io-client';
 import Editor, { Monaco } from '@monaco-editor/react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { CheckCircle2, Trophy, Swords, Zap } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { CheckCircle2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import DashboardBackground from '@/components/dashboard/DashboardBackground';
 import { Starfield } from '../leaderboard/Starfield';
@@ -19,8 +19,7 @@ function getAvatar(name: string) {
   return (name || "?").charAt(0).toUpperCase();
 }
 
-const fmt = (s: number) =>
-  `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
+
 
 const hearts = (n = 5, max = 5) =>
   Array.from({ length: max }, (_, i) => (
@@ -516,9 +515,7 @@ export default function ActiveMatchView({ socket, matchInfo, userId, username, o
 
   const myStage = myPlayerCode?.currentStage ?? codeState?.currentStage ?? 1;
   const isBoss = myStage === 6;
-  const myTimeRemaining = isBoss
-    ? codeState?.stageTimeRemaining
-    : (myPlayerCode?.stageTimeRemaining ?? codeState?.stageTimeRemaining);
+
 
   const inDecision = waitingDecision || myPlayerCode?.status === 'WAITING_DECISION';
   const isWaiting = myPlayerCode?.status === 'DONE';

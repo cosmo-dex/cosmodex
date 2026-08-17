@@ -1,0 +1,45 @@
+{
+  "title": "Lists: Storing Collections of Data",
+  "sections": [
+    {
+      "heading": "What is a List?",
+      "content": [
+        "So far, every variable you've made has held **one single value**. A **list** breaks that limit it's an ordered collection that can hold many values in a single variable.",
+        "You create a list with square brackets: `groceries = [\"milk\", \"eggs\", \"bread\"]`. Lists can hold any data type strings, integers, floats, booleans and can even mix types, though in practice you'll usually keep one type per list.",
+        "Lists are **ordered** and **mutable** the order of items is preserved, and you can change, add, or remove items after the list is created."
+      ]
+    },
+    {
+      "heading": "Indexing & Slicing",
+      "content": [
+        "Every item in a list has a position called an **index**, starting at `0`, not `1`. So in `groceries = [\"milk\", \"eggs\", \"bread\"]`, `groceries[0]` is `\"milk\"` and `groceries[2]` is `\"bread\"`.",
+        "Negative indexing counts from the end: `groceries[-1]` gives the **last** item (`\"bread\"`), which is handy when you don't know a list's exact length.",
+        "**Slicing** lets you pull out a sub-section of a list using `list[start:stop]` it grabs items from `start` up to (but not including) `stop`. Example: `groceries[0:2]` returns `[\"milk\", \"eggs\"]`. Leaving either side blank means 'from the beginning' or 'to the end': `groceries[:2]` and `groceries[1:]` both work.",
+        "Trying to access an index that doesn't exist (like `groceries[10]` on a 3-item list) raises an `IndexError` a very common bug to watch for."
+      ]
+    },
+    {
+      "heading": "Modifying Lists",
+      "content": [
+        "**Adding items:** `list.append(item)` adds a single item to the end this is exactly what you'll use in the **Grocery List** and **Inventory** exercises to let a user add new entries.",
+        "**Removing items:** `list.remove(item)` removes the first matching item by value, while `list.pop(index)` removes an item at a specific position (and returns it, so you can use the removed value if needed).",
+        "**Updating an item:** you can directly reassign by index `groceries[0] = \"oat milk\"` swaps out the first item.",
+        "**Checking length:** `len(list)` returns the number of items useful for things like showing how many songs are in a **Playlist Manager**, or how many items are left in stock in an **Inventory** system."
+      ]
+    },
+    {
+      "heading": "Looping Through Lists",
+      "content": [
+        "The most common thing you'll do with a list is loop through it, combining Station 04's `for` loop with a list directly:\n```python\nfor item in groceries:\n    print(item)\n```\nThis is cleaner than looping with `range()` when you just need each item, not its index.",
+        "If you need both the index and the value, use `enumerate()`: `for index, item in enumerate(groceries):` useful for numbered output, like showing track numbers in a **Playlist Manager**."
+      ]
+    },
+    {
+      "heading": "Sorting & Built-in List Functions",
+      "content": [
+        "`list.sort()` sorts a list in place (permanently changes it), while `sorted(list)` returns a new sorted list and leaves the original untouched. Add `reverse=True` to either for descending order exactly what you'll need for **High Scores Analytics** to rank scores from highest to lowest.",
+        "Other useful built-ins for numeric lists: `max(list)` and `min(list)` find the highest and lowest values, and `sum(list)` adds everything up all directly applicable to analyzing a list of high scores or inventory counts."
+      ]
+    }
+  ]
+}

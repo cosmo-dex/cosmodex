@@ -1,0 +1,11 @@
+{
+  "id": "ch-6",
+  "number": 7,
+  "stationNumber": "STATION 07",
+  "title": "FUNCTIONS",
+  "description": "Write reusable code blocks using def, parameters, arguments, and return values.",
+  "xpValue": 95,
+  "planetType": "green-crater",
+  "isUnlocked": false,
+  "theoryLessonId": "ch-6"
+}

@@ -1,0 +1,11 @@
+{
+  "id": "ch-4",
+  "number": 4,
+  "stationNumber": "STATION 04",
+  "title": "LOOPS",
+  "description": "Automate repetitive tasks with for loops, while loops, and range iteration.",
+  "xpValue": 85,
+  "planetType": "saturn-ring",
+  "isUnlocked": false,
+  "theoryLessonId": "ch-4"
+}

@@ -1,0 +1,34 @@
+[
+  {
+    "id": "ex-20",
+    "numberLabel": "Exercise 1",
+    "title": "Dry Code",
+    "isUnlocked": true,
+    "instruction": "Define a function greet(name) and call it twice.",
+    "initialCode": "# Exercise: Dry Code\n\ndef greet(name):\n    print(\"Hello,\", name)\n\ngreet(\"Cosmo\")\ngreet(\"Explorer\")"
+  },
+  {
+    "id": "ex-21",
+    "numberLabel": "Exercise 2",
+    "title": "Calculator",
+    "isUnlocked": false,
+    "instruction": "Define add(a, b) and multiply(a, b) functions that return values.",
+    "initialCode": "# Exercise: Calculator\n\ndef add(a, b):\n    return a + b\n\ndef multiply(a, b):\n    return a * b\n\nprint(\"Sum:\", add(12, 8))\nprint(\"Product:\", multiply(4, 5))"
+  },
+  {
+    "id": "ex-63",
+    "numberLabel": "Exercise 3",
+    "title": "Temperature Converter",
+    "isUnlocked": false,
+    "instruction": "Write a function fahrenheit_to_celsius(f) that returns temperature in Celsius rounded to 1 decimal place.",
+    "initialCode": "# Exercise: Temperature Converter\n\ndef fahrenheit_to_celsius(f):\n    c = (f - 32) * 5 / 9\n    return round(c, 1)\n\nprint(\"100 F in C is:\", fahrenheit_to_celsius(100))"
+  },
+  {
+    "id": "ex-64",
+    "numberLabel": "Exercise 4",
+    "title": "Palindrome Checker",
+    "isUnlocked": false,
+    "instruction": "Write a function is_palindrome(word) that returns True if word reads the same forward and backward.",
+    "initialCode": "# Exercise: Palindrome Checker\n\ndef is_palindrome(word):\n    clean = word.lower()\n    return clean == clean[::-1]\n\nprint(\"radar:\", is_palindrome(\"radar\"))\nprint(\"python:\", is_palindrome(\"python\"))"
+  }
+]

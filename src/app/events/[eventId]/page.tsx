@@ -303,6 +303,7 @@ export default function EventDetailPage() {
       {/* Hero Banner */}
       <div className="relative h-72 md:h-96 overflow-hidden pt-16">
         {event.banner_url ? (
+          /* eslint-disable-next-line @next/next/no-img-element */
           <img src={event.banner_url} alt={event.title} className="absolute inset-0 w-full h-full object-cover" />
         ) : (
           <div className="absolute inset-0" style={{ background: `linear-gradient(135deg, ${typeMeta.color}25 0%, #8D37D625 50%, #06020f 100%)` }} />

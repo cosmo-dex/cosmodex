@@ -30,9 +30,10 @@ export function RankTable({ players }: { players: Player[] }) {
               }}
               className="group relative z-0 grid grid-cols-[2.5rem_1fr_auto] items-center gap-3 rounded-btn border border-border-subtle bg-bg-surface px-3 py-3 transition-all duration-200 hover:z-10 hover:border-border-accent hover:bg-white/[0.07] md:grid-cols-[3rem_1fr_7rem_6rem_7rem]"
             >
-              <span className="font-display text-sm text-text-muted transition-colors group-hover:text-text-accent">#{i + 4}</span>
+              <span className="font-display text-sm font-semibold text-text-secondary transition-colors group-hover:text-text-accent">#{i + 4}</span>
 
               <div className="flex min-w-0 items-center gap-3">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={p.avatar}
                   alt={`${p.name} avatar`}
@@ -68,8 +69,8 @@ export function RankTable({ players }: { players: Player[] }) {
                 <span className="text-text-secondary">{p.streak}</span>
               </div>
 
-              <span className="text-right text-sm font-bold text-xp-gold transition-all duration-200 group-hover:drop-shadow-[0_0_8px_rgba(245,200,66,0.6)]">
-                {p.xp.toLocaleString()}
+              <span className="text-right text-xs md:text-sm font-bold text-xp-gold transition-all duration-200 group-hover:drop-shadow-[0_0_8px_rgba(245,200,66,0.6)] shrink-0">
+                {p.xp.toLocaleString()} XP
               </span>
             </motion.li>
           );
