@@ -3,7 +3,7 @@
 import Link from "next/link";
 import Navbar from "@/components/navbar/Navbar";
 import RisingStars from "@/component/RisingStar";
-import { ArrowLeft, Sparkles, Terminal, LayoutDashboard } from "lucide-react";
+import { ArrowLeft, Sparkles, Terminal } from "lucide-react";
 
 interface NoExercisesViewProps {
   courseId: string;
@@ -53,17 +53,8 @@ export default function NoExercisesView({ courseId }: NoExercisesViewProps) {
           {/* Actions */}
           <div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-3">
             <Link
-              href="/dashboard"
-              prefetch={true}
-              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-sans font-bold text-sm text-white bg-gradient-to-r from-[#E873C3] via-[#C453D6] to-[#8D37D6] hover:from-[#f085ce] hover:to-[#9a42e4] border border-[#E873C3]/50 shadow-[0_0_20px_rgba(232,115,195,0.4)] hover:shadow-[0_0_30px_rgba(232,115,195,0.6)] transition-all cursor-pointer"
-            >
-              <LayoutDashboard size={16} />
-              <span>Go to Dashboard</span>
-            </Link>
-
-            <Link
               href="/learn"
-              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-sans font-bold text-sm text-slate-200 bg-white/10 border border-white/20 hover:bg-white/20 transition-all cursor-pointer"
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-sans font-bold text-sm text-white bg-gradient-to-r from-[#E873C3] via-[#C453D6] to-[#8D37D6] hover:from-[#f085ce] hover:to-[#9a42e4] border border-[#E873C3]/50 shadow-[0_0_20px_rgba(232,115,195,0.4)] hover:shadow-[0_0_30px_rgba(232,115,195,0.6)] transition-all cursor-pointer"
             >
               <ArrowLeft size={16} />
               <span>Back to Courses</span>
