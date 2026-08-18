@@ -3,8 +3,29 @@ import { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import NextLink from 'next/link';
 import { motion, AnimatePresence } from 'motion/react';
-import { Calendar, Edit, Zap, Shield, Award, Flame, Plus, X, Globe, Link, MessageCircle, Video, Share2, CheckCircle2, Star, Loader2, ArrowLeft, LayoutDashboard } from 'lucide-react';
-import RisingStars from '../../component/RisingStar';
+import {
+  Calendar,
+  Edit,
+  Shield,
+  Award,
+  Flame,
+  Plus,
+  X,
+  Globe,
+  Link as LinkIcon,
+  MessageCircle,
+  Share2,
+  CheckCircle2,
+  Loader2,
+  Swords,
+  Trophy,
+  Lock,
+  ArrowLeft,
+  LayoutDashboard,
+} from 'lucide-react';
+import Navbar from '@/components/navbar/Navbar';
+import DashboardBackground from '@/components/dashboard/DashboardBackground';
+import Footer from '@/components/dashboard/Footer';
 
 const ONBOARDING_SKILLS = [
   'Python',
@@ -139,7 +160,7 @@ export default function ProfileContent({
   arenaLosses = 3,
 }: ProfileContentProps) {
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'practice' | 'battles'>('overview');
   const [isEditing, setIsEditing] = useState(false);
   const [isAddingSkill, setIsAddingSkill] = useState(false);
   const [isPending, startTransition] = useTransition();
@@ -169,12 +190,19 @@ export default function ProfileContent({
     return {
       name: initialUsername,
       username: initialUsername,
+      bio: initialBio,
+      avatarUrl: initialAvatarUrl,
       skills: initialInterests,
       socials: initialSocials,
     };
   });
 
   const [editData, setEditData] = useState(profile);
+  const [badgeFilter, setBadgeFilter] = useState<'all' | 'earned' | 'locked'>('all');
+  const [selectedBadgeModal, setSelectedBadgeModal] = useState<ShowcaseBadge | null>(null);
+  const [tempSkills, setTempSkills] = useState<string[]>(initialInterests);
+  const [customSkillInput, setCustomSkillInput] = useState('');
+  const [isSavingSkills, setIsSavingSkills] = useState(false);
 
   const handleSaveProfile = () => {
     setSaveError(null);
@@ -303,8 +331,6 @@ export default function ProfileContent({
             <span className="hidden sm:inline">Dashboard</span>
           </NextLink>
         </div>
-
-        <div className="w-full max-w-5xl mx-auto flex flex-col lg:flex-row gap-6 lg:gap-8 pb-32">
 
         <div className="w-full max-w-6xl mx-auto px-4 py-8 sm:px-8">
           <div className="w-full flex flex-col lg:flex-row gap-6 lg:gap-8 pb-12">
