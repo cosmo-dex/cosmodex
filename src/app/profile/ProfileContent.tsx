@@ -275,7 +275,7 @@ export default function ProfileContent({
   });
 
   return (
-    <div className="relative w-screen h-screen overflow-hidden bg-[#080312] text-white">
+    <div className="relative min-h-screen bg-[#080312] text-white">
       {/* Top Main Site Navbar */}
       <Navbar />
 
@@ -283,7 +283,7 @@ export default function ProfileContent({
       <DashboardBackground />
 
       {/* Main Content Area */}
-      <div className="relative z-10 w-full h-full overflow-y-auto custom-scrollbar">
+      <div className="relative z-10 w-full">
         {/* Spacer for fixed top Navbar */}
         <div className="w-full h-16"></div>
 
