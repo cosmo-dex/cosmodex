@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { displayFont, bodyFont, monoFont } from "@/fonts";
 import "./globals.css";
 import SmoothScroll from "@/components/landing/SmoothScroll";
+import Mascot from "@/features/mascot/Mascot";
 
 export const metadata: Metadata = {
   title: "CosmoDeX — Start Your Coding Expedition",
@@ -42,6 +43,7 @@ export default function RootLayout({
         {/* Noise overlay for texture */}
         <div className="noise-overlay" aria-hidden="true" />
         {children}
+        <Mascot />
       </body>
     </html>
   );

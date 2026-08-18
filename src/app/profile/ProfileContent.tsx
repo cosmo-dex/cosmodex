@@ -268,7 +268,7 @@ export default function ProfileContent({
   });
 
   return (
-    <div className="relative w-screen h-screen overflow-hidden bg-[#080312] text-white">
+    <div className="relative min-h-screen bg-[#080312] text-white">
       {/* Top Main Site Navbar */}
       <Navbar />
 

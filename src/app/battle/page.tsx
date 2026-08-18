@@ -95,7 +95,7 @@ export default function BattlePage() {
 
   // ── LOBBY / MATCHMAKING ───────────────────────────────────────────────────
   return (
-    <div className="relative w-screen h-screen overflow-hidden bg-[#050508] text-white flex flex-col starfield">
+    <div className="relative min-h-screen bg-[#050508] text-white flex flex-col starfield">
       {/* Background: Leaderboard-style dark space gradient */}
       <div className="absolute inset-0 pointer-events-none z-0 overflow-hidden">
         {/* Deep dark base matching leaderboard */}
