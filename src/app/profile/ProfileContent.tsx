@@ -433,33 +433,48 @@ export default function ProfileContent({
               <div className="flex items-center gap-8 mt-10 border-b border-white/10 text-base font-semibold tracking-wide">
                 <button
                   onClick={() => setActiveTab('overview')}
-                  className={`pb-4 px-1 -mb-[1px] transition-colors cursor-pointer ${
-                    activeTab === 'overview'
-                      ? 'text-white border-b-2 border-fuchsia-400'
-                      : 'text-white/40 border-b-2 border-transparent hover:text-white/80'
+                  className={`pb-4 px-1 -mb-[1px] transition-colors cursor-pointer relative ${
+                    activeTab === 'overview' ? 'text-white' : 'text-white/40 hover:text-white/80'
                   }`}
                 >
                   Overview
+                  {activeTab === 'overview' && (
+                    <motion.div
+                      layoutId="activeProfileNavTab"
+                      transition={{ type: "spring", stiffness: 400, damping: 30 }}
+                      className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-[#E873C3] to-[#8D37D6] shadow-[0_0_12px_rgba(232,115,195,0.8)]"
+                    />
+                  )}
                 </button>
                 <button
                   onClick={() => setActiveTab('practice')}
-                  className={`pb-4 px-1 -mb-[1px] transition-colors cursor-pointer ${
-                    activeTab === 'practice'
-                      ? 'text-white border-b-2 border-fuchsia-400'
-                      : 'text-white/40 border-b-2 border-transparent hover:text-white/80'
+                  className={`pb-4 px-1 -mb-[1px] transition-colors cursor-pointer relative ${
+                    activeTab === 'practice' ? 'text-white' : 'text-white/40 hover:text-white/80'
                   }`}
                 >
                   Practice & Lessons
+                  {activeTab === 'practice' && (
+                    <motion.div
+                      layoutId="activeProfileNavTab"
+                      transition={{ type: "spring", stiffness: 400, damping: 30 }}
+                      className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-[#E873C3] to-[#8D37D6] shadow-[0_0_12px_rgba(232,115,195,0.8)]"
+                    />
+                  )}
                 </button>
                 <button
                   onClick={() => setActiveTab('battles')}
-                  className={`pb-4 px-1 -mb-[1px] transition-colors cursor-pointer ${
-                    activeTab === 'battles'
-                      ? 'text-white border-b-2 border-fuchsia-400'
-                      : 'text-white/40 border-b-2 border-transparent hover:text-white/80'
+                  className={`pb-4 px-1 -mb-[1px] transition-colors cursor-pointer relative ${
+                    activeTab === 'battles' ? 'text-white' : 'text-white/40 hover:text-white/80'
                   }`}
                 >
                   Battle Stats
+                  {activeTab === 'battles' && (
+                    <motion.div
+                      layoutId="activeProfileNavTab"
+                      transition={{ type: "spring", stiffness: 400, damping: 30 }}
+                      className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-[#E873C3] to-[#8D37D6] shadow-[0_0_12px_rgba(232,115,195,0.8)]"
+                    />
+                  )}
                 </button>
               </div>
 
@@ -570,32 +585,42 @@ export default function ProfileContent({
                 <Trophy size={18} className="text-[#FFD700]" />
               </div>
 
-              {/* Badge Filter Tabs */}
-              <div className="flex items-center gap-1.5 p-1 bg-white/[0.04] rounded-xl border border-white/10">
+              {/* Badge Filter Tabs with Smooth Sliding Pill */}
+              <div className="flex items-center gap-1.5 p-1 bg-white/[0.04] rounded-xl border border-white/10 relative">
                 {(['all', 'earned', 'locked'] as const).map((tab) => (
                   <button
                     key={tab}
                     onClick={() => setBadgeFilter(tab)}
-                    className={`flex-1 py-1 text-xs font-mono font-bold uppercase rounded-lg transition-all cursor-pointer ${
+                    className={`flex-1 py-1 text-xs font-mono font-bold uppercase rounded-lg transition-all cursor-pointer relative z-10 ${
                       badgeFilter === tab
-                        ? 'bg-[#E873C3]/20 border border-[#E873C3]/50 text-white shadow-sm'
+                        ? 'text-white'
                         : 'text-slate-400 hover:text-white'
                     }`}
                   >
+                    {badgeFilter === tab && (
+                      <motion.div
+                        layoutId="activeBadgeTab"
+                        transition={{ type: "spring", stiffness: 450, damping: 30 }}
+                        className="absolute inset-0 bg-gradient-to-r from-[#E873C3]/30 to-[#8D37D6]/40 border border-[#E873C3]/60 rounded-lg shadow-[0_0_12px_rgba(232,115,195,0.4)] z-[-1]"
+                      />
+                    )}
                     {tab}
                   </button>
                 ))}
               </div>
 
-              {/* Badges Grid */}
+              {/* Badges Grid with Smooth Motion */}
               <div className="grid grid-cols-2 gap-2.5">
                 {filteredBadges.map((badge) => (
-                  <div
+                  <motion.div
                     key={badge.id}
+                    layout
+                    whileHover={{ scale: 1.05, y: -2 }}
+                    whileTap={{ scale: 0.96 }}
                     onClick={() => setSelectedBadgeModal(badge)}
                     className={`p-3 rounded-xl border transition-all cursor-pointer flex flex-col items-center text-center space-y-1.5 ${
                       badge.category === 'earned'
-                        ? 'bg-white/[0.04] border-white/15 hover:border-[#E873C3]/60 hover:bg-[#E873C3]/10'
+                        ? 'bg-white/[0.04] border-white/15 hover:border-[#E873C3]/60 hover:bg-[#E873C3]/10 shadow-sm'
                         : 'bg-white/[0.01] border-white/5 opacity-50 hover:opacity-80'
                     }`}
                   >
@@ -614,7 +639,7 @@ export default function ProfileContent({
                     >
                       {badge.rarity}
                     </span>
-                  </div>
+                  </motion.div>
                 ))}
               </div>
             </div>
@@ -764,9 +789,10 @@ export default function ProfileContent({
               initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
+              data-lenis-prevent
               className="cosmo-glass-panel border border-white/20 p-6 rounded-3xl w-full max-w-lg relative z-10 shadow-2xl overflow-hidden max-h-[90vh] flex flex-col bg-[#080d19]"
             >
-              <div className="relative flex flex-col h-full max-h-[80vh]">
+              <div className="relative flex flex-col h-full max-h-[80vh] min-h-0">
                 <button
                   onClick={() => setIsEditing(false)}
                   className="absolute top-0 right-0 text-white/50 hover:text-white transition-colors p-1 z-20 bg-black/20 rounded-full cursor-pointer"
@@ -774,9 +800,13 @@ export default function ProfileContent({
                   <X size={24} />
                 </button>
 
-                <h2 className="text-2xl font-display font-bold text-white mb-6">Edit Profile</h2>
+                <h2 className="text-2xl font-display font-bold text-white mb-6 shrink-0">Edit Profile</h2>
 
-                <div className="overflow-y-auto pr-2 custom-scrollbar space-y-6 pb-6">
+                <div
+                  onWheel={(e) => e.stopPropagation()}
+                  data-lenis-prevent
+                  className="flex-1 min-h-0 overflow-y-auto overscroll-contain pr-2 custom-scrollbar space-y-6 pb-6"
+                >
                   {/* Display Name */}
                   <div>
                     <label className="block text-xs font-mono font-bold uppercase tracking-wider text-slate-400 mb-1.5">
@@ -935,7 +965,11 @@ export default function ProfileContent({
                   <label className="block text-xs font-mono font-bold uppercase tracking-wider text-slate-400 mb-2.5">
                     Available Presets
                   </label>
-                  <div className="flex flex-wrap gap-2 max-h-[140px] overflow-y-auto custom-scrollbar pr-1">
+                  <div
+                    data-lenis-prevent
+                    onWheel={(e) => e.stopPropagation()}
+                    className="flex flex-wrap gap-2 max-h-[140px] overflow-y-auto overscroll-contain custom-scrollbar pr-1"
+                  >
                     {ONBOARDING_SKILLS.map((skill) => {
                       const isSelected = tempSkills.includes(skill);
                       if (isSelected) return null; // already shown in active list above

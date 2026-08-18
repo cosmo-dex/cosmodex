@@ -142,6 +142,7 @@ interface McqMatchState {
   status?: string;
   currentQuestion?: McqQuestion;
   players?: Record<string, McqPlayerState>;
+  timeRemaining?: number;
 }
 
 interface RoundRevealData {
@@ -208,6 +209,11 @@ export default function ActiveMatchView({ socket, matchInfo, userId, username, o
   const [mcqState, setMcqState] = useState<McqMatchState | null>(null);
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
   const [roundReveal, setRoundReveal] = useState<RoundRevealData | null>(null);
+
+  // Live MCQ Question Round Countdown Timer (15s per question)
+  const [mcqTimer, setMcqTimer] = useState(15);
+  // Real-time Match Elapsed Timer
+  const [matchElapsedSeconds, setMatchElapsedSeconds] = useState(0);
 
   // Match outcome
   const [matchResult, setMatchResult] = useState<{ winnerId: string | null; reason: string } | null>(null);
@@ -395,6 +401,31 @@ export default function ActiveMatchView({ socket, matchInfo, userId, username, o
     }, 1000);
     return () => clearInterval(interval);
   }, [waitingDecision]);
+
+  // Real-time MCQ Question Round Countdown Effect (Production Synced)
+  useEffect(() => {
+    if (!isMcq || !mcqState || roundReveal || matchResult) return;
+    const initialTime = mcqState.timeRemaining ?? 15;
+    const timer = setTimeout(() => {
+      setMcqTimer(initialTime);
+    }, 0);
+    const interval = setInterval(() => {
+      setMcqTimer((prev) => (prev <= 1 ? 0 : prev - 1));
+    }, 1000);
+    return () => {
+      clearTimeout(timer);
+      clearInterval(interval);
+    };
+  }, [isMcq, mcqState, roundReveal, matchResult]);
+
+  // Real-time Overall Match Elapsed Timer Effect
+  useEffect(() => {
+    if (matchResult) return;
+    const interval = setInterval(() => {
+      setMatchElapsedSeconds((prev) => prev + 1);
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [matchResult]);
 
   // Auto-save draft in Code Battle
   useEffect(() => {
@@ -604,11 +635,14 @@ export default function ActiveMatchView({ socket, matchInfo, userId, username, o
       <div className="arena-game-wrapper relative z-10 flex flex-col h-full" style={{ paddingTop: 0, height: '100vh' }}>
         {/* Topbar matching redesign image */}
         <div className="relative w-full h-16 bg-[#080312]/90 border-b border-purple-900/30 backdrop-blur-xl px-6 flex items-center justify-between z-30 shadow-md">
-          {/* Left: Round Badge */}
+          {/* Left: Round Badge & Elapsed Timer */}
           <div className="flex items-center gap-3">
             <span className="px-4 py-1.5 rounded-full text-xs font-mono font-bold uppercase tracking-wider bg-purple-500/10 backdrop-blur-md text-purple-200 border border-purple-400/30 shadow-[inset_0_1px_1px_rgba(255,255,255,0.2),0_4px_16px_rgba(168,85,247,0.15)] flex items-center gap-2">
               <span className="w-1.5 h-1.5 rounded-full bg-purple-400 animate-pulse" />
-              ROUND {mcqState?.currentRound ?? 1} / 5
+              {isMcq ? `ROUND ${mcqState?.currentRound ?? 1} / 5` : `STAGE ${myStage} / 6`}
+            </span>
+            <span className="px-3 py-1 rounded-full text-xs font-mono font-bold bg-white/5 border border-white/10 text-white/70">
+              ⏱ {Math.floor(matchElapsedSeconds / 60).toString().padStart(2, "0")}:{(matchElapsedSeconds % 60).toString().padStart(2, "0")}
             </span>
           </div>
 
@@ -752,7 +786,7 @@ export default function ActiveMatchView({ socket, matchInfo, userId, username, o
                       {/* Timer */}
                       <div className="text-xs font-mono font-bold text-red-400 tracking-wider flex items-center gap-1.5 bg-red-950/80 border border-red-500/40 px-3.5 py-1 rounded-full shadow-[0_0_12px_rgba(239,68,68,0.25)]">
                         <span className="text-[11px] font-bold text-red-400">TIME</span>
-                        <span className="text-sm font-black text-red-300">05s</span>
+                        <span className="text-sm font-black text-red-300">{mcqTimer.toString().padStart(2, "0")}s</span>
                       </div>
                     </div>
                   </div>

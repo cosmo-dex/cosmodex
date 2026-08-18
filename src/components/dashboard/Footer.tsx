@@ -1,8 +1,7 @@
 import Link from "next/link";
-import { Heart } from "lucide-react";
 import Image from "next/image";
 
-// Inline SVG components for brand icons that aren't in lucide-react
+// Brand icons for social links
 const InstagramIcon = ({ className }: { className?: string }) => (
   <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect>
@@ -45,120 +44,109 @@ const DiscordIcon = ({ className }: { className?: string }) => (
 );
 
 export default function Footer() {
-  const footerLinks = {
-    company: [
-      "About", "Blog", "Shop", "Community", "Help Center", "Pricing", "For Schools"
-    ],
-    practice: [
-      "Challenges", "Projects", "#30DaysOfCode"
-    ],
-    learn1: [
-      "All Courses", "Python", "Intermediate Python", "NumPy", "SQL",
-      "GenAI", "Pandas", "Matplotlib", "Machine Learning", "HTML",
-      "CSS", "JavaScript", "Intermediate JavaScript"
-    ],
-    learn2: [
-      "React", "Node.js", "p5.js", "Command Line", "Git & GitHub",
-      "GitHub Copilot", "C++", "C#", "Java", "Data Structures & Algorithms",
-      "Phaser", "Lua", "UI/UX Design"
-    ]
-  };
-
   return (
-    <footer className="w-full relative z-10 bg-[#0B0C10] border-t border-white/10 pt-16 pb-8 px-6 sm:px-12 mt-12">
-      <div className="max-w-[1400px] mx-auto">
-
-        {/* Top Header Row */}
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-12 gap-6">
-          <div className="flex items-center gap-3">
-            <Image
-              src="/images/logo.png"
-              alt="CosmoDex Logo"
-              width={32}
-              height={32}
-              className="object-contain"
-            />
-            <span className="text-xl font-bold tracking-wide text-white">CosmoDex</span>
+    <footer className="w-full relative z-30 bg-[#070412]/90 border-t border-white/10 pt-12 pb-8 px-6 sm:px-12 mt-12 backdrop-blur-md">
+      <div className="max-w-[1200px] mx-auto relative z-30">
+        {/* Main Content Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-8 pb-10 border-b border-white/10">
+          
+          {/* Brand Info */}
+          <div className="md:col-span-1 flex flex-col gap-3">
+            <Link href="/" className="flex items-center gap-3 w-fit hover:opacity-80 transition-opacity">
+              <Image
+                src="/images/logo.png"
+                alt="CosmoDex Logo"
+                width={28}
+                height={28}
+                className="object-contain"
+              />
+              <span className="text-lg font-bold tracking-wide text-white">CosmoDex</span>
+            </Link>
+            <p className="text-xs text-white/50 leading-relaxed max-w-xs font-mono">
+              Level up your coding skills, compete in real-time battles, and conquer the cosmos.
+            </p>
           </div>
 
-          <div className="flex items-center gap-2 text-text-secondary text-sm font-lato">
-            Made with <Heart className="w-4 h-4 text-red-500 fill-red-500" /> in the Cosmos
-          </div>
-        </div>
-
-        {/* Main Links Grid */}
-        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-8 lg:gap-12 mb-16">
-
-          {/* Company */}
-          <div className="flex flex-col gap-4">
-            <h4 className="text-text-secondary text-xs font-bold tracking-widest uppercase mb-2">Company</h4>
-            {footerLinks.company.map((link) => (
-              <Link key={link} href="/events" className="text-text-primary hover:text-white text-sm transition-colors w-fit">
-                {link}
-              </Link>
-            ))}
-          </div>
-
-          {/* Practice */}
-          <div className="flex flex-col gap-4">
-            <h4 className="text-text-secondary text-xs font-bold tracking-widest uppercase mb-2">Practice</h4>
-            {footerLinks.practice.map((link) => (
-              <Link key={link} href="/battle" className="text-text-primary hover:text-white text-sm transition-colors w-fit">
-                {link}
-              </Link>
-            ))}
+          {/* Column 1: Platform */}
+          <div className="flex flex-col gap-2.5">
+            <h4 className="text-white/40 text-[11px] font-bold tracking-widest uppercase mb-1 font-mono">Platform</h4>
+            <Link href="/learn" className="text-white/70 hover:text-white hover:translate-x-1 text-xs font-medium transition-all w-fit cursor-pointer">
+              Courses
+            </Link>
+            <Link href="/battle" className="text-white/70 hover:text-white hover:translate-x-1 text-xs font-medium transition-all w-fit cursor-pointer">
+              Battle Arena
+            </Link>
+            <Link href="/leaderboard" className="text-white/70 hover:text-white hover:translate-x-1 text-xs font-medium transition-all w-fit cursor-pointer">
+              Leaderboard
+            </Link>
+            <Link href="/events" className="text-white/70 hover:text-white hover:translate-x-1 text-xs font-medium transition-all w-fit cursor-pointer">
+              Events & Hackathons
+            </Link>
           </div>
 
-          {/* Learn (Spans multiple columns effectively in visual layout) */}
-          <div className="flex flex-col gap-4 lg:col-span-1">
-            <h4 className="text-text-secondary text-xs font-bold tracking-widest uppercase mb-2">Learn</h4>
-            {footerLinks.learn1.map((link) => (
-              <Link key={link} href="/learn" className="text-text-primary hover:text-white text-sm transition-colors w-fit">
-                {link}
-              </Link>
-            ))}
+          {/* Column 2: Community */}
+          <div className="flex flex-col gap-2.5">
+            <h4 className="text-white/40 text-[11px] font-bold tracking-widest uppercase mb-1 font-mono">Community</h4>
+            <Link href="/onboarding" className="text-white/70 hover:text-white hover:translate-x-1 text-xs font-medium transition-all w-fit cursor-pointer">
+              Join the Crew
+            </Link>
+            <a href="https://discord.gg" target="_blank" rel="noopener noreferrer" className="text-white/70 hover:text-white hover:translate-x-1 text-xs font-medium transition-all w-fit cursor-pointer">
+              Discord Server
+            </a>
+            <Link href="/onboarding?mode=login" className="text-white/70 hover:text-white hover:translate-x-1 text-xs font-medium transition-all w-fit cursor-pointer">
+              Support & FAQ
+            </Link>
           </div>
 
-          {/* Learn Column 2 */}
-          <div className="flex flex-col gap-4 lg:col-span-1 lg:mt-8">
-            {footerLinks.learn2.map((link) => (
-              <Link key={link} href="/learn" className="text-text-primary hover:text-white text-sm transition-colors w-fit">
-                {link}
-              </Link>
-            ))}
+          {/* Column 3: Legal */}
+          <div className="flex flex-col gap-2.5">
+            <h4 className="text-white/40 text-[11px] font-bold tracking-widest uppercase mb-1 font-mono">Legal</h4>
+            <Link href="/events" className="text-white/70 hover:text-white hover:translate-x-1 text-xs font-medium transition-all w-fit cursor-pointer">
+              Terms of Service
+            </Link>
+            <Link href="/events" className="text-white/70 hover:text-white hover:translate-x-1 text-xs font-medium transition-all w-fit cursor-pointer">
+              Privacy Policy
+            </Link>
+            <Link href="/events" className="text-white/70 hover:text-white hover:translate-x-1 text-xs font-medium transition-all w-fit cursor-pointer">
+              Cookie Policy
+            </Link>
           </div>
 
         </div>
 
         {/* Bottom Footer Row */}
-        <div className="flex flex-col md:flex-row justify-between items-center pt-8 border-t border-white/5 gap-6">
-
-          <div className="flex items-center gap-4 text-xs text-text-secondary">
+        <div className="flex flex-col sm:flex-row justify-between items-center pt-6 gap-4 text-xs text-white/40 font-mono">
+          <div className="flex items-center gap-2">
             <span>© 2026 CosmoDex, Inc.</span>
-            <Link href="/events" className="hover:text-white transition-colors">Terms</Link>
-            <Link href="/events" className="hover:text-white transition-colors">Privacy Policy</Link>
           </div>
 
-          <div className="flex items-center gap-3">
+          {/* Social Icons */}
+          <div className="flex items-center gap-2.5">
             {[
-              { icon: InstagramIcon, color: "hover:text-[#E1306C]" },
-              { icon: TwitterIcon, color: "hover:text-[#1DA1F2]" },
-              { icon: GithubIcon, color: "hover:text-white" },
-              { icon: YoutubeIcon, color: "hover:text-[#FF0000]" },
-              { icon: LinkedinIcon, color: "hover:text-[#0077B5]" },
-              { icon: DiscordIcon, color: "hover:text-[#5865F2]" }
+              { icon: InstagramIcon, color: "hover:text-[#E1306C]", href: "https://instagram.com" },
+              { icon: TwitterIcon, color: "hover:text-[#1DA1F2]", href: "https://twitter.com" },
+              { icon: GithubIcon, color: "hover:text-white", href: "https://github.com" },
+              { icon: YoutubeIcon, color: "hover:text-[#FF0000]", href: "https://youtube.com" },
+              { icon: LinkedinIcon, color: "hover:text-[#0077B5]", href: "https://linkedin.com" },
+              { icon: DiscordIcon, color: "hover:text-[#5865F2]", href: "https://discord.gg" }
             ].map((social, idx) => {
               const Icon = social.icon;
               return (
-                <Link key={idx} href="#" className={`w-8 h-8 rounded bg-white/5 flex items-center justify-center text-text-secondary transition-all ${social.color}`}>
-                  <Icon className="w-4 h-4" />
-                </Link>
+                <a
+                  key={idx}
+                  href={social.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={`w-7 h-7 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-white/50 transition-all hover:bg-white/10 ${social.color}`}
+                >
+                  <Icon className="w-3.5 h-3.5" />
+                </a>
               );
             })}
           </div>
-
         </div>
       </div>
     </footer>
   );
 }
+
