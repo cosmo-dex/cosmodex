@@ -102,7 +102,7 @@ export default function Footer() {
               { label: "Courses", href: "/learn" },
               { label: "Battle Arena", href: "/battle" },
               { label: "Leaderboard", href: "/leaderboard" },
-              { label: "Changelog", href: "/events" },
+              { label: "Events", href: "/events" },
             ]}
           />
 

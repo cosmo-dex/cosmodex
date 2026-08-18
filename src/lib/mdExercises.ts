@@ -87,38 +87,40 @@ import { Chapter } from "@/components/learn/pythonData";
 
 export function getExerciseFromMarkdown(courseId: string, lessonId: string): TheoryExercise | null {
   try {
-    const chapters = PYTHON_COURSE_CHAPTERS as unknown as Chapter[];
-    // 1. First check if lesson matches a chapter in our JSON course data
-    const chapterIndex = chapters.findIndex(
-      (ch) => ch.theoryLessonId === lessonId || ch.id === lessonId
-    );
+    // 1. First check if course is Python and lesson matches a chapter in our JSON course data
+    if (courseId === "py-1" || courseId === "python") {
+      const chapters = PYTHON_COURSE_CHAPTERS as unknown as Chapter[];
+      const chapterIndex = chapters.findIndex(
+        (ch) => ch.theoryLessonId === lessonId || ch.id === lessonId
+      );
 
-    if (chapterIndex !== -1) {
-      const ch = chapters[chapterIndex];
-      const prevChapter = chapters[chapterIndex - 1];
-      const nextChapter = chapters[chapterIndex + 1];
+      if (chapterIndex !== -1) {
+        const ch = chapters[chapterIndex];
+        const prevChapter = chapters[chapterIndex - 1];
+        const nextChapter = chapters[chapterIndex + 1];
 
-      if (ch.documentation && ch.documentation.sections) {
-        return {
-          id: ch.theoryLessonId || ch.id,
-          courseId: courseId,
-          courseTitle: "Python",
-          chapterNumber: String(ch.number).padStart(2, "0"),
-          title: ch.documentation.title || ch.title,
-          exerciseIndex: ch.number,
-          totalExercises: chapters.length,
-          xp: 10,
-          category: "Exercise",
-          activeGrindersCount: 4,
-          prevLessonId: prevChapter ? (prevChapter.theoryLessonId || prevChapter.id) : undefined,
-          nextLessonId: nextChapter ? (nextChapter.theoryLessonId || nextChapter.id) : undefined,
-          sections: ch.documentation.sections.map((sec, i) => ({
-            id: `sec-${i + 1}`,
-            heading: sec.heading,
-            content: sec.content,
-            illustration: "command-line",
-          })),
-        };
+        if (ch.documentation && ch.documentation.sections) {
+          return {
+            id: ch.theoryLessonId || ch.id,
+            courseId: courseId,
+            courseTitle: "Python",
+            chapterNumber: String(ch.number).padStart(2, "0"),
+            title: ch.documentation.title || ch.title,
+            exerciseIndex: ch.number,
+            totalExercises: chapters.length,
+            xp: 10,
+            category: "Exercise",
+            activeGrindersCount: 4,
+            prevLessonId: prevChapter ? (prevChapter.theoryLessonId || prevChapter.id) : undefined,
+            nextLessonId: nextChapter ? (nextChapter.theoryLessonId || nextChapter.id) : undefined,
+            sections: ch.documentation.sections.map((sec, i) => ({
+              id: `sec-${i + 1}`,
+              heading: sec.heading,
+              content: sec.content,
+              illustration: "command-line",
+            })),
+          };
+        }
       }
     }
 
