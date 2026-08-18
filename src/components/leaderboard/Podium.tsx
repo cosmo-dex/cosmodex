@@ -7,24 +7,24 @@ import { cn } from "@/lib/utils";
 
 const CONFIG = {
   1: {
-    order: "md:order-2",
-    height: "h-44 md:h-56",
+    order: "order-1 md:order-2",
+    height: "h-48 md:h-56",
     ring: "ring-gradient-1",
     glow: "0 0 35px -8px rgba(245, 200, 66, 0.55)",
     label: "1st",
     avatarSize: "size-20 md:size-24",
   },
   2: {
-    order: "md:order-1",
-    height: "h-36 md:h-44",
+    order: "order-2 md:order-1",
+    height: "h-44 md:h-48",
     ring: "ring-gradient-2",
     glow: "0 0 28px -10px rgba(78, 205, 196, 0.45)",
     label: "2nd",
     avatarSize: "size-16 md:size-20",
   },
   3: {
-    order: "md:order-3",
-    height: "h-32 md:h-36",
+    order: "order-3 md:order-3",
+    height: "h-40 md:h-40",
     ring: "ring-gradient-3",
     glow: "0 0 28px -10px rgba(255, 107, 53, 0.45)",
     label: "3rd",
@@ -36,7 +36,7 @@ const GLASS_STYLES = {
   1: {
     cardBg:
       "bg-gradient-to-b from-amber-500/15 via-purple-950/45 to-purple-950/85 backdrop-blur-2xl border border-amber-400/40 shadow-[0_12px_40px_-8px_rgba(245,200,66,0.25),inset_0_1px_1px_0_rgba(255,255,255,0.4)] hover:border-amber-300/60 hover:shadow-[0_16px_50px_-6px_rgba(245,200,66,0.35),inset_0_1px_2px_0_rgba(255,255,255,0.5)]",
-    labelGradient: "from-amber-100 via-amber-300 to-amber-500 drop-shadow-[0_4px_16px_rgba(245,200,66,0.45)]",
+    labelGradient: "from-amber-100 via-amber-300 to-amber-500",
     glowColor: "bg-amber-400/15",
     topLine: "from-transparent via-amber-300/70 to-transparent",
     badgeGlow: "shadow-[0_0_12px_rgba(245,200,66,0.25)] border-amber-400/40",
@@ -44,7 +44,7 @@ const GLASS_STYLES = {
   2: {
     cardBg:
       "bg-gradient-to-b from-cyan-400/15 via-purple-950/45 to-purple-950/85 backdrop-blur-2xl border border-cyan-300/40 shadow-[0_12px_40px_-8px_rgba(78,205,196,0.22),inset_0_1px_1px_0_rgba(255,255,255,0.4)] hover:border-cyan-200/60 hover:shadow-[0_16px_50px_-6px_rgba(78,205,196,0.32),inset_0_1px_2px_0_rgba(255,255,255,0.5)]",
-    labelGradient: "from-cyan-100 via-cyan-300 to-cyan-500 drop-shadow-[0_4px_16px_rgba(78,205,196,0.45)]",
+    labelGradient: "from-cyan-100 via-cyan-300 to-cyan-500",
     glowColor: "bg-cyan-400/15",
     topLine: "from-transparent via-cyan-300/70 to-transparent",
     badgeGlow: "shadow-[0_0_12px_rgba(78,205,196,0.25)] border-cyan-400/40",
@@ -52,7 +52,7 @@ const GLASS_STYLES = {
   3: {
     cardBg:
       "bg-gradient-to-b from-orange-500/15 via-purple-950/45 to-purple-950/85 backdrop-blur-2xl border border-orange-400/40 shadow-[0_12px_40px_-8px_rgba(255,107,53,0.22),inset_0_1px_1px_0_rgba(255,107,53,0.4)] hover:border-orange-300/60 hover:shadow-[0_16px_50px_-6px_rgba(255,107,53,0.32),inset_0_1px_2px_0_rgba(255,255,255,0.5)]",
-    labelGradient: "from-orange-100 via-orange-300 to-orange-500 drop-shadow-[0_4px_16px_rgba(255,107,53,0.45)]",
+    labelGradient: "from-orange-100 via-orange-300 to-orange-500",
     glowColor: "bg-orange-400/15",
     topLine: "from-transparent via-orange-300/70 to-transparent",
     badgeGlow: "shadow-[0_0_12px_rgba(255,107,53,0.25)] border-orange-400/40",
@@ -177,7 +177,7 @@ function PodiumCard({ player, place }: { player: Player; place: 1 | 2 | 3 }) {
       {/* Enhanced Glassmorphism Card */}
       <div
         className={cn(
-          "group relative mt-4 flex w-full flex-col items-center justify-between overflow-hidden rounded-2xl rounded-b-none px-4 py-5 transition-all duration-500 hover:-translate-y-1.5",
+          "group relative mt-4 flex w-full flex-col items-center justify-between overflow-hidden rounded-2xl md:rounded-b-none px-4 py-4 md:py-5 transition-all duration-500 hover:-translate-y-1.5",
           glass.cardBg,
           c.height,
         )}
@@ -189,15 +189,15 @@ function PodiumCard({ player, place }: { player: Player; place: 1 | 2 | 3 }) {
         <div className="pointer-events-none absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/10 to-transparent transition-transform duration-1000 group-hover:translate-x-full" />
 
         {/* Ambient center spotlight glow behind rank label */}
-        <div className={cn("pointer-events-none absolute top-3 size-36 rounded-full blur-2xl", glass.glowColor)} />
+        <div className={cn("pointer-events-none absolute top-2 size-32 md:size-36 rounded-full blur-2xl", glass.glowColor)} />
 
         {/* 3D Glass Rank Typography */}
-        <span className={cn("bg-gradient-to-b bg-clip-text text-transparent font-display text-5xl font-black tracking-tight select-none md:text-6xl", glass.labelGradient)}>
+        <span className={cn("bg-gradient-to-b bg-clip-text text-transparent font-display text-4xl font-black tracking-tight select-none md:text-6xl drop-shadow-md", glass.labelGradient)}>
           {c.label}
         </span>
 
         {/* Card Footer Info */}
-        <div className="relative z-10 flex flex-col items-center gap-2">
+        <div className="relative z-10 flex flex-col items-center gap-1.5 md:gap-2">
           <span
             className={cn(
               "rounded-pill border px-3.5 py-1 text-[10px] font-bold uppercase tracking-[0.18em] backdrop-blur-md transition-transform duration-300 group-hover:scale-105",
@@ -207,7 +207,7 @@ function PodiumCard({ player, place }: { player: Player; place: 1 | 2 | 3 }) {
           >
             {tier.label}
           </span>
-          <span className="text-xs font-semibold tracking-wide text-text-muted">
+          <span className="text-[11px] md:text-xs font-semibold tracking-wide text-text-muted">
             {player.wins}W / {player.losses}L · <span className="text-text-secondary">{player.mmr} MMR</span>
           </span>
         </div>
@@ -221,7 +221,7 @@ export function Podium({ players }: { players: Player[] }) {
   if (!first) return null;
 
   return (
-    <div className="mx-auto flex w-full max-w-4xl flex-col items-end gap-6 md:flex-row md:gap-4">
+    <div className="mx-auto flex w-full max-w-4xl flex-col items-center gap-6 md:flex-row md:items-end md:gap-4">
       {second ? <PodiumCard player={second} place={2} /> : null}
       <PodiumCard player={first} place={1} />
       {third ? <PodiumCard player={third} place={3} /> : null}

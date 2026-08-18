@@ -5,12 +5,9 @@ import { useParams, useRouter } from 'next/navigation';
 import Navbar from '@/components/navbar/Navbar';
 import {
   ArrowLeft, Send, Code, FileText, ExternalLink,
-  Loader2, CheckCircle2, ListChecks, Terminal, Sparkles,
-  Play, Copy, Check, RotateCcw,
-  ChevronRight, ChevronLeft
+  Loader2, CheckCircle2,
 } from 'lucide-react';
 import EventContestArena, { QuestionItem as ArenaQuestionItem } from '@/components/events/EventContestArena';
-import Editor from '@monaco-editor/react';
 
 interface SubmissionConfig {
   mode?: 'platform' | 'google_form' | 'external_link';
@@ -92,28 +89,7 @@ export default function SubmitProjectPage() {
   const [codeAnswers, setCodeAnswers] = useState<Record<string, string>>({});
   const [selectedLanguage, setSelectedLanguage] = useState<string>('cpp');
 
-  // Code Execution Terminal State
-  const [runningCode, setRunningCode] = useState(false);
-  const [showStdin, setShowStdin] = useState(false);
-  const [customStdin, setCustomStdin] = useState('');
-  const [activeConsoleTab, setActiveConsoleTab] = useState<'tests' | 'console'>('tests');
-  const [copiedInputIdx, setCopiedInputIdx] = useState<number | null>(null);
 
-  interface TestResultItem {
-    testIndex: number;
-    input: string;
-    expectedOutput: string;
-    actualOutput: string;
-    passed: boolean;
-  }
-
-  const [terminalOutput, setTerminalOutput] = useState<{
-    status: 'IDLE' | 'SUCCESS' | 'ERROR';
-    stdout: string;
-    stderr?: string;
-    executionTimeMs?: number;
-    testResults?: TestResultItem[];
-  }>({ status: 'IDLE', stdout: '' });
 
   const [hasSubmitted, setHasSubmitted] = useState(false);
   const [submittedAt, setSubmittedAt] = useState<string | null>(null);
@@ -238,50 +214,7 @@ export default function SubmitProjectPage() {
     }
   };
 
-  // Run Code against sample testcases or custom stdin
-  const handleRunCode = (activeQ: CodingQuestionItem) => {
-    const code = codeAnswers[activeQ.id] || DEFAULT_STARTERS[selectedLanguage] || '';
-    if (!code.trim()) return;
 
-    setRunningCode(true);
-    setActiveConsoleTab('tests');
-
-    setTimeout(() => {
-      const sampleCases = activeQ.sampleTestCases || activeQ.testCases || [];
-
-      let testResults: TestResultItem[] = [];
-      let stdoutLog = `[CosmoDex Code Runner v2.4]\nCompiling and executing ${selectedLanguage.toUpperCase()} code...\n\n`;
-
-      if (sampleCases.length > 0) {
-        testResults = sampleCases.map((tc, idx) => {
-          const expectedClean = tc.output?.trim() || '';
-          // Simulated test execution output matching
-          const passed = code.includes('cout') || code.includes('print') || code.includes('System.out') || code.includes('console.log');
-          const actualOutput = passed ? expectedClean : 'Execution finished with output.';
-
-          stdoutLog += `Testcase #${idx + 1} Input: ${tc.input}\nExpected: ${expectedClean}\nActual: ${actualOutput}\nResult: ${passed ? '✓ PASSED' : '❌ FAILED'}\n\n`;
-
-          return {
-            testIndex: idx + 1,
-            input: tc.input,
-            expectedOutput: expectedClean,
-            actualOutput: actualOutput,
-            passed: passed,
-          };
-        });
-      } else {
-        stdoutLog += `Stdin: ${customStdin || 'None'}\nStandard Output:\nExecution completed successfully.\n`;
-      }
-
-      setTerminalOutput({
-        status: 'SUCCESS',
-        stdout: stdoutLog,
-        executionTimeMs: Math.floor(Math.random() * 25) + 12,
-        testResults,
-      });
-      setRunningCode(false);
-    }, 600);
-  };
 
   const mode = submissionConfig?.mode ?? 'platform';
   const questions = (submissionConfig?.assessment_details?.questions ?? []) as QuestionItem[];
@@ -407,8 +340,6 @@ export default function SubmitProjectPage() {
   }
 
   // --- HACKATHON PROJECT SUBMISSION VIEW ---
-
-  const requiredFields = submissionConfig?.required_fields ?? ['submission_url', 'demo_url', 'video_url', 'tech_stack', 'description'];
 
   return (
     <div className="min-h-screen bg-[#06020f] text-white">

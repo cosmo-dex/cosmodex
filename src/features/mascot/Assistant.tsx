@@ -194,354 +194,145 @@ export default function Assistant({
         {/* =====================================================
             Main Window
         ====================================================== */}
-
         <motion.div
-
           initial={{
             opacity: 0,
-            scale: .90,
+            scale: 0.9,
             y: 20,
           }}
-
           animate={{
             opacity: 1,
             scale: 1,
             y: 0,
           }}
-
           exit={{
             opacity: 0,
-            scale: .92,
+            scale: 0.92,
             y: 20,
           }}
-
           transition={{
             type: "spring",
             stiffness: 260,
             damping: 22,
           }}
-
           className={`
-
-pointer-events-auto
-fixed
-
-overflow-hidden
-
-border
-border-white/10
-
-bg-[#13111C]/92
-
-backdrop-blur-3xl
-
-shadow-[0_0_80px_rgba(141,55,214,.25)]
-
-${fullScreen
-? `
-inset-4
-
-lg:inset-8
-rounded-[28px]
-`
-:`
-bottom-4
-right-4
-
-sm:bottom-6
-sm:right-6
-
-lg:bottom-8
-lg:right-8
-
-w-[calc(100vw-24px)]
-max-w-[460px]
-
-h-[min(720px,calc(100vh-140px))]
-
-rounded-[28px]
-`
-}
-
-`}
-
+            pointer-events-auto
+            fixed
+            overflow-hidden
+            border
+            border-white/10
+            bg-[#13111C]/95
+            backdrop-blur-3xl
+            shadow-[0_0_80px_rgba(141,55,214,.25)]
+            flex
+            flex-col
+            ${fullScreen
+              ? `
+                inset-3
+                sm:inset-4
+                lg:inset-8
+                rounded-[24px] sm:rounded-[28px]
+              `
+              : `
+                bottom-3
+                inset-x-3
+                sm:inset-x-auto
+                sm:bottom-6
+                sm:right-6
+                lg:bottom-8
+                lg:right-8
+                sm:w-[440px]
+                max-w-[440px]
+                h-[min(680px,calc(100dvh-70px))]
+                sm:h-[min(720px,calc(100vh-120px))]
+                rounded-[24px] sm:rounded-[28px]
+              `
+            }
+          `}
         >
-
           {/* =====================================================
               Ambient Glow
           ====================================================== */}
-
-          <div
-
-            className="
-absolute
-inset-0
-pointer-events-none
-"
-
-          >
-
-            <div
-              className="
-absolute
-
--top-32
--left-24
-
-h-72
-w-72
-
-rounded-full
-
-bg-fuchsia-500/20
-
-blur-[110px]
-"
-            />
-
-            <div
-              className="
-absolute
-
--bottom-40
--right-24
-
-h-72
-w-72
-
-rounded-full
-
-bg-cyan-500/10
-
-blur-[120px]
-"
-            />
-
+          <div className="absolute inset-0 pointer-events-none">
+            <div className="absolute -top-32 -left-24 h-72 w-72 rounded-full bg-fuchsia-500/20 blur-[110px]" />
+            <div className="absolute -bottom-40 -right-24 h-72 w-72 rounded-full bg-cyan-500/10 blur-[120px]" />
           </div>
 
           {/* =====================================================
               Header
           ====================================================== */}
-
-          <div
-
-            className="
-relative
-z-20
-
-flex
-items-center
-justify-between
-
-border-b
-border-white/8
-
-px-6
-py-4
-"
-
-          >
-
+          <div className="relative z-20 flex shrink-0 items-center justify-between border-b border-white/8 px-4 sm:px-6 py-3.5 sm:py-4">
             {/* Left */}
-
-            <div className="flex items-center gap-4">
-
-              <div
-
-                className="
-relative
-
-flex
-h-12
-w-12
-items-center
-justify-center
-
-rounded-2xl
-
-bg-gradient-to-br
-
-from-fuchsia-500
-to-violet-700
-
-shadow-[0_0_35px_rgba(217,95,209,.35)]
-"
-
-              >
-
-                <Bot
-
-                  className="h-7 w-7 text-white"
-
-                />
-
-                <span
-
-className="
-absolute
--bottom-1
--right-1
-
-h-3
-w-3
-
-rounded-full
-
-bg-emerald-400
-
-ring-2
-ring-[#13111C]
-"
-
-                />
-
+            <div className="flex items-center gap-3 sm:gap-4">
+              <div className="relative flex h-10 w-10 sm:h-12 sm:w-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-fuchsia-500 to-violet-700 shadow-[0_0_30px_rgba(217,95,209,.35)]">
+                <Bot className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
+                <span className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full bg-emerald-400 ring-2 ring-[#13111C]" />
               </div>
 
               <div>
-
-                <h3
-
-                  className="
-font-display
-
-text-xl
-
-lg:text-2xl
-
-tracking-wide
-
-text-white
-"
-
-                >
-
+                <h3 className="font-display text-lg sm:text-xl lg:text-2xl tracking-wide text-white">
                   COSMO AI
-
                 </h3>
-
-                <p
-
-                  className="
-mt-1
-
-flex
-items-center
-gap-2
-
-font-mono
-
-text-[12px]
-
-text-fuchsia-300
-"
-
-                >
-
+                <p className="mt-0.5 flex items-center gap-1.5 font-mono text-[11px] sm:text-[12px] text-fuchsia-300">
                   <Sparkles className="h-3 w-3" />
-
                   Online • Ready to help
-
                 </p>
-
               </div>
-
             </div>
 
             {/* Right */}
-
-            <div className="flex items-center gap-2">
-
+            <div className="flex items-center gap-1.5 sm:gap-2">
               <button
-
                 onClick={onToggleFullscreen}
-
-                className="
-cosmo-btn-secondary
-
-!h-11
-!w-11
-
-!rounded-xl
-
-!p-0
-"
-
+                className="cosmo-btn-secondary !h-9 !w-9 sm:!h-10 sm:!w-10 !rounded-xl !p-0"
               >
-
-                {
-
-                  fullScreen
-
-                  ?
-
-                  <Minimize2 className="h-4 w-4"/>
-
-                  :
-
-                  <Maximize2 className="h-4 w-4"/>
-
-                }
-
+                {fullScreen ? (
+                  <Minimize2 className="h-4 w-4" />
+                ) : (
+                  <Maximize2 className="h-4 w-4" />
+                )}
               </button>
 
               <button
-
                 onClick={onClose}
-
-                className="
-cosmo-btn-secondary
-
-!h-11
-!w-11
-
-!rounded-xl
-
-!p-0
-"
-
+                className="cosmo-btn-secondary !h-9 !w-9 sm:!h-10 sm:!w-10 !rounded-xl !p-0"
               >
-
-                <X className="h-4 w-4"/>
-
+                <X className="h-4 w-4" />
               </button>
-
             </div>
-
           </div>
-                    {/* =====================================================
+
+          {/* =====================================================
               Body
           ====================================================== */}
-
-          <div className="relative z-20 flex h-[calc(100%-92px)] flex-col">
-
+          <div className="relative z-20 flex flex-1 min-h-0 flex-col">
             {/* Messages */}
-
             <div
               ref={scrollRef}
-              className="flex-1 overflow-y-auto px-6 py-6"
+              className="flex-1 min-h-0 overflow-y-auto px-4 sm:px-6 py-4 sm:py-5"
             >
               {messages.length === 0 ? (
                 <motion.div
                   initial={{ opacity: 0, y: 12 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="flex h-full flex-col justify-center"
+                  className="flex min-h-full flex-col justify-start sm:justify-center py-2 my-auto"
                 >
-                  <div className="mb-8 text-center">
-                    <div className="mx-auto mb-5 flex h-20 w-20 items-center justify-center rounded-3xl bg-gradient-to-br from-fuchsia-500 to-violet-700 shadow-[0_0_45px_rgba(217,95,209,.35)]">
-                      <Bot className="h-10 w-10 text-white" />
+                  <div className="mb-4 sm:mb-6 text-center">
+                    <div className="mx-auto mb-3 sm:mb-4 flex h-14 w-14 sm:h-16 sm:w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-fuchsia-500 to-violet-700 shadow-[0_0_35px_rgba(217,95,209,.35)]">
+                      <Bot className="h-7 w-7 sm:h-8 sm:w-8 text-white" />
                     </div>
 
-                    <h2 className="font-display text-3xl text-white">
+                    <h2 className="font-display text-2xl sm:text-3xl text-white">
                       Welcome Explorer
                     </h2>
 
-                    <p className="mt-3 font-mono text-sm text-white/60">
+                    <p className="mt-1.5 font-mono text-xs sm:text-sm text-white/60">
                       Ask me anything about CosmoDeX, coding,
                       challenges or your learning journey.
                     </p>
                   </div>
 
-                  <div className="grid gap-3">
+                  <div className="grid gap-2.5 sm:gap-3">
                     {suggestions.map((item) => {
                       const Icon = item.icon;
 
@@ -559,27 +350,31 @@ cosmo-btn-secondary
                             onInputChange(item.prompt)
                           }
                           className="
-                          cosmo-glass-panel
-
-                          flex
-                          items-center
-                          gap-4
-
-                          p-4
-
-                          text-left
+                            group
+                            flex
+                            items-center
+                            gap-3.5
+                            p-3 sm:p-3.5
+                            text-left
+                            rounded-2xl
+                            bg-white/[0.05]
+                            hover:bg-white/[0.09]
+                            border
+                            border-white/10
+                            hover:border-fuchsia-500/30
+                            transition-colors
                           "
                         >
-                          <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-fuchsia-500/15">
+                          <div className="flex h-10 w-10 sm:h-11 sm:w-11 shrink-0 items-center justify-center rounded-xl bg-fuchsia-500/15 group-hover:bg-fuchsia-500/25 transition-colors">
                             <Icon className="h-5 w-5 text-fuchsia-300" />
                           </div>
 
-                          <div>
-                            <p className="font-mono text-sm font-semibold text-white">
+                          <div className="min-w-0">
+                            <p className="font-mono text-xs sm:text-sm font-semibold text-white truncate">
                               {item.title}
                             </p>
 
-                            <p className="mt-1 font-mono text-xs text-white/50">
+                            <p className="mt-0.5 font-mono text-[11px] sm:text-xs text-white/50 truncate">
                               {item.prompt}
                             </p>
                           </div>
@@ -589,13 +384,13 @@ cosmo-btn-secondary
                   </div>
                 </motion.div>
               ) : (
-                <div className="space-y-5">
+                <div className="space-y-4">
                   {messages.map((message, index) => (
                     <motion.div
                       key={index}
                       initial={{
                         opacity: 0,
-                        y: 12,
+                        y: 10,
                       }}
                       animate={{
                         opacity: 1,
@@ -608,10 +403,10 @@ cosmo-btn-secondary
                       }`}
                     >
                       <div
-                        className={`max-w-[82%] rounded-2xl px-4 py-3 font-mono text-sm leading-7 ${
+                        className={`max-w-[85%] rounded-2xl px-4 py-2.5 sm:py-3 font-mono text-xs sm:text-sm leading-relaxed ${
                           message.isUser
-                            ? "bg-gradient-to-r from-fuchsia-600 to-violet-700 text-white"
-                            : "cosmo-glass-panel text-white"
+                            ? "bg-gradient-to-r from-fuchsia-600 to-violet-700 text-white shadow-[0_0_20px_rgba(217,95,209,0.25)]"
+                            : "bg-white/[0.07] border border-white/10 text-white backdrop-blur-md"
                         }`}
                       >
                         {message.text}
@@ -623,7 +418,7 @@ cosmo-btn-secondary
                     <motion.div
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
-                      className="flex items-center gap-3"
+                      className="flex items-center gap-2.5 py-1"
                     >
                       <Loader2 className="h-4 w-4 animate-spin text-fuchsia-400" />
 
@@ -635,117 +430,78 @@ cosmo-btn-secondary
                 </div>
               )}
             </div>
-                        {/* =====================================================
+
+            {/* =====================================================
                 Input Area
             ====================================================== */}
-
-            <div className="border-t border-white/10 p-5">
-
-              <div className="flex items-end gap-3">
-
+            <div className="shrink-0 border-t border-white/10 bg-[#13111C]/60 p-3.5 sm:p-4 backdrop-blur-md">
+              <div className="flex items-end gap-2.5 sm:gap-3">
                 <textarea
-
                   value={inputValue}
-
                   onChange={(e) => onInputChange(e.target.value)}
-
                   onKeyDown={(e) => {
-
                     if (
                       e.key === "Enter" &&
                       !e.shiftKey
                     ) {
-
                       e.preventDefault();
-
                       onSend();
-
                     }
-
                   }}
-
                   rows={1}
-
                   placeholder="Ask Cosmo anything..."
-
                   className="
-                  cosmo-input
-
-                  min-h-[52px]
-                  max-h-40
-
-                  resize-none
-
-                  font-mono
-                  text-sm
+                    cosmo-input
+                    !min-h-[46px]
+                    sm:!min-h-[48px]
+                    max-h-32
+                    resize-none
+                    !py-2.5
+                    !px-3.5
+                    font-mono
+                    text-xs sm:text-sm
                   "
-
                 />
 
                 <motion.button
-
                   whileHover={{
-                    scale: 1.06,
-                    y: -2,
+                    scale: 1.05,
+                    y: -1,
                   }}
-
                   whileTap={{
                     scale: 0.95,
                   }}
-
                   onClick={onSend}
-
                   disabled={!inputValue.trim()}
-
                   className="
-                  cosmo-btn-primary
-
-                  !h-[52px]
-                  !w-[52px]
-
-                  !rounded-2xl
-
-                  !p-0
-
-                  disabled:opacity-40
+                    cosmo-btn-primary
+                    !h-[46px]
+                    !w-[46px]
+                    sm:!h-[48px]
+                    sm:!w-[48px]
+                    shrink-0
+                    !rounded-xl
+                    !p-0
+                    disabled:opacity-40
                   "
-
                 >
-
-                  <Send className="h-5 w-5" />
-
+                  <Send className="h-4 w-4 sm:h-5 sm:w-5" />
                 </motion.button>
-
               </div>
 
-              <div className="mt-3 flex items-center justify-between">
-
-                <p className="font-mono text-[11px] text-white/40">
-
-                  Press <span className="text-fuchsia-300">Enter</span> to send
-                  • Shift + Enter for a new line
-
+              <div className="mt-2.5 flex items-center justify-between text-[10px] sm:text-[11px] text-white/40 font-mono">
+                <p>
+                  <span className="hidden sm:inline">Press <span className="text-fuchsia-300">Enter</span> to send • </span>
+                  <span>Shift + Enter for new line</span>
                 </p>
 
-                <span className="font-mono text-[11px] text-white/40">
-
-                  Cosmo AI Beta
-
-                </span>
-
+                <span>Cosmo AI Beta</span>
               </div>
-
             </div>
-
           </div>
-
         </motion.div>
-
       </motion.div>
-
     </AnimatePresence>
-
   );
-
 }
   
