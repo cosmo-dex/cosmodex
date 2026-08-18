@@ -20,6 +20,34 @@ export default function Mascot() {
 
   const { message } = useMascotStore();
 
+  const [dragConstraints, setDragConstraints] = useState<{
+    left: number;
+    right: number;
+    top: number;
+    bottom: number;
+  }>({ left: -1000, right: 0, top: -1000, bottom: 0 });
+
+  // Update drag constraints dynamically based on viewport dimensions
+  useEffect(() => {
+    const updateConstraints = () => {
+      if (typeof window !== "undefined") {
+        const padding = 16;
+        const width = containerRef.current?.offsetWidth || 130;
+        const height = containerRef.current?.offsetHeight || 173;
+        setDragConstraints({
+          left: -(window.innerWidth - width - padding * 2),
+          right: padding,
+          top: -(window.innerHeight - height - padding * 2),
+          bottom: padding,
+        });
+      }
+    };
+
+    updateConstraints();
+    window.addEventListener("resize", updateConstraints);
+    return () => window.removeEventListener("resize", updateConstraints);
+  }, []);
+
   /* ==========================================================
       Assistant State
   ========================================================== */
@@ -146,13 +174,18 @@ export default function Mascot() {
       {/* Floating Mascot Button */}
       <motion.div
         ref={containerRef}
+        drag
+        dragConstraints={dragConstraints}
+        dragElastic={0.1}
+        dragMomentum={false}
+        whileDrag={{ scale: 1.05, cursor: "grabbing" }}
         animate={{
           opacity: chatOpen ? 0 : 1,
           scale: chatOpen ? 0.75 : 1,
           pointerEvents: chatOpen ? "none" : "auto",
         }}
         transition={{ duration: 0.2 }}
-        className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-[9999] w-[110px] h-[146px] sm:w-[130px] sm:h-[173px] select-none"
+        className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-[9999] w-[110px] h-[146px] sm:w-[130px] sm:h-[173px] select-none touch-none cursor-grab active:cursor-grabbing"
       >
         {/* Dark Theme Chat Bubble */}
         <div
@@ -164,7 +197,7 @@ export default function Mascot() {
         </div>
 
         <motion.div
-          className="relative w-full h-full cursor-pointer"
+          className="relative w-full h-full cursor-grab active:cursor-grabbing"
           whileHover={{
             scale: 1.05,
             y: -3,
@@ -172,7 +205,7 @@ export default function Mascot() {
           whileTap={{
             scale: 0.95,
           }}
-          onClick={() => {
+          onTap={() => {
             setChatOpen(true);
           }}
         >

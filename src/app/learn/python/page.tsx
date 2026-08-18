@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import Navbar from "@/components/navbar/Navbar";
 import { motion } from "framer-motion";
-import { Star, Rocket, ArrowLeft } from "lucide-react";
+import { Star, Rocket } from "lucide-react";
 import GalaxyPathMap from "@/components/learn/GalaxyPathMap";
 import ProgressSidebar from "@/components/learn/ProgressSidebar";
 import { Starfield } from "@/components/leaderboard/Starfield";
@@ -212,9 +212,11 @@ export default function PythonCoursePage() {
         <div className="mb-4 sm:mb-2">
           <Link
             href="/learn"
-            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#131d31]/80 hover:bg-[#1b273e] border border-[#22314e] hover:border-[#E873C3]/50 text-xs sm:text-sm font-mono font-bold text-[#94a3b8] hover:text-white transition-all duration-200 shadow-md group cursor-pointer"
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-white/70 hover:text-white text-xs sm:text-sm font-medium border border-white/10 transition-all cursor-pointer shadow-lg backdrop-blur-md group"
           >
-            <ArrowLeft size={16} className="transition-transform group-hover:-translate-x-1" />
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="none" className="transition-transform group-hover:-translate-x-0.5">
+              <path d="M10 12L6 8L10 4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
             <span>Back to Courses</span>
           </Link>
         </div>

@@ -77,6 +77,7 @@ export default function Assistant({
   ====================================================== */
 
   const scrollRef = useRef<HTMLDivElement>(null);
+  const windowRef = useRef<HTMLDivElement>(null);
 
   /* ======================================================
       Auto Scroll
@@ -95,6 +96,50 @@ export default function Assistant({
     });
 
   }, [messages, isTyping]);
+
+  /* ======================================================
+      Click Outside to Close Chatbot
+  ====================================================== */
+  useEffect(() => {
+    if (!chatOpen) return;
+
+    const handleClickOutside = (event: MouseEvent) => {
+      if (windowRef.current && !windowRef.current.contains(event.target as Node)) {
+        onClose();
+      }
+    };
+
+    // Delay listener to avoid triggering on the click that opened the chatbox
+    const timer = setTimeout(() => {
+      document.addEventListener("mousedown", handleClickOutside);
+    }, 50);
+
+    return () => {
+      clearTimeout(timer);
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [chatOpen, onClose]);
+
+  /* ======================================================
+      Lock Background Scroll While Chatbot is Open
+  ====================================================== */
+  useEffect(() => {
+    if (!chatOpen) return;
+
+    const lenis = (window as unknown as { __lenis?: { stop: () => void; start: () => void } }).__lenis;
+    if (lenis) {
+      lenis.stop();
+    }
+    const originalOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
+    return () => {
+      if (lenis) {
+        lenis.start();
+      }
+      document.body.style.overflow = originalOverflow;
+    };
+  }, [chatOpen]);
 
   /* ======================================================
       Suggestions
@@ -163,38 +208,26 @@ export default function Assistant({
         {/* =====================================================
             Backdrop
         ====================================================== */}
-
-        {fullScreen && (
-
-          <motion.div
-
-            initial={{
-              opacity: 0,
-            }}
-
-            animate={{
-              opacity: 1,
-            }}
-
-            exit={{
-              opacity: 0,
-            }}
-
-            className="
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          onClick={onClose}
+          className={`
+            pointer-events-auto
             absolute
             inset-0
-            bg-black/45
-            backdrop-blur-md
-            "
-
-          />
-
-        )}
+            cursor-pointer
+            ${fullScreen ? "bg-black/50 backdrop-blur-md" : "bg-transparent"}
+          `}
+        />
 
         {/* =====================================================
             Main Window
         ====================================================== */}
         <motion.div
+          ref={windowRef}
+          data-lenis-prevent
           initial={{
             opacity: 0,
             scale: 0.9,
@@ -309,13 +342,15 @@ export default function Assistant({
             {/* Messages */}
             <div
               ref={scrollRef}
-              className="flex-1 min-h-0 overflow-y-auto px-4 sm:px-6 py-4 sm:py-5"
+              data-lenis-prevent
+              onWheel={(e) => e.stopPropagation()}
+              className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden overscroll-contain px-4 sm:px-6 py-4 sm:py-5 space-y-4"
             >
               {messages.length === 0 ? (
                 <motion.div
                   initial={{ opacity: 0, y: 12 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="flex min-h-full flex-col justify-start sm:justify-center py-2 my-auto"
+                  className="flex flex-col py-2 pb-8"
                 >
                   <div className="mb-4 sm:mb-6 text-center">
                     <div className="mx-auto mb-3 sm:mb-4 flex h-14 w-14 sm:h-16 sm:w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-fuchsia-500 to-violet-700 shadow-[0_0_35px_rgba(217,95,209,.35)]">

@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Brain, Code2, Globe, Trophy } from "lucide-react";
+import Link from "next/link";
 import SmoothScroll from "@/components/landing/SmoothScroll";
 import { Podium } from "./Podium";
 import { RankTable } from "./RankTable";
@@ -135,6 +136,17 @@ export default function Leaderboard() {
     <main className="starfield relative min-h-screen overflow-hidden px-4 pb-16 pt-16 md:pt-20">
       <SmoothScroll />
       <Starfield />
+
+      {/* Back Button */}
+      <Link
+        href="/"
+        className="absolute left-4 sm:left-8 md:left-12 top-20 md:top-24 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 text-white/70 hover:text-white text-xs sm:text-sm font-medium border border-white/10 transition-all cursor-pointer shadow-lg backdrop-blur-md z-30"
+      >
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+          <path d="M10 12L6 8L10 4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+        <span>Back</span>
+      </Link>
 
       <div className="relative mx-auto flex max-w-5xl flex-col items-center">
         <span className="flex items-center gap-2 rounded-full border border-cosmo-border bg-white/[0.04] px-3.5 py-1 text-[10px] uppercase tracking-[0.22em] text-badge">

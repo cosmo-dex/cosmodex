@@ -255,6 +255,17 @@ export default function EventsPage() {
       <div className="pt-20 pb-24">
         {/* Hero */}
         <div className="relative overflow-hidden px-6 sm:px-10 py-16 text-center">
+          {/* Back Button */}
+          <Link
+            href="/"
+            className="absolute left-6 sm:left-10 top-10 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 text-white/70 hover:text-white text-xs sm:text-sm font-medium border border-white/10 transition-all cursor-pointer shadow-lg backdrop-blur-md z-20"
+          >
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+              <path d="M10 12L6 8L10 4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+            <span>Back</span>
+          </Link>
+
           <div className="absolute inset-0 pointer-events-none overflow-hidden">
             <div className="absolute -top-20 left-1/4 w-[500px] h-[500px] bg-[#E873C3]/6 rounded-full blur-3xl" />
             <div className="absolute top-10 right-1/4 w-[400px] h-[400px] bg-[#8D37D6]/8 rounded-full blur-3xl" />
