@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, LayoutDashboard } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 
 interface TheoryHeaderProps {
   activeGrindersCount?: number;
@@ -35,18 +35,8 @@ export default function TheoryHeader({
 
   return (
     <header className="fixed top-16 left-0 right-0 z-30 bg-[#080d19] border-b border-[#1b263b] px-4 sm:px-8 py-3 flex items-center justify-between font-sans shadow-md">
-      {/* Left: Dashboard Button, Back Arrow & Exercise Counter */}
+      {/* Left: Back Arrow & Exercise Counter */}
       <div className="flex items-center gap-3">
-        <Link
-          href="/dashboard"
-          prefetch={true}
-          className="flex items-center gap-2 px-3 py-1.5 rounded-xl border border-white/10 bg-white/[0.04] text-slate-300 hover:border-[#E873C3]/50 hover:bg-[#E873C3]/10 hover:text-[#E873C3] text-xs font-mono font-semibold transition-all cursor-pointer shadow-sm"
-          title="Dashboard"
-        >
-          <LayoutDashboard size={15} />
-          <span className="hidden sm:inline">Dashboard</span>
-        </Link>
-
         {courseId && (
           <Link
             href={fallbackHref}
