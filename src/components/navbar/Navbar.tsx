@@ -7,7 +7,6 @@ import {
   ChevronDown,
   BookOpen,
   LayoutDashboard,
-  Code2,
   Hammer,
   Users,
   Menu,

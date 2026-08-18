@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { displayFont, bodyFont, monoFont } from "@/fonts";
 import "./globals.css";
-import Mascot from "@/features/mascot/Mascot";
 import SmoothScroll from "@/components/landing/SmoothScroll";
 
 export const metadata: Metadata = {
