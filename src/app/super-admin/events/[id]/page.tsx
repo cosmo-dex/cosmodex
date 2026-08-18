@@ -404,14 +404,6 @@ export default function EventControlPage() {
     fetchEvent();
   };
 
-  const handleToggleRegistration = async () => {
-    await fetch(`/api/admin/super/events/${eventId}`, {
-      method: 'PATCH', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ registration_open: !event?.registration_open }),
-    });
-    fetchEvent();
-  };
-
   const handleTogglePublishResults = async () => {
     const isCurrentlyPublished = Boolean(event?.submission_config?.results_published);
     const updatedSubConfig = {

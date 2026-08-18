@@ -86,6 +86,7 @@ function EventCardComponent({ event }: { event: EventCard }) {
       {/* Banner */}
       <div className={`relative h-40 bg-gradient-to-br ${typeMeta.gradient} flex items-center justify-center overflow-hidden`}>
         {event.banner_url ? (
+          /* eslint-disable-next-line @next/next/no-img-element */
           <img src={event.banner_url} alt={event.title} className="absolute inset-0 w-full h-full object-cover opacity-35 group-hover:opacity-50 transition-opacity duration-400" />
         ) : null}
         <div className="absolute inset-0 bg-gradient-to-t from-[#06020f]/90 via-[#06020f]/30 to-transparent" />

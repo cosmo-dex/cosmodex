@@ -501,6 +501,7 @@ export default function LearnPage() {
           transition={{ duration: 0.6, ease: "easeOut" }}
           className="relative w-full h-80 sm:h-[460px] lg:h-[520px] overflow-hidden border-b border-purple-500/20 shadow-[0_20px_60px_rgba(15,3,35,0.9)] bg-[#070312]"
         >
+          {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src="/images/space-hero-banner.jpg"
             alt="CosmoDeX Space Banner"
