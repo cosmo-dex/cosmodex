@@ -33,10 +33,10 @@ interface EventCard {
 }
 
 const TYPE_META: Record<string, { label: string; icon: React.ComponentType<{ size?: number }>; color: string; bg: string; gradient: string }> = {
-  hackathon:      { label: 'Hackathon',      icon: Zap,      color: '#E873C3', bg: 'rgba(232,115,195,0.15)', gradient: 'from-[#E873C3]/25 via-[#8D37D6]/12 to-transparent' },
-  coding_contest: { label: 'Coding Contest', icon: Hammer,   color: '#4ECDC4', bg: 'rgba(78,205,196,0.15)',  gradient: 'from-[#4ECDC4]/25 via-[#3DCB7F]/12 to-transparent' },
-  workshop:       { label: 'Workshop',       icon: BookOpen, color: '#F5A623', bg: 'rgba(245,166,35,0.15)',  gradient: 'from-[#F5A623]/25 via-[#FF6B35]/12 to-transparent' },
-  challenge:      { label: 'Challenge',      icon: Star,     color: '#8D37D6', bg: 'rgba(141,55,214,0.15)',  gradient: 'from-[#8D37D6]/25 via-[#E873C3]/12 to-transparent' },
+  hackathon: { label: 'Hackathon', icon: Zap, color: '#E873C3', bg: 'rgba(232,115,195,0.15)', gradient: 'from-[#E873C3]/25 via-[#8D37D6]/12 to-transparent' },
+  coding_contest: { label: 'Coding Contest', icon: Hammer, color: '#4ECDC4', bg: 'rgba(78,205,196,0.15)', gradient: 'from-[#4ECDC4]/25 via-[#3DCB7F]/12 to-transparent' },
+  workshop: { label: 'Workshop', icon: BookOpen, color: '#F5A623', bg: 'rgba(245,166,35,0.15)', gradient: 'from-[#F5A623]/25 via-[#FF6B35]/12 to-transparent' },
+  challenge: { label: 'Challenge', icon: Star, color: '#8D37D6', bg: 'rgba(141,55,214,0.15)', gradient: 'from-[#8D37D6]/25 via-[#E873C3]/12 to-transparent' },
 };
 
 function useCountdownStr(target: string | null) {
@@ -98,11 +98,10 @@ function EventCardComponent({ event }: { event: EventCard }) {
         </div>
 
         {/* Status badge */}
-        <div className={`absolute top-3 right-3 flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-black uppercase backdrop-blur-sm ${
-          isLive ? 'text-[#E873C3] bg-[#E873C3]/15 border border-[#E873C3]/40' :
-          isUpcoming ? 'text-[#3DCB7F] bg-[#3DCB7F]/12 border border-[#3DCB7F]/30' :
-          'text-white/40 bg-white/[0.06] border border-white/10'
-        }`}>
+        <div className={`absolute top-3 right-3 flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-black uppercase backdrop-blur-sm ${isLive ? 'text-[#E873C3] bg-[#E873C3]/15 border border-[#E873C3]/40' :
+            isUpcoming ? 'text-[#3DCB7F] bg-[#3DCB7F]/12 border border-[#3DCB7F]/30' :
+              'text-white/40 bg-white/[0.06] border border-white/10'
+          }`}>
           {isLive && <span className="w-1.5 h-1.5 rounded-full bg-[#E873C3] animate-pulse" />}
           {isLive ? 'LIVE' : isUpcoming ? 'Upcoming' : 'Ended'}
         </div>
@@ -132,9 +131,8 @@ function EventCardComponent({ event }: { event: EventCard }) {
           <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-white/[0.04] border border-white/[0.07] text-[10px] text-white/40 font-medium">
             <Globe size={9} />{event.eligibility ?? 'Open to All'}
           </span>
-          <span className={`flex items-center gap-1 px-2 py-0.5 rounded-full border text-[10px] font-medium ${
-            isFree ? 'bg-[#3DCB7F]/10 border-[#3DCB7F]/25 text-[#3DCB7F]' : 'bg-[#F5A623]/10 border-[#F5A623]/25 text-[#F5A623]'
-          }`}>
+          <span className={`flex items-center gap-1 px-2 py-0.5 rounded-full border text-[10px] font-medium ${isFree ? 'bg-[#3DCB7F]/10 border-[#3DCB7F]/25 text-[#3DCB7F]' : 'bg-[#F5A623]/10 border-[#F5A623]/25 text-[#F5A623]'
+            }`}>
             <BadgeCheck size={9} />{event.registration_fee ?? 'Free'}
           </span>
         </div>
@@ -290,92 +288,158 @@ export default function EventsPage() {
         </div>
 
         <div className="max-w-7xl mx-auto px-6 sm:px-10 flex flex-col gap-7">
-          {/* Search + Filter bar */}
-          <div className="flex flex-col gap-3">
-            <div className="flex gap-3">
+          {/* Modern Search & Filter Bar */}
+          <div className="flex flex-col gap-4 bg-[#0c081d]/80 border border-white/10 rounded-2xl p-4 sm:p-5 backdrop-blur-xl shadow-2xl">
+            {/* Top row: Search input + Category quick pills + Advanced Filter Toggle */}
+            <div className="flex flex-col md:flex-row items-stretch md:items-center gap-3">
+              {/* Search Box */}
               <div className="relative flex-1">
-                <Search size={15} className="absolute left-4 top-1/2 -translate-y-1/2 text-white/30" />
+                <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-white/40" />
                 <input
                   value={search}
                   onChange={e => { setSearch(e.target.value); setPage(1); }}
                   placeholder="Search events, hackathons, contests..."
-                  className="w-full pl-11 pr-4 py-3 bg-white/[0.04] border border-white/[0.08] rounded-xl text-sm text-white placeholder:text-white/30 focus:outline-none focus:border-[#E873C3]/50 transition-colors"
+                  className="w-full pl-11 pr-9 py-2.5 bg-white/[0.05] border border-white/10 rounded-xl text-sm text-white placeholder:text-white/40 focus:outline-none focus:border-[#E873C3] focus:ring-2 focus:ring-[#E873C3]/30 transition-all font-medium"
                 />
+                {search && (
+                  <button
+                    onClick={() => { setSearch(''); setPage(1); }}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-white/40 hover:text-white text-xs font-bold p-1"
+                  >
+                    ✕
+                  </button>
+                )}
               </div>
+
+              {/* Main Category Tabs */}
+              <div className="flex items-center gap-1.5 overflow-x-auto pb-1 md:pb-0 no-scrollbar">
+                {TYPE_FILTERS.map(f => {
+                  const isActive = typeFilter === f.key;
+                  return (
+                    <button
+                      key={f.key}
+                      onClick={() => { setTypeFilter(f.key); setPage(1); }}
+                      className={`px-3.5 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all duration-200 cursor-pointer ${
+                        isActive
+                          ? 'bg-gradient-to-r from-[#E873C3] to-[#8D37D6] text-white shadow-lg shadow-[#E873C3]/30 border border-white/30 scale-[1.02]'
+                          : 'bg-white/[0.05] text-white/80 border border-white/10 hover:bg-white/10 hover:text-white hover:border-white/20'
+                      }`}
+                    >
+                      {f.label}
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* Advanced Filter Toggle Button */}
               <button
                 onClick={() => setShowFilters(f => !f)}
-                className={`flex items-center gap-2 px-4 py-3 rounded-xl text-sm font-bold border transition-all ${showFilters ? 'bg-[#E873C3]/15 border-[#E873C3]/40 text-[#E873C3]' : 'bg-white/[0.04] border-white/[0.08] text-white/50 hover:text-white'}`}
+                className={`flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold border transition-all cursor-pointer whitespace-nowrap ${
+                  showFilters || statusFilter || participationFilter
+                    ? 'bg-[#E873C3]/20 border-[#E873C3]/50 text-[#E873C3] shadow-md shadow-[#E873C3]/20'
+                    : 'bg-white/[0.05] border-white/10 text-white/80 hover:bg-white/10 hover:text-white'
+                }`}
               >
-                <Filter size={14} /> Filters
+                <Filter size={14} />
+                <span>Filters</span>
+                {(statusFilter || participationFilter) && (
+                  <span className="w-5 h-5 rounded-full bg-[#E873C3] text-white text-[10px] flex items-center justify-center font-bold">
+                    {(statusFilter ? 1 : 0) + (participationFilter ? 1 : 0)}
+                  </span>
+                )}
               </button>
             </div>
 
-            {/* Expanded filters */}
+            {/* Advanced Filters Panel (Status & Mode) */}
             {showFilters && (
-              <div className="flex flex-wrap gap-2 p-4 bg-white/[0.02] border border-white/[0.06] rounded-xl">
-                <div className="flex flex-wrap gap-1.5">
-                  <span className="text-[10px] font-bold text-white/30 uppercase tracking-wider self-center mr-1">Type</span>
-                  {TYPE_FILTERS.map(f => (
-                    <button key={f.key} onClick={() => { setTypeFilter(f.key); setPage(1); }}
-                      className="px-3 py-1.5 rounded-full text-xs font-bold transition-all duration-200"
-                      style={typeFilter === f.key
-                        ? { background: 'linear-gradient(135deg,#E873C3,#8D37D6)', color: '#fff' }
-                        : { background: 'rgba(255,255,255,0.04)', color: 'rgba(255,255,255,0.45)', border: '1px solid rgba(255,255,255,0.08)' }
-                      }>
-                      {f.label}
-                    </button>
-                  ))}
+              <div className="pt-4 border-t border-white/10 grid grid-cols-1 sm:grid-cols-2 gap-4 animate-in fade-in slide-in-from-top-2 duration-200">
+                {/* Status Filter Row */}
+                <div className="flex flex-col gap-2">
+                  <span className="text-[11px] font-bold text-white/50 uppercase tracking-wider">Event Status</span>
+                  <div className="flex flex-wrap gap-1.5">
+                    {STATUS_FILTERS.map(f => {
+                      const isActive = statusFilter === f.key;
+                      return (
+                        <button
+                          key={f.key}
+                          onClick={() => { setStatusFilter(f.key); setPage(1); }}
+                          className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-200 cursor-pointer ${
+                            isActive
+                              ? 'bg-[#E873C3]/25 text-[#E873C3] border border-[#E873C3]/50 shadow-sm'
+                              : 'bg-white/[0.04] text-white/70 border border-white/10 hover:bg-white/10 hover:text-white'
+                          }`}
+                        >
+                          {f.label}
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
-                <div className="w-px bg-white/10 mx-2 self-stretch" />
-                <div className="flex flex-wrap gap-1.5">
-                  <span className="text-[10px] font-bold text-white/30 uppercase tracking-wider self-center mr-1">Status</span>
-                  {STATUS_FILTERS.map(f => (
-                    <button key={f.key} onClick={() => { setStatusFilter(f.key); setPage(1); }}
-                      className="px-3 py-1.5 rounded-full text-xs font-bold transition-all duration-200"
-                      style={statusFilter === f.key
-                        ? { background: 'rgba(232,115,195,0.2)', color: '#E873C3', border: '1px solid rgba(232,115,195,0.4)' }
-                        : { background: 'rgba(255,255,255,0.04)', color: 'rgba(255,255,255,0.45)', border: '1px solid rgba(255,255,255,0.08)' }
-                      }>
-                      {f.label}
-                    </button>
-                  ))}
-                </div>
-                <div className="w-px bg-white/10 mx-2 self-stretch" />
-                <div className="flex flex-wrap gap-1.5">
-                  <span className="text-[10px] font-bold text-white/30 uppercase tracking-wider self-center mr-1">Mode</span>
-                  {PARTICIPATION_FILTERS.map(f => (
-                    <button key={f.key} onClick={() => { setParticipationFilter(f.key); setPage(1); }}
-                      className="px-3 py-1.5 rounded-full text-xs font-bold transition-all duration-200"
-                      style={participationFilter === f.key
-                        ? { background: 'rgba(78,205,196,0.2)', color: '#4ECDC4', border: '1px solid rgba(78,205,196,0.4)' }
-                        : { background: 'rgba(255,255,255,0.04)', color: 'rgba(255,255,255,0.45)', border: '1px solid rgba(255,255,255,0.08)' }
-                      }>
-                      {f.label}
-                    </button>
-                  ))}
+
+                {/* Mode Filter Row */}
+                <div className="flex flex-col gap-2">
+                  <span className="text-[11px] font-bold text-white/50 uppercase tracking-wider">Participation Mode</span>
+                  <div className="flex flex-wrap gap-1.5">
+                    {PARTICIPATION_FILTERS.map(f => {
+                      const isActive = participationFilter === f.key;
+                      return (
+                        <button
+                          key={f.key}
+                          onClick={() => { setParticipationFilter(f.key); setPage(1); }}
+                          className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-200 cursor-pointer ${
+                            isActive
+                              ? 'bg-[#4ECDC4]/25 text-[#4ECDC4] border border-[#4ECDC4]/50 shadow-sm'
+                              : 'bg-white/[0.04] text-white/70 border border-white/10 hover:bg-white/10 hover:text-white'
+                          }`}
+                        >
+                          {f.label}
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
               </div>
             )}
 
-            {/* Compact quick filters (always visible) */}
-            <div className="flex flex-wrap gap-1.5">
-              {TYPE_FILTERS.filter(f => f.key).map(f => (
-                <button key={f.key} onClick={() => { setTypeFilter(typeFilter === f.key ? '' : f.key); setPage(1); }}
-                  className="px-3 py-1 rounded-full text-xs font-bold transition-all duration-200"
-                  style={typeFilter === f.key
-                    ? { background: 'linear-gradient(135deg,#E873C3,#8D37D6)', color: '#fff' }
-                    : { background: 'rgba(255,255,255,0.04)', color: 'rgba(255,255,255,0.4)', border: '1px solid rgba(255,255,255,0.08)' }
-                  }>
-                  {f.label}
+            {/* Active Filters Bar & Reset Option */}
+            {(typeFilter || statusFilter || participationFilter || search) && (
+              <div className="flex items-center justify-between pt-2 border-t border-white/5 text-xs">
+                <div className="flex items-center gap-2 flex-wrap text-white/60">
+                  <span className="font-bold text-white/40">Active Filters:</span>
+                  {typeFilter && (
+                    <span className="px-2.5 py-1 rounded-md bg-[#E873C3]/15 text-[#E873C3] border border-[#E873C3]/30 font-medium flex items-center gap-1">
+                      {TYPE_FILTERS.find(f => f.key === typeFilter)?.label}
+                      <button onClick={() => setTypeFilter('')} className="hover:text-white font-bold ml-1">✕</button>
+                    </span>
+                  )}
+                  {statusFilter && (
+                    <span className="px-2.5 py-1 rounded-md bg-[#E873C3]/15 text-[#E873C3] border border-[#E873C3]/30 font-medium flex items-center gap-1">
+                      {STATUS_FILTERS.find(f => f.key === statusFilter)?.label}
+                      <button onClick={() => setStatusFilter('')} className="hover:text-white font-bold ml-1">✕</button>
+                    </span>
+                  )}
+                  {participationFilter && (
+                    <span className="px-2.5 py-1 rounded-md bg-[#4ECDC4]/15 text-[#4ECDC4] border border-[#4ECDC4]/30 font-medium flex items-center gap-1">
+                      {PARTICIPATION_FILTERS.find(f => f.key === participationFilter)?.label}
+                      <button onClick={() => setParticipationFilter('')} className="hover:text-white font-bold ml-1">✕</button>
+                    </span>
+                  )}
+                  {search && (
+                    <span className="px-2.5 py-1 rounded-md bg-white/10 text-white border border-white/20 font-medium flex items-center gap-1">
+                      &quot;{search}&quot;
+                      <button onClick={() => setSearch('')} className="hover:text-white font-bold ml-1">✕</button>
+                    </span>
+                  )}
+                </div>
+
+                <button
+                  onClick={() => { setTypeFilter(''); setStatusFilter(''); setParticipationFilter(''); setSearch(''); setPage(1); }}
+                  className="text-red-400 hover:text-red-300 font-bold transition-colors ml-auto cursor-pointer flex items-center gap-1"
+                >
+                  Reset All ✕
                 </button>
-              ))}
-              {(typeFilter || statusFilter || participationFilter) && (
-                <button onClick={() => { setTypeFilter(''); setStatusFilter(''); setParticipationFilter(''); setPage(1); }}
-                  className="px-3 py-1 rounded-full text-xs font-bold text-red-400/70 border border-red-500/20 hover:bg-red-500/10 transition-all">
-                  Clear filters ✕
-                </button>
-              )}
-            </div>
+              </div>
+            )}
           </div>
 
           {/* Results count */}
