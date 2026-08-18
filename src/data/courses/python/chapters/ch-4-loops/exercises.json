@@ -1,0 +1,34 @@
+[
+  {
+    "id": "ex-14",
+    "numberLabel": "Exercise 1",
+    "title": "Guess Number",
+    "isUnlocked": false,
+    "instruction": "Use a while loop to keep guessing until secret number is matched.",
+    "initialCode": "# Exercise: Guess Number\n\nguess = 0\nwhile guess != 6:\n    guess += 2\n    print(\"Guess:\", guess)\nprint(\"Got it!\")"
+  },
+  {
+    "id": "ex-15",
+    "numberLabel": "Exercise 2",
+    "title": "Detention",
+    "isUnlocked": false,
+    "instruction": "Use a for loop with range to print a sentence 5 times.",
+    "initialCode": "# Exercise: Detention\n\nfor i in range(5):\n    print(\"I will not use Snapchat in class.\")"
+  },
+  {
+    "id": "ex-16",
+    "numberLabel": "Exercise 3",
+    "title": "99 Bottles",
+    "isUnlocked": false,
+    "instruction": "Iterate backwards from 3 to 1 printing bottle countdown verses.",
+    "initialCode": "# Exercise: 99 Bottles\n\nfor i in range(3, 0, -1):\n    print(i, \"bottles of milk on the wall\")"
+  },
+  {
+    "id": "ex-17",
+    "numberLabel": "Exercise 4",
+    "title": "Fizz Buzz",
+    "isUnlocked": false,
+    "instruction": "Print numbers 1 to 15, replacing multiples of 3 with Fizz and 5 with Buzz.",
+    "initialCode": "# Exercise: Fizz Buzz\n\nfor i in range(1, 16):\n    if i % 15 == 0:\n        print(\"FizzBuzz\")\n    elif i % 3 == 0:\n        print(\"Fizz\")\n    elif i % 5 == 0:\n        print(\"Buzz\")\n    else:\n        print(i)"
+  }
+]

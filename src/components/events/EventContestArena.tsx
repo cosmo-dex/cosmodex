@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useEffect, useCallback } from 'react';
+import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Editor, { Monaco } from '@monaco-editor/react';
 import {
@@ -358,7 +358,10 @@ function CodingPanel({
   }>({ status: 'IDLE', stdout: '' });
 
   const problemDesc = question.description || question.problemStatement || 'No description provided.';
-  const sampleCases = question.sampleTestCases || question.testCases || [];
+  const sampleCases = useMemo(
+    () => question.sampleTestCases || question.testCases || [],
+    [question.sampleTestCases, question.testCases]
+  );
   const isLast = questionIndex === totalQuestions - 1;
 
   // Drag resizer

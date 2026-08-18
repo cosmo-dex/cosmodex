@@ -55,9 +55,8 @@ export async function verifyAdminSession(
 /**
  * Audit logging removed per requirements.
  */
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 export async function logAdminActivity(..._args: unknown[]) {
-  // No-op
+  void _args;
 }
 
 /**

@@ -2,6 +2,7 @@
 
 import { useRef, useState } from "react";
 import { motion, useInView } from "framer-motion";
+import Link from "next/link";
 
 const courses = [
   {
@@ -14,6 +15,7 @@ const courses = [
     color: "#ff2d78",
     rgb: "255,45,120",
     category: "Popular",
+    href: "/learn#python",
     icon: (
       <svg width="28" height="28" viewBox="0 0 32 32" fill="none" aria-hidden="true">
         <path d="M16 4C9.373 4 10 7 10 7v3h6v1H7S4 10.627 4 17s3.373 7 3.373 7H9v-3.5S8.9 17 12 17h8c2.761 0 3-2.239 3-5V9c0-2.761-2.239-5-5-5h-2zm-1.5 2.5a1.5 1.5 0 110 3 1.5 1.5 0 010-3z" fill="currentColor" opacity="0.9"/>
@@ -31,6 +33,7 @@ const courses = [
     color: "#9b30ff",
     rgb: "155,48,255",
     category: "Popular",
+    href: "/learn#cpp",
     icon: (
       <svg width="28" height="28" viewBox="0 0 32 32" fill="none" aria-hidden="true">
         <path d="M16 3L4 9.5v13L16 29l12-6.5v-13L16 3z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round"/>
@@ -48,6 +51,7 @@ const courses = [
     color: "#c084fc",
     rgb: "192,132,252",
     category: "Popular",
+    href: "/learn#java",
     icon: (
       <svg width="28" height="28" viewBox="0 0 32 32" fill="none" aria-hidden="true">
         <path d="M12 22s-2 1.2-2 2.2c0 1.5 4 2.3 7 2.3s6-.7 6-2.2c0-1-.8-1.8-2-2.3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
@@ -145,6 +149,9 @@ export default function CoursesSection() {
         background: "rgba(5,5,8,0.55)",
         backdropFilter: "blur(4px)",
         WebkitBackdropFilter: "blur(4px)",
+        paddingTop: "90px",
+        paddingBottom: "80px",
+        scrollMarginTop: "80px",
       }}
     >
       {/* Radial tint */}
@@ -168,9 +175,9 @@ export default function CoursesSection() {
           initial={{ opacity: 0, y: 32 }}
           animate={isInView ? { opacity: 1, y: 0 } : {}}
           transition={{ duration: 0.85, ease: [0.16, 1, 0.3, 1] }}
-          style={{ textAlign: "center", marginBottom: "64px" }}
+          style={{ textAlign: "center", marginBottom: "28px" }}
         >
-          <div className="badge" style={{ marginBottom: "22px" }}>
+          <div className="badge" style={{ marginBottom: "14px" }}>
             <svg width="11" height="11" viewBox="0 0 12 12" fill="none" aria-hidden="true">
               <path d="M6 1l1.5 3h3l-2.5 2 1 3L6 7.5 3 9l1-3L1.5 4h3L6 1z" fill="currentColor" />
             </svg>
@@ -178,11 +185,11 @@ export default function CoursesSection() {
           </div>
           <h2
             style={{
-              fontSize: "clamp(32px, 5vw, 58px)",
+              fontSize: "clamp(28px, 4.2vw, 48px)",
               fontWeight: 700,
               letterSpacing: "0.03em",
-              lineHeight: 1.15,
-              marginBottom: "18px",
+              lineHeight: 1.25,
+              marginBottom: "12px",
               fontFamily: "var(--font-display), sans-serif",
             }}
           >
@@ -192,11 +199,11 @@ export default function CoursesSection() {
           </h2>
           <p
             style={{
-              fontSize: "17px",
+              fontSize: "15px",
               color: "rgba(240,230,255,0.48)",
               maxWidth: "460px",
               margin: "0 auto",
-              lineHeight: 1.65,
+              lineHeight: 1.55,
               fontFamily: "var(--font-body), 'Fira Code', monospace",
             }}
           >
@@ -209,7 +216,7 @@ export default function CoursesSection() {
           initial={{ opacity: 0, y: 20 }}
           animate={isInView ? { opacity: 1, y: 0 } : {}}
           transition={{ duration: 0.7, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
-          style={{ maxWidth: "480px", margin: "0 auto 64px" }}
+          style={{ maxWidth: "460px", margin: "0 auto 32px" }}
         >
           <div style={{ position: "relative" }}>
             <svg
@@ -231,7 +238,7 @@ export default function CoursesSection() {
               onChange={(e) => setSearch(e.target.value)}
               style={{
                 width: "100%",
-                padding: "12px 16px 12px 44px",
+                padding: "10px 16px 10px 44px",
                 borderRadius: "100px",
                 background: "rgba(255,255,255,0.04)",
                 border: "1px solid rgba(255,255,255,0.09)",
@@ -260,8 +267,8 @@ export default function CoursesSection() {
           animate={isInView ? "visible" : "hidden"}
           style={{
             display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))",
-            gap: "18px",
+            gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
+            gap: "16px",
           }}
         >
           {filtered.map((course) => (
@@ -272,21 +279,22 @@ export default function CoursesSection() {
               style={{
                 opacity: (course as { placeholder?: boolean }).placeholder ? 0.5 : 1,
                 cursor: (course as { placeholder?: boolean }).placeholder ? "default" : "pointer",
+                padding: "24px",
               }}
             >
               {/* Icon */}
               <div
                 className="feature-icon"
                 style={{
-                  width: "52px",
-                  height: "52px",
-                  borderRadius: "14px",
+                  width: "46px",
+                  height: "46px",
+                  borderRadius: "12px",
                   background: `rgba(${course.rgb}, 0.1)`,
                   border: `1px solid rgba(${course.rgb}, 0.2)`,
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
-                  marginBottom: "20px",
+                  marginBottom: "14px",
                   color: course.color,
                   boxShadow: `0 4px 16px rgba(${course.rgb}, 0.12)`,
                 }}
@@ -308,7 +316,7 @@ export default function CoursesSection() {
                     textTransform: "uppercase",
                     background: `rgba(${course.rgb}, 0.1)`,
                     color: course.color,
-                    marginBottom: "12px",
+                    marginBottom: "10px",
                     fontFamily: "var(--font-body), 'Fira Code', monospace",
                   }}
                 >
@@ -319,10 +327,10 @@ export default function CoursesSection() {
               {/* Title */}
               <h3
                 style={{
-                  fontSize: "21px",
+                  fontSize: "19px",
                   fontWeight: 700,
                   color: "rgba(240,230,255,0.95)",
-                  marginBottom: "10px",
+                  marginBottom: "8px",
                   letterSpacing: "0.025em",
                   lineHeight: 1.18,
                   fontFamily: "var(--font-display), sans-serif",
@@ -334,10 +342,10 @@ export default function CoursesSection() {
               {/* Description */}
               <p
                 style={{
-                  fontSize: "14.5px",
+                  fontSize: "13.5px",
                   color: "rgba(240,230,255,0.48)",
-                  lineHeight: 1.65,
-                  marginBottom: "20px",
+                  lineHeight: 1.55,
+                  marginBottom: "14px",
                   fontFamily: "var(--font-body), 'Fira Code', monospace",
                 }}
               >
@@ -351,7 +359,7 @@ export default function CoursesSection() {
                     display: "flex",
                     gap: "16px",
                     alignItems: "center",
-                    paddingTop: "16px",
+                    paddingTop: "12px",
                     borderTop: "1px solid rgba(255,255,255,0.05)",
                   }}
                 >
@@ -383,6 +391,70 @@ export default function CoursesSection() {
                   >
                     ✦ {course.xp.toLocaleString()} ✦
                   </span>
+                </div>
+              )}
+
+              {/* Action Button */}
+              {!(course as { placeholder?: boolean }).placeholder ? (
+                <Link
+                  href={(course as { href?: string }).href || "/learn"}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: "8px",
+                    width: "100%",
+                    marginTop: "12px",
+                    padding: "10px 16px",
+                    borderRadius: "10px",
+                    fontSize: "13px",
+                    fontWeight: 600,
+                    fontFamily: "var(--font-body), 'Fira Code', monospace",
+                    textDecoration: "none",
+                    background: `rgba(${course.rgb}, 0.12)`,
+                    border: `1px solid rgba(${course.rgb}, 0.3)`,
+                    color: "#ffffff",
+                    transition: "all 0.25s cubic-bezier(0.16, 1, 0.3, 1)",
+                  }}
+                  onMouseEnter={(e) => {
+                    const el = e.currentTarget as HTMLElement;
+                    el.style.background = `linear-gradient(135deg, rgba(${course.rgb}, 0.85), rgba(${course.rgb}, 0.45))`;
+                    el.style.borderColor = `rgba(${course.rgb}, 0.9)`;
+                    el.style.boxShadow = `0 6px 20px rgba(${course.rgb}, 0.4)`;
+                    el.style.transform = "translateY(-1.5px)";
+                  }}
+                  onMouseLeave={(e) => {
+                    const el = e.currentTarget as HTMLElement;
+                    el.style.background = `rgba(${course.rgb}, 0.12)`;
+                    el.style.borderColor = `rgba(${course.rgb}, 0.3)`;
+                    el.style.boxShadow = "none";
+                    el.style.transform = "translateY(0)";
+                  }}
+                >
+                  Start Course
+                  <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                    <path d="M6 3l5 5-5 5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                </Link>
+              ) : (
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    width: "100%",
+                    marginTop: "12px",
+                    padding: "10px 16px",
+                    borderRadius: "10px",
+                    fontSize: "12.5px",
+                    fontWeight: 500,
+                    color: "rgba(240,230,255,0.3)",
+                    background: "rgba(255,255,255,0.02)",
+                    border: "1px solid rgba(255,255,255,0.05)",
+                    fontFamily: "var(--font-body), 'Fira Code', monospace",
+                  }}
+                >
+                  Coming Soon
                 </div>
               )}
 

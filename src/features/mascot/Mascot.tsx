@@ -1,99 +1,36 @@
 "use client";
 
 import React, { useEffect, useRef, useState } from "react";
-import { motion, useAnimation } from "framer-motion";
+import { motion } from "framer-motion";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useMascotStore } from "@/hooks/useMascotStore";
-
 
 import Assistant from "./Assistant";
 
 import mascotBody from "./Mascot - Without Eyes.png";
 import mascotPupil from "./Mascot - Pupil.png";
 
-// Responsive Viewport Positions
-const layoutVariants: Record<string, { top: string; left: string; x: string; y: string }> = {
-  "bottom-right": { top: "calc(100vh - 110px)", left: "calc(100vw - 90px)", x: "-50%", y: "-50%" },
-  "center": { top: "50vh", left: "50vw", x: "-50%", y: "-50%" },
-  "offset-right": { top: "50vh", left: "70vw", x: "-50%", y: "-50%" }
-};
-
 export default function Mascot() {
   const leftEyeRef = useRef<HTMLDivElement>(null);
   const rightEyeRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
-  const boundaryRef = useRef<HTMLDivElement>(null);
 
   const pathname = usePathname();
 
-  // Use Framer Motion's manual animation controls for the teleport sequence
-  const controls = useAnimation();
+  const { message } = useMascotStore();
 
-  const { message, position } = useMascotStore();
+  /* ==========================================================
+      Assistant State
+  ========================================================== */
 
-/* ==========================================================
-    Assistant State
-========================================================== */
-
-const [chatOpen, setChatOpen] = useState(false);
-
-const [messages, setMessages] = useState<
-  {
-    text: string;
-    isUser: boolean;
-  }[]
->([]);
-
-const [inputValue, setInputValue] = useState("");
-
-const [fullScreen, setFullScreen] = useState(false);
-
-const [isTyping, setIsTyping] = useState(false);
+  const [chatOpen, setChatOpen] = useState(false);
+  const [messages, setMessages] = useState<{ text: string; isUser: boolean }[]>([]);
+  const [inputValue, setInputValue] = useState("");
+  const [fullScreen, setFullScreen] = useState(false);
+  const [isTyping, setIsTyping] = useState(false);
   const [isIdle, setIsIdle] = useState(false);
   const idleTimer = useRef<NodeJS.Timeout | null>(null);
-
-  // --- Teleportation Sequence Logic ---
-  const isFirstMount = useRef(true);
-
-  useEffect(() => {
-    // Prevent teleporting on the very first page load
-    if (isFirstMount.current) {
-      isFirstMount.current = false;
-      return;
-    }
-
-    const triggerTeleport = async () => {
-      // 1. Zap Out (Shrink and fade out quickly)
-      await controls.start({
-        scale: 0.1,
-        opacity: 0,
-        filter: "blur(4px)",
-        transition: { duration: 0.15, ease: "easeIn" }
-      });
-
-      // 2. Snap to new location instantly (duration 0)
-      // This also resets the x/y transform, erasing any manual drag offsets
-      const target = layoutVariants[position] || layoutVariants["bottom-right"];
-      await controls.start({
-        top: target.top,
-        left: target.left,
-        x: target.x,
-        y: target.y,
-        transition: { duration: 0 }
-      });
-
-      // 3. Zap In (Pop back up with a bouncy spring)
-      await controls.start({
-        scale: 1,
-        opacity: 1,
-        filter: "blur(0px)",
-        transition: { type: "spring", stiffness: 350, damping: 15 }
-      });
-    };
-
-    triggerTeleport();
-  }, [position, controls]);
 
   // --- Eye Tracking Logic ---
   useEffect(() => {
@@ -115,7 +52,7 @@ const [isTyping, setIsTyping] = useState(false);
       const deltaY = e.clientY - mascotCenterY;
       const angle = Math.atan2(deltaY, deltaX);
 
-      const maxRadius = 6;
+      const maxRadius = 5;
       const pupilX = Math.cos(angle) * maxRadius;
       const pupilY = Math.sin(angle) * maxRadius;
 
@@ -149,149 +86,123 @@ const [isTyping, setIsTyping] = useState(false);
     scaleY: [1, 1, 0.1, 1, 1],
     transition: { duration: 4, repeat: Infinity, times: [0, 0.85, 0.9, 0.95, 1], ease: "easeInOut" as const }
   };
+
   /* ==========================================================
     Assistant Chat Logic
+  ========================================================== */
 
-    NOTE:
-    Replace the simulated response with your backend API
-    when the AI agent is integrated.
-========================================================== */
+  const sendMessage = async () => {
+    if (!inputValue.trim()) return;
 
-const sendMessage = async () => {
-  if (!inputValue.trim()) return;
+    const question = inputValue.trim();
 
-  const question = inputValue.trim();
-
-  // Add user message
-  setMessages((prev) => [
-    ...prev,
-    {
-      text: question,
-      isUser: true,
-    },
-  ]);
-
-  setInputValue("");
-  setIsTyping(true);
-
-  try {
-    /*
-    ==========================================================
-    BACKEND INTEGRATION
-
-    Replace this with:
-
-    const res = await fetch("/api/chat", {
-      method: "POST",
-      body: JSON.stringify({ message: question }),
-    });
-
-    const data = await res.json();
-
-    ==========================================================
-    */
-
-    // Temporary fake response
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-
-    const reply =
-      "👋 Hi! I'm Cosmo. Backend integration is coming soon.";
-
+    // Add user message
     setMessages((prev) => [
       ...prev,
       {
-        text: reply,
-        isUser: false,
+        text: question,
+        isUser: true,
       },
     ]);
-  } catch (error) {
-    console.error("Assistant Error:", error);
 
-    setMessages((prev) => [
-      ...prev,
-      {
-        text: "Something went wrong. Please try again.",
-        isUser: false,
-      },
-    ]);
-  } finally {
-    setIsTyping(false);
-  }
-};
+    setInputValue("");
+    setIsTyping(true);
+
+    try {
+      // Temporary simulated response
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+
+      const reply =
+        "👋 Hi! I'm Cosmo. How can I help you with your cosmic coding journey today?";
+
+      setMessages((prev) => [
+        ...prev,
+        {
+          text: reply,
+          isUser: false,
+        },
+      ]);
+    } catch (error) {
+      console.error("Assistant Error:", error);
+
+      setMessages((prev) => [
+        ...prev,
+        {
+          text: "Something went wrong. Please try again.",
+          isUser: false,
+        },
+      ]);
+    } finally {
+      setIsTyping(false);
+    }
+  };
 
   if (pathname === '/onboarding' || pathname?.startsWith('/onboarding/') || pathname?.startsWith('/battle')) {
     return null;
   }
 
   return (
-    <div ref={boundaryRef} className="fixed 
-    top-0 left-0 w-screen h-screen pointer-events-none z-[9999] overflow-hidden">
-
+    <>
+      {/* Floating Mascot Button */}
       <motion.div
         ref={containerRef}
-        drag
-        dragConstraints={boundaryRef}
-        dragElastic={0.2}
-        dragMomentum={false}
-        // Initialize position on first mount
-        initial={{ ...layoutVariants["bottom-right"], scale: 1, opacity: 1 }}
-        // Use manual controls instead of state binding
-        animate={controls}
-        className="absolute pointer-events-auto w-[150px] h-[200px] cursor-grab active:cursor-grabbing touch-none select-none"
+        animate={{
+          opacity: chatOpen ? 0 : 1,
+          scale: chatOpen ? 0.75 : 1,
+          pointerEvents: chatOpen ? "none" : "auto",
+        }}
+        transition={{ duration: 0.2 }}
+        className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-[9999] w-[110px] h-[146px] sm:w-[130px] sm:h-[173px] select-none"
       >
-
         {/* Dark Theme Chat Bubble */}
         <div
-          className={`absolute -top-[70px] -right-[90px] w-[220px] px-4 py-3 rounded-2xl font-medium tracking-wide pointer-events-none transition-all duration-500 ease-out
+          className={`absolute -top-[52px] right-0 sm:-right-2 w-[190px] sm:w-[220px] px-3.5 py-2 rounded-2xl font-medium tracking-wide pointer-events-none transition-all duration-500 ease-out text-xs
             bg-[#160E2B]/95 text-cyan-400 border border-cyan-400/30 shadow-[0_4px_15px_rgba(0,255,255,0.15)]
             ${message ? "opacity-100 translate-y-0" : "opacity-0 translate-y-2.5"}`}
         >
           {message}
         </div>
 
-       <motion.div
-  className="absolute w-full h-full cursor-pointer"
-
-  whileHover={{
-    scale: 1.03,
-    y: -2,
-  }}
-
-  whileTap={{
-    scale: 0.97,
-  }}
-
-  onClick={() => {
-    setChatOpen(true);
-  }}
->
+        <motion.div
+          className="relative w-full h-full cursor-pointer"
+          whileHover={{
+            scale: 1.05,
+            y: -3,
+          }}
+          whileTap={{
+            scale: 0.95,
+          }}
+          onClick={() => {
+            setChatOpen(true);
+          }}
+        >
           <Image
             src={mascotBody}
-            alt="Mascot Body"
+            alt="Cosmo Mascot"
+            priority
             draggable={false}
-            className="absolute z-10 w-full h-auto pointer-events-none"
+            className="w-full h-auto pointer-events-none drop-shadow-[0_8px_24px_rgba(141,55,214,0.35)]"
           />
 
           {/* Left Pupil */}
-          <div ref={leftEyeRef} className="absolute z-11 w-[20px] top-[52px] left-[52px]">
+          <div ref={leftEyeRef} className="absolute z-11 w-[14px] sm:w-[17px] top-[38px] left-[38px] sm:top-[45px] sm:left-[45px]">
             <motion.div animate={blinkAnimation} style={{ originY: 0.5 }}>
               <Image src={mascotPupil} alt="Left Eye" draggable={false} className="w-full h-auto pointer-events-none" />
             </motion.div>
           </div>
 
           {/* Right Pupil */}
-          <div ref={rightEyeRef} className="absolute z-11 w-[20px] top-[52px] right-[45px]">
+          <div ref={rightEyeRef} className="absolute z-11 w-[14px] sm:w-[17px] top-[38px] right-[33px] sm:top-[45px] sm:right-[39px]">
             <motion.div animate={blinkAnimation} style={{ originY: 0.5 }}>
               <Image src={mascotPupil} alt="Right Eye" draggable={false} className="w-full h-auto pointer-events-none" />
             </motion.div>
           </div>
         </motion.div>
-            </motion.div>
+      </motion.div>
 
       {/* ==========================================================
-          Assistant
+          Assistant Modal
       ========================================================== */}
-
       <Assistant
         chatOpen={chatOpen}
         fullScreen={fullScreen}
@@ -305,6 +216,6 @@ const sendMessage = async () => {
           setFullScreen((prev) => !prev)
         }
       />
-    </div>
+    </>
   );
 }

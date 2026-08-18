@@ -336,6 +336,7 @@ const ALL_COURSES: CourseData[] = [
 
 // ── REUSABLE TRACK SECTION WITH ARROW PAGINATION BUTTONS IN FRONT OF HEADING ──
 interface TrackSectionProps {
+  id?: string;
   title: string;
   subtext: string;
   courses: CourseData[];
@@ -343,6 +344,7 @@ interface TrackSectionProps {
 }
 
 function TrackSection({
+  id,
   title,
   subtext,
   courses,
@@ -365,7 +367,7 @@ function TrackSection({
   };
 
   return (
-    <section className="space-y-6">
+    <section id={id} className="space-y-6 scroll-mt-28">
       {/* Header Row: Title & Subtext on Left, Arrow Navigation Buttons directly on Right */}
       <div className="flex items-center justify-between border-b border-white/10 pb-4 gap-4">
         <div className="space-y-1 text-left">
@@ -503,6 +505,7 @@ export default function LearnPage() {
           transition={{ duration: 0.6, ease: "easeOut" }}
           className="relative w-full h-80 sm:h-[460px] lg:h-[520px] overflow-hidden border-b border-purple-500/20 shadow-[0_20px_60px_rgba(15,3,35,0.9)] bg-[#070312]"
         >
+          {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src="/images/space-hero-banner.jpg"
             alt="CosmoDeX Space Banner"
@@ -550,6 +553,7 @@ export default function LearnPage() {
 
         {/* ── TRACK 1: WEB DEVELOPMENT (With Arrow Pagination) ── */}
         <TrackSection
+          id="webdev"
           title="Web Development"
           subtext="Master the foundational technologies of the web with HTML, CSS, and JavaScript."
           courses={WEBDEV_COURSES}
@@ -557,17 +561,23 @@ export default function LearnPage() {
 
         {/* ── TRACK 2: PYTHON (With Arrow Pagination) ── */}
         <TrackSection
+          id="python"
           title="Python"
           subtext="Advance your journey with python"
           courses={PYTHON_COURSES}
         />
 
         {/* ── TRACK 3: JAVA & C++ (With Arrow Pagination) ── */}
-        <TrackSection
-          title="Java & C++"
-          subtext="Master object-oriented programming principles and low-level systems programming."
-          courses={OOP_COURSES}
-        />
+        <div id="cpp" className="scroll-mt-28">
+          <div id="java" className="scroll-mt-28">
+            <TrackSection
+              id="java-cpp"
+              title="Java & C++"
+              subtext="Master object-oriented programming principles and low-level systems programming."
+              courses={OOP_COURSES}
+            />
+          </div>
+        </div>
 
         {/* ── SECTION 4: SEARCH & EXPLORE ALL COURSES ── */}
         <section className="space-y-8 pt-8 border-t border-white/10">

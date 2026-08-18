@@ -58,7 +58,8 @@ export default function BattleArenaSection() {
                 fontSize: "clamp(28px, 4vw, 52px)",
                 fontWeight: 700,
                 letterSpacing: "0.03em",
-                lineHeight: 1.15,
+                lineHeight: 1.28,
+                paddingTop: "6px",
                 marginBottom: "20px",
                 fontFamily: "var(--font-display), sans-serif",
               }}

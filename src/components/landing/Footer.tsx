@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import RisingStars from "@/components/landing/RisingStars";
 
 export default function Footer() {
@@ -9,36 +10,39 @@ export default function Footer() {
         position: "relative",
         zIndex: 2,
         background: "#000000",
-        borderTop: "1px solid rgba(255,255,255,0.05)",
-        padding: "72px 0 48px",
+        borderTop: "1px solid rgba(255,255,255,0.06)",
+        padding: "80px 0 44px",
         overflow: "hidden",
       }}
     >
-      {/* Rising stars — very subtle in footer */}
+      {/* Rising stars — subtle in footer */}
       <RisingStars count={40} intensity={0.4} />
-      <div className="container-custom">
-        {/* Top row */}
+
+      <div className="container-custom" style={{ position: "relative", zIndex: 3 }}>
+        {/* Main top grid with balanced positioning */}
         <div
           style={{
-            display: "flex",
-            alignItems: "flex-start",
-            justifyContent: "space-between",
-            flexWrap: "wrap",
-            gap: "32px",
-            marginBottom: "40px",
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
+            gap: "48px 32px",
+            marginBottom: "56px",
+            alignItems: "start",
           }}
+          className="lg:!grid-cols-5"
         >
-          {/* Brand */}
-          <div style={{ maxWidth: "260px" }}>
-            <div
+          {/* Brand info — spans 2 columns */}
+          <div className="lg:col-span-2" style={{ maxWidth: "340px" }}>
+            <Link
+              href="/"
               style={{
-                display: "flex",
+                display: "inline-flex",
                 alignItems: "center",
-                gap: "9px",
-                marginBottom: "14px",
+                gap: "10px",
+                marginBottom: "16px",
+                textDecoration: "none",
               }}
             >
-              {/* Logo icon matching navbar */}
+              {/* Logo icon */}
               <svg width="26" height="26" viewBox="0 0 28 28" fill="none" aria-hidden="true">
                 <circle cx="14" cy="14" r="5.5" fill="url(#footer-logo-grad)" />
                 <ellipse
@@ -68,53 +72,64 @@ export default function Footer() {
               <span
                 style={{
                   fontWeight: 700,
-                  fontSize: "16px",
-                  letterSpacing: "-0.03em",
+                  fontSize: "17px",
+                  letterSpacing: "-0.02em",
                   color: "#ffffff",
                   fontFamily: "var(--font-display), sans-serif",
                 }}
               >
                 CosmoDeX
               </span>
-            </div>
+            </Link>
+
             <p
               style={{
                 fontSize: "13.5px",
-                color: "rgba(240,230,255,0.32)",
-                lineHeight: 1.65,
+                color: "rgba(240,230,255,0.38)",
+                lineHeight: 1.7,
                 fontFamily: "var(--font-body), 'Fira Code', monospace",
+                margin: 0,
               }}
             >
-              Start your coding expedition. Learn, battle, and level up
-              through the cosmos.
+              Start your coding expedition. Learn, battle, and level up through the cosmos.
             </p>
           </div>
 
-          {/* Links columns */}
-          <div
-            style={{
-              display: "flex",
-              gap: "48px",
-              flexWrap: "wrap",
-            }}
-          >
-            <FooterColumn
-              title="Learn"
-              links={["Courses", "Battle Arena", "Leaderboard", "Changelog"]}
-            />
-            <FooterColumn
-              title="Community"
-              links={["Join the Crew", "Discord", "Forum", "Support"]}
-            />
-            <FooterColumn
-              title="Legal"
-              links={["Privacy Policy", "Terms of Service", "Cookie Policy"]}
-            />
-          </div>
+          {/* Links Column: Learn */}
+          <FooterColumn
+            title="Learn"
+            links={[
+              { label: "Courses", href: "/learn" },
+              { label: "Battle Arena", href: "/battle" },
+              { label: "Leaderboard", href: "/leaderboard" },
+              { label: "Events", href: "/events" },
+            ]}
+          />
+
+          {/* Links Column: Community */}
+          <FooterColumn
+            title="Community"
+            links={[
+              { label: "Join the Crew", href: "/onboarding" },
+              { label: "Discord", href: "https://discord.gg", external: true },
+              { label: "Forum", href: "/events" },
+              { label: "Support", href: "/onboarding?mode=login" },
+            ]}
+          />
+
+          {/* Links Column: Legal */}
+          <FooterColumn
+            title="Legal"
+            links={[
+              { label: "Privacy Policy", href: "/events" },
+              { label: "Terms of Service", href: "/events" },
+              { label: "Cookie Policy", href: "/events" },
+            ]}
+          />
         </div>
 
         {/* Divider */}
-        <div className="divider" style={{ marginBottom: "24px" }} />
+        <div className="divider" style={{ marginBottom: "28px" }} />
 
         {/* Bottom row */}
         <div
@@ -123,14 +138,15 @@ export default function Footer() {
             alignItems: "center",
             justifyContent: "space-between",
             flexWrap: "wrap",
-            gap: "12px",
+            gap: "16px",
           }}
         >
           <p
             style={{
               fontSize: "12.5px",
-              color: "rgba(240,230,255,0.22)",
+              color: "rgba(240,230,255,0.3)",
               fontFamily: "var(--font-body), 'Fira Code', monospace",
+              margin: 0,
             }}
           >
             © 2026 CosmoDeX. Built with ✦ for the cosmos.
@@ -141,6 +157,7 @@ export default function Footer() {
             {/* Discord */}
             <SocialButton
               label="Discord"
+              href="https://discord.gg"
               hoverColor="rgba(255,45,120,0.12)"
               hoverBorder="rgba(255,45,120,0.3)"
               hoverText="#ff2d78"
@@ -153,6 +170,7 @@ export default function Footer() {
             {/* GitHub */}
             <SocialButton
               label="GitHub"
+              href="https://github.com"
               hoverColor="rgba(155,48,255,0.12)"
               hoverBorder="rgba(155,48,255,0.3)"
               hoverText="#9b30ff"
@@ -165,7 +183,7 @@ export default function Footer() {
             <div
               style={{
                 fontSize: "11.5px",
-                color: "rgba(240,230,255,0.18)",
+                color: "rgba(240,230,255,0.22)",
                 fontFamily: "var(--font-mono), 'Fira Code', monospace",
                 letterSpacing: "0.04em",
                 marginLeft: "4px",
@@ -180,16 +198,22 @@ export default function Footer() {
   );
 }
 
-function FooterColumn({ title, links }: { title: string; links: string[] }) {
+interface FooterLinkItem {
+  label: string;
+  href: string;
+  external?: boolean;
+}
+
+function FooterColumn({ title, links }: { title: string; links: FooterLinkItem[] }) {
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+    <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
       <div
         style={{
           fontSize: "11px",
           fontWeight: 700,
-          letterSpacing: "0.09em",
+          letterSpacing: "0.1em",
           textTransform: "uppercase",
-          color: "rgba(240,230,255,0.35)",
+          color: "rgba(240,230,255,0.45)",
           marginBottom: "4px",
           fontFamily: "var(--font-body), 'Fira Code', monospace",
         }}
@@ -197,25 +221,32 @@ function FooterColumn({ title, links }: { title: string; links: string[] }) {
         {title}
       </div>
       {links.map((link) => (
-        <a
-          key={link}
-          href="#"
+        <Link
+          key={link.label}
+          href={link.href}
+          target={link.external ? "_blank" : undefined}
+          rel={link.external ? "noopener noreferrer" : undefined}
           style={{
             fontSize: "13.5px",
-            color: "rgba(240,230,255,0.42)",
+            color: "rgba(240,230,255,0.5)",
             textDecoration: "none",
-            transition: "color 0.18s ease",
+            transition: "color 0.18s ease, transform 0.18s ease",
             fontFamily: "var(--font-body), 'Fira Code', monospace",
+            width: "fit-content",
           }}
-          onMouseEnter={(e) =>
-            ((e.currentTarget as HTMLElement).style.color = "rgba(240,230,255,0.82)")
-          }
-          onMouseLeave={(e) =>
-            ((e.currentTarget as HTMLElement).style.color = "rgba(240,230,255,0.42)")
-          }
+          onMouseEnter={(e) => {
+            const el = e.currentTarget as HTMLElement;
+            el.style.color = "rgba(240,230,255,0.92)";
+            el.style.transform = "translateX(2px)";
+          }}
+          onMouseLeave={(e) => {
+            const el = e.currentTarget as HTMLElement;
+            el.style.color = "rgba(240,230,255,0.5)";
+            el.style.transform = "translateX(0)";
+          }}
         >
-          {link}
-        </a>
+          {link.label}
+        </Link>
       ))}
     </div>
   );
@@ -224,30 +255,34 @@ function FooterColumn({ title, links }: { title: string; links: string[] }) {
 function SocialButton({
   children,
   label,
+  href,
   hoverColor,
   hoverBorder,
   hoverText,
 }: {
   children: React.ReactNode;
   label: string;
+  href?: string;
   hoverColor: string;
   hoverBorder: string;
   hoverText: string;
 }) {
   return (
     <a
-      href="#"
+      href={href || "#"}
+      target={href?.startsWith("http") ? "_blank" : undefined}
+      rel={href?.startsWith("http") ? "noopener noreferrer" : undefined}
       aria-label={label}
       style={{
         width: "34px",
         height: "34px",
         borderRadius: "9px",
         background: "rgba(255,255,255,0.04)",
-        border: "1px solid rgba(255,255,255,0.07)",
+        border: "1px solid rgba(255,255,255,0.08)",
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        color: "rgba(240,230,255,0.45)",
+        color: "rgba(240,230,255,0.5)",
         transition: "all 0.2s ease",
         textDecoration: "none",
       }}
@@ -261,8 +296,8 @@ function SocialButton({
       onMouseLeave={(e) => {
         const el = e.currentTarget as HTMLElement;
         el.style.background = "rgba(255,255,255,0.04)";
-        el.style.borderColor = "rgba(255,255,255,0.07)";
-        el.style.color = "rgba(240,230,255,0.45)";
+        el.style.borderColor = "rgba(255,255,255,0.08)";
+        el.style.color = "rgba(240,230,255,0.5)";
         el.style.transform = "translateY(0)";
       }}
     >

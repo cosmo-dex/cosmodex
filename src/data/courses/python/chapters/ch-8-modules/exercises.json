@@ -1,0 +1,26 @@
+[
+  {
+    "id": "ex-23",
+    "numberLabel": "Exercise 1",
+    "title": "Random Module",
+    "isUnlocked": true,
+    "instruction": "Import random and print a random integer between 1 and 100.",
+    "initialCode": "# Exercise: Random Module\n\nimport random\nprint(\"Random num:\", random.randint(1, 100))"
+  },
+  {
+    "id": "ex-82",
+    "numberLabel": "Exercise 2",
+    "title": "Math Utility",
+    "isUnlocked": false,
+    "instruction": "Import the math module to calculate the square root of 64 and area of a circle with radius 5.",
+    "initialCode": "# Exercise: Math Utility\n\nimport math\nsqrt_val = math.sqrt(64)\narea = math.pi * (5 ** 2)\nprint(f\"Square root of 64: {sqrt_val}\")\nprint(f\"Circle Area: {round(area, 2)}\")"
+  },
+  {
+    "id": "ex-83",
+    "numberLabel": "Exercise 3",
+    "title": "Datetime Timestamp",
+    "isUnlocked": false,
+    "instruction": "Import datetime to fetch and display the current date and time formatted string.",
+    "initialCode": "# Exercise: Datetime Timestamp\n\nfrom datetime import datetime\nnow = datetime.now()\nformatted = now.strftime(\"%Y-%m-%d %H:%M:%S\")\nprint(\"Current System Timestamp:\", formatted)"
+  }
+]

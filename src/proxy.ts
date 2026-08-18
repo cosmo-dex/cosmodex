@@ -33,7 +33,7 @@ function getSafeRedirectUrl(target: string | null, fallback: string): string {
   return fallback;
 }
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const { pathname, search } = request.nextUrl;
 
   const sessionCookie = request.cookies.get(SESSION_COOKIE);

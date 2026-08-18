@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useRef, useCallback } from "react";
 import { Socket } from "socket.io-client";
-import { Swords, Flame, Terminal, ListChecks, Trophy, Zap, Clock, Timer, Target, Award, CheckCircle2, XCircle, Sparkles } from "lucide-react";
+import { Swords, Flame, Terminal, ListChecks, Trophy, Zap, Clock, Timer, Award, CheckCircle2, XCircle, Sparkles } from "lucide-react";
 
 import MatchmakingCinematic from "@/components/battle/MatchmakingCinematic";
 
@@ -88,7 +88,6 @@ export default function MatchmakingPanel({ socket, userId, username, onMatchFoun
     onMatchFoundRef.current = onMatchFound;
   }, [onMatchFound]);
 
-  // Real-time stats auto-refresh via existing /api/user/stats route
   const fetchStats = useCallback(() => {
     fetch("/api/user/stats")
       .then((res) => {
@@ -98,7 +97,7 @@ export default function MatchmakingPanel({ socket, userId, username, onMatchFoun
       .then((data) => {
         if (data) setStats(data);
       })
-      .catch(() => {});
+      .catch(() => { });
   }, []);
 
   useEffect(() => {
@@ -230,10 +229,7 @@ export default function MatchmakingPanel({ socket, userId, username, onMatchFoun
   const isUserInTop3 = userRankIndex !== -1 && userRankIndex < 3;
 
   const userRank = userRankIndex !== -1 ? leaderboard[userRankIndex].rank : 15;
-  const aboveUserRank = userRank > 1 ? userRank - 1 : 14;
-  const aboveUserEntry = (userRankIndex > 0 && leaderboard[userRankIndex - 1])
-    ? leaderboard[userRankIndex - 1]
-    : { rank: aboveUserRank, userId: "l_above", username: "Astra", elo: currentElo + 30 };
+
 
   const currentUserEntry = {
     rank: userRank,
@@ -413,26 +409,23 @@ export default function MatchmakingPanel({ socket, userId, username, onMatchFoun
               <button
                 onClick={() => setMode("code")}
                 disabled={queueState === "queuing"}
-                className={`relative flex flex-col items-start justify-between p-4 rounded-2xl border text-left transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed group overflow-hidden ${
-                  isCode
+                className={`relative flex flex-col items-start justify-between p-4 rounded-2xl border text-left transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed group overflow-hidden ${isCode
                     ? "bg-gradient-to-br from-[#E873C3]/25 via-[#C453D6]/20 to-[#8D37D6]/30 border-[#E873C3]/50 shadow-[0_0_18px_rgba(232,115,195,0.3)]"
                     : "border-white/15 bg-white/5 hover:border-white/30 hover:bg-white/10"
-                }`}
+                  }`}
               >
                 <div className="w-full flex items-center justify-between">
-                  <div className={`p-2.5 rounded-xl border transition-all ${
-                    isCode
+                  <div className={`p-2.5 rounded-xl border transition-all ${isCode
                       ? "bg-[#E873C3]/20 border-[#E873C3]/40 text-white"
                       : "bg-white/10 border-white/10 text-white/70 group-hover:text-white"
-                  }`}>
+                    }`}>
                     <Terminal size={24} />
                   </div>
 
-                  <span className={`text-[11px] font-bold px-2.5 py-0.5 rounded-full border transition-all ${
-                    isCode
+                  <span className={`text-[11px] font-bold px-2.5 py-0.5 rounded-full border transition-all ${isCode
                       ? "bg-[#E873C3]/30 text-white border-[#E873C3]/50 shadow-[0_0_8px_rgba(232,115,195,0.5)]"
                       : "bg-white/10 text-white/60 border-white/15"
-                  }`}>
+                    }`}>
                     {isCode ? "1v1 Duel" : "1v1"}
                   </span>
                 </div>
@@ -451,26 +444,23 @@ export default function MatchmakingPanel({ socket, userId, username, onMatchFoun
               <button
                 onClick={() => setMode("mcq")}
                 disabled={queueState === "queuing"}
-                className={`relative flex flex-col items-start justify-between p-4 rounded-2xl border text-left transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed group overflow-hidden ${
-                  !isCode
+                className={`relative flex flex-col items-start justify-between p-4 rounded-2xl border text-left transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed group overflow-hidden ${!isCode
                     ? "bg-gradient-to-br from-[#E873C3]/25 via-[#C453D6]/20 to-[#8D37D6]/30 border-[#E873C3]/50 shadow-[0_0_18px_rgba(232,115,195,0.3)]"
                     : "border-white/15 bg-white/5 hover:border-white/30 hover:bg-white/10"
-                }`}
+                  }`}
               >
                 <div className="w-full flex items-center justify-between">
-                  <div className={`p-2.5 rounded-xl border transition-all ${
-                    !isCode
+                  <div className={`p-2.5 rounded-xl border transition-all ${!isCode
                       ? "bg-[#E873C3]/20 border-[#E873C3]/40 text-white"
                       : "bg-white/10 border-white/10 text-white/70 group-hover:text-white"
-                  }`}>
+                    }`}>
                     <ListChecks size={24} />
                   </div>
 
-                  <span className={`text-[11px] font-bold px-2.5 py-0.5 rounded-full border transition-all ${
-                    !isCode
+                  <span className={`text-[11px] font-bold px-2.5 py-0.5 rounded-full border transition-all ${!isCode
                       ? "bg-[#E873C3]/30 text-white border-[#E873C3]/50 shadow-[0_0_8px_rgba(232,115,195,0.5)]"
                       : "bg-white/10 text-white/60 border-white/15"
-                  }`}>
+                    }`}>
                     {!isCode ? "Quiz Arena" : "Quiz"}
                   </span>
                 </div>

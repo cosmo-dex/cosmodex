@@ -143,9 +143,8 @@ export default function StatsSection() {
               }}
               className="stat-card"
               style={{
-                /* @ts-expect-error CSS custom property */
                 "--stat-color": `rgba(${stat.rgb}, 0.4)`,
-              }}
+              } as React.CSSProperties}
             >
               {/* Icon */}
               <div

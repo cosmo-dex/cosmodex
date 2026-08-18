@@ -3,10 +3,18 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "next dev --webpack",
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
+    "lint:fix": "eslint --fix",
+    "typecheck": "tsc --noEmit",
+    "db:generate": "prisma generate",
+    "test:lint": "pnpm run lint",
+    "test:types": "pnpm run typecheck",
+    "test:ci": "pnpm run db:generate && pnpm run lint && pnpm run typecheck",
+    "test": "pnpm run db:generate && pnpm run lint && pnpm run typecheck",
+    "test:all": "pnpm run db:generate && pnpm run lint && pnpm run typecheck && pnpm run build",
     "prepare": "husky",
     "postinstall": "prisma generate"
   },
@@ -50,14 +58,12 @@
     "tailwindcss": "^4",
     "typescript": "^5"
   },
-  "pnpm": {
-    "onlyBuiltDependencies": [
-      "@prisma/engines",
-      "prisma",
-      "@prisma/client",
-      "esbuild",
-      "sharp",
-      "unrs-resolver"
-    ]
-  }
+  "onlyBuiltDependencies": [
+    "@prisma/engines",
+    "prisma",
+    "@prisma/client",
+    "esbuild",
+    "sharp",
+    "unrs-resolver"
+  ]
 }
