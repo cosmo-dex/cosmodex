@@ -34,9 +34,31 @@ export default function PythonCoursePage() {
       if (savedChapters) {
         const parsed = JSON.parse(savedChapters);
         if (Array.isArray(parsed) && parsed.length > 0) {
+          // Merge saved completion progress with latest MOCK_PYTHON_CHAPTERS data structure
+          const mergedChapters = MOCK_PYTHON_CHAPTERS.map((defaultCh) => {
+            const savedCh = parsed.find((c: Chapter) => c.id === defaultCh.id);
+            if (!savedCh) return defaultCh;
+
+            const mergedExercises = defaultCh.exercises.map((defaultEx) => {
+              const savedEx = savedCh.exercises?.find((e: Exercise) => e.id === defaultEx.id);
+              return {
+                ...defaultEx,
+                isUnlocked: savedEx ? savedEx.isUnlocked : defaultEx.isUnlocked,
+                isCompleted: savedEx ? savedEx.isCompleted : defaultEx.isCompleted,
+              };
+            });
+
+            return {
+              ...defaultCh,
+              isUnlocked: savedCh.isUnlocked ?? defaultCh.isUnlocked,
+              isCompleted: savedCh.isCompleted ?? defaultCh.isCompleted,
+              exercises: mergedExercises,
+            };
+          });
+
           // eslint-disable-next-line react-hooks/set-state-in-effect
-          setChapters(parsed);
-          setSelectedChapter(parsed[0]);
+          setChapters(mergedChapters);
+          setSelectedChapter(mergedChapters[0]);
         }
       }
       if (savedProgress) {
