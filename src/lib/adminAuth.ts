@@ -56,7 +56,7 @@ export async function verifyAdminSession(
  * Audit logging removed per requirements.
  */
 export async function logAdminActivity(..._args: unknown[]) {
-  // No-op
+  void _args;
 }
 
 /**

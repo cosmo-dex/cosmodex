@@ -52,9 +52,7 @@ export default function ThreeSpaceDebris() {
     }));
 
     // Render loop
-    let frame = 0;
     const render = () => {
-      frame++;
       ctx.clearRect(0, 0, width, height);
 
       asteroids.forEach((ast) => {
