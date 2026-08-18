@@ -1,6 +1,8 @@
 "use client";
 import { useState, useTransition } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { useRouter } from 'next/navigation';
+import NextLink from 'next/link';
+import { motion, AnimatePresence } from 'motion/react';
 import {
   Calendar,
   Edit,
@@ -18,6 +20,8 @@ import {
   Swords,
   Trophy,
   Lock,
+  ArrowLeft,
+  LayoutDashboard,
 } from 'lucide-react';
 import Navbar from '@/components/navbar/Navbar';
 import DashboardBackground from '@/components/dashboard/DashboardBackground';
@@ -155,30 +159,47 @@ export default function ProfileContent({
   arenaWins = 12,
   arenaLosses = 3,
 }: ProfileContentProps) {
+  const router = useRouter();
   const [activeTab, setActiveTab] = useState<'overview' | 'practice' | 'battles'>('overview');
-  const [badgeFilter, setBadgeFilter] = useState<'all' | 'earned' | 'locked'>('all');
-  const [selectedBadgeModal, setSelectedBadgeModal] = useState<ShowcaseBadge | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [isAddingSkill, setIsAddingSkill] = useState(false);
   const [isPending, startTransition] = useTransition();
   const [saveError, setSaveError] = useState<string | null>(null);
 
-  const [profile, setProfile] = useState({
-    name: initialUsername,
-    username: initialUsername,
-    bio: initialBio,
-    avatarUrl: initialAvatarUrl,
-    skills: initialInterests,
-    socials: {
-      github: 'github.com/explorer',
-      twitter: 'x.com/cosmodex',
+  const [profile, setProfile] = useState(() => {
+    let initialSocials = {
+      github: '',
       linkedin: '',
-      discord: 'discord.gg/cosmodex',
-      portfolio: '',
-    },
+      twitter: '',
+      instagram: '',
+      youtube: '',
+      twitch: ''
+    };
+
+    if (typeof window !== 'undefined') {
+      const savedSocials = localStorage.getItem(`cosmo_socials_${initialUsername}`);
+      if (savedSocials) {
+        try {
+          initialSocials = { ...initialSocials, ...JSON.parse(savedSocials) };
+        } catch (e) {
+          console.error('Failed to parse saved socials:', e);
+        }
+      }
+    }
+
+    return {
+      name: initialUsername,
+      username: initialUsername,
+      bio: initialBio,
+      avatarUrl: initialAvatarUrl,
+      skills: initialInterests,
+      socials: initialSocials,
+    };
   });
 
   const [editData, setEditData] = useState(profile);
+  const [badgeFilter, setBadgeFilter] = useState<'all' | 'earned' | 'locked'>('all');
+  const [selectedBadgeModal, setSelectedBadgeModal] = useState<ShowcaseBadge | null>(null);
   const [tempSkills, setTempSkills] = useState<string[]>(initialInterests);
   const [customSkillInput, setCustomSkillInput] = useState('');
   const [isSavingSkills, setIsSavingSkills] = useState(false);
@@ -283,9 +304,33 @@ export default function ProfileContent({
       <DashboardBackground />
 
       {/* Main Content Area */}
-      <div className="relative z-10 w-full">
-        {/* Spacer for fixed top Navbar */}
-        <div className="w-full h-16"></div>
+      <div className="relative z-10 w-full h-full overflow-y-auto px-4 py-8 sm:px-8 custom-scrollbar">
+        {/* Top Navigation Bar with Back Button */}
+        <div className="w-full max-w-5xl mx-auto flex items-center justify-between mb-6 pt-2">
+          <button
+            onClick={() => {
+              if (typeof window !== 'undefined' && window.history.length > 1) {
+                router.back();
+              } else {
+                router.push('/dashboard');
+              }
+            }}
+            className="cosmo-glass-panel px-4 py-2 rounded-xl text-xs sm:text-sm font-sans font-bold text-white/90 hover:text-white border border-white/15 hover:border-[#E873C3]/50 hover:bg-[#E873C3]/10 transition-all flex items-center gap-2 shadow-lg group active:scale-95 cursor-pointer z-30"
+            title="Go Back"
+          >
+            <ArrowLeft size={18} className="group-hover:-translate-x-1 transition-transform" />
+            <span>Back</span>
+          </button>
+
+          <NextLink
+            href="/dashboard"
+            prefetch={true}
+            className="cosmo-glass-panel px-4 py-2 rounded-xl text-xs sm:text-sm font-sans font-bold text-white/90 hover:text-white border border-white/15 hover:border-[#E873C3]/50 hover:bg-[#E873C3]/10 transition-all flex items-center gap-2 shadow-lg group active:scale-95 cursor-pointer z-30"
+          >
+            <LayoutDashboard size={16} />
+            <span className="hidden sm:inline">Dashboard</span>
+          </NextLink>
+        </div>
 
         <div className="w-full max-w-6xl mx-auto px-4 py-8 sm:px-8">
           <div className="w-full flex flex-col lg:flex-row gap-6 lg:gap-8 pb-12">
