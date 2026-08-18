@@ -47,16 +47,6 @@ export default function GetStartedCard({ enrollments = [] }: GetStartedCardProps
               <h3 className="text-xl font-bold text-white mb-1">Welcome to CosmoDex!</h3>
               <p className="text-sm text-white/70">Complete onboarding to unlock your personalized learning path.</p>
             </div>
-
-            <div className="flex items-center gap-3 w-full sm:w-auto shrink-0 mt-4 sm:mt-0 justify-end">
-              <Link
-                href="/onboarding"
-                className="cosmo-btn-primary py-2.5 px-6 rounded-xl text-sm"
-              >
-                Start Onboarding
-                <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform inline-block ml-1" />
-              </Link>
-            </div>
           </div>
         </div>
       </div>
@@ -79,11 +69,10 @@ export default function GetStartedCard({ enrollments = [] }: GetStartedCardProps
                 <button
                   key={e.id}
                   onClick={() => setSelectedIdx(idx)}
-                  className={`px-3 py-1.5 text-xs font-bold rounded-md transition-all ${
-                    selectedIdx === idx
+                  className={`px-3 py-1.5 text-xs font-bold rounded-md transition-all ${selectedIdx === idx
                       ? 'bg-white/10 text-white shadow-sm'
                       : 'text-white/50 hover:text-white/80 hover:bg-white/5'
-                  }`}
+                    }`}
                   style={selectedIdx === idx ? { color: s.color } : {}}
                 >
                   {e.languageName.split(' ')[0]}
