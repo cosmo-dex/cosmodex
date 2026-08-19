@@ -334,7 +334,7 @@ export default function Navbar() {
           )}
 
           {/* Notification (Positioned at the very end after Log out / Join Crew button) */}
-          <NotificationBell />
+          {user && <NotificationBell />}
 
           {/* Mobile button */}
           <button
