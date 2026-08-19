@@ -740,7 +740,14 @@ export default function EventControlPage() {
                 <div><span className="text-white/40">Fee: </span><span className="text-[#3DCB7F] font-bold">{event.registration_fee || 'Free'}</span></div>
                 <div><span className="text-white/40">Eligibility: </span><span className="text-white">{event.eligibility || 'Open to All'}</span></div>
                 <div><span className="text-white/40">Evaluation Engine: </span><span className="text-[#4ECDC4] font-bold capitalize">{event.event_type === 'coding_contest' ? 'CosmoDex Online IDE' : (event.submission_config?.mode ?? 'platform')}</span></div>
-                <div><span className="text-white/40">Rounds: </span><span className="text-white font-bold">{event.rounds_json?.length || 0}</span></div>
+                <div>
+                  <span className="text-white/40">{event.event_type === 'coding_contest' ? 'Questions: ' : 'Rounds: '}</span>
+                  <span className="text-white font-bold">
+                    {event.event_type === 'coding_contest'
+                      ? `${event.submission_config?.assessment_details?.questions?.length || 0} Questions`
+                      : event.rounds_json?.length || 0}
+                  </span>
+                </div>
               </div>
             </div>
           </div>
