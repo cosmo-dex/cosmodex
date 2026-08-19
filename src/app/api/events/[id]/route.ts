@@ -192,8 +192,12 @@ export async function GET(
       event = null;
     }
 
+    if (!event && DEMO_EVENTS_MAP[id]) {
+      event = DEMO_EVENTS_MAP[id] as Record<string, unknown>;
+    }
+
     if (!event) {
-      event = (DEMO_EVENTS_MAP[id] as Record<string, unknown> | undefined) || (DEMO_EVENTS_MAP["cosmo-hackathon-2026"] as Record<string, unknown>);
+      return NextResponse.json({ error: 'Event not found' }, { status: 404 });
     }
 
     let userRegistration: {
