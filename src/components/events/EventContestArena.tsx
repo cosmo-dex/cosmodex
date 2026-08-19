@@ -778,6 +778,7 @@ export interface EventContestArenaProps {
   selectedLanguage: string;
   submitting: boolean;
   msg: string;
+  hasSubmitted?: boolean;
   onMcqAnswer: (questionId: string, optionId: string) => void;
   onCodeChange: (questionId: string, code: string) => void;
   onLanguageChange: (lang: string) => void;
@@ -798,6 +799,7 @@ export default function EventContestArena({
   selectedLanguage,
   submitting,
   msg,
+  hasSubmitted,
   onMcqAnswer,
   onCodeChange,
   onLanguageChange,
@@ -937,8 +939,13 @@ export default function EventContestArena({
           ))}
         </div>
 
-        {/* Right: contest countdown + solved count + finish button */}
         <div className="flex items-center gap-3 shrink-0 ml-2">
+          {hasSubmitted && (
+            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#3DCB7F]/15 border border-[#3DCB7F]/40 text-[#3DCB7F] font-bold text-xs">
+              <CheckCircle2 size={13} />
+              <span>Submitted</span>
+            </div>
+          )}
           {(durationMinutes || endsAt) && (
             <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-purple-950/70 border border-purple-500/40 text-purple-200">
               <Clock size={13} className="text-[#E873C3] animate-pulse" />
@@ -960,16 +967,15 @@ export default function EventContestArena({
             className="px-5 py-2 rounded-xl text-xs font-black text-black bg-[#3DCB7F] hover:bg-[#32b870] shadow-lg shadow-[#3DCB7F]/20 transition-all flex items-center gap-1.5 disabled:opacity-50 cursor-pointer"
           >
             <Send size={13} />
-            {submitting ? 'Submitting…' : 'Finish & Submit →'}
+            {submitting ? 'Submitting…' : hasSubmitted ? 'Update Submission' : 'Finish & Submit →'}
           </button>
         </div>
       </div>
 
       {/* ── Message Banner ── */}
       {msg && (
-        <div className={`relative z-30 mx-4 mt-3 p-3 rounded-xl text-xs font-bold shrink-0 ${
-          msg.startsWith('🎉') ? 'bg-[#3DCB7F]/10 border border-[#3DCB7F]/30 text-[#3DCB7F]' : 'bg-red-500/10 border border-red-500/30 text-red-400'
-        }`}>
+        <div className={`relative z-30 mx-4 mt-3 p-3 rounded-xl text-xs font-bold shrink-0 ${msg.startsWith('🎉') ? 'bg-[#3DCB7F]/10 border border-[#3DCB7F]/30 text-[#3DCB7F]' : 'bg-red-500/10 border border-red-500/30 text-red-400'
+          }`}>
           {msg}
         </div>
       )}
@@ -1045,9 +1051,15 @@ export default function EventContestArena({
           <span className="text-[10px] font-mono font-bold text-white/30 tracking-wider">
             Q {selectedQuestionIdx + 1} / {questions.length}
           </span>
-          <span className="text-[10px] font-bold text-[#3DCB7F]">
-            {solvedCount > 0 ? `${Math.round((solvedCount / questions.length) * 100)}% done` : 'Not started'}
-          </span>
+          {hasSubmitted ? (
+            <span className="text-[10px] font-bold text-[#3DCB7F] bg-[#3DCB7F]/10 px-2 py-0.5 rounded border border-[#3DCB7F]/30 flex items-center gap-1">
+              <CheckCircle2 size={11} /> Submitted
+            </span>
+          ) : (
+            <span className="text-[10px] font-bold text-[#3DCB7F]">
+              {solvedCount > 0 ? `${Math.round((solvedCount / questions.length) * 100)}% done` : 'Not started'}
+            </span>
+          )}
         </div>
       </div>
     </div>
