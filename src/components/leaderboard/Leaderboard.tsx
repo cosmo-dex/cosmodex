@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Brain, Code2, Globe, Trophy } from "lucide-react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import SmoothScroll from "@/components/landing/SmoothScroll";
 import { Podium } from "./Podium";
@@ -66,6 +67,7 @@ function mapEntryToPlayer(entry: LeaderboardEntry, index: number, timeframe: Tim
 }
 
 export default function Leaderboard() {
+  const router = useRouter();
   const [scope, setScope] = useState<Scope>("global");
   const [timeframe, setTimeframe] = useState<Timeframe>("weekly");
   const [entries, setEntries] = useState<LeaderboardEntry[]>([]);
@@ -138,15 +140,21 @@ export default function Leaderboard() {
       <Starfield />
 
       {/* Back Button */}
-      <Link
-        href="/"
-        className="absolute left-4 sm:left-8 md:left-12 top-20 md:top-24 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 text-white/70 hover:text-white text-xs sm:text-sm font-medium border border-white/10 transition-all cursor-pointer shadow-lg backdrop-blur-md z-30"
+      <button
+        onClick={() => {
+          if (typeof window !== 'undefined' && window.history.length > 1) {
+            router.back();
+          } else {
+            router.push('/dashboard');
+          }
+        }}
+        className="absolute left-4 sm:left-8 md:left-12 top-20 md:top-24 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 text-white/70 hover:text-white text-xs sm:text-sm font-medium border border-white/10 transition-all cursor-pointer shadow-lg backdrop-blur-md z-30 group"
       >
-        <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="none" className="group-hover:-translate-x-0.5 transition-transform duration-200">
           <path d="M10 12L6 8L10 4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
         <span>Back</span>
-      </Link>
+      </button>
 
       <div className="relative mx-auto flex max-w-5xl flex-col items-center">
         <span className="flex items-center gap-2 rounded-full border border-cosmo-border bg-white/[0.04] px-3.5 py-1 text-[10px] uppercase tracking-[0.22em] text-badge">

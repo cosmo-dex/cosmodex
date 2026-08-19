@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Navbar from '@/components/navbar/Navbar';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
   Trophy, Users, Clock, ChevronDown, ChevronUp,
   Zap, Star, Hammer, BookOpen, CheckCircle, AlertCircle,
@@ -68,74 +69,51 @@ interface EventDetail {
     hackathon_details?: {
       problem_statement?: string;
       tracks?: { title: string; description: string; prize: string }[];
-      judging_criteria?: { criteria: string; weight: string; description: string }[];
+      judging_criteria?: { criteria: string; weight?: string; description?: string }[];
     };
     assessment_details?: {
-      assessment_mode?: 'mcq_only' | 'coding_only' | 'mixed';
+      assessment_mode?: string;
       total_questions?: number;
-      questions?: Record<string, unknown>[];
     };
-  } | null;
+  };
   _count: { event_registrations: number };
 }
 
-interface LeaderboardEntry { rank: number | null; score: number; username: string; avatar_url: string | null }
-interface UserRegistration {
-  status: string;
-  team_name: string | null;
-  team_code: string | null;
-  team_members_json: { userId: string; username: string; joinedAt: string }[] | null;
-  submission_url: string | null;
-  submission_details_json: { demo_url?: string; video_url?: string; tech_stack?: string; description?: string; submitted_at?: string } | null;
-}
-
-const TYPE_META: Record<string, { label: string; icon: React.ComponentType<{ size?: number }>; color: string; glow: string }> = {
-  hackathon: { label: 'Hackathon', icon: Zap, color: '#E873C3', glow: 'rgba(232,115,195,0.4)' },
-  coding_contest: { label: 'Coding Contest', icon: Hammer, color: '#4ECDC4', glow: 'rgba(78,205,196,0.4)' },
-  workshop: { label: 'Workshop', icon: BookOpen, color: '#F5A623', glow: 'rgba(245,166,35,0.4)' },
-  challenge: { label: 'Challenge', icon: Star, color: '#8D37D6', glow: 'rgba(141,55,214,0.4)' },
+const TYPE_META: Record<string, { label: string; icon: React.ComponentType<{ size?: number }>; color: string }> = {
+  hackathon: { label: 'Hackathon', icon: Zap, color: '#E873C3' },
+  coding_contest: { label: 'Coding Contest', icon: Hammer, color: '#4ECDC4' },
+  workshop: { label: 'Workshop', icon: BookOpen, color: '#F5A623' },
+  challenge: { label: 'Challenge', icon: Star, color: '#8D37D6' },
 };
 
 type Tab = 'about' | 'rounds' | 'prizes' | 'rules' | 'leaderboard' | 'faqs';
 
-function useCountdown(target: string | null) {
-  const [parts, setParts] = useState({ d: 0, h: 0, m: 0, s: 0, expired: false });
-  useEffect(() => {
-    if (!target) return;
-    function calc() {
-      const diff = new Date(target!).getTime() - Date.now();
-      if (diff <= 0) { setParts({ d: 0, h: 0, m: 0, s: 0, expired: true }); return; }
-      setParts({
-        d: Math.floor(diff / 86400000),
-        h: Math.floor((diff % 86400000) / 3600000),
-        m: Math.floor((diff % 3600000) / 60000),
-        s: Math.floor((diff % 60000) / 1000),
-        expired: false,
-      });
-    }
-    calc();
-    const t = setInterval(calc, 1000);
-    return () => clearInterval(t);
-  }, [target]);
-  return parts;
-}
-
 function FaqItem({ q, a }: { q: string; a: string }) {
   const [open, setOpen] = useState(false);
   return (
-    <div className="border border-white/[0.07] rounded-xl overflow-hidden bg-white/[0.02]">
+    <div className="border border-white/[0.08] rounded-xl overflow-hidden bg-white/[0.02]">
       <button
-        onClick={() => setOpen(v => !v)}
-        className="w-full flex items-center justify-between px-5 py-4 text-left hover:bg-white/[0.04] transition-colors"
+        onClick={() => setOpen(!open)}
+        className="w-full px-5 py-4 text-left flex items-center justify-between gap-4 font-bold text-sm text-white hover:text-[#E873C3] transition-colors cursor-pointer"
       >
-        <span className="font-bold text-white text-sm pr-4">{q}</span>
-        {open ? <ChevronUp size={15} className="text-white/40 shrink-0" /> : <ChevronDown size={15} className="text-white/40 shrink-0" />}
+        <span>{q}</span>
+        {open ? <ChevronUp size={16} className="text-[#E873C3] shrink-0" /> : <ChevronDown size={16} className="text-white/40 shrink-0" />}
       </button>
-      {open && (
-        <div className="px-5 pb-4 text-sm text-white/60 leading-relaxed border-t border-white/[0.05]">
-          <div className="pt-3">{a}</div>
-        </div>
-      )}
+      <AnimatePresence>
+        {open && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="overflow-hidden"
+          >
+            <div className="px-5 pb-4 text-xs text-white/60 leading-relaxed border-t border-white/[0.04] pt-3">
+              {a}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
@@ -143,54 +121,72 @@ function FaqItem({ q, a }: { q: string; a: string }) {
 export default function EventDetailPage() {
   const params = useParams();
   const router = useRouter();
-  const eventId = params?.eventId as string;
+  const eventId = params.eventId as string;
 
   const [event, setEvent] = useState<EventDetail | null>(null);
-  const [userReg, setUserReg] = useState<UserRegistration | null>(null);
-  const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
+  const [userRegistration, setUserRegistration] = useState<{
+    status: string;
+    team_name: string | null;
+    team_code: string | null;
+    team_members_json: { username: string }[] | null;
+    submission_url: string | null;
+    submission_details_json?: { tech_stack?: string } | null;
+  } | null>(null);
+  const [leaderboard, setLeaderboard] = useState<{ rank: number | null; score: number; username: string; avatar_url: string | null }[]>([]);
   const [loading, setLoading] = useState(true);
+
   const [activeTab, setActiveTab] = useState<Tab>('about');
+  const [showRegModal, setShowRegModal] = useState(false);
   const [registering, setRegistering] = useState(false);
   const [regMsg, setRegMsg] = useState('');
-
-  // Registration Modal state
-  const [showRegModal, setShowRegModal] = useState(false);
-  const [sessionUser, setSessionUser] = useState<{ email?: string; username?: string }>({});
+  const [userEmail, setUserEmail] = useState('');
+  const [userName, setUserName] = useState('');
   const [copiedCode, setCopiedCode] = useState(false);
 
-  const fetchEvent = useCallback(async () => {
-    try {
-      const res = await fetch(`/api/events/${eventId}`);
-      if (!res.ok) { setLoading(false); return; }
-      const data = await res.json();
-      setEvent(data.event);
-      setUserReg(data.userRegistration);
-      setLeaderboard(data.leaderboard ?? []);
-    } finally {
-      setLoading(false);
-    }
-  }, [eventId]);
+  const handleCopyTeamCode = (code: string) => {
+    navigator.clipboard.writeText(code);
+    setCopiedCode(true);
+    setTimeout(() => setCopiedCode(false), 2000);
+  };
 
-  useEffect(() => { fetchEvent(); }, [fetchEvent]);
-
-  // Pre-fill user data from session if available
-  useEffect(() => {
-    fetch('/api/auth/session')
+  const fetchEvent = useCallback(() => {
+    fetch(`/api/events/${eventId}`)
       .then(r => r.json())
       .then(data => {
-        if (data.user) setSessionUser({ email: data.user.email, username: data.user.username });
+        if (data.event) {
+          setEvent(data.event);
+          setUserRegistration(data.userRegistration ?? null);
+          setLeaderboard(data.leaderboard ?? []);
+        }
+      })
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, [eventId]);
+
+  useEffect(() => {
+    fetchEvent();
+    fetch('/api/notifications')
+      .then(() => {})
+      .catch(() => {});
+  }, [fetchEvent]);
+
+  useEffect(() => {
+    fetch('/api/user/profile')
+      .then(r => r.ok ? r.json() : null)
+      .then(data => {
+        if (data?.user) {
+          setUserEmail(data.user.email || '');
+          setUserName(data.user.username || data.user.full_name || '');
+        }
       })
       .catch(() => {});
   }, []);
 
-  const isRegistered = userReg?.status === 'registered';
+  const isRegistered = Boolean(userRegistration);
   const isOngoing = event?.status === 'ongoing';
   const isEnded = event?.status === 'ended';
 
-  const countdownTarget = event?.status === 'published' ? (event.starts_at ?? null) : isOngoing ? (event.ends_at ?? null) : null;
-  const countdown = useCountdown(countdownTarget);
-
-  const handleCosmoDexRegister = async (payload: {
+  const handleRegisterSubmit = async (payload: {
     details: CosmoDexRegistrationDetails;
     teamAction?: 'create' | 'join';
     teamName?: string;
@@ -228,16 +224,10 @@ export default function EventDetailPage() {
   const handleWithdraw = async () => {
     setRegistering(true);
     await fetch(`/api/events/${eventId}/register`, { method: 'DELETE' });
-    setUserReg(null);
+    setUserRegistration(null);
     setRegMsg('Registration withdrawn.');
     setRegistering(false);
     fetchEvent();
-  };
-
-  const handleCopyTeamCode = (code: string) => {
-    navigator.clipboard.writeText(code);
-    setCopiedCode(true);
-    setTimeout(() => setCopiedCode(false), 2000);
   };
 
   if (loading) return (
@@ -268,7 +258,6 @@ export default function EventDetailPage() {
   const canRegister = Boolean(event.registration_open && !isFull && !isEnded);
   const isTeam = event.participation_type === 'team';
 
-  // Determine submission URL based on admin-configured submission mode
   const submissionConfig = event.submission_config;
   const submissionMode = submissionConfig?.mode ?? 'platform';
   const submissionUrl = submissionMode === 'google_form'
@@ -278,9 +267,7 @@ export default function EventDetailPage() {
     : `/events/${event.slug || event.id}/submit`;
 
   const isCodingContest = event.event_type === 'coding_contest';
-  const isHackathon = event.event_type === 'hackathon';
 
-  // Live action URL — for coding contest defaults to CosmoDex built-in IDE/submit area if not overridden
   const contestEnterUrl = event.enter_event_url || (isCodingContest ? `/events/${event.slug || event.id}/submit` : null);
 
   const TABS: { key: Tab; label: string }[] = [
@@ -369,48 +356,11 @@ export default function EventDetailPage() {
             </div>
             <Link
               href={contestEnterUrl}
-              className="px-7 py-3.5 rounded-xl font-black text-sm text-white flex items-center gap-2 shrink-0 transition-all hover:scale-105"
-              style={{ background: 'linear-gradient(135deg,#4ECDC4,#3DCB7F)', boxShadow: '0 4px 24px rgba(78,205,196,0.5)' }}
+              className="px-6 py-3 rounded-xl font-black text-sm text-white flex items-center gap-2 shrink-0 transition-all shadow-lg hover:scale-105"
+              style={{ background: 'linear-gradient(135deg,#4ECDC4,#3DCB7F)', boxShadow: '0 4px 20px rgba(78,205,196,0.4)' }}
             >
-              <Flame size={16} /> Enter Contest Arena →
-            </Link>
-          </div>
-        </div>
-      )}
-
-      {/* 🔴 LIVE HACKATHON SUBMISSION BANNER */}
-      {isOngoing && isRegistered && isHackathon && (
-        <div className="max-w-6xl mx-auto px-6 sm:px-10 mt-6">
-          <div
-            className="relative overflow-hidden rounded-2xl p-6 border flex flex-col md:flex-row items-center justify-between gap-6"
-            style={{
-              background: 'linear-gradient(135deg, rgba(232,115,195,0.15), rgba(141,55,214,0.2))',
-              borderColor: 'rgba(232,115,195,0.4)',
-              boxShadow: '0 0 30px rgba(232,115,195,0.25)',
-            }}
-          >
-            <div className="flex items-center gap-4">
-              <div className="w-14 h-14 rounded-2xl bg-[#E873C3]/20 border border-[#E873C3]/40 flex items-center justify-center shrink-0">
-                <Send size={26} className="text-[#E873C3] animate-pulse" />
-              </div>
-              <div>
-                <div className="flex items-center gap-2 mb-1">
-                  <span className="w-2.5 h-2.5 rounded-full bg-[#E873C3] animate-pulse" />
-                  <h3 className="font-black text-xl text-white">Hackathon is Live — Submit Project</h3>
-                </div>
-                <p className="text-sm text-white/80">
-                  {userReg?.submission_url
-                    ? '✅ You have submitted your project. You can edit your submission until the deadline.'
-                    : 'Submit your solution repository, demo URL, and technical brief before time runs out!'}
-                </p>
-              </div>
-            </div>
-            <Link
-              href={submissionUrl}
-              className="px-7 py-3.5 rounded-xl font-black text-sm text-white flex items-center gap-2 shrink-0 transition-all hover:scale-105"
-              style={{ background: 'linear-gradient(135deg,#E873C3,#8D37D6)', boxShadow: '0 4px 24px rgba(232,115,195,0.6)' }}
-            >
-              <Send size={16} /> {userReg?.submission_url ? 'Edit Submission' : 'Submit Project'} →
+              <span>Enter Contest Arena Now</span>
+              <Send size={16} />
             </Link>
           </div>
         </div>
@@ -437,84 +387,87 @@ export default function EventDetailPage() {
       <div className="max-w-6xl mx-auto px-6 sm:px-10 py-8 flex flex-col lg:flex-row gap-8">
         {/* Left: Tabs + Details */}
         <div className="flex-1 min-w-0 flex flex-col gap-6">
-          {/* Tabs bar */}
-          <div className="flex items-center gap-1 bg-white/[0.02] border border-white/[0.06] rounded-xl p-1 overflow-x-auto">
-            {TABS.map(({ key, label }) => (
-              <button
-                key={key}
-                onClick={() => setActiveTab(key)}
-                className="px-4 py-2.5 rounded-lg text-xs md:text-sm font-bold whitespace-nowrap transition-all flex-1"
-                style={activeTab === key
-                  ? { background: 'rgba(232,115,195,0.15)', color: '#E873C3' }
-                  : { color: 'rgba(255,255,255,0.45)' }
-                }
-              >
-                {label}
-              </button>
-            ))}
+          {/* Smooth Sliding Tabs Bar */}
+          <div className="flex items-center gap-1 bg-white/[0.03] border border-white/10 rounded-xl p-1.5 overflow-x-auto backdrop-blur-md">
+            {TABS.map(({ key, label }) => {
+              const isActive = activeTab === key;
+              return (
+                <button
+                  key={key}
+                  onClick={() => setActiveTab(key)}
+                  className={`relative px-4 py-2.5 rounded-lg text-xs md:text-sm font-bold whitespace-nowrap transition-colors duration-200 flex-1 cursor-pointer select-none ${
+                    isActive ? 'text-[#E873C3]' : 'text-white/45 hover:text-white/80'
+                  }`}
+                >
+                  {isActive && (
+                    <motion.div
+                      layoutId="active-event-detail-tab"
+                      className="absolute inset-0 rounded-lg bg-gradient-to-r from-[#E873C3]/20 via-[#8D37D6]/20 to-[#4ECDC4]/15 border border-[#E873C3]/50 shadow-[0_0_20px_rgba(232,115,195,0.3)]"
+                      transition={{ type: 'spring', stiffness: 450, damping: 32 }}
+                    />
+                  )}
+                  <span className="relative z-10">{label}</span>
+                </button>
+              );
+            })}
           </div>
 
-          {/* TAB 1: ABOUT / OVERVIEW */}
-          {activeTab === 'about' && (
-            <div className="flex flex-col gap-6">
-              {/* Highlights cards */}
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                <div className="bg-white/[0.02] border border-white/[0.06] rounded-xl p-3.5">
-                  <p className="text-[10px] font-bold text-white/30 uppercase tracking-wider mb-1">Participation</p>
-                  <p className="text-sm font-bold text-white flex items-center gap-1">
-                    {isTeam ? <><UsersRound size={13} className="text-[#E873C3]" /> Team ({event.min_team_size || 1}-{event.max_team_size || 4})</> : <><UserCheck size={13} className="text-[#3DCB7F]" /> Individual</>}
-                  </p>
-                </div>
-                <div className="bg-white/[0.02] border border-white/[0.06] rounded-xl p-3.5">
-                  <p className="text-[10px] font-bold text-white/30 uppercase tracking-wider mb-1">Eligibility</p>
-                  <p className="text-sm font-bold text-white flex items-center gap-1">
-                    <Globe size={13} className="text-[#4ECDC4]" /> {event.eligibility ?? 'Open to All'}
-                  </p>
-                </div>
-                <div className="bg-white/[0.02] border border-white/[0.06] rounded-xl p-3.5">
-                  <p className="text-[10px] font-bold text-white/30 uppercase tracking-wider mb-1">Fee</p>
-                  <p className="text-sm font-bold text-[#3DCB7F] flex items-center gap-1">
-                    <ShieldCheck size={13} /> {event.registration_fee ?? 'Free'}
-                  </p>
-                </div>
-                <div className="bg-white/[0.02] border border-white/[0.06] rounded-xl p-3.5">
-                  <p className="text-[10px] font-bold text-white/30 uppercase tracking-wider mb-1">Prize Pool</p>
-                  <p className="text-sm font-bold text-[#FFD700] flex items-center gap-1">
-                    <Trophy size={13} /> {event.prize_pool ?? 'Perks & Badges'}
-                  </p>
-                </div>
-              </div>
-
-              {/* Event Description */}
-              {event.description && (
-                <div className="bg-white/[0.02] border border-white/[0.06] rounded-2xl p-6">
-                  <h2 className="text-xs font-bold text-white/30 uppercase tracking-widest mb-4">About Event</h2>
-                  <p className="text-white/70 text-sm leading-relaxed whitespace-pre-wrap">{event.description}</p>
-                </div>
-              )}
-
-              {/* Hackathon Problem Statements, Tracks & Rubrics */}
-              {event.event_type === 'hackathon' && event.submission_config?.hackathon_details && (
+          {/* Smooth Tab Content Animations */}
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={activeTab}
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8 }}
+              transition={{ duration: 0.18, ease: 'easeOut' }}
+            >
+              {/* TAB 1: ABOUT / OVERVIEW */}
+              {activeTab === 'about' && (
                 <div className="flex flex-col gap-6">
-                  {event.submission_config.hackathon_details.problem_statement && (
-                    <div className="bg-[#E873C3]/[0.03] border border-[#E873C3]/30 rounded-2xl p-6 flex flex-col gap-3">
-                      <h3 className="text-xs font-bold text-[#E873C3] uppercase tracking-widest flex items-center gap-2">
-                        <Sparkles size={14} /> Problem Statement & Brief
-                      </h3>
-                      <p className="text-white/80 text-sm leading-relaxed whitespace-pre-wrap font-sans">
-                        {event.submission_config.hackathon_details.problem_statement}
+                  {/* Highlights cards */}
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                    <div className="bg-white/[0.02] border border-white/[0.06] rounded-xl p-3.5">
+                      <p className="text-[10px] font-bold text-white/30 uppercase tracking-wider mb-1">Participation</p>
+                      <p className="text-sm font-bold text-white flex items-center gap-1">
+                        {isTeam ? <><UsersRound size={13} className="text-[#E873C3]" /> Team ({event.min_team_size || 1}-{event.max_team_size || 4})</> : <><UserCheck size={13} className="text-[#3DCB7F]" /> Individual</>}
                       </p>
+                    </div>
+                    <div className="bg-white/[0.02] border border-white/[0.06] rounded-xl p-3.5">
+                      <p className="text-[10px] font-bold text-white/30 uppercase tracking-wider mb-1">Eligibility</p>
+                      <p className="text-sm font-bold text-white flex items-center gap-1">
+                        <Globe size={13} className="text-[#4ECDC4]" /> {event.eligibility ?? 'Open to All'}
+                      </p>
+                    </div>
+                    <div className="bg-white/[0.02] border border-white/[0.06] rounded-xl p-3.5">
+                      <p className="text-[10px] font-bold text-white/30 uppercase tracking-wider mb-1">Fee</p>
+                      <p className="text-sm font-bold text-[#3DCB7F] flex items-center gap-1">
+                        <ShieldCheck size={13} /> {event.registration_fee ?? 'Free'}
+                      </p>
+                    </div>
+                    <div className="bg-white/[0.02] border border-white/[0.06] rounded-xl p-3.5">
+                      <p className="text-[10px] font-bold text-white/30 uppercase tracking-wider mb-1">Prize Pool</p>
+                      <p className="text-sm font-bold text-[#FFD700] flex items-center gap-1">
+                        <Trophy size={13} /> {event.prize_pool || 'Rewards & Perks'}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Description */}
+                  {event.description && (
+                    <div className="bg-white/[0.02] border border-white/[0.06] rounded-2xl p-6 flex flex-col gap-3">
+                      <h2 className="text-xs font-bold text-white/30 uppercase tracking-widest">About the Event</h2>
+                      <div className="text-sm text-white/80 leading-relaxed whitespace-pre-line">{event.description}</div>
                     </div>
                   )}
 
-                  {/* Tracks */}
-                  {event.submission_config.hackathon_details.tracks && event.submission_config.hackathon_details.tracks.length > 0 && (
+                  {/* Hackathon Problem Statements / Tracks */}
+                  {submissionConfig?.hackathon_details?.tracks && submissionConfig.hackathon_details.tracks.length > 0 && (
                     <div className="bg-white/[0.02] border border-white/[0.06] rounded-2xl p-6 flex flex-col gap-4">
-                      <h3 className="text-xs font-bold text-white/40 uppercase tracking-widest flex items-center gap-2">
-                        <Layers size={14} /> Competition Tracks & Themes
-                      </h3>
+                      <h2 className="text-xs font-bold text-[#E873C3] uppercase tracking-widest flex items-center gap-2">
+                        <Sparkles size={14} /> Hackathon Tracks & Challenges
+                      </h2>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {event.submission_config.hackathon_details.tracks.map((tr, i) => (
+                        {event.submission_config?.hackathon_details?.tracks?.map((tr, i) => (
                           <div key={i} className="p-4 bg-white/[0.03] border border-white/[0.08] rounded-xl flex flex-col gap-2 relative overflow-hidden">
                             <div className="flex items-center justify-between">
                               <span className="font-bold text-sm text-white">{tr.title}</span>
@@ -528,7 +481,7 @@ export default function EventDetailPage() {
                   )}
 
                   {/* Judging Rubrics */}
-                  {event.submission_config.hackathon_details.judging_criteria && event.submission_config.hackathon_details.judging_criteria.length > 0 && (
+                  {event.submission_config?.hackathon_details?.judging_criteria && event.submission_config.hackathon_details.judging_criteria.length > 0 && (
                     <div className="bg-white/[0.02] border border-white/[0.06] rounded-2xl p-6 flex flex-col gap-4">
                       <h3 className="text-xs font-bold text-[#4ECDC4] uppercase tracking-widest flex items-center gap-2">
                         <Award size={14} /> Judging Rubrics & Criteria
@@ -546,8 +499,6 @@ export default function EventDetailPage() {
                       </div>
                     </div>
                   )}
-                </div>
-              )}
 
               {/* Coding Contest Assessment Details */}
               {event.event_type === 'coding_contest' && event.submission_config?.assessment_details && (
@@ -576,33 +527,33 @@ export default function EventDetailPage() {
               )}
 
               {/* User Team Card if registered */}
-              {isRegistered && isTeam && userReg && (
+              {isRegistered && isTeam && userRegistration && (
                 <div className="bg-[#8D37D6]/10 border border-[#8D37D6]/30 rounded-2xl p-5 flex flex-col gap-3">
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-bold text-[#E873C3] uppercase tracking-wider flex items-center gap-1.5">
                       <UsersRound size={14} /> Your Team Information
                     </span>
-                    {userReg.team_code && (
+                    {userRegistration.team_code && (
                       <button
-                        onClick={() => handleCopyTeamCode(userReg.team_code!)}
+                        onClick={() => handleCopyTeamCode(userRegistration.team_code!)}
                         className="flex items-center gap-1 text-xs font-bold text-white/70 hover:text-white bg-white/10 px-3 py-1 rounded-lg border border-white/10 transition-colors"
                       >
                         {copiedCode ? <Check size={12} className="text-[#3DCB7F]" /> : <Copy size={12} />}
-                        Code: <span className="font-mono text-[#E873C3]">{userReg.team_code}</span>
+                        Code: <span className="font-mono text-[#E873C3]">{userRegistration.team_code}</span>
                       </button>
                     )}
                   </div>
 
-                  <p className="text-base font-black text-white">Team Name: {userReg.team_name || 'My Team'}</p>
+                  <p className="text-base font-black text-white">Team Name: {userRegistration.team_name || 'My Team'}</p>
 
-                  {userReg.team_members_json && userReg.team_members_json.length > 0 && (
+                  {userRegistration.team_members_json && userRegistration.team_members_json.length > 0 && (
                     <div className="flex flex-col gap-1.5">
-                      <p className="text-xs font-bold text-white/40">Team Members ({userReg.team_members_json.length + 1}):</p>
+                      <p className="text-xs font-bold text-white/40">Team Members ({userRegistration.team_members_json.length + 1}):</p>
                       <div className="flex flex-wrap gap-2">
                         <span className="px-2.5 py-1 rounded-lg bg-white/10 border border-white/15 text-xs text-white font-bold flex items-center gap-1">
                           👑 (You)
                         </span>
-                        {userReg.team_members_json.map((m, idx) => (
+                        {userRegistration.team_members_json.map((m, idx) => (
                           <span key={idx} className="px-2.5 py-1 rounded-lg bg-white/[0.06] border border-white/10 text-xs text-white/70">
                             {m.username}
                           </span>
@@ -614,16 +565,16 @@ export default function EventDetailPage() {
               )}
 
               {/* User Submission Card if submitted */}
-              {isRegistered && userReg?.submission_url && (
+              {isRegistered && userRegistration?.submission_url && (
                 <div className="bg-[#3DCB7F]/10 border border-[#3DCB7F]/30 rounded-2xl p-5 flex flex-col gap-2">
                   <div className="flex items-center gap-2 text-[#3DCB7F] font-bold text-xs">
                     <CheckCircle size={14} /> Solution / Project Submitted
                   </div>
-                  <a href={userReg.submission_url} target="_blank" rel="noreferrer" className="text-sm font-bold text-white hover:text-[#3DCB7F] flex items-center gap-1.5 underline">
-                    {userReg.submission_url} <ExternalLink size={12} />
+                  <a href={userRegistration.submission_url} target="_blank" rel="noreferrer" className="text-sm font-bold text-white hover:text-[#3DCB7F] flex items-center gap-1.5 underline">
+                    {userRegistration.submission_url} <ExternalLink size={12} />
                   </a>
-                  {userReg.submission_details_json?.tech_stack && (
-                    <p className="text-xs text-white/40">Tech Stack: {userReg.submission_details_json.tech_stack}</p>
+                  {userRegistration.submission_details_json?.tech_stack && (
+                    <p className="text-xs text-white/40">Tech Stack: {userRegistration.submission_details_json.tech_stack}</p>
                   )}
                 </div>
               )}
@@ -645,70 +596,43 @@ export default function EventDetailPage() {
             </div>
           )}
 
-          {/* TAB 2: ROUNDS & TIMELINE */}
-          {activeTab === 'rounds' && (
-            <div className="bg-white/[0.02] border border-white/[0.06] rounded-2xl p-6 flex flex-col gap-6">
-              <h2 className="text-xs font-bold text-white/30 uppercase tracking-widest">
-                {isCodingContest ? 'Contest Schedule & Timeline' : 'Competition Rounds & Schedule'}
-              </h2>
-
-              {/* Multi-Stage Rounds (Hackathons only) */}
-              {!isCodingContest && event.rounds_json && event.rounds_json.length > 0 ? (
-                <div className="flex flex-col gap-4">
-                  {event.rounds_json.map((round, idx) => {
-                    const rStart = round.starts_at ? new Date(round.starts_at) : null;
-                    const rEnd = round.ends_at ? new Date(round.ends_at) : null;
-                    const now = new Date();
-                    const rActive = rStart && rEnd ? (now >= rStart && now <= rEnd) : isOngoing;
-                    const rPast = rEnd ? now > rEnd : false;
-
-                    return (
-                      <div key={round.id || idx} className={`relative p-5 rounded-2xl border transition-all ${
-                        rActive ? 'bg-[#E873C3]/10 border-[#E873C3]/40' : 'bg-white/[0.02] border-white/[0.07]'
-                      }`}>
-                        <div className="flex items-start justify-between gap-4">
-                          <div className="flex items-start gap-3">
-                            <div className={`w-8 h-8 rounded-xl flex items-center justify-center font-black text-xs shrink-0 ${
-                              rActive ? 'bg-[#E873C3] text-white' : rPast ? 'bg-[#3DCB7F]/20 text-[#3DCB7F]' : 'bg-white/10 text-white/50'
-                            }`}>
-                              R{idx + 1}
-                            </div>
-                            <div>
-                              <div className="flex items-center gap-2 mb-1">
-                                <h3 className="font-bold text-white text-base">{round.title}</h3>
-                                <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${
-                                  rActive ? 'text-[#E873C3] bg-[#E873C3]/20 border border-[#E873C3]/40 animate-pulse' :
-                                  rPast ? 'text-[#3DCB7F] bg-[#3DCB7F]/15' : 'text-white/40 bg-white/10'
-                                }`}>
-                                  {rActive ? '🔴 Active Round' : rPast ? 'Completed' : 'Upcoming'}
+              {/* TAB 2: ROUNDS & TIMELINE */}
+              {activeTab === 'rounds' && (
+                <div className="flex flex-col gap-6">
+                                    {event.rounds_json && event.rounds_json.length > 0 ? (
+                    <div className="flex flex-col gap-4">
+                      <h2 className="text-xs font-bold text-white/30 uppercase tracking-widest">Event Rounds</h2>
+                      <div className="flex flex-col gap-3">
+                        {event.rounds_json.map((r, i) => (
+                          <div key={r.id || i} className="bg-white/[0.02] border border-white/[0.06] rounded-2xl p-5 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                            <div className="flex items-start gap-4">
+                              <div className="w-10 h-10 rounded-xl bg-[#E873C3]/15 border border-[#E873C3]/30 text-[#E873C3] font-black text-sm flex items-center justify-center shrink-0">
+                                R{i + 1}
+                              </div>
+                              <div>
+                                <h3 className="font-bold text-white text-base">{r.title}</h3>
+                                <p className="text-xs text-white/60 mt-0.5">{r.description}</p>
+                                <span className="inline-block mt-2 px-2.5 py-0.5 rounded-md bg-white/[0.04] border border-white/10 text-[10px] uppercase font-bold text-white/50">
+                                  Type: {r.type}
                                 </span>
                               </div>
-                              {round.description && <p className="text-xs text-white/60 leading-relaxed mb-2">{round.description}</p>}
-                              {round.starts_at && (
-                                <p className="text-[11px] text-white/40 flex items-center gap-1">
-                                  <Clock size={11} /> {new Date(round.starts_at).toLocaleString('en-IN', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
-                                  {round.ends_at && ` - ${new Date(round.ends_at).toLocaleString('en-IN', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}`}
-                                </p>
-                              )}
                             </div>
+                            {r.action_url && (
+                              <a
+                                href={r.action_url}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="px-4 py-2 rounded-xl bg-[#E873C3]/20 hover:bg-[#E873C3]/30 text-[#E873C3] text-xs font-bold border border-[#E873C3]/40 flex items-center gap-1.5 self-start md:self-center shrink-0 transition-colors"
+                              >
+                                <span>Go to Round</span>
+                                <ExternalLink size={13} />
+                              </a>
+                            )}
                           </div>
-
-                          {/* Round Action button — if active and registered */}
-                          {rActive && isRegistered && (
-                            <Link
-                              href={round.action_url || submissionUrl}
-                              className="px-4 py-2 rounded-xl font-bold text-xs text-white flex items-center gap-1.5 shrink-0 transition-all hover:scale-105"
-                              style={{ background: 'linear-gradient(135deg,#E873C3,#8D37D6)', boxShadow: '0 2px 12px rgba(232,115,195,0.4)' }}
-                            >
-                              <Flame size={12} /> Enter Round
-                            </Link>
-                          )}
-                        </div>
+                        ))}
                       </div>
-                    );
-                  })}
-                </div>
-              ) : event.timeline_json && event.timeline_json.length > 0 ? (
+                    </div>
+                  ) : event.timeline_json && event.timeline_json.length > 0 ? (
                 <div className="relative flex flex-col gap-0 pl-4">
                   <div className="absolute left-6 top-2 bottom-2 w-px bg-gradient-to-b from-[#4ECDC4]/60 via-white/10 to-transparent" />
                   {event.timeline_json.map((entry, i) => {
@@ -850,24 +774,44 @@ export default function EventDetailPage() {
                       <span className="text-sm font-black" style={{ color: i === 0 ? '#FFD700' : '#E873C3' }}>{entry.score.toLocaleString()} pts</span>
                     </div>
                   ))}
+
+                  {/* Timeline Checklist */}
+                  {event.timeline_json && event.timeline_json.length > 0 && (
+                    <div className="bg-white/[0.02] border border-white/[0.06] rounded-2xl p-6">
+                      <h2 className="text-xs font-bold text-white/30 uppercase tracking-widest mb-6">Schedule Timeline</h2>
+                      <div className="relative pl-6 border-l-2 border-white/10 flex flex-col gap-6">
+                        {event.timeline_json.map((item, idx) => (
+                          <div key={idx} className="relative flex flex-col gap-1">
+                            <div className={`absolute -left-[31px] top-0 w-4 h-4 rounded-full border-2 ${
+                              item.done ? 'bg-[#3DCB7F] border-[#3DCB7F]' : 'bg-[#06020f] border-white/30'
+                            }`} />
+                            <span className="text-xs font-bold text-white/40">{item.date}</span>
+                            <span className={`text-sm font-bold ${item.done ? 'text-white' : 'text-white/70'}`}>{item.label}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
           )}
 
-          {/* TAB 6: FAQS */}
-          {activeTab === 'faqs' && (
-            <div className="flex flex-col gap-3">
-              <h2 className="text-xs font-bold text-white/30 uppercase tracking-widest">Frequently Asked Questions</h2>
-              {!event.faqs_json || (event.faqs_json as { question: string; answer: string }[]).length === 0 ? (
-                <p className="text-white/30 text-sm">No specific FAQs added yet.</p>
-              ) : (
-                (event.faqs_json as { question: string; answer: string }[]).map((faq, i) => (
-                  <FaqItem key={i} q={faq.question} a={faq.answer} />
-                ))
+              {/* TAB 6: FAQS */}
+              {activeTab === 'faqs' && (
+                <div className="flex flex-col gap-3">
+                  <h2 className="text-xs font-bold text-white/30 uppercase tracking-widest">Frequently Asked Questions</h2>
+                  {!event.faqs_json || (event.faqs_json as { question: string; answer: string }[]).length === 0 ? (
+                    <p className="text-white/30 text-sm">No specific FAQs added yet.</p>
+                  ) : (
+                    (event.faqs_json as { question: string; answer: string }[]).map((faq, i) => (
+                      <FaqItem key={i} q={faq.question} a={faq.answer} />
+                    ))
+                  )}
+                </div>
               )}
-            </div>
-          )}
+            </motion.div>
+          </AnimatePresence>
         </div>
 
         {/* Right Sticky Sidebar */}
@@ -879,151 +823,112 @@ export default function EventDetailPage() {
               {event.prize_pool && (
                 <div className="flex items-center justify-between pb-3 border-b border-white/[0.06]">
                   <div className="flex items-center gap-2">
-                    <Trophy size={18} style={{ color: '#FFD700' }} />
-                    <span className="text-base font-black text-white">{event.prize_pool}</span>
+                    <Trophy size={16} className="text-[#FFD700]" />
+                    <span className="text-xs font-bold text-white/60">Prize Pool</span>
                   </div>
-                  <span className="text-[10px] font-bold text-white/30 uppercase">Prize Pool</span>
+                  <span className="text-sm font-black text-[#FFD700]">{event.prize_pool}</span>
                 </div>
               )}
 
-              {/* 🔴 Active LIVE CTA Button for Coding Contest */}
-              {isOngoing && isRegistered && isCodingContest && contestEnterUrl && (
-                <Link
-                  href={contestEnterUrl}
-                  className="py-3.5 px-4 rounded-xl font-black text-sm text-white text-center flex items-center justify-center gap-2 transition-all hover:scale-[1.02]"
-                  style={{ background: 'linear-gradient(135deg,#4ECDC4,#3DCB7F)', boxShadow: '0 4px 20px rgba(78,205,196,0.5)' }}
-                >
-                  <Flame size={16} /> Enter Contest Arena →
-                </Link>
-              )}
-
-              {/* 🔴 Active LIVE CTA Button for Hackathon */}
-              {isOngoing && isRegistered && isHackathon && (
-                <Link
-                  href={submissionUrl}
-                  className="py-3.5 px-4 rounded-xl font-black text-sm text-white text-center flex items-center justify-center gap-2 transition-all hover:scale-[1.02]"
-                  style={{ background: 'linear-gradient(135deg,#E873C3,#8D37D6)', boxShadow: '0 4px 20px rgba(232,115,195,0.6)' }}
-                >
-                  <Send size={15} /> {userReg?.submission_url ? 'Edit Submission →' : 'Submit Project →'}
-                </Link>
-              )}
-
-              {/* Countdown Timer */}
-              {!countdown.expired && (event.status === 'published' || isOngoing) && (
-                <div className="flex flex-col gap-2 bg-white/[0.02] p-3 rounded-xl border border-white/[0.05]">
-                  <p className="text-[10px] font-bold text-white/40 uppercase tracking-wider text-center">
-                    {event.status === 'published' ? 'Starts In' : 'Ends In'}
-                  </p>
-                  <div className="grid grid-cols-4 gap-1.5">
-                    {[{ v: countdown.d, l: 'D' }, { v: countdown.h, l: 'H' }, { v: countdown.m, l: 'M' }, { v: countdown.s, l: 'S' }].map(({ v, l }) => (
-                      <div key={l} className="flex flex-col items-center">
-                        <div className="w-full py-1.5 rounded-lg bg-white/[0.06] border border-white/[0.08] text-center text-sm font-black text-white font-mono">
-                          {String(v).padStart(2, '0')}
-                        </div>
-                        <span className="text-[9px] text-white/30 mt-0.5 font-bold">{l}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Capacity Progress Bar */}
-              <div className="flex flex-col gap-1.5">
-                <div className="flex items-center justify-between text-xs">
-                  <span className="text-white/40 flex items-center gap-1"><Users size={12} /> Registered</span>
-                  <span className="font-bold text-white">{slotsUsed}{slotsTotal ? `/${slotsTotal}` : ''}</span>
+              {/* Registration Stats */}
+              <div className="flex flex-col gap-2">
+                <div className="flex items-center justify-between text-xs font-semibold">
+                  <span className="text-white/60 flex items-center gap-1.5">
+                    <Users size={13} className="text-[#E873C3]" /> Registered
+                  </span>
+                  <span className="text-white font-bold">
+                    {slotsUsed}{slotsTotal ? ` / ${slotsTotal}` : ''}
+                  </span>
                 </div>
                 {slotsPercent !== null && (
-                  <div className="w-full h-1.5 bg-white/[0.06] rounded-full overflow-hidden">
-                    <div className="h-full rounded-full transition-all duration-500" style={{ width: `${slotsPercent}%`, background: 'linear-gradient(90deg,#E873C3,#8D37D6)' }} />
+                  <div className="w-full bg-white/[0.06] h-2 rounded-full overflow-hidden">
+                    <div
+                      className="bg-gradient-to-r from-[#E873C3] to-[#8D37D6] h-full rounded-full transition-all duration-300"
+                      style={{ width: `${slotsPercent}%` }}
+                    />
                   </div>
                 )}
               </div>
 
-              {/* Registration Deadline */}
-              {event.registration_deadline && (
-                <div className="flex items-center gap-2 text-xs text-white/40">
-                  <Clock size={12} />
-                  <span>Closes: {new Date(event.registration_deadline).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}</span>
+              {/* Timeline Dates */}
+              <div className="flex flex-col gap-2 pt-3 border-t border-white/[0.06] text-xs">
+                {event.starts_at && (
+                  <div className="flex items-center justify-between text-white/60">
+                    <span className="flex items-center gap-1.5"><Clock size={13} className="text-[#3DCB7F]" /> Starts</span>
+                    <span className="font-bold text-white/80">{new Date(event.starts_at).toLocaleDateString()}</span>
+                  </div>
+                )}
+                {event.ends_at && (
+                  <div className="flex items-center justify-between text-white/60">
+                    <span className="flex items-center gap-1.5"><Clock size={13} className="text-[#E873C3]" /> Ends</span>
+                    <span className="font-bold text-white/80">{new Date(event.ends_at).toLocaleDateString()}</span>
+                  </div>
+                )}
+              </div>
+
+              {/* Registration Status Feedback Message */}
+              {regMsg && (
+                <div className="p-3 rounded-xl text-xs font-semibold bg-white/[0.04] border border-white/10 text-white/90 leading-relaxed">
+                  {regMsg}
                 </div>
               )}
 
-              {/* Main Registration CTAs */}
-              {isEnded ? (
-                <div className="py-3 rounded-xl text-xs font-bold text-center text-white/30 bg-white/[0.04] border border-white/[0.07]">
-                  Event Ended
-                </div>
-              ) : isRegistered ? (
+              {/* Dynamic Action Button */}
+              {isRegistered ? (
                 <div className="flex flex-col gap-2">
-                  <div className="flex items-center gap-2 py-3 rounded-xl bg-[#3DCB7F]/10 border border-[#3DCB7F]/30 justify-center">
-                    <UserCheck size={16} style={{ color: '#3DCB7F' }} />
-                    <span className="text-xs font-bold" style={{ color: '#3DCB7F' }}>Registered!</span>
+                  <div className="w-full py-3 rounded-xl bg-[#3DCB7F]/15 border border-[#3DCB7F]/40 text-[#3DCB7F] text-xs font-black text-center flex items-center justify-center gap-2">
+                    <CheckCircle size={15} />
+                    <span>Registered for Event</span>
                   </div>
-
-                  {/* Submission button for hackathons */}
-                  {isOngoing && isHackathon && (
-                    <Link
-                      href={submissionUrl}
-                      className="py-2.5 rounded-xl text-xs font-bold text-center text-white bg-white/10 hover:bg-white/15 border border-white/15 transition-all flex items-center justify-center gap-1.5"
-                    >
-                      <Send size={13} /> {userReg?.submission_url ? 'Edit Submission' : 'Submit Project'}
-                    </Link>
-                  )}
-
-                  {/* Enter Contest button for coding contests */}
-                  {isOngoing && isCodingContest && contestEnterUrl && (
+                  {/* Enter Contest Arena Button when LIVE */}
+                  {isOngoing && contestEnterUrl && (
                     <Link
                       href={contestEnterUrl}
-                      className="py-2.5 rounded-xl text-xs font-bold text-center text-white bg-[#4ECDC4]/20 hover:bg-[#4ECDC4]/30 border border-[#4ECDC4]/40 text-[#4ECDC4] transition-all flex items-center justify-center gap-1.5"
+                      className="w-full py-3 rounded-xl font-black text-xs text-white text-center flex items-center justify-center gap-1.5 transition-all shadow-lg hover:scale-[1.02]"
+                      style={{ background: 'linear-gradient(135deg,#E873C3,#8D37D6)', boxShadow: '0 4px 20px rgba(232,115,195,0.4)' }}
                     >
-                      <Flame size={13} /> Enter Contest Arena
+                      <Flame size={14} className="animate-pulse" />
+                      <span>{isCodingContest ? 'Enter Contest Arena' : 'Submit Project'}</span>
                     </Link>
                   )}
-
-                  <button onClick={handleWithdraw} disabled={registering} className="text-xs text-white/30 hover:text-red-400 transition-colors text-center py-1">
-                    Withdraw registration
-                  </button>
+                  {canRegister && (
+                    <button
+                      onClick={handleWithdraw}
+                      disabled={registering}
+                      className="text-[11px] font-semibold text-white/30 hover:text-red-400 text-center transition-colors cursor-pointer"
+                    >
+                      Withdraw Registration
+                    </button>
+                  )}
+                </div>
+              ) : isEnded ? (
+                <div className="w-full py-3 rounded-xl bg-white/[0.04] border border-white/10 text-white/30 text-xs font-bold text-center">
+                  Event Concluded
+                </div>
+              ) : regDeadlinePassed ? (
+                <div className="w-full py-3 rounded-xl bg-white/[0.04] border border-white/10 text-white/30 text-xs font-bold text-center">
+                  Registration Deadline Passed
+                </div>
+              ) : isFull ? (
+                <div className="w-full py-3 rounded-xl bg-white/[0.04] border border-white/10 text-white/30 text-xs font-bold text-center">
+                  Registration Full ({slotsTotal} max)
                 </div>
               ) : canRegister ? (
                 <button
                   onClick={() => setShowRegModal(true)}
                   disabled={registering}
-                  className="py-3 rounded-xl text-xs font-bold text-white transition-all hover:-translate-y-0.5 disabled:opacity-50 flex items-center justify-center gap-1.5"
-                  style={{ background: 'linear-gradient(135deg,#E873C3,#8D37D6)', boxShadow: '0 4px 20px rgba(232,115,195,0.5)' }}
+                  className="w-full py-3.5 rounded-xl font-black text-sm text-white flex items-center justify-center gap-2 transition-all cursor-pointer shadow-lg hover:scale-[1.02]"
+                  style={{
+                    background: 'linear-gradient(135deg,#E873C3,#8D37D6)',
+                    boxShadow: '0 4px 25px rgba(232,115,195,0.4)',
+                  }}
                 >
-                  {isTeam ? <UsersRound size={14} /> : null}
-                  {isTeam ? 'Register Team →' : 'Register Now →'}
+                  <Sparkles size={16} />
+                  <span>Register Now</span>
                 </button>
               ) : (
-                <div className="py-3 rounded-xl text-xs font-bold text-center text-white/30 bg-white/[0.04] border border-white/[0.07]">
-                  {regDeadlinePassed ? 'Registration Closed' : isFull ? 'Event Full' : 'Registrations Closed'}
-                </div>
-              )}
-
-              {regMsg && (
-                <p className={`text-xs text-center font-medium ${regMsg.startsWith('🎉') ? 'text-[#3DCB7F]' : 'text-red-400'}`}>{regMsg}</p>
-              )}
-            </div>
-
-            {/* Quick Details Box */}
-            <div className="bg-white/[0.02] border border-white/[0.06] rounded-2xl p-4 flex flex-col gap-3">
-              <h3 className="text-[10px] font-bold text-white/30 uppercase tracking-wider">Event Details</h3>
-              <div className="flex items-center justify-between text-xs">
-                <span className="text-white/40">Participation</span>
-                <span className="font-bold text-white">{isTeam ? 'Team Event' : 'Solo / Individual'}</span>
-              </div>
-              <div className="flex items-center justify-between text-xs">
-                <span className="text-white/40">Fee</span>
-                <span className="font-bold text-[#3DCB7F]">{event.registration_fee ?? 'Free'}</span>
-              </div>
-              <div className="flex items-center justify-between text-xs">
-                <span className="text-white/40">Eligibility</span>
-                <span className="font-bold text-white">{event.eligibility ?? 'Open to All'}</span>
-              </div>
-              {event.starts_at && (
-                <div className="flex items-center justify-between text-xs">
-                  <span className="text-white/40">Starts</span>
-                  <span className="font-bold text-white">{new Date(event.starts_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}</span>
+                <div className="w-full py-3 rounded-xl bg-white/[0.04] border border-white/10 text-white/30 text-xs font-bold text-center">
+                  Registration Closed
                 </div>
               )}
             </div>
@@ -1031,19 +936,23 @@ export default function EventDetailPage() {
         </div>
       </div>
 
-      {/* COSMODEX DETAILED REGISTRATION MODAL */}
-      <CosmoDexRegistrationModal
-        isOpen={showRegModal}
-        onClose={() => setShowRegModal(false)}
-        onSubmit={handleCosmoDexRegister}
-        eventTitle={event.title}
-        isTeamEvent={isTeam}
-        fieldsConfig={event.registration_fields_config}
-        initialEmail={sessionUser.email ?? ''}
-        initialName={sessionUser.username ?? ''}
-        submitting={registering}
-        errorMessage={regMsg.startsWith('🎉') ? undefined : regMsg}
-      />
+      {/* CosmoDex Candidate Pass Registration Modal */}
+      <AnimatePresence>
+        {showRegModal && event && (
+          <CosmoDexRegistrationModal
+            isOpen={showRegModal}
+            onClose={() => setShowRegModal(false)}
+            onSubmit={handleRegisterSubmit}
+            eventTitle={event.title}
+            isTeamEvent={isTeam}
+            fieldsConfig={event.registration_fields_config}
+            initialEmail={userEmail}
+            initialName={userName}
+            submitting={registering}
+            errorMessage={regMsg}
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 }

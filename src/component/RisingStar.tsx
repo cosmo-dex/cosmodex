@@ -4,12 +4,14 @@ interface RisingStarsProps {
   size?: number;
   width?: number;
   height?: number;
+  speed?: number;
 }
 
 export default function RisingStars({
   size = 1024,
   width = 3840,
-  height = 3840
+  height = 3840,
+  speed = 2.2
 }: RisingStarsProps) {
   const [stars, setStars] = useState<{ small: string; medium: string; large: string } | null>(null);
 
@@ -35,19 +37,23 @@ export default function RisingStars({
     return <div className="absolute inset-0 overflow-hidden w-screen h-[45vh] bg-gradient-to-b from-20% to-80% pointer-events-none z-0" />;
   }
 
+  const smallDuration = Math.round(333 / speed);
+  const mediumDuration = Math.round(666 / speed);
+  const largeDuration = Math.round(999 / speed);
+
   return (
     <div className="absolute inset-0 overflow-hidden w-screen h-[45vh] bg-gradient-to-b from-20% to-80% pointer-events-none z-0">
       <div
-        className="rising-stars__small animate-risingstar [animation-duration:333s] w-px h-px bg-transparent absolute"
-        style={{ boxShadow: stars.small }}
+        className="rising-stars__small animate-risingstar w-px h-px bg-transparent absolute"
+        style={{ boxShadow: stars.small, animationDuration: `${smallDuration}s` }}
       />
       <div
-        className="rising-stars__medium animate-risingstar [animation-duration:666s] w-[2px] h-[2px] bg-transparent absolute"
-        style={{ boxShadow: stars.medium }}
+        className="rising-stars__medium animate-risingstar w-[2px] h-[2px] bg-transparent absolute"
+        style={{ boxShadow: stars.medium, animationDuration: `${mediumDuration}s` }}
       />
       <div
-        className="rising-stars__large animate-risingstar [animation-duration:999s] w-[3px] h-[3px] bg-transparent absolute"
-        style={{ boxShadow: stars.large }}
+        className="rising-stars__large animate-risingstar w-[3px] h-[3px] bg-transparent absolute"
+        style={{ boxShadow: stars.large, animationDuration: `${largeDuration}s` }}
       />
     </div>
   );
