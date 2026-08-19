@@ -1,17 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { Prisma } from '@prisma/client';
-import { SESSION_COOKIE } from '@/lib/adminAuth';
-
-function getSession(req: NextRequest) {
-  const cookie = req.cookies.get(SESSION_COOKIE);
-  if (!cookie?.value) return null;
-  try {
-    return JSON.parse(cookie.value) as { userId: string; username: string; role: string; email?: string };
-  } catch {
-    return null;
-  }
-}
+import { getEventUserSession } from '@/lib/eventAuth';
 
 function generateTeamCode(): string {
   return Math.random().toString(36).substring(2, 8).toUpperCase();
@@ -21,9 +11,9 @@ export async function POST(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  const session = getSession(req);
+  const session = await getEventUserSession(req);
   if (!session?.userId) {
-    return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
+    return NextResponse.json({ error: 'Please log in to register for this event' }, { status: 401 });
   }
 
   const { id } = await params;
@@ -218,9 +208,9 @@ export async function DELETE(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  const session = getSession(req);
+  const session = await getEventUserSession(req);
   if (!session?.userId) {
-    return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
+    return NextResponse.json({ error: 'Please log in to manage your registration' }, { status: 401 });
   }
 
   const { id } = await params;

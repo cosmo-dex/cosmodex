@@ -2,13 +2,12 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import Link from 'next/link';
 import AdminLayout from '@/components/admin/AdminLayout';
 import {
   CalendarDays, Users, Trophy, Settings, ArrowLeft,
   Save, Zap, Search, Ban, RotateCcw, Plus, Trash2,
-  ExternalLink, FileText, Download, X, Send, Copy,
-  Sparkles, Code2, ListChecks
+  FileText, Download, X, Send, Copy,
+  Sparkles, Code2, ListChecks, Clock
 } from 'lucide-react';
 
 type Tab = 'overview' | 'questions' | 'registrations' | 'leaderboard' | 'settings';
@@ -29,6 +28,7 @@ interface MCQQuestion {
   options: MCQOption[];
   explanation?: string;
   marks: number;
+  timeLimitMin?: number;
 }
 
 interface TestCase { input: string; output: string; explanation?: string; isPublic: boolean }
@@ -44,6 +44,7 @@ interface CodingQuestion {
   timeLimitSec: number;
   memoryLimitMb: number;
   points: number;
+  timeLimitMin?: number;
   sampleTestCases: TestCase[];
 }
 
@@ -74,6 +75,7 @@ interface SubmissionConfig {
   };
   assessment_details?: {
     assessment_mode?: 'mcq_only' | 'coding_only' | 'mixed';
+    duration_minutes?: number;
     total_questions?: number;
     questions?: QuestionItem[];
   };
@@ -181,7 +183,8 @@ export default function EventControlPage() {
   const [problemStatement, setProblemStatement] = useState('');
   const [tracks, setTracks] = useState<TrackEntry[]>([]);
   const [judgingCriteria, setJudgingCriteria] = useState<JudgingCriteriaEntry[]>([]);
-  const [assessmentMode, setAssessmentMode] = useState<'mcq_only' | 'coding_only' | 'mixed'>('mixed');
+  const [assessmentMode, setAssessmentMode] = useState<'mixed' | 'coding_only' | 'mcq_only'>('mixed');
+  const [contestDurationMinutes, setContestDurationMinutes] = useState<number>(60);
   const [questions, setQuestions] = useState<QuestionItem[]>([]);
   const [questionsSaving, setQuestionsSaving] = useState(false);
   const [questionsMsg, setQuestionsMsg] = useState('');
@@ -301,6 +304,7 @@ export default function EventControlPage() {
         }
         if (sc.assessment_details) {
           setAssessmentMode(sc.assessment_details.assessment_mode || 'mixed');
+          setContestDurationMinutes(sc.assessment_details.duration_minutes || 60);
           setQuestions(sc.assessment_details.questions || []);
         }
       }
@@ -411,6 +415,7 @@ export default function EventControlPage() {
         } : existingConfig.hackathon_details,
         assessment_details: event?.event_type === 'coding_contest' ? {
           assessment_mode: assessmentMode,
+          duration_minutes: contestDurationMinutes,
           total_questions: questions.length,
           questions: questions,
         } : existingConfig.assessment_details,
@@ -596,8 +601,8 @@ export default function EventControlPage() {
                 <button
                   onClick={() => event.registration_open ? handleCloseRegistrationNow() : handleStartRegistrationNow()}
                   className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${event.registration_open
-                      ? 'text-red-400 bg-red-500/10 border border-red-500/30 hover:bg-red-500/20'
-                      : 'text-[#3DCB7F] bg-[#3DCB7F]/10 border border-[#3DCB7F]/30 hover:bg-[#3DCB7F]/20'
+                    ? 'text-red-400 bg-red-500/10 border border-red-500/30 hover:bg-red-500/20'
+                    : 'text-[#3DCB7F] bg-[#3DCB7F]/10 border border-[#3DCB7F]/30 hover:bg-[#3DCB7F]/20'
                     }`}
                 >
                   {event.registration_open ? '🔒 Close Registration' : '🔓 Open Registration'}
@@ -728,6 +733,52 @@ export default function EventControlPage() {
                     </select>
                   </div>
 
+                  <div className="bg-gradient-to-r from-purple-950/40 to-[#0c0818] p-4 rounded-2xl border border-purple-500/30 flex items-center justify-between gap-4 flex-wrap">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-xl bg-purple-500/10 border border-purple-500/30 flex items-center justify-center text-purple-400">
+                        <Clock size={20} />
+                      </div>
+                      <div>
+                        <h4 className="text-sm font-black text-white flex items-center gap-2">
+                          Complete Contest Timing
+                          <span className="text-[10px] font-bold uppercase tracking-wider text-purple-400 bg-purple-950/60 px-2 py-0.5 rounded border border-purple-500/30">
+                            Global Timer
+                          </span>
+                        </h4>
+                        <p className="text-xs text-white/50">Total duration allowed for participants inside the contest arena.</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <label className="text-xs font-bold text-white/60">Duration:</label>
+                      <div className="flex items-center gap-1.5 bg-[#05020a] border border-white/15 px-3 py-1.5 rounded-xl">
+                        <input
+                          type="number"
+                          min={1}
+                          max={1440}
+                          value={contestDurationMinutes}
+                          onChange={(e) => setContestDurationMinutes(Math.max(1, Number(e.target.value)))}
+                          className="w-16 bg-transparent text-center font-bold text-white text-sm focus:outline-none"
+                        />
+                        <span className="text-xs text-white/40 font-bold">Minutes</span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        {[30, 60, 90, 120].map((mins) => (
+                          <button
+                            key={mins}
+                            type="button"
+                            onClick={() => setContestDurationMinutes(mins)}
+                            className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all ${contestDurationMinutes === mins
+                                ? 'bg-purple-600 text-white shadow-md shadow-purple-600/30'
+                                : 'bg-white/5 text-white/40 hover:bg-white/10'
+                              }`}
+                          >
+                            {mins}m
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+
                   <div className="flex items-center justify-between bg-white/[0.03] p-3 rounded-xl border border-white/[0.06]">
                     <span className="text-xs text-white/50">{questions.length} total questions configured</span>
                     <div className="flex items-center gap-2">
@@ -740,12 +791,13 @@ export default function EventControlPage() {
                             title: 'New MCQ',
                             questionText: '',
                             options: [
-                              { id: '1', text: 'Option A', isCorrect: true },
+                              { id: '1', text: 'Option A', isCorrect: false },
                               { id: '2', text: 'Option B', isCorrect: false },
                               { id: '3', text: 'Option C', isCorrect: false },
                               { id: '4', text: 'Option D', isCorrect: false },
                             ],
-                            marks: 5
+                            marks: 5,
+                            timeLimitMin: 2,
                           }])}
                           className="px-3 py-1.5 rounded-lg text-xs font-bold text-[#E873C3] bg-[#E873C3]/10 border border-[#E873C3]/30 hover:bg-[#E873C3]/20"
                         >
@@ -755,7 +807,7 @@ export default function EventControlPage() {
                       {(assessmentMode === 'coding_only' || assessmentMode === 'mixed') && (
                         <button
                           type="button"
-                          onClick={() => setQuestions([...questions, { id: `code-${Date.now()}`, type: 'coding', title: 'New Coding Problem', difficulty: 'Medium', description: '', inputFormat: '', outputFormat: '', constraints: '', timeLimitSec: 1, memoryLimitMb: 256, points: 50, sampleTestCases: [] }])}
+                          onClick={() => setQuestions([...questions, { id: `code-${Date.now()}`, type: 'coding', title: 'New Coding Problem', difficulty: 'Medium', description: '', inputFormat: '', outputFormat: '', constraints: '', timeLimitSec: 1, timeLimitMin: 30, memoryLimitMb: 256, points: 50, sampleTestCases: [] }])}
                           className="px-3 py-1.5 rounded-lg text-xs font-bold text-[#4ECDC4] bg-[#4ECDC4]/10 border border-[#4ECDC4]/30 hover:bg-[#4ECDC4]/20"
                         >
                           + Add Coding Problem
@@ -791,10 +843,10 @@ export default function EventControlPage() {
                                 </div>
                                 <div className="flex items-center gap-3">
                                   <div className="flex items-center gap-1">
-                                    <span className="text-xs text-white/40">Marks:</span>
+                                    <span className="text-xs text-white/40">Points:</span>
                                     <input
                                       type="number"
-                                      value={q.marks}
+                                      value={q.marks ?? 5}
                                       onChange={e => {
                                         const list = [...questions];
                                         (list[idx] as MCQQuestion).marks = Number(e.target.value);
@@ -837,7 +889,17 @@ export default function EventControlPage() {
                               {/* MCQ Options */}
                               <div className="flex flex-col gap-2 pt-1">
                                 <div className="flex items-center justify-between">
-                                  <span className="text-[11px] font-bold text-white/40 uppercase">Answer Options (Click letter to mark Correct Answer)</span>
+                                  <span className="text-[11px] font-bold text-white/50 uppercase">
+                                    {event.status === 'ended' ? (
+                                      <span className="text-[#3DCB7F] flex items-center gap-1">
+                                        ✓ Answer Key Evaluation Mode (Event is Closed — Click letter to set correct answer)
+                                      </span>
+                                    ) : (
+                                      <span>
+                                        Question Options (A, B, C, D) <span className="text-white/30 font-normal normal-case">— Answer key is configured after event closes</span>
+                                      </span>
+                                    )}
+                                  </span>
                                   <button
                                     type="button"
                                     onClick={() => {
@@ -858,20 +920,26 @@ export default function EventControlPage() {
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                                   {(q.options || []).map((opt, optIdx) => (
                                     <div key={opt.id || optIdx} className="flex items-center gap-2 bg-white/[0.03] p-2 rounded-lg border border-white/[0.05]">
-                                      <button
-                                        type="button"
-                                        title="Click to mark as correct answer"
-                                        onClick={() => {
-                                          const list = [...questions];
-                                          const mcq = { ...(list[idx] as MCQQuestion) };
-                                          mcq.options = mcq.options.map((o, i) => ({ ...o, isCorrect: i === optIdx }));
-                                          list[idx] = mcq;
-                                          setQuestions(list);
-                                        }}
-                                        className={`w-6 h-6 rounded-full flex items-center justify-center font-bold text-xs shrink-0 transition-all ${opt.isCorrect ? 'bg-[#3DCB7F] text-black shadow-lg shadow-[#3DCB7F]/30' : 'bg-white/10 text-white/40 hover:bg-white/20'}`}
-                                      >
-                                        {String.fromCharCode(65 + optIdx)}
-                                      </button>
+                                      {event.status === 'ended' ? (
+                                        <button
+                                          type="button"
+                                          title="Click to mark as correct answer"
+                                          onClick={() => {
+                                            const list = [...questions];
+                                            const mcq = { ...(list[idx] as MCQQuestion) };
+                                            mcq.options = mcq.options.map((o, i) => ({ ...o, isCorrect: i === optIdx }));
+                                            list[idx] = mcq;
+                                            setQuestions(list);
+                                          }}
+                                          className={`w-6 h-6 rounded-full flex items-center justify-center font-bold text-xs shrink-0 transition-all cursor-pointer ${opt.isCorrect ? 'bg-[#3DCB7F] text-black shadow-lg shadow-[#3DCB7F]/30' : 'bg-white/10 text-white/40 hover:bg-white/20'}`}
+                                        >
+                                          {String.fromCharCode(65 + optIdx)}
+                                        </button>
+                                      ) : (
+                                        <div className="w-6 h-6 rounded-full flex items-center justify-center font-bold text-xs shrink-0 bg-white/10 text-white/70 border border-white/10">
+                                          {String.fromCharCode(65 + optIdx)}
+                                        </div>
+                                      )}
                                       <input
                                         value={opt.text}
                                         onChange={e => {
@@ -1172,8 +1240,8 @@ export default function EventControlPage() {
                         </button>
                         {reg.submission_url && (
                           <button
-                            onClick={() => setSelectedReg(reg)}
-                            className="px-3 py-1.5 rounded-lg text-xs font-bold text-[#3DCB7F] bg-[#3DCB7F]/10 border border-[#3DCB7F]/30 hover:bg-[#3DCB7F]/20 transition-all flex items-center gap-1 shrink-0 cursor-pointer"
+                            onClick={() => setInspectSubmissionReg(reg)}
+                            className="px-3 py-1.5 rounded-lg text-xs font-bold text-black bg-[#3DCB7F] hover:bg-[#32b870] transition-all flex items-center gap-1 shrink-0 cursor-pointer shadow-sm shadow-[#3DCB7F]/20"
                           >
                             <Send size={11} /> View Submission
                           </button>
@@ -1289,20 +1357,7 @@ export default function EventControlPage() {
 
                   {selectedReg.submission_url ? (
                     <div className="flex flex-col gap-3 bg-black/40 p-3.5 rounded-xl border border-white/[0.08]">
-                      {/* Submission URL */}
-                      <div>
-                        <span className="text-white/40 font-bold block uppercase text-[10px] mb-1">Submission URL / Link</span>
-                        <a
-                          href={selectedReg.submission_url}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="text-[#4ECDC4] font-mono text-xs hover:underline flex items-center gap-1 break-all"
-                        >
-                          {selectedReg.submission_url} <ExternalLink size={12} />
-                        </a>
-                      </div>
 
-                      {/* Description / Remarks */}
                       {selectedReg.submission_details_json?.description && (
                         <div>
                           <span className="text-white/40 font-bold block uppercase text-[10px] mb-1">Project Description / Remarks</span>
@@ -1312,7 +1367,6 @@ export default function EventControlPage() {
                         </div>
                       )}
 
-                      {/* Submission Timestamp */}
                       {selectedReg.submission_details_json?.submitted_at && (
                         <div className="flex items-center justify-between text-[11px] pt-1">
                           <span className="text-white/40">Submitted At:</span>
@@ -1320,7 +1374,6 @@ export default function EventControlPage() {
                         </div>
                       )}
 
-                      {/* Submitted Code Answers (for Contest) */}
                       {selectedReg.submission_details_json?.codeAnswers && Object.keys(selectedReg.submission_details_json.codeAnswers as unknown as Record<string, string>).length > 0 && (
                         <div className="flex flex-col gap-2 pt-2 border-t border-white/[0.06]">
                           <span className="text-white/50 font-bold uppercase text-[10px]">Submitted Code Answers ({Object.keys(selectedReg.submission_details_json.codeAnswers as unknown as Record<string, string>).length})</span>
@@ -1333,7 +1386,6 @@ export default function EventControlPage() {
                         </div>
                       )}
 
-                      {/* Submitted MCQ Answers */}
                       {selectedReg.submission_details_json?.mcqAnswers && Object.keys(selectedReg.submission_details_json.mcqAnswers as unknown as Record<string, string>).length > 0 && (
                         <div className="flex flex-col gap-1 pt-2 border-t border-white/[0.06]">
                           <span className="text-white/50 font-bold uppercase text-[10px]">Submitted MCQ Answers ({Object.keys(selectedReg.submission_details_json.mcqAnswers as unknown as Record<string, string>).length})</span>
@@ -1406,21 +1458,6 @@ export default function EventControlPage() {
 
               <div className="flex flex-col gap-4 overflow-y-auto pr-1 flex-1 text-xs">
 
-                {/* 1. Submission Link / Target URL */}
-                <div className="bg-white/[0.02] border border-white/[0.08] rounded-2xl p-4 flex flex-col gap-2">
-                  <span className="text-[10px] font-bold text-[#4ECDC4] uppercase tracking-wider">Submission Link / Target URL</span>
-                  <div className="flex items-center justify-between gap-3 bg-black/50 p-3 rounded-xl border border-white/10">
-                    <span className="font-mono text-xs text-white/80 truncate">{inspectSubmissionReg.submission_url}</span>
-                    <a
-                      href={inspectSubmissionReg.submission_url || '#'}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="px-3 py-1.5 rounded-lg font-bold text-xs text-black bg-[#4ECDC4] hover:bg-[#3dbdb4] transition-all flex items-center gap-1 shrink-0"
-                    >
-                      Open Link <ExternalLink size={12} />
-                    </a>
-                  </div>
-                </div>
 
                 {/* 2. Project Description / Remarks */}
                 {inspectSubmissionReg.submission_details_json?.description && (
@@ -1432,48 +1469,105 @@ export default function EventControlPage() {
                   </div>
                 )}
 
-                {/* 3. Submitted Code Answers */}
+                {/* 3. Submitted Coding Solutions */}
                 {inspectSubmissionReg.submission_details_json?.codeAnswers &&
                   Object.keys(inspectSubmissionReg.submission_details_json.codeAnswers as unknown as Record<string, string>).length > 0 ? (
                   <div className="bg-white/[0.02] border border-white/[0.08] rounded-2xl p-4 flex flex-col gap-3">
-                    <span className="text-[10px] font-bold text-[#3DCB7F] uppercase tracking-wider">
-                      Submitted Coding Solutions ({Object.keys(inspectSubmissionReg.submission_details_json.codeAnswers as unknown as Record<string, string>).length})
+                    <span className="text-[10px] font-bold text-[#3DCB7F] uppercase tracking-wider flex items-center gap-1.5">
+                      <Code2 size={13} /> Submitted Coding Solutions ({Object.keys(inspectSubmissionReg.submission_details_json.codeAnswers as unknown as Record<string, string>).length})
                     </span>
-                    {Object.entries(inspectSubmissionReg.submission_details_json.codeAnswers as unknown as Record<string, string>).map(([qId, code], codeIdx) => (
-                      <div key={qId} className="flex flex-col gap-1.5 bg-[#05020a] border border-white/10 rounded-xl p-3">
-                        <div className="flex items-center justify-between text-[11px] text-white/50 border-b border-white/5 pb-1">
-                          <span className="font-bold text-white">Coding Problem #{codeIdx + 1}</span>
-                          <button
-                            onClick={() => navigator.clipboard.writeText(code)}
-                            className="text-white/40 hover:text-white flex items-center gap-1 text-[10px] cursor-pointer"
-                          >
-                            <Copy size={10} /> Copy Code
-                          </button>
+                    {Object.entries(inspectSubmissionReg.submission_details_json.codeAnswers as unknown as Record<string, string>).map(([qId, code], codeIdx) => {
+                      const qMatch = questions.find(q => q.id === qId || q.title === qId);
+                      const qTitle = qMatch?.title || `Coding Problem #${codeIdx + 1}`;
+                      const qDiff = (qMatch as CodingQuestion)?.difficulty || 'Medium';
+
+                      return (
+                        <div key={qId} className="flex flex-col gap-2 bg-[#05020a] border border-white/10 rounded-xl p-3.5">
+                          <div className="flex items-center justify-between text-xs border-b border-white/10 pb-2">
+                            <div className="flex items-center gap-2">
+                              <span className="font-bold text-white text-sm">{qTitle}</span>
+                              <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-[#4ECDC4]/15 text-[#4ECDC4] border border-[#4ECDC4]/30">
+                                {qDiff}
+                              </span>
+                            </div>
+                            <button
+                              onClick={() => navigator.clipboard.writeText(code)}
+                              className="text-white/50 hover:text-white flex items-center gap-1 text-xs cursor-pointer px-2 py-1 rounded bg-white/5 hover:bg-white/10 transition-colors"
+                            >
+                              <Copy size={11} /> Copy Code
+                            </button>
+                          </div>
+
+                          {(qMatch as CodingQuestion)?.description && (
+                            <p className="text-xs text-white/50 leading-relaxed bg-white/[0.02] p-2.5 rounded-lg border border-white/5">
+                              {(qMatch as CodingQuestion).description}
+                            </p>
+                          )}
+
+                          <pre className="font-mono text-xs text-[#4ECDC4] overflow-x-auto p-3 bg-black/70 rounded-xl leading-relaxed whitespace-pre-wrap max-h-[260px] border border-white/5">
+                            {code}
+                          </pre>
                         </div>
-                        <pre className="font-mono text-xs text-[#4ECDC4] overflow-x-auto p-2 bg-black/60 rounded-lg leading-relaxed whitespace-pre-wrap max-h-[220px]">
-                          {code}
-                        </pre>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 ) : null}
 
                 {/* 4. Submitted MCQ Answers */}
                 {inspectSubmissionReg.submission_details_json?.mcqAnswers &&
                   Object.keys(inspectSubmissionReg.submission_details_json.mcqAnswers as unknown as Record<string, string>).length > 0 ? (
-                  <div className="bg-white/[0.02] border border-white/[0.08] rounded-2xl p-4 flex flex-col gap-2">
-                    <span className="text-[10px] font-bold text-[#F5A623] uppercase tracking-wider">
-                      Submitted MCQ Answers ({Object.keys(inspectSubmissionReg.submission_details_json.mcqAnswers as unknown as Record<string, string>).length})
+                  <div className="bg-white/[0.02] border border-white/[0.08] rounded-2xl p-4 flex flex-col gap-3">
+                    <span className="text-[10px] font-bold text-[#F5A623] uppercase tracking-wider flex items-center gap-1.5">
+                      <ListChecks size={13} /> Submitted MCQ Answers ({Object.keys(inspectSubmissionReg.submission_details_json.mcqAnswers as unknown as Record<string, string>).length})
                     </span>
-                    <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                      {Object.entries(inspectSubmissionReg.submission_details_json.mcqAnswers as unknown as Record<string, string>).map(([qId, optId], mcqIdx) => (
-                        <div key={qId} className="p-2.5 bg-black/40 border border-white/10 rounded-xl flex items-center justify-between">
-                          <span className="text-white/50 font-bold">Question #{mcqIdx + 1}</span>
-                          <span className="font-mono font-black text-[#E873C3] bg-[#E873C3]/10 px-2 py-0.5 rounded border border-[#E873C3]/30">
-                            Option {optId.toUpperCase()}
-                          </span>
-                        </div>
-                      ))}
+                    <div className="flex flex-col gap-3">
+                      {Object.entries(inspectSubmissionReg.submission_details_json.mcqAnswers as unknown as Record<string, string>).map(([qId, chosenOptId], mcqIdx) => {
+                        const mcqMatch = questions.find(q => q.id === qId) as MCQQuestion | undefined;
+                        const qTitle = mcqMatch?.title || `MCQ #${mcqIdx + 1}`;
+                        const qText = mcqMatch?.questionText || '';
+                        const chosenOpt = mcqMatch?.options?.find(o => o.id === chosenOptId || o.text === chosenOptId);
+                        const correctOpt = mcqMatch?.options?.find(o => o.isCorrect);
+
+                        return (
+                          <div key={qId} className="p-3 bg-black/40 border border-white/10 rounded-xl flex flex-col gap-2">
+                            <div className="flex items-center justify-between">
+                              <span className="font-bold text-white text-xs">{qTitle}</span>
+                              {event.status === 'ended' && correctOpt && (
+                                <span className={`text-[10px] font-bold px-2 py-0.5 rounded ${chosenOpt?.isCorrect
+                                  ? 'text-[#3DCB7F] bg-[#3DCB7F]/10 border border-[#3DCB7F]/30'
+                                  : 'text-red-400 bg-red-500/10 border border-red-500/30'
+                                  }`}>
+                                  {chosenOpt?.isCorrect ? 'Correct ✓' : 'Incorrect ✗'}
+                                </span>
+                              )}
+                            </div>
+
+                            {qText && <p className="text-xs text-white/60">{qText}</p>}
+
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-1">
+                              {(mcqMatch?.options || []).map((opt, optIdx) => {
+                                const isSelected = opt.id === chosenOptId || opt.text === chosenOptId;
+                                return (
+                                  <div
+                                    key={opt.id || optIdx}
+                                    className={`p-2 rounded-lg border text-xs flex items-center gap-2 ${isSelected
+                                      ? 'bg-[#E873C3]/15 border-[#E873C3] text-white font-bold'
+                                      : 'bg-white/[0.02] border-white/5 text-white/40'
+                                      }`}
+                                  >
+                                    <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold ${isSelected ? 'bg-[#E873C3] text-white' : 'bg-white/10 text-white/40'
+                                      }`}>
+                                      {String.fromCharCode(65 + optIdx)}
+                                    </span>
+                                    <span className="truncate">{opt.text}</span>
+                                    {isSelected && <span className="ml-auto text-[10px] text-[#E873C3] uppercase font-bold">Selected</span>}
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        );
+                      })}
                     </div>
                   </div>
                 ) : null}

@@ -6,7 +6,7 @@ import Editor, { Monaco } from '@monaco-editor/react';
 import {
   ChevronLeft, ChevronRight, CheckCircle2, Terminal,
   Play, RotateCcw, Copy, Check, Code, Zap,
-  ListChecks, ArrowLeft, Send,
+  ListChecks, ArrowLeft, Send, Clock,
 } from 'lucide-react';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -22,6 +22,8 @@ export interface MCQQuestionItem {
   codeSnippet?: string;
   options: MCQOption[];
   marks?: number;
+  points?: number;
+  timeLimitMin?: number;
 }
 
 export interface TestCase {
@@ -44,6 +46,7 @@ export interface CodingQuestionItem {
   points?: number;
   marks?: number;
   timeLimitSec?: number;
+  timeLimitMin?: number;
   memoryLimitMb?: number;
   sampleTestCases?: TestCase[];
   testCases?: TestCase[];
@@ -223,9 +226,9 @@ function McqPanel({
             <span className="px-3.5 py-1 rounded-full text-xs font-mono font-bold uppercase tracking-wider bg-purple-900/60 text-purple-300 border border-purple-500/40">
               Multiple Choice
             </span>
-            {question.marks && (
+            {(question.marks || question.points) && (
               <span className="px-3 py-1 rounded-full text-xs font-mono font-bold border border-amber-500/40 bg-amber-950/60 text-amber-300">
-                ⚡ {question.marks} pts
+                ⚡ {question.marks || question.points} pts
               </span>
             )}
           </div>
@@ -423,7 +426,7 @@ function CodingPanel({
           </div>
           {(question.points || question.marks) && (
             <span className="text-xs font-bold text-[#FFD700] bg-[#FFD700]/10 px-2.5 py-1 rounded-lg border border-[#FFD700]/30">
-              🌟 {question.points || question.marks} XP
+              🌟 {question.points || question.marks} pts
             </span>
           )}
         </div>
@@ -702,6 +705,8 @@ function CodingPanel({
 export interface EventContestArenaProps {
   eventTitle: string;
   eventId: string;
+  endsAt?: string | null;
+  durationMinutes?: number;
   questions: QuestionItem[];
   mcqAnswers: Record<string, string>;
   codeAnswers: Record<string, string>;
@@ -719,6 +724,9 @@ export interface EventContestArenaProps {
 
 export default function EventContestArena({
   eventTitle,
+  eventId,
+  endsAt,
+  durationMinutes,
   questions,
   mcqAnswers,
   codeAnswers,
@@ -734,6 +742,55 @@ export default function EventContestArena({
   onBack,
 }: EventContestArenaProps) {
   const activeQ = questions[selectedQuestionIdx];
+
+  const [contestTimer, setContestTimer] = useState<{ hours: string; minutes: string; seconds: string; isEnded: boolean }>({
+    hours: '00',
+    minutes: '00',
+    seconds: '00',
+    isEnded: false,
+  });
+
+  useEffect(() => {
+    let targetTime: number | null = null;
+
+    if (durationMinutes && durationMinutes > 0) {
+      const storageKey = `cosmodex_contest_${eventId}_deadline`;
+      const storedDeadline = typeof window !== 'undefined' ? localStorage.getItem(storageKey) : null;
+      if (storedDeadline) {
+        targetTime = Number(storedDeadline);
+      } else {
+        const newDeadline = Date.now() + durationMinutes * 60 * 1000;
+        targetTime = newDeadline;
+        if (typeof window !== 'undefined') {
+          localStorage.setItem(storageKey, String(newDeadline));
+        }
+      }
+    } else if (endsAt) {
+      targetTime = new Date(endsAt).getTime();
+    }
+
+    if (!targetTime) return;
+
+    function calc() {
+      const diff = targetTime! - Date.now();
+      if (diff <= 0) {
+        setContestTimer({ hours: '00', minutes: '00', seconds: '00', isEnded: true });
+        return;
+      }
+      const h = Math.floor(diff / 3600000);
+      const m = Math.floor((diff % 3600000) / 60000);
+      const s = Math.floor((diff % 60000) / 1000);
+      setContestTimer({
+        hours: String(h).padStart(2, '0'),
+        minutes: String(m).padStart(2, '0'),
+        seconds: String(s).padStart(2, '0'),
+        isEnded: false,
+      });
+    }
+    calc();
+    const timer = setInterval(calc, 1000);
+    return () => clearInterval(timer);
+  }, [durationMinutes, endsAt, eventId]);
 
   const solvedCount = questions.filter((q) =>
     q.type === 'mcq' ? !!mcqAnswers[q.id] : !!(codeAnswers[q.id]?.trim())
@@ -793,8 +850,17 @@ export default function EventContestArena({
           ))}
         </div>
 
-        {/* Right: solved count + finish button */}
+        {/* Right: contest countdown + solved count + finish button */}
         <div className="flex items-center gap-3 shrink-0 ml-2">
+          {(durationMinutes || endsAt) && (
+            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-purple-950/70 border border-purple-500/40 text-purple-200">
+              <Clock size={13} className="text-[#E873C3] animate-pulse" />
+              <span className="text-[10px] font-bold text-white/50 uppercase">Time Left:</span>
+              <span className="font-mono font-black text-xs text-white">
+                {contestTimer.hours}:{contestTimer.minutes}:{contestTimer.seconds}
+              </span>
+            </div>
+          )}
           <div className="flex items-center gap-1.5 text-xs font-mono font-bold text-white/40">
             <ListChecks size={13} className="text-[#3DCB7F]" />
             <span className="text-[#3DCB7F]">{solvedCount}</span>
@@ -803,7 +869,7 @@ export default function EventContestArena({
           </div>
           <button
             onClick={onSubmit}
-            disabled={submitting}
+            disabled={submitting || contestTimer.isEnded}
             className="px-5 py-2 rounded-xl text-xs font-black text-black bg-[#3DCB7F] hover:bg-[#32b870] shadow-lg shadow-[#3DCB7F]/20 transition-all flex items-center gap-1.5 disabled:opacity-50 cursor-pointer"
           >
             <Send size={13} />

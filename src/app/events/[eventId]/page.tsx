@@ -213,11 +213,7 @@ export default function EventDetailPage() {
       const data = await res.json();
       if (res.ok) {
         setShowRegModal(false);
-        if (data.email_sent === false) {
-          setRegMsg(`🎉 Registered successfully! (Note: Delivery of confirmation email to ${payload.details.email} failed or was delayed)`);
-        } else {
-          setRegMsg(`🎉 Registered successfully! Confirmation email sent to ${payload.details.email}`);
-        }
+        setRegMsg('🎉 Registered successfully! You are now enrolled.');
         fetchEvent();
       } else {
         setRegMsg(data.error ?? 'Failed to complete registration');
