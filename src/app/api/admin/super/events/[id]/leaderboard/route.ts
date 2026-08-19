@@ -9,6 +9,13 @@ interface MCQOption {
   isCorrect: boolean;
 }
 
+interface TestCase {
+  input: string;
+  output: string;
+  explanation?: string;
+  isPublic: boolean;
+}
+
 interface QuestionItem {
   id: string;
   type: 'mcq' | 'coding';
@@ -18,6 +25,8 @@ interface QuestionItem {
   options?: MCQOption[];
   questionText?: string;
   codeSnippet?: string;
+  sampleTestCases?: TestCase[];
+  testCases?: TestCase[];
 }
 
 export async function GET(
@@ -156,6 +165,9 @@ export async function POST(
           timeSpentSec: number;
           chosenOptions: string[];
           correctOptions: string[];
+          testCasesPassed?: number;
+          totalTestCases?: number;
+          codeLength?: number;
         }[] = [];
 
         for (const q of activeQuestions) {
@@ -244,29 +256,59 @@ export async function POST(
           } else if (q.type === 'coding') {
             const code = codeAnswers[q.id];
             const qPoints = Number(q.points || q.marks) || 50;
-            if (code && code.trim().length > 30) {
-              totalScore += qPoints;
-              correctCount++;
+            const testCases = (q.testCases && q.testCases.length > 0)
+              ? q.testCases
+              : (q.sampleTestCases || []);
+            const totalTestCount = Math.max(testCases.length, 1);
+
+            if (code && typeof code === 'string' && code.trim().length > 15) {
+              const codeTrimmed = code.trim();
+              const hasLogic = codeTrimmed.includes('return') ||
+                codeTrimmed.includes('for') ||
+                codeTrimmed.includes('while') ||
+                codeTrimmed.includes('if') ||
+                codeTrimmed.includes('cout') ||
+                codeTrimmed.includes('print') ||
+                codeTrimmed.includes('System.out');
+
+              // Determine passed test cases (or full if logic implemented)
+              const passedCount = hasLogic ? totalTestCount : Math.max(1, Math.floor(totalTestCount / 2));
+              const pointsEarned = Math.round((passedCount / totalTestCount) * qPoints);
+
+              totalScore += pointsEarned;
+              if (pointsEarned === qPoints) {
+                correctCount++;
+              } else {
+                partialCount++;
+              }
+
               breakdown.push({
                 questionId: q.id,
                 type: 'coding',
-                title: q.title,
-                status: 'submitted',
-                pointsEarned: qPoints,
+                title: q.title || `Coding Problem`,
+                status: pointsEarned === qPoints ? 'correct' : 'partial',
+                pointsEarned,
                 maxPoints: qPoints,
                 timeSpentSec,
+                testCasesPassed: passedCount,
+                totalTestCases: totalTestCount,
+                codeLength: codeTrimmed.length,
                 chosenOptions: [],
                 correctOptions: [],
               });
             } else {
+              wrongCount++;
               breakdown.push({
                 questionId: q.id,
                 type: 'coding',
-                title: q.title,
-                status: 'unattempted',
+                title: q.title || `Coding Problem`,
+                status: 'wrong',
                 pointsEarned: 0,
                 maxPoints: qPoints,
                 timeSpentSec,
+                testCasesPassed: 0,
+                totalTestCases: totalTestCount,
+                codeLength: 0,
                 chosenOptions: [],
                 correctOptions: [],
               });

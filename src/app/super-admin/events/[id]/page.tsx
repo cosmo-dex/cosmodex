@@ -14,11 +14,9 @@ import {
 type Tab = 'overview' | 'questions' | 'registrations' | 'leaderboard' | 'settings';
 type SubmissionMode = 'platform' | 'google_form' | 'external_link';
 
-// Hackathon specific structures
 interface TrackEntry { title: string; description: string; prize: string }
 interface JudgingCriteriaEntry { criteria: string; weight: string; description: string }
 
-// Contest / Assessment specific structures
 interface MCQOption { id: string; text: string; isCorrect: boolean }
 interface MCQQuestion {
   id: string;
@@ -152,6 +150,9 @@ interface LeaderboardQuestionBreakdown {
   timeSpentSec: number;
   chosenOptions: string[];
   correctOptions: string[];
+  testCasesPassed?: number;
+  totalTestCases?: number;
+  codeLength?: number;
 }
 
 interface LeaderboardEntry {
@@ -673,11 +674,10 @@ export default function EventControlPage() {
               {/* 4 Interactive Steps */}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
                 {/* Step 1: Open Registration */}
-                <div className={`p-4 rounded-xl border flex flex-col justify-between gap-3 transition-all ${
-                  event.registration_open && (event.status === 'published' || event.status === 'draft')
+                <div className={`p-4 rounded-xl border flex flex-col justify-between gap-3 transition-all ${event.registration_open && (event.status === 'published' || event.status === 'draft')
                     ? 'bg-[#3DCB7F]/10 border-[#3DCB7F]/40'
                     : 'bg-white/[0.01] border-white/[0.08]'
-                }`}>
+                  }`}>
                   <div>
                     <div className="flex items-center justify-between">
                       <span className="text-[11px] font-bold text-white/40 uppercase">Step 1</span>
@@ -691,22 +691,20 @@ export default function EventControlPage() {
                   <button
                     onClick={() => handleStartRegistrationNow()}
                     disabled={Boolean(event.registration_open)}
-                    className={`w-full py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                      event.registration_open
+                    className={`w-full py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${event.registration_open
                         ? 'bg-[#3DCB7F]/20 text-[#3DCB7F] border border-[#3DCB7F]/40'
                         : 'bg-white/10 hover:bg-white/20 text-white'
-                    }`}
+                      }`}
                   >
                     {event.registration_open ? '✓ Open (Active)' : '🔓 Open Registration'}
                   </button>
                 </div>
 
                 {/* Step 2: Close Registration */}
-                <div className={`p-4 rounded-xl border flex flex-col justify-between gap-3 transition-all ${
-                  !event.registration_open && (event.status === 'published' || event.status === 'ongoing')
+                <div className={`p-4 rounded-xl border flex flex-col justify-between gap-3 transition-all ${!event.registration_open && (event.status === 'published' || event.status === 'ongoing')
                     ? 'bg-amber-500/10 border-amber-500/40'
                     : 'bg-white/[0.01] border-white/[0.08]'
-                }`}>
+                  }`}>
                   <div>
                     <div className="flex items-center justify-between">
                       <span className="text-[11px] font-bold text-white/40 uppercase">Step 2</span>
@@ -717,22 +715,20 @@ export default function EventControlPage() {
                   <button
                     onClick={() => handleCloseRegistrationNow()}
                     disabled={!event.registration_open}
-                    className={`w-full py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                      !event.registration_open
+                    className={`w-full py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${!event.registration_open
                         ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40'
                         : 'bg-white/10 hover:bg-white/20 text-white'
-                    }`}
+                      }`}
                   >
                     {!event.registration_open ? '✓ Closed' : '🔒 Close Registration'}
                   </button>
                 </div>
 
                 {/* Step 3: Event Live (Ongoing) */}
-                <div className={`p-4 rounded-xl border flex flex-col justify-between gap-3 transition-all ${
-                  event.status === 'ongoing'
+                <div className={`p-4 rounded-xl border flex flex-col justify-between gap-3 transition-all ${event.status === 'ongoing'
                     ? 'bg-[#E873C3]/10 border-[#E873C3]/40 shadow-sm shadow-[#E873C3]/20'
                     : 'bg-white/[0.01] border-white/[0.08]'
-                }`}>
+                  }`}>
                   <div>
                     <div className="flex items-center justify-between">
                       <span className="text-[11px] font-bold text-white/40 uppercase">Step 3</span>
@@ -746,22 +742,20 @@ export default function EventControlPage() {
                   <button
                     onClick={() => handleEventStatusChange('ongoing')}
                     disabled={event.status === 'ongoing'}
-                    className={`w-full py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                      event.status === 'ongoing'
+                    className={`w-full py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${event.status === 'ongoing'
                         ? 'bg-[#E873C3]/20 text-[#E873C3] border border-[#E873C3]/40'
                         : 'bg-white/10 hover:bg-white/20 text-white'
-                    }`}
+                      }`}
                   >
                     {event.status === 'ongoing' ? '🔴 Live Now' : '⚡ Start Event (Go Live)'}
                   </button>
                 </div>
 
                 {/* Step 4: Event Ended */}
-                <div className={`p-4 rounded-xl border flex flex-col justify-between gap-3 transition-all ${
-                  event.status === 'ended'
+                <div className={`p-4 rounded-xl border flex flex-col justify-between gap-3 transition-all ${event.status === 'ended'
                     ? 'bg-blue-500/10 border-blue-500/40'
                     : 'bg-white/[0.01] border-white/[0.08]'
-                }`}>
+                  }`}>
                   <div>
                     <div className="flex items-center justify-between">
                       <span className="text-[11px] font-bold text-white/40 uppercase">Step 4</span>
@@ -772,11 +766,10 @@ export default function EventControlPage() {
                   <button
                     onClick={() => handleEventStatusChange('ended')}
                     disabled={event.status === 'ended'}
-                    className={`w-full py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                      event.status === 'ended'
+                    className={`w-full py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${event.status === 'ended'
                         ? 'bg-blue-500/20 text-blue-300 border border-blue-500/40'
                         : 'bg-white/10 hover:bg-white/20 text-white'
-                    }`}
+                      }`}
                   >
                     {event.status === 'ended' ? '✓ Ended' : '🏁 End Event'}
                   </button>
@@ -1801,11 +1794,10 @@ export default function EventControlPage() {
                   </p>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className={`px-2.5 py-1 rounded-full text-xs font-bold uppercase ${
-                    event.submission_config?.results_published
+                  <span className={`px-2.5 py-1 rounded-full text-xs font-bold uppercase ${event.submission_config?.results_published
                       ? 'text-[#3DCB7F] bg-[#3DCB7F]/10 border border-[#3DCB7F]/30'
                       : 'text-amber-400 bg-amber-400/10 border border-amber-400/30'
-                  }`}>
+                    }`}>
                     {event.submission_config?.results_published ? '📢 Status: Published' : '🔒 Status: Draft (Private)'}
                   </span>
                 </div>
@@ -1841,11 +1833,10 @@ export default function EventControlPage() {
 
             {/* Evaluation Status Message */}
             {evalMsg && (
-              <div className={`p-3.5 rounded-xl text-xs font-bold flex items-center gap-2 ${
-                evalSuccess
+              <div className={`p-3.5 rounded-xl text-xs font-bold flex items-center gap-2 ${evalSuccess
                   ? 'bg-[#3DCB7F]/10 border border-[#3DCB7F]/30 text-[#3DCB7F]'
                   : 'bg-red-500/10 border border-red-500/30 text-red-400'
-              }`}>
+                }`}>
                 {evalSuccess ? <CheckCircle2 size={16} /> : <AlertCircle size={16} />}
                 <span>{evalMsg}</span>
               </div>
@@ -1929,19 +1920,17 @@ export default function EventControlPage() {
                                     key={opt.id || optIdx}
                                     type="button"
                                     onClick={() => handleToggleOption(qIdx, optIdx)}
-                                    className={`p-3 rounded-xl border text-left flex items-center justify-between gap-3 transition-all cursor-pointer ${
-                                      isCorrect
+                                    className={`p-3 rounded-xl border text-left flex items-center justify-between gap-3 transition-all cursor-pointer ${isCorrect
                                         ? 'bg-[#3DCB7F]/10 border-[#3DCB7F]/60 text-white shadow-sm shadow-[#3DCB7F]/10'
                                         : 'bg-white/[0.01] border-white/[0.08] hover:bg-white/[0.03] text-white/70'
-                                    }`}
+                                      }`}
                                   >
                                     <div className="flex items-center gap-2.5 min-w-0 flex-1">
                                       <span
-                                        className={`w-6 h-6 rounded-full flex items-center justify-center font-bold text-xs shrink-0 ${
-                                          isCorrect
+                                        className={`w-6 h-6 rounded-full flex items-center justify-center font-bold text-xs shrink-0 ${isCorrect
                                             ? 'bg-[#3DCB7F] text-black font-black'
                                             : 'bg-white/10 text-white/60'
-                                        }`}
+                                          }`}
                                       >
                                         {letter}
                                       </span>
@@ -1950,11 +1939,10 @@ export default function EventControlPage() {
 
                                     {/* Right / Wrong Badge */}
                                     <span
-                                      className={`px-2.5 py-1 rounded-lg text-[10px] font-black uppercase shrink-0 flex items-center gap-1 ${
-                                        isCorrect
+                                      className={`px-2.5 py-1 rounded-lg text-[10px] font-black uppercase shrink-0 flex items-center gap-1 ${isCorrect
                                           ? 'bg-[#3DCB7F] text-black shadow-sm shadow-[#3DCB7F]/30'
                                           : 'bg-red-500/15 text-red-300 border border-red-500/30'
-                                      }`}
+                                        }`}
                                     >
                                       {isCorrect ? (
                                         <>
@@ -2065,11 +2053,10 @@ export default function EventControlPage() {
 
                   <button
                     onClick={handleTogglePublishResults}
-                    className={`px-4 py-2 rounded-xl text-xs font-black transition-all flex items-center gap-1.5 cursor-pointer shadow-md ${
-                      event.submission_config?.results_published
+                    className={`px-4 py-2 rounded-xl text-xs font-black transition-all flex items-center gap-1.5 cursor-pointer shadow-md ${event.submission_config?.results_published
                         ? 'text-red-400 bg-red-500/10 border border-red-500/30 hover:bg-red-500/20'
                         : 'text-black bg-[#3DCB7F] hover:bg-[#32b870]'
-                    }`}
+                      }`}
                   >
                     {event.submission_config?.results_published ? '🔒 Unpublish' : '📢 Step 3: Publish to Candidates'}
                   </button>
@@ -2100,9 +2087,8 @@ export default function EventControlPage() {
                     return (
                       <div
                         key={entry.id || entry.users.id}
-                        className={`flex items-center gap-4 px-5 py-3 hover:bg-white/[0.02] transition-colors ${
-                          rankNum === 1 ? 'bg-[#FFD700]/[0.03]' : rankNum === 2 ? 'bg-[#C0C0C0]/[0.02]' : rankNum === 3 ? 'bg-[#CD7F32]/[0.02]' : ''
-                        }`}
+                        className={`flex items-center gap-4 px-5 py-3 hover:bg-white/[0.02] transition-colors ${rankNum === 1 ? 'bg-[#FFD700]/[0.03]' : rankNum === 2 ? 'bg-[#C0C0C0]/[0.02]' : rankNum === 3 ? 'bg-[#CD7F32]/[0.02]' : ''
+                          }`}
                       >
                         <span
                           className="text-sm font-black w-7 text-center shrink-0"
@@ -2177,7 +2163,7 @@ export default function EventControlPage() {
                 {(selectedLbEntryBreakdown.metadata_json?.breakdown || []).map((item, idx) => (
                   <div
                     key={item.questionId || idx}
-                    className={`p-3 rounded-xl border flex items-center justify-between gap-2 ${item.status === 'correct'
+                    className={`p-3.5 rounded-xl border flex items-center justify-between gap-3 ${item.status === 'correct'
                         ? 'bg-[#3DCB7F]/10 border-[#3DCB7F]/30'
                         : item.status === 'partial'
                           ? 'bg-amber-500/10 border-amber-500/30'
@@ -2186,17 +2172,38 @@ export default function EventControlPage() {
                             : 'bg-white/[0.02] border-white/[0.06]'
                       }`}
                   >
-                    <div className="min-w-0">
-                      <span className="font-bold text-white block truncate">
-                        #{idx + 1}. {item.title}
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className={`px-1.5 py-0.5 rounded text-[9px] font-black uppercase ${item.type === 'coding'
+                            ? 'bg-[#4ECDC4]/20 text-[#4ECDC4] border border-[#4ECDC4]/30'
+                            : 'bg-[#E873C3]/20 text-[#E873C3] border border-[#E873C3]/30'
+                          }`}>
+                          {item.type === 'coding' ? '⌨️ Coding' : '📝 MCQ'}
+                        </span>
+                        <span className="font-bold text-white truncate text-xs">
+                          #{idx + 1}. {item.title}
+                        </span>
+                      </div>
+                      <div className="text-[11px] text-white/50 flex items-center gap-2 flex-wrap">
+                        {item.type === 'coding' && item.testCasesPassed !== undefined && (
+                          <span className="font-mono text-[#4ECDC4] font-bold">
+                            🧪 {item.testCasesPassed}/{item.totalTestCases} Tests Passed
+                          </span>
+                        )}
+                        <span>⏱️ {item.timeSpentSec || 0}s spent</span>
+                        <span className="uppercase font-bold text-[10px] tracking-wider">
+                          • {item.status}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="text-right shrink-0">
+                      <span className="font-mono font-black text-sm text-[#FFD700] block">
+                        +{item.pointsEarned} pts
                       </span>
-                      <span className="text-[10px] text-white/40">
-                        {item.timeSpentSec || 0}s spent • {item.status.toUpperCase()}
+                      <span className="text-[10px] text-white/40 block">
+                        Max: {item.maxPoints} pts
                       </span>
                     </div>
-                    <span className="font-mono font-bold text-white shrink-0">
-                      {item.pointsEarned} / {item.maxPoints} pts
-                    </span>
                   </div>
                 ))}
               </div>
