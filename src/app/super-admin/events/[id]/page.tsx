@@ -5,9 +5,10 @@ import { useParams, useRouter } from 'next/navigation';
 import AdminLayout from '@/components/admin/AdminLayout';
 import {
   CalendarDays, Users, Trophy, Settings, ArrowLeft,
-  Save, Zap, Search, Ban, RotateCcw, Plus, Trash2,
+  Save, Search, Ban, RotateCcw, Plus, Trash2,
   FileText, Download, X, Send, Copy,
-  Sparkles, Code2, ListChecks, Clock
+  Sparkles, Code2, ListChecks, Clock,
+  CheckCircle2, AlertCircle, RefreshCw, Check
 } from 'lucide-react';
 
 type Tab = 'overview' | 'questions' | 'registrations' | 'leaderboard' | 'settings';
@@ -141,11 +142,32 @@ interface Registration {
   };
 }
 
+interface LeaderboardQuestionBreakdown {
+  questionId: string;
+  type: string;
+  title: string;
+  status: 'correct' | 'partial' | 'wrong' | 'unattempted' | 'submitted';
+  pointsEarned: number;
+  maxPoints: number;
+  timeSpentSec: number;
+  chosenOptions: string[];
+  correctOptions: string[];
+}
+
 interface LeaderboardEntry {
   id: string;
   rank: number | null;
   score: number;
-  users: { id: string; username: string; avatar_url: string | null };
+  metadata_json?: {
+    totalTimeSeconds?: number;
+    totalQuestions?: number;
+    correctCount?: number;
+    wrongCount?: number;
+    partialCount?: number;
+    breakdown?: LeaderboardQuestionBreakdown[];
+    evaluatedAt?: string;
+  } | null;
+  users: { id: string; username: string; email?: string; avatar_url: string | null };
 }
 
 const STATUS_COLORS: Record<string, { text: string; bg: string; border: string }> = {
@@ -236,12 +258,16 @@ export default function EventControlPage() {
 
 
 
-  // Leaderboard
+  // Leaderboard & Evaluation
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
   const [lbLoading, setLbLoading] = useState(false);
   const [editScores, setEditScores] = useState<Record<string, number>>({});
   const [newEntry, setNewEntry] = useState({ userId: '', score: 0 });
   const [lbSaving, setLbSaving] = useState(false);
+  const [evaluatingLb, setEvaluatingLb] = useState(false);
+  const [evalMsg, setEvalMsg] = useState('');
+  const [evalSuccess, setEvalSuccess] = useState(false);
+  const [selectedLbEntryBreakdown, setSelectedLbEntryBreakdown] = useState<LeaderboardEntry | null>(null);
 
   // Settings Form
   const [form, setForm] = useState<Partial<EventData>>({});
@@ -365,27 +391,46 @@ export default function EventControlPage() {
   };
 
   const handleEventStatusChange = async (status: string) => {
-    await fetch(`/api/admin/super/events/${eventId}`, {
-      method: 'PATCH', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ status }),
-    });
-    fetchEvent();
+    // Instant optimistic UI update
+    setEvent(prev => prev ? { ...prev, status } : prev);
+    try {
+      await fetch(`/api/admin/super/events/${eventId}`, {
+        method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status }),
+      });
+    } catch {
+      fetchEvent();
+    }
   };
 
   const handleStartRegistrationNow = async () => {
-    await fetch(`/api/admin/super/events/${eventId}`, {
-      method: 'PATCH', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ registration_open: true, auto_publish: true }),
-    });
-    fetchEvent();
+    // Instant optimistic UI update
+    setEvent(prev => prev ? {
+      ...prev,
+      registration_open: true,
+      status: prev.status === 'draft' ? 'published' : prev.status,
+    } : prev);
+    try {
+      await fetch(`/api/admin/super/events/${eventId}`, {
+        method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ registration_open: true, auto_publish: true }),
+      });
+    } catch {
+      fetchEvent();
+    }
   };
 
   const handleCloseRegistrationNow = async () => {
-    await fetch(`/api/admin/super/events/${eventId}`, {
-      method: 'PATCH', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ registration_open: false }),
-    });
-    fetchEvent();
+    // Instant optimistic UI update
+    setEvent(prev => prev ? { ...prev, registration_open: false } : prev);
+    try {
+      await fetch(`/api/admin/super/events/${eventId}`, {
+        method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ registration_open: false }),
+      });
+    } catch {
+      fetchEvent();
+    }
   };
 
   const handleTogglePublishResults = async () => {
@@ -394,11 +439,16 @@ export default function EventControlPage() {
       ...(event?.submission_config || {}),
       results_published: !isCurrentlyPublished,
     };
-    await fetch(`/api/admin/super/events/${eventId}`, {
-      method: 'PATCH', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ submission_config: updatedSubConfig }),
-    });
-    fetchEvent();
+    // Instant optimistic UI update
+    setEvent(prev => prev ? { ...prev, submission_config: updatedSubConfig } : prev);
+    try {
+      await fetch(`/api/admin/super/events/${eventId}`, {
+        method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ submission_config: updatedSubConfig }),
+      });
+    } catch {
+      fetchEvent();
+    }
   };
 
   const handleSaveQuestionsOrProblemStatement = async () => {
@@ -438,20 +488,66 @@ export default function EventControlPage() {
     }
   };
 
+  const handleEvaluateLeaderboard = async (questionsToUse?: (MCQQuestion | CodingQuestion)[]) => {
+    const listToEvaluate = questionsToUse || questions;
+    setEvaluatingLb(true);
+    setEvalMsg('');
+    try {
+      const res = await fetch(`/api/admin/super/events/${eventId}/leaderboard`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'evaluate',
+          questions: listToEvaluate,
+        }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setEvalSuccess(true);
+        setEvalMsg(data.message || '✓ Leaderboard and point distributions calculated successfully!');
+        if (data.leaderboard) {
+          setLeaderboard(data.leaderboard);
+          const scores: Record<string, number> = {};
+          data.leaderboard.forEach((e: LeaderboardEntry) => { scores[e.users.id] = e.score; });
+          setEditScores(scores);
+        } else {
+          fetchLeaderboard();
+        }
+      } else {
+        setEvalSuccess(false);
+        setEvalMsg(data.error || 'Failed to evaluate submissions');
+      }
+    } catch {
+      setEvalSuccess(false);
+      setEvalMsg('Network error while evaluating submissions');
+    } finally {
+      setEvaluatingLb(false);
+    }
+  };
+
+  const handleToggleOption = (qIdx: number, optIdx: number) => {
+    // Instant 0ms local state update
+    const list = [...questions];
+    const curMcq = { ...(list[qIdx] as MCQQuestion) };
+    curMcq.options = (curMcq.options || []).map((o, idx) =>
+      idx === optIdx ? { ...o, isCorrect: !o.isCorrect } : o
+    );
+    list[qIdx] = curMcq;
+    setQuestions(list);
+  };
+
   const handleLbSave = async () => {
     setLbSaving(true);
     const entries = leaderboard.map(e => ({ userId: e.users.id, score: editScores[e.users.id] ?? e.score }));
     if (newEntry.userId) entries.push({ userId: newEntry.userId, score: newEntry.score });
     await fetch(`/api/admin/super/events/${eventId}/leaderboard`, {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ entries }),
+      body: JSON.stringify({ action: 'manual_update', entries }),
     });
     setNewEntry({ userId: '', score: 0 });
     setLbSaving(false);
     fetchLeaderboard();
   };
-
-
 
   const handleSettingsSave = async () => {
     setSettingsSaving(true);
@@ -555,58 +651,136 @@ export default function EventControlPage() {
         {activeTab === 'overview' && (
           <div className="flex flex-col gap-4">
 
-            {/* Unified Event Lifecycle Controls */}
-            <div className="bg-white/[0.02] border border-white/[0.08] rounded-2xl p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-lg">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: sc.border, color: sc.text }}>
-                  <Zap size={18} />
-                </div>
+            {/* Step-by-Step Event Lifecycle Pipeline */}
+            <div className="bg-white/[0.02] border border-white/[0.08] rounded-2xl p-5 flex flex-col gap-4 shadow-lg">
+              <div className="flex items-center justify-between flex-wrap gap-2 border-b border-white/[0.06] pb-3">
                 <div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs font-bold text-white/50 uppercase tracking-wider">Event Status:</span>
-                    <span className="px-2.5 py-0.5 rounded-full text-xs font-extrabold uppercase" style={{ color: sc.text, background: sc.bg, border: `1px solid ${sc.border}` }}>
-                      {event.status === 'ongoing' ? '🔴 LIVE NOW' : event.status}
-                    </span>
-                  </div>
-                  <p className="text-xs text-white/40 mt-0.5">
-                    {event.status === 'ongoing'
-                      ? 'Competition is actively running. Participants can access the arena and submit solutions.'
-                      : event.status === 'published'
-                        ? 'Event is published and visible to participants on the events catalog.'
-                        : event.status === 'ended'
-                          ? 'Event has concluded. Submissions are closed.'
-                          : 'Event is in draft mode.'}
+                  <span className="text-xs font-bold text-[#E873C3] uppercase tracking-wider">
+                    Event Lifecycle Pipeline
+                  </span>
+                  <p className="text-xs text-white/50 mt-0.5">
+                    Follow the sequential stages from registration to event completion.
                   </p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-white/40">Current Status:</span>
+                  <span className="px-2.5 py-0.5 rounded-full text-xs font-bold uppercase" style={{ color: sc.text, background: sc.bg, border: `1px solid ${sc.border}` }}>
+                    {event.status === 'ongoing' ? '🔴 LIVE NOW' : event.status}
+                  </span>
                 </div>
               </div>
 
-              <div className="flex items-center gap-3 shrink-0 flex-wrap">
-                {/* Status Selector */}
-                <div className="flex items-center gap-1.5">
-                  <span className="text-xs font-bold text-white/40">Status:</span>
-                  <select
-                    value={event.status}
-                    onChange={(e) => handleEventStatusChange(e.target.value)}
-                    className="bg-[#0e0a1c] text-white border border-white/[0.15] rounded-xl px-3 py-1.5 text-xs font-bold focus:outline-none focus:border-[#E873C3] cursor-pointer"
+              {/* 4 Interactive Steps */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                {/* Step 1: Open Registration */}
+                <div className={`p-4 rounded-xl border flex flex-col justify-between gap-3 transition-all ${
+                  event.registration_open && (event.status === 'published' || event.status === 'draft')
+                    ? 'bg-[#3DCB7F]/10 border-[#3DCB7F]/40'
+                    : 'bg-white/[0.01] border-white/[0.08]'
+                }`}>
+                  <div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-[11px] font-bold text-white/40 uppercase">Step 1</span>
+                      {event.registration_open && (
+                        <span className="w-2 h-2 rounded-full bg-[#3DCB7F] animate-ping" />
+                      )}
+                    </div>
+                    <h4 className="text-sm font-bold text-white mt-1">Registration Open</h4>
+                    <p className="text-[11px] text-white/40 mt-0.5">Candidates can register</p>
+                  </div>
+                  <button
+                    onClick={() => handleStartRegistrationNow()}
+                    disabled={Boolean(event.registration_open)}
+                    className={`w-full py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                      event.registration_open
+                        ? 'bg-[#3DCB7F]/20 text-[#3DCB7F] border border-[#3DCB7F]/40'
+                        : 'bg-white/10 hover:bg-white/20 text-white'
+                    }`}
                   >
-                    <option value="draft">Draft</option>
-                    <option value="published">Published</option>
-                    <option value="ongoing">Ongoing (LIVE)</option>
-                    <option value="ended">Ended</option>
-                    <option value="archived">Archived</option>
-                  </select>
+                    {event.registration_open ? '✓ Open (Active)' : '🔓 Open Registration'}
+                  </button>
                 </div>
 
-                {/* Single Registration Toggle Button */}
-                <button
-                  onClick={() => event.registration_open ? handleCloseRegistrationNow() : handleStartRegistrationNow()}
-                  className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${event.registration_open
-                    ? 'text-red-400 bg-red-500/10 border border-red-500/30 hover:bg-red-500/20'
-                    : 'text-[#3DCB7F] bg-[#3DCB7F]/10 border border-[#3DCB7F]/30 hover:bg-[#3DCB7F]/20'
+                {/* Step 2: Close Registration */}
+                <div className={`p-4 rounded-xl border flex flex-col justify-between gap-3 transition-all ${
+                  !event.registration_open && (event.status === 'published' || event.status === 'ongoing')
+                    ? 'bg-amber-500/10 border-amber-500/40'
+                    : 'bg-white/[0.01] border-white/[0.08]'
+                }`}>
+                  <div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-[11px] font-bold text-white/40 uppercase">Step 2</span>
+                    </div>
+                    <h4 className="text-sm font-bold text-white mt-1">Registration Closed</h4>
+                    <p className="text-[11px] text-white/40 mt-0.5">Locks candidate entries</p>
+                  </div>
+                  <button
+                    onClick={() => handleCloseRegistrationNow()}
+                    disabled={!event.registration_open}
+                    className={`w-full py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                      !event.registration_open
+                        ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40'
+                        : 'bg-white/10 hover:bg-white/20 text-white'
                     }`}
-                >
-                  {event.registration_open ? '🔒 Close Registration' : '🔓 Open Registration'}
-                </button>
+                  >
+                    {!event.registration_open ? '✓ Closed' : '🔒 Close Registration'}
+                  </button>
+                </div>
+
+                {/* Step 3: Event Live (Ongoing) */}
+                <div className={`p-4 rounded-xl border flex flex-col justify-between gap-3 transition-all ${
+                  event.status === 'ongoing'
+                    ? 'bg-[#E873C3]/10 border-[#E873C3]/40 shadow-sm shadow-[#E873C3]/20'
+                    : 'bg-white/[0.01] border-white/[0.08]'
+                }`}>
+                  <div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-[11px] font-bold text-white/40 uppercase">Step 3</span>
+                      {event.status === 'ongoing' && (
+                        <span className="w-2 h-2 rounded-full bg-[#E873C3] animate-ping" />
+                      )}
+                    </div>
+                    <h4 className="text-sm font-bold text-white mt-1">Event Live (Ongoing)</h4>
+                    <p className="text-[11px] text-white/40 mt-0.5">Contest arena active</p>
+                  </div>
+                  <button
+                    onClick={() => handleEventStatusChange('ongoing')}
+                    disabled={event.status === 'ongoing'}
+                    className={`w-full py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                      event.status === 'ongoing'
+                        ? 'bg-[#E873C3]/20 text-[#E873C3] border border-[#E873C3]/40'
+                        : 'bg-white/10 hover:bg-white/20 text-white'
+                    }`}
+                  >
+                    {event.status === 'ongoing' ? '🔴 Live Now' : '⚡ Start Event (Go Live)'}
+                  </button>
+                </div>
+
+                {/* Step 4: Event Ended */}
+                <div className={`p-4 rounded-xl border flex flex-col justify-between gap-3 transition-all ${
+                  event.status === 'ended'
+                    ? 'bg-blue-500/10 border-blue-500/40'
+                    : 'bg-white/[0.01] border-white/[0.08]'
+                }`}>
+                  <div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-[11px] font-bold text-white/40 uppercase">Step 4</span>
+                    </div>
+                    <h4 className="text-sm font-bold text-white mt-1">Event Ended</h4>
+                    <p className="text-[11px] text-white/40 mt-0.5">Submissions concluded</p>
+                  </div>
+                  <button
+                    onClick={() => handleEventStatusChange('ended')}
+                    disabled={event.status === 'ended'}
+                    className={`w-full py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                      event.status === 'ended'
+                        ? 'bg-blue-500/20 text-blue-300 border border-blue-500/40'
+                        : 'bg-white/10 hover:bg-white/20 text-white'
+                    }`}
+                  >
+                    {event.status === 'ended' ? '✓ Ended' : '🏁 End Event'}
+                  </button>
+                </div>
               </div>
             </div>
 
@@ -768,8 +942,8 @@ export default function EventControlPage() {
                             type="button"
                             onClick={() => setContestDurationMinutes(mins)}
                             className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all ${contestDurationMinutes === mins
-                                ? 'bg-purple-600 text-white shadow-md shadow-purple-600/30'
-                                : 'bg-white/5 text-white/40 hover:bg-white/10'
+                              ? 'bg-purple-600 text-white shadow-md shadow-purple-600/30'
+                              : 'bg-white/5 text-white/40 hover:bg-white/10'
                               }`}
                           >
                             {mins}m
@@ -1613,76 +1787,428 @@ export default function EventControlPage() {
           </div>
         )}
 
-        {/* TAB: LEADERBOARD */}
         {activeTab === 'leaderboard' && (
-          <div className="flex flex-col gap-4">
-            {/* Publish Results & Leaderboard Banner */}
-            <div className="bg-gradient-to-r from-[#170e30] to-[#0d071d] border border-white/10 rounded-2xl p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-xl">
-              <div>
+          <div className="flex flex-col gap-6">
+            {/* Step Progress Tracker */}
+            <div className="bg-white/[0.02] border border-white/[0.08] rounded-2xl p-5 flex flex-col gap-3 shadow-lg">
+              <div className="flex items-center justify-between flex-wrap gap-2 border-b border-white/[0.06] pb-3">
+                <div>
+                  <h2 className="text-sm font-black text-white uppercase tracking-wider flex items-center gap-2">
+                    <Trophy size={16} className="text-[#FFD700]" /> Leaderboard 3-Step Process
+                  </h2>
+                  <p className="text-xs text-white/50 mt-0.5">
+                    Follow the 3 steps in order: Set answer key $\rightarrow$ Generate leaderboard $\rightarrow$ Publish results to participants.
+                  </p>
+                </div>
                 <div className="flex items-center gap-2">
-                  <h3 className="text-sm font-black text-white uppercase tracking-wider flex items-center gap-1.5">
-                    <Trophy size={16} className="text-[#FFD700]" /> Official Leaderboard Publishing
-                  </h3>
-                  <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase ${event.submission_config?.results_published
-                    ? 'text-[#3DCB7F] bg-[#3DCB7F]/10 border border-[#3DCB7F]/30'
-                    : 'text-amber-400 bg-amber-400/10 border border-amber-400/30'
-                    }`}>
-                    {event.submission_config?.results_published ? '📢 PUBLISHED TO CANDIDATES' : '🔒 UNPUBLISHED (HIDDEN)'}
+                  <span className={`px-2.5 py-1 rounded-full text-xs font-bold uppercase ${
+                    event.submission_config?.results_published
+                      ? 'text-[#3DCB7F] bg-[#3DCB7F]/10 border border-[#3DCB7F]/30'
+                      : 'text-amber-400 bg-amber-400/10 border border-amber-400/30'
+                  }`}>
+                    {event.submission_config?.results_published ? '📢 Status: Published' : '🔒 Status: Draft (Private)'}
                   </span>
                 </div>
-                <p className="text-xs text-white/50 mt-1">
-                  {event.submission_config?.results_published
-                    ? 'Official rankings are currently visible to all participants on the public event page.'
-                    : 'Leaderboard results are hidden from participants. Click publish to make official results public.'}
-                </p>
+              </div>
+
+              {/* Step indicator badges */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3 pt-1">
+                <div className="p-3 rounded-xl bg-white/[0.02] border border-white/[0.06] flex items-center gap-3">
+                  <span className="w-6 h-6 rounded-full bg-[#E873C3]/20 text-[#E873C3] font-bold text-xs flex items-center justify-center shrink-0">1</span>
+                  <div className="min-w-0">
+                    <span className="text-xs font-bold text-white block">Step 1: Set Answer Key</span>
+                    <span className="text-[10px] text-white/40">Mark right &amp; wrong options</span>
+                  </div>
+                </div>
+
+                <div className="p-3 rounded-xl bg-white/[0.02] border border-white/[0.06] flex items-center gap-3">
+                  <span className="w-6 h-6 rounded-full bg-[#4ECDC4]/20 text-[#4ECDC4] font-bold text-xs flex items-center justify-center shrink-0">2</span>
+                  <div className="min-w-0">
+                    <span className="text-xs font-bold text-white block">Step 2: Generate Scores</span>
+                    <span className="text-[10px] text-white/40">Auto-match &amp; calculate time</span>
+                  </div>
+                </div>
+
+                <div className="p-3 rounded-xl bg-white/[0.02] border border-white/[0.06] flex items-center gap-3">
+                  <span className="w-6 h-6 rounded-full bg-[#3DCB7F]/20 text-[#3DCB7F] font-bold text-xs flex items-center justify-center shrink-0">3</span>
+                  <div className="min-w-0">
+                    <span className="text-xs font-bold text-white block">Step 3: Publish Rankings</span>
+                    <span className="text-[10px] text-white/40">Make public on event page</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Evaluation Status Message */}
+            {evalMsg && (
+              <div className={`p-3.5 rounded-xl text-xs font-bold flex items-center gap-2 ${
+                evalSuccess
+                  ? 'bg-[#3DCB7F]/10 border border-[#3DCB7F]/30 text-[#3DCB7F]'
+                  : 'bg-red-500/10 border border-red-500/30 text-red-400'
+              }`}>
+                {evalSuccess ? <CheckCircle2 size={16} /> : <AlertCircle size={16} />}
+                <span>{evalMsg}</span>
+              </div>
+            )}
+
+            {/* STEP 1: ANSWER KEY QUESTIONS */}
+            <div className="bg-white/[0.02] border border-white/[0.06] rounded-2xl p-5 flex flex-col gap-4">
+              <div className="flex items-center justify-between flex-wrap gap-2 border-b border-white/[0.06] pb-3">
+                <div className="flex items-center gap-2.5">
+                  <span className="w-6 h-6 rounded-full bg-[#E873C3] text-black font-black text-xs flex items-center justify-center">1</span>
+                  <div>
+                    <h3 className="text-sm font-bold text-white">
+                      Step 1: Mark Answer Key Options
+                    </h3>
+                    <p className="text-[11px] text-white/40 mt-0.5">
+                      Click each option to mark it as <strong>Right (✓)</strong> or <strong>Wrong (❌)</strong>.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {questions.length === 0 ? (
+                <p className="text-xs text-white/30 italic py-4">No questions configured. Add questions in the Question Bank tab first.</p>
+              ) : (
+                <div className="flex flex-col gap-4">
+                  {questions.map((q, qIdx) => {
+                    if (q.type === 'mcq') {
+                      const mcq = q as MCQQuestion;
+                      return (
+                        <div key={mcq.id || qIdx} className="bg-white/[0.02] border border-white/[0.08] rounded-xl p-4 flex flex-col gap-3">
+                          <div className="flex items-center justify-between flex-wrap gap-2 border-b border-white/[0.06] pb-2">
+                            <div className="flex items-center gap-2">
+                              <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-[#E873C3]/20 text-[#E873C3] border border-[#E873C3]/30">
+                                Question {qIdx + 1}
+                              </span>
+                              <span className="font-bold text-sm text-white">{mcq.title || `MCQ ${qIdx + 1}`}</span>
+                            </div>
+                            <div className="flex items-center gap-1.5">
+                              <span className="text-xs text-white/40">Marks:</span>
+                              <input
+                                type="number"
+                                min={1}
+                                value={mcq.marks ?? 10}
+                                onChange={(e) => {
+                                  const list = [...questions];
+                                  (list[qIdx] as MCQQuestion).marks = Number(e.target.value);
+                                  setQuestions(list);
+                                }}
+                                className="w-14 px-2 py-1 bg-[#05020a] border border-white/20 rounded-lg text-xs font-bold text-center text-[#FFD700] focus:outline-none"
+                              />
+                              <span className="text-xs text-white/40">pts</span>
+                            </div>
+                          </div>
+
+                          {/* Full Question Text */}
+                          {mcq.questionText && (
+                            <p className="text-xs text-white/80 leading-relaxed bg-white/[0.01] p-2.5 rounded-lg border border-white/[0.04]">
+                              {mcq.questionText}
+                            </p>
+                          )}
+
+                          {/* Code Snippet if any */}
+                          {mcq.codeSnippet && (
+                            <pre className="text-xs font-mono text-[#4ECDC4] bg-[#05020a] p-3 rounded-lg border border-white/10 overflow-x-auto">
+                              {mcq.codeSnippet}
+                            </pre>
+                          )}
+
+                          {/* Options List with Full Text and Right/Wrong Toggle */}
+                          <div className="flex flex-col gap-2 pt-1">
+                            <span className="text-[10px] font-bold text-white/40 uppercase tracking-wider">
+                              Options (Click to set Right ✓ or Wrong ❌):
+                            </span>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                              {(mcq.options || []).map((opt, optIdx) => {
+                                const letter = String.fromCharCode(65 + optIdx);
+                                const isCorrect = Boolean(opt.isCorrect);
+
+                                return (
+                                  <button
+                                    key={opt.id || optIdx}
+                                    type="button"
+                                    onClick={() => handleToggleOption(qIdx, optIdx)}
+                                    className={`p-3 rounded-xl border text-left flex items-center justify-between gap-3 transition-all cursor-pointer ${
+                                      isCorrect
+                                        ? 'bg-[#3DCB7F]/10 border-[#3DCB7F]/60 text-white shadow-sm shadow-[#3DCB7F]/10'
+                                        : 'bg-white/[0.01] border-white/[0.08] hover:bg-white/[0.03] text-white/70'
+                                    }`}
+                                  >
+                                    <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                                      <span
+                                        className={`w-6 h-6 rounded-full flex items-center justify-center font-bold text-xs shrink-0 ${
+                                          isCorrect
+                                            ? 'bg-[#3DCB7F] text-black font-black'
+                                            : 'bg-white/10 text-white/60'
+                                        }`}
+                                      >
+                                        {letter}
+                                      </span>
+                                      <span className="text-xs font-medium break-words">{opt.text}</span>
+                                    </div>
+
+                                    {/* Right / Wrong Badge */}
+                                    <span
+                                      className={`px-2.5 py-1 rounded-lg text-[10px] font-black uppercase shrink-0 flex items-center gap-1 ${
+                                        isCorrect
+                                          ? 'bg-[#3DCB7F] text-black shadow-sm shadow-[#3DCB7F]/30'
+                                          : 'bg-red-500/15 text-red-300 border border-red-500/30'
+                                      }`}
+                                    >
+                                      {isCorrect ? (
+                                        <>
+                                          <Check size={11} /> Right
+                                        </>
+                                      ) : (
+                                        <>
+                                          <X size={11} /> Wrong
+                                        </>
+                                      )}
+                                    </span>
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    }
+
+                    // Coding Problem
+                    const codingQ = q as CodingQuestion;
+                    return (
+                      <div key={codingQ.id || qIdx} className="bg-white/[0.02] border border-[#4ECDC4]/20 rounded-xl p-4 flex items-center justify-between gap-3 flex-wrap">
+                        <div className="flex items-center gap-2.5">
+                          <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-[#4ECDC4]/20 text-[#4ECDC4] border border-[#4ECDC4]/30">
+                            Coding #{qIdx + 1}
+                          </span>
+                          <span className="font-bold text-sm text-white">{codingQ.title || `Problem ${qIdx + 1}`}</span>
+                          <span className="text-[10px] font-bold text-white/40 uppercase bg-white/5 px-2 py-0.5 rounded">
+                            {codingQ.difficulty || 'Medium'}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-xs text-white/40">Points:</span>
+                          <input
+                            type="number"
+                            min={1}
+                            value={codingQ.points ?? 50}
+                            onChange={(e) => {
+                              const list = [...questions];
+                              (list[qIdx] as CodingQuestion).points = Number(e.target.value);
+                              setQuestions(list);
+                            }}
+                            className="w-16 px-2 py-1 bg-[#05020a] border border-white/20 rounded-lg text-xs font-bold text-center text-[#4ECDC4] focus:outline-none"
+                          />
+                          <span className="text-xs text-white/40">pts</span>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
+            {/* STEP 2: GENERATE LEADERBOARD CARD */}
+            <div className="bg-gradient-to-r from-purple-950/40 to-indigo-950/40 border border-purple-500/30 rounded-2xl p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-xl">
+              <div className="flex items-center gap-3">
+                <span className="w-8 h-8 rounded-full bg-[#4ECDC4] text-black font-black text-sm flex items-center justify-center shrink-0">
+                  2
+                </span>
+                <div>
+                  <h3 className="text-sm font-bold text-white">
+                    Step 2: Match Submissions &amp; Generate Leaderboard
+                  </h3>
+                  <p className="text-xs text-white/50 mt-0.5">
+                    Calculates candidate points based on the answer key above and ranks by score + fastest question completion time.
+                  </p>
+                </div>
               </div>
 
               <button
-                onClick={handleTogglePublishResults}
-                className={`px-5 py-2.5 rounded-xl text-xs font-black transition-all flex items-center gap-2 shrink-0 cursor-pointer ${event.submission_config?.results_published
-                  ? 'text-red-400 bg-red-500/10 border border-red-500/30 hover:bg-red-500/20'
-                  : 'text-black bg-[#3DCB7F] hover:bg-[#32b870] shadow-lg shadow-[#3DCB7F]/20'
-                  }`}
+                onClick={() => handleEvaluateLeaderboard()}
+                disabled={evaluatingLb || questions.length === 0}
+                className="px-6 py-2.5 rounded-xl text-xs font-black text-white flex items-center gap-2 shrink-0 transition-all hover:scale-105 disabled:opacity-50 cursor-pointer shadow-lg shadow-[#E873C3]/30"
+                style={{ background: 'linear-gradient(135deg, #E873C3, #8D37D6)' }}
               >
-                {event.submission_config?.results_published ? '🔒 Unpublish Results' : '📢 Publish Results to Leaderboard'}
+                <RefreshCw size={13} className={evaluatingLb ? 'animate-spin' : ''} />
+                {evaluatingLb ? 'Matching & Calculating...' : '⚡ Step 2: Generate Leaderboard'}
               </button>
             </div>
 
-            <div className="flex items-center justify-between pt-2">
-              <p className="text-sm text-white/40">Edit scores directly and click Save Leaderboard.</p>
-              <button onClick={handleLbSave} disabled={lbSaving}
-                className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold text-white disabled:opacity-50 transition-all"
-                style={{ background: 'linear-gradient(135deg, #E873C3, #8D37D6)' }}>
-                <Save size={14} />{lbSaving ? 'Saving...' : 'Save Leaderboard'}
-              </button>
-            </div>
+            {/* STEP 3: REVIEW & PUBLISH LEADERBOARD */}
+            <div className="bg-white/[0.02] border border-white/[0.06] rounded-2xl overflow-hidden shadow-lg flex flex-col">
+              <div className="p-5 border-b border-white/[0.06] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div className="flex items-center gap-3">
+                  <span className="w-7 h-7 rounded-full bg-[#3DCB7F] text-black font-black text-xs flex items-center justify-center shrink-0">
+                    3
+                  </span>
+                  <div>
+                    <h3 className="text-sm font-bold text-white">
+                      Step 3: Review &amp; Publish Leaderboard ({leaderboard.length} Candidates)
+                    </h3>
+                    <p className="text-[11px] text-white/40">
+                      Check the generated rankings below and publish official results to all participants.
+                    </p>
+                  </div>
+                </div>
 
-            <div className="bg-white/[0.02] border border-white/[0.06] rounded-2xl overflow-hidden">
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={handleLbSave}
+                    disabled={lbSaving || leaderboard.length === 0}
+                    className="px-3.5 py-2 rounded-xl text-xs font-bold text-white bg-white/10 hover:bg-white/15 border border-white/10 transition-all cursor-pointer flex items-center gap-1.5 disabled:opacity-40"
+                  >
+                    <Save size={13} /> Save Manual Edits
+                  </button>
+
+                  <button
+                    onClick={handleTogglePublishResults}
+                    className={`px-4 py-2 rounded-xl text-xs font-black transition-all flex items-center gap-1.5 cursor-pointer shadow-md ${
+                      event.submission_config?.results_published
+                        ? 'text-red-400 bg-red-500/10 border border-red-500/30 hover:bg-red-500/20'
+                        : 'text-black bg-[#3DCB7F] hover:bg-[#32b870]'
+                    }`}
+                  >
+                    {event.submission_config?.results_published ? '🔒 Unpublish' : '📢 Step 3: Publish to Candidates'}
+                  </button>
+                </div>
+              </div>
+
               {lbLoading ? (
-                <div className="p-4 flex flex-col gap-2">{Array.from({ length: 5 }).map((_, i) => <div key={i} className="h-12 bg-white/[0.03] rounded-xl animate-pulse" />)}</div>
-              ) : leaderboard.length === 0 ? (
-                <div className="py-16 text-center text-white/30 text-sm">No leaderboard entries yet.</div>
-              ) : (
-                <div className="divide-y divide-white/[0.04]">
-                  {leaderboard.map((entry, i) => (
-                    <div key={entry.id} className="flex items-center gap-4 px-5 py-3.5">
-                      <span className="text-lg font-black w-8 text-center" style={{ color: i === 0 ? '#FFD700' : i === 1 ? '#C0C0C0' : i === 2 ? '#CD7F32' : '#6b7280' }}>
-                        #{entry.rank ?? i + 1}
-                      </span>
-                      <div className="w-8 h-8 rounded-full bg-[#E873C3]/20 border border-[#E873C3]/30 flex items-center justify-center text-xs font-black text-[#E873C3]">
-                        {entry.users.username[0].toUpperCase()}
-                      </div>
-                      <span className="flex-1 text-sm font-bold text-white">{entry.users.username}</span>
-                      <div className="flex items-center gap-2">
-                        <input type="number" value={editScores[entry.users.id] ?? entry.score}
-                          onChange={e => setEditScores(s => ({ ...s, [entry.users.id]: Number(e.target.value) }))}
-                          className="w-24 px-3 py-1.5 bg-[#0e0a1c] border border-white/[0.08] rounded-lg text-sm text-white focus:outline-none focus:border-[#E873C3]/50 text-center" />
-                        <span className="text-xs text-white/30">pts</span>
-                      </div>
-                    </div>
+                <div className="p-4 flex flex-col gap-2">
+                  {Array.from({ length: 4 }).map((_, i) => (
+                    <div key={i} className="h-12 bg-white/[0.03] rounded-xl animate-pulse" />
                   ))}
                 </div>
+              ) : leaderboard.length === 0 ? (
+                <div className="py-12 text-center text-white/30 text-xs flex flex-col items-center gap-2">
+                  <Trophy size={32} className="text-white/10" />
+                  <span>No leaderboard entries generated yet. Complete Step 1 and click <strong>&quot;⚡ Step 2: Generate Leaderboard&quot;</strong> above.</span>
+                </div>
+              ) : (
+                <div className="divide-y divide-white/[0.04]">
+                  {leaderboard.map((entry, i) => {
+                    const rankNum = entry.rank ?? i + 1;
+                    const meta = entry.metadata_json || {};
+                    const totalSec = meta.totalTimeSeconds ?? 0;
+                    const m = Math.floor(totalSec / 60);
+                    const s = totalSec % 60;
+                    const timeStr = m > 0 ? `${m}m ${s}s` : `${s}s`;
+
+                    return (
+                      <div
+                        key={entry.id || entry.users.id}
+                        className={`flex items-center gap-4 px-5 py-3 hover:bg-white/[0.02] transition-colors ${
+                          rankNum === 1 ? 'bg-[#FFD700]/[0.03]' : rankNum === 2 ? 'bg-[#C0C0C0]/[0.02]' : rankNum === 3 ? 'bg-[#CD7F32]/[0.02]' : ''
+                        }`}
+                      >
+                        <span
+                          className="text-sm font-black w-7 text-center shrink-0"
+                          style={{
+                            color: rankNum === 1 ? '#FFD700' : rankNum === 2 ? '#C0C0C0' : rankNum === 3 ? '#CD7F32' : '#6b7280',
+                          }}
+                        >
+                          #{rankNum}
+                        </span>
+
+                        <div className="w-8 h-8 rounded-full bg-[#E873C3]/20 border border-[#E873C3]/30 flex items-center justify-center text-xs font-black text-[#E873C3] shrink-0">
+                          {entry.users.username[0].toUpperCase()}
+                        </div>
+
+                        <div className="flex-1 min-w-0">
+                          <span className="text-xs font-bold text-white block truncate">{entry.users.username}</span>
+                          <span className="text-[10px] text-white/40 font-mono flex items-center gap-1">
+                            ⏱️ {timeStr}
+                          </span>
+                        </div>
+
+                        {meta.breakdown && meta.breakdown.length > 0 && (
+                          <button
+                            onClick={() => setSelectedLbEntryBreakdown(entry)}
+                            className="px-2.5 py-1 rounded-lg text-[11px] font-bold text-purple-300 bg-purple-950/60 border border-purple-500/30 hover:bg-purple-900/60 transition-all cursor-pointer"
+                          >
+                            Details
+                          </button>
+                        )}
+
+                        <div className="flex items-center gap-1.5 shrink-0">
+                          <input
+                            type="number"
+                            value={editScores[entry.users.id] ?? entry.score}
+                            onChange={(e) =>
+                              setEditScores((s) => ({ ...s, [entry.users.id]: Number(e.target.value) }))
+                            }
+                            className="w-20 px-2 py-1 bg-[#0e0a1c] border border-white/15 rounded-lg text-xs font-bold text-[#FFD700] text-center focus:outline-none"
+                          />
+                          <span className="text-xs text-white/40">pts</span>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
               )}
+            </div>
+          </div>
+        )}
+
+        {/* CANDIDATE QUESTION-BY-QUESTION BREAKDOWN MODAL */}
+        {selectedLbEntryBreakdown && (
+          <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+            <div className="bg-[#0b0717] border border-purple-500/30 rounded-3xl p-6 max-w-lg w-full flex flex-col gap-4 shadow-2xl relative max-h-[85vh] overflow-hidden">
+              <button
+                onClick={() => setSelectedLbEntryBreakdown(null)}
+                className="absolute top-5 right-5 text-white/40 hover:text-white p-1 rounded-lg hover:bg-white/10"
+              >
+                <X size={18} />
+              </button>
+
+              <div className="border-b border-white/[0.08] pb-3">
+                <h3 className="text-lg font-black text-white">
+                  @{selectedLbEntryBreakdown.users.username}&apos;s Results
+                </h3>
+                <p className="text-xs text-white/50">
+                  Score: <strong className="text-[#FFD700]">{selectedLbEntryBreakdown.score} pts</strong> • Rank #{selectedLbEntryBreakdown.rank} • Time: {Math.floor((selectedLbEntryBreakdown.metadata_json?.totalTimeSeconds || 0) / 60)}m {(selectedLbEntryBreakdown.metadata_json?.totalTimeSeconds || 0) % 60}s
+                </p>
+              </div>
+
+              <div className="flex flex-col gap-2.5 overflow-y-auto pr-1 flex-1 text-xs">
+                {(selectedLbEntryBreakdown.metadata_json?.breakdown || []).map((item, idx) => (
+                  <div
+                    key={item.questionId || idx}
+                    className={`p-3 rounded-xl border flex items-center justify-between gap-2 ${item.status === 'correct'
+                        ? 'bg-[#3DCB7F]/10 border-[#3DCB7F]/30'
+                        : item.status === 'partial'
+                          ? 'bg-amber-500/10 border-amber-500/30'
+                          : item.status === 'wrong'
+                            ? 'bg-red-500/10 border-red-500/30'
+                            : 'bg-white/[0.02] border-white/[0.06]'
+                      }`}
+                  >
+                    <div className="min-w-0">
+                      <span className="font-bold text-white block truncate">
+                        #{idx + 1}. {item.title}
+                      </span>
+                      <span className="text-[10px] text-white/40">
+                        {item.timeSpentSec || 0}s spent • {item.status.toUpperCase()}
+                      </span>
+                    </div>
+                    <span className="font-mono font-bold text-white shrink-0">
+                      {item.pointsEarned} / {item.maxPoints} pts
+                    </span>
+                  </div>
+                ))}
+              </div>
+
+              <div className="flex justify-end pt-2 border-t border-white/[0.08]">
+                <button
+                  onClick={() => setSelectedLbEntryBreakdown(null)}
+                  className="px-5 py-2 rounded-xl text-xs font-bold text-white bg-white/10 hover:bg-white/20 transition-all cursor-pointer"
+                >
+                  Close
+                </button>
+              </div>
             </div>
           </div>
         )}

@@ -79,7 +79,14 @@ interface EventDetail {
   _count: { event_registrations: number };
 }
 
-interface LeaderboardEntry { rank: number | null; score: number; username: string; avatar_url: string | null }
+interface LeaderboardEntry {
+  rank: number | null;
+  score: number;
+  username: string;
+  avatar_url: string | null;
+  totalTimeSeconds?: number;
+  correctCount?: number;
+}
 interface UserRegistration {
   status: string;
   team_name: string | null;
@@ -838,18 +845,37 @@ export default function EventDetailPage() {
                 </div>
               ) : (
                 <div className="divide-y divide-white/[0.04]">
-                  {leaderboard.map((entry, i) => (
-                    <div key={i} className={`flex items-center gap-4 px-6 py-4 ${i < 3 ? 'bg-white/[0.01]' : ''}`}>
-                      <span className="text-lg font-black w-8 text-center" style={{ color: i === 0 ? '#FFD700' : i === 1 ? '#C0C0C0' : i === 2 ? '#CD7F32' : '#6b7280' }}>
-                        #{entry.rank ?? i + 1}
-                      </span>
-                      <div className="w-8 h-8 rounded-full bg-[#E873C3]/20 border border-[#E873C3]/30 flex items-center justify-center text-xs font-black text-[#E873C3]">
-                        {entry.username[0].toUpperCase()}
+                  {leaderboard.map((entry, i) => {
+                    const rankNum = entry.rank ?? i + 1;
+                    const totalSec = entry.totalTimeSeconds;
+                    const m = totalSec !== undefined ? Math.floor(totalSec / 60) : null;
+                    const s = totalSec !== undefined ? totalSec % 60 : null;
+                    const timeStr = m !== null && s !== null ? (m > 0 ? `${m}m ${s}s` : `${s}s`) : null;
+
+                    return (
+                      <div key={i} className={`flex items-center gap-4 px-6 py-4 ${i < 3 ? 'bg-white/[0.01]' : ''}`}>
+                        <span className="text-lg font-black w-8 text-center" style={{ color: i === 0 ? '#FFD700' : i === 1 ? '#C0C0C0' : i === 2 ? '#CD7F32' : '#6b7280' }}>
+                          #{rankNum}
+                        </span>
+                        <div className="w-8 h-8 rounded-full bg-[#E873C3]/20 border border-[#E873C3]/30 flex items-center justify-center text-xs font-black text-[#E873C3]">
+                          {entry.username[0].toUpperCase()}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <span className="text-sm font-bold text-white block truncate">{entry.username}</span>
+                          {timeStr && (
+                            <span className="text-[11px] font-mono text-cyan-300/80 flex items-center gap-1 mt-0.5">
+                              ⏱️ {timeStr}
+                            </span>
+                          )}
+                        </div>
+                        <div className="text-right">
+                          <span className="text-sm font-black block" style={{ color: i === 0 ? '#FFD700' : '#E873C3' }}>
+                            {entry.score.toLocaleString()} pts
+                          </span>
+                        </div>
                       </div>
-                      <span className="flex-1 text-sm font-bold text-white">{entry.username}</span>
-                      <span className="text-sm font-black" style={{ color: i === 0 ? '#FFD700' : '#E873C3' }}>{entry.score.toLocaleString()} pts</span>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
             </div>
