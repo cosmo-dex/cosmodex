@@ -1,18 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { Prisma } from '@prisma/client';
-import { SESSION_COOKIE } from '@/lib/adminAuth';
-import { sendRegistrationConfirmationEmail } from '@/lib/email';
-
-function getSession(req: NextRequest) {
-  const cookie = req.cookies.get(SESSION_COOKIE);
-  if (!cookie?.value) return null;
-  try {
-    return JSON.parse(cookie.value) as { userId: string; username: string; role: string; email?: string };
-  } catch {
-    return null;
-  }
-}
+import { getEventUserSession } from '@/lib/eventAuth';
 
 function generateTeamCode(): string {
   return Math.random().toString(36).substring(2, 8).toUpperCase();
@@ -22,9 +11,9 @@ export async function POST(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  const session = getSession(req);
+  const session = await getEventUserSession(req);
   if (!session?.userId) {
-    return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
+    return NextResponse.json({ error: 'Please log in to register for this event' }, { status: 401 });
   }
 
   const { id } = await params;
@@ -108,7 +97,6 @@ export async function POST(
 
     const isTeamEvent = event.participation_type === 'team';
     let resultRegistration;
-    let finalTeamName: string | null = null;
     let finalTeamCode: string | null = null;
 
     if (existing) {
@@ -121,7 +109,6 @@ export async function POST(
           details_json: detailsJson as Prisma.InputJsonValue,
         },
       });
-      finalTeamName = existing.team_name;
       finalTeamCode = existing.team_code;
     } else {
       if (event.max_participants && event._count.event_registrations >= event.max_participants) {
@@ -184,7 +171,6 @@ export async function POST(
           },
         });
 
-        finalTeamName = leaderReg.team_name;
         finalTeamCode = body.team_code;
       } else {
         const teamCode = generateTeamCode();
@@ -203,31 +189,14 @@ export async function POST(
           },
         });
 
-        finalTeamName = teamName;
         finalTeamCode = teamCode;
       }
-    }
-
-    let emailSent = false;
-    try {
-      emailSent = await sendRegistrationConfirmationEmail({
-        toEmail: userEmail,
-        userName: candidateName,
-        eventTitle: event.title,
-        startsAt: event.starts_at ? event.starts_at.toISOString() : null,
-        teamName: finalTeamName,
-        teamCode: finalTeamCode,
-        enterUrl: `${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/events/${event.slug || event.id}`,
-      });
-    } catch (emailErr) {
-      console.error('[POST /api/events/[id]/register] Email confirmation error:', emailErr);
     }
 
     return NextResponse.json({
       registration: resultRegistration,
       team_code: finalTeamCode,
       created_team: body.action === 'create_team',
-      email_sent: emailSent,
     });
   } catch (err) {
     console.error('[POST /api/events/[id]/register] Error:', err);
@@ -239,9 +208,9 @@ export async function DELETE(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  const session = getSession(req);
+  const session = await getEventUserSession(req);
   if (!session?.userId) {
-    return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
+    return NextResponse.json({ error: 'Please log in to manage your registration' }, { status: 401 });
   }
 
   const { id } = await params;

@@ -1,24 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
-import { SESSION_COOKIE } from '@/lib/adminAuth';
-
-function getSession(req: NextRequest) {
-  const cookie = req.cookies.get(SESSION_COOKIE);
-  if (!cookie?.value) return null;
-  try {
-    return JSON.parse(cookie.value) as { userId: string; username: string; role: string };
-  } catch {
-    return null;
-  }
-}
+import { getEventUserSession } from '@/lib/eventAuth';
 
 export async function POST(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  const session = getSession(req);
+  const session = await getEventUserSession(req);
   if (!session?.userId) {
-    return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
+    return NextResponse.json({ error: 'Please log in to submit' }, { status: 401 });
   }
 
   const { id } = await params;
@@ -58,10 +48,6 @@ export async function POST(
 
     if (!registration || registration.status === 'disqualified' || registration.status === 'withdrawn') {
       return NextResponse.json({ error: 'You must be a registered participant to submit' }, { status: 403 });
-    }
-
-    if (registration.submission_url) {
-      return NextResponse.json({ error: 'You have already submitted your solution for this event. Multiple submissions are not allowed.' }, { status: 400 });
     }
 
     const submissionDetails = {
@@ -120,9 +106,9 @@ export async function GET(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  const session = getSession(req);
+  const session = await getEventUserSession(req);
   if (!session?.userId) {
-    return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
+    return NextResponse.json({ error: 'Please log in to view submission' }, { status: 401 });
   }
 
   const { id } = await params;

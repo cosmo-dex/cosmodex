@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
-import { SESSION_COOKIE } from '@/lib/adminAuth';
+import { getEventUserSession } from '@/lib/eventAuth';
 
 
 export async function GET(
@@ -12,10 +12,7 @@ export async function GET(
 
   try {
     const event = await prisma.events.findFirst({
-      where: {
-        ...(isUuid ? { OR: [{ id }, { slug: id }] } : { slug: id }),
-        status: { in: ['published', 'ongoing', 'ended'] },
-      },
+      where: isUuid ? { OR: [{ id }, { slug: id }] } : { slug: id },
       select: {
         id: true,
         title: true,
@@ -63,25 +60,19 @@ export async function GET(
       submission_details_json: unknown;
     } | null = null;
 
-    const sessionCookie = req.cookies.get(SESSION_COOKIE);
-    if (sessionCookie?.value) {
-      try {
-        const session = JSON.parse(sessionCookie.value);
-        if (session?.userId) {
-          userRegistration = await prisma.event_registrations.findUnique({
-            where: { event_id_user_id: { event_id: event.id, user_id: session.userId } },
-            select: {
-              status: true,
-              team_name: true,
-              team_code: true,
-              team_members_json: true,
-              submission_url: true,
-              submission_details_json: true,
-            },
-          });
-        }
-      } catch {
-      }
+    const session = await getEventUserSession(req);
+    if (session?.userId) {
+      userRegistration = await prisma.event_registrations.findUnique({
+        where: { event_id_user_id: { event_id: event.id, user_id: session.userId } },
+        select: {
+          status: true,
+          team_name: true,
+          team_code: true,
+          team_members_json: true,
+          submission_url: true,
+          submission_details_json: true,
+        },
+      });
     }
 
     let leaderboard: { rank: number | null; score: number; username: string; avatar_url: string | null }[] = [];

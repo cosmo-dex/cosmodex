@@ -11,12 +11,10 @@ export async function GET(req: NextRequest) {
   const page = Math.max(1, Number(searchParams.get('page') ?? '1'));
   const PAGE_SIZE = 12;
 
-  const where: NonNullable<Parameters<typeof prisma.events.findMany>[0]>['where'] = {
-    status: { in: ['published', 'ongoing', 'ended'] },
-  };
+  const where: NonNullable<Parameters<typeof prisma.events.findMany>[0]>['where'] = {};
 
   if (type) where.event_type = type;
-  if (status && ['published', 'ongoing', 'ended'].includes(status)) where.status = status;
+  if (status) where.status = status;
   if (participation) where.participation_type = participation;
   if (search) where.title = { contains: search, mode: 'insensitive' };
 

@@ -2,9 +2,8 @@
 
 import { useState } from 'react';
 import {
-  X, User, Mail, Phone, Building2, GraduationCap, MapPin,
-  Github, Linkedin, Users, ArrowRight, ArrowLeft, CheckCircle2,
-  Sparkles, Code, Globe
+  X, User, Building2, Users, CheckCircle2,
+  Sparkles, Code
 } from 'lucide-react';
 
 export interface CosmoDexRegistrationFieldsConfig {
@@ -74,8 +73,6 @@ export default function CosmoDexRegistrationModal({
   submitting,
   errorMessage,
 }: CosmoDexRegistrationModalProps) {
-  const [step, setStep] = useState<1 | 2 | 3 | 4>(1);
-
   // Form State
   const [fullName, setFullName] = useState(initialName);
   const [email, setEmail] = useState(initialEmail);
@@ -125,120 +122,78 @@ export default function CosmoDexRegistrationModal({
     referral_source: { enabled: fieldsConfig?.referral_source?.enabled ?? true, required: fieldsConfig?.referral_source?.required ?? false },
   };
 
-  const hasStep2Fields = cfg.college_org.enabled || cfg.degree.enabled || cfg.branch.enabled || cfg.year_of_study.enabled || cfg.city_state.enabled;
-  const hasStep3Fields = cfg.github_url.enabled || cfg.linkedin_url.enabled || cfg.portfolio_url.enabled || cfg.resume_url.enabled || cfg.coding_handle.enabled || cfg.preferred_language.enabled || cfg.referral_source.enabled;
+  const hasEducationFields = cfg.college_org.enabled || cfg.degree.enabled || cfg.branch.enabled || cfg.year_of_study.enabled || cfg.city_state.enabled;
+  const hasProfileFields = cfg.github_url.enabled || cfg.linkedin_url.enabled || cfg.portfolio_url.enabled || cfg.resume_url.enabled || cfg.coding_handle.enabled || cfg.preferred_language.enabled || cfg.referral_source.enabled;
 
-  const validateStep1 = () => {
-    if (!fullName.trim()) { setFormError('Please enter your full name'); return false; }
-    if (!email.trim() || !/\S+@\S+\.\S+/.test(email)) { setFormError('Please enter a valid email address'); return false; }
+  const validateAndSubmit = async () => {
+    // 1. Personal
+    if (!fullName.trim()) { setFormError('Please enter your full name'); return; }
+    if (!email.trim() || !/\S+@\S+\.\S+/.test(email)) { setFormError('Please enter a valid email address'); return; }
     if (cfg.phone.enabled && cfg.phone.required && (!phone.trim() || phone.length < 8)) {
       setFormError('Please enter a valid phone number');
-      return false;
+      return;
     }
     if (cfg.gender.enabled && cfg.gender.required && !gender) {
       setFormError('Please select your gender');
-      return false;
+      return;
     }
-    setFormError('');
-    return true;
-  };
 
-  const validateStep2 = () => {
+    // 2. Education
     if (cfg.college_org.enabled && cfg.college_org.required && !collegeOrg.trim()) {
       setFormError('Please enter your college, university, or organization');
-      return false;
+      return;
     }
     if (cfg.degree.enabled && cfg.degree.required && !degree.trim()) {
       setFormError('Please enter your degree');
-      return false;
+      return;
     }
     if (cfg.branch.enabled && cfg.branch.required && !branch.trim()) {
       setFormError('Please enter your branch / specialization');
-      return false;
+      return;
     }
     if (cfg.city_state.enabled && cfg.city_state.required && !cityState.trim()) {
       setFormError('Please enter your city and state');
-      return false;
+      return;
     }
-    setFormError('');
-    return true;
-  };
 
-  const validateStep3 = () => {
+    // 3. Profiles
     if (cfg.github_url.enabled && cfg.github_url.required && !githubUrl.trim()) {
-      setFormError('Please enter your GitHub profile URL'); return false;
+      setFormError('Please enter your GitHub profile URL'); return;
     }
     if (cfg.linkedin_url.enabled && cfg.linkedin_url.required && !linkedinUrl.trim()) {
-      setFormError('Please enter your LinkedIn profile URL'); return false;
+      setFormError('Please enter your LinkedIn profile URL'); return;
     }
     if (cfg.portfolio_url.enabled && cfg.portfolio_url.required && !portfolioUrl.trim()) {
-      setFormError('Please enter your Portfolio URL'); return false;
+      setFormError('Please enter your Portfolio URL'); return;
     }
     if (cfg.resume_url.enabled && cfg.resume_url.required && !resumeUrl.trim()) {
-      setFormError('Please enter your Resume drive link'); return false;
+      setFormError('Please enter your Resume drive link'); return;
     }
     if (cfg.coding_handle.enabled && cfg.coding_handle.required && !codingHandle.trim()) {
       setFormError('Please enter your programming handle (e.g. Codeforces / LeetCode)');
-      return false;
+      return;
     }
-    setFormError('');
-    return true;
-  };
 
-  const validateStep4 = () => {
+    // 4. Team
     if (isTeamEvent) {
       if (teamAction === 'create' && !teamName.trim()) {
         setFormError('Please enter a team name');
-        return false;
+        return;
       }
       if (teamAction === 'join' && !teamCode.trim()) {
         setFormError('Please enter your team code');
-        return false;
+        return;
       }
     }
+
     setFormError('');
-    return true;
-  };
-
-  const handleNext = () => {
-    if (step === 1 && validateStep1()) {
-      if (hasStep2Fields) setStep(2);
-      else if (hasStep3Fields) setStep(3);
-      else if (isTeamEvent) setStep(4);
-      else handleSubmitFinal();
-    } else if (step === 2 && validateStep2()) {
-      if (hasStep3Fields) setStep(3);
-      else if (isTeamEvent) setStep(4);
-      else handleSubmitFinal();
-    } else if (step === 3 && validateStep3()) {
-      if (isTeamEvent) setStep(4);
-      else handleSubmitFinal();
-    }
-  };
-
-  const handleBack = () => {
-    setFormError('');
-    if (step === 4) {
-      if (hasStep3Fields) setStep(3);
-      else if (hasStep2Fields) setStep(2);
-      else setStep(1);
-    } else if (step === 3) {
-      if (hasStep2Fields) setStep(2);
-      else setStep(1);
-    } else if (step === 2) {
-      setStep(1);
-    }
-  };
-
-  const handleSubmitFinal = async () => {
-    if (isTeamEvent && step === 4 && !validateStep4()) return;
 
     const details: CosmoDexRegistrationDetails = {
       full_name: fullName.trim(),
       email: email.trim(),
       phone: cfg.phone.enabled ? phone.trim() : undefined,
       gender: cfg.gender.enabled ? gender : undefined,
-      user_type: hasStep2Fields ? userType : undefined,
+      user_type: hasEducationFields ? userType : undefined,
       college_org: cfg.college_org.enabled ? collegeOrg.trim() : undefined,
       degree: cfg.degree.enabled ? degree.trim() : undefined,
       branch: cfg.branch.enabled ? branch.trim() : undefined,
@@ -261,135 +216,146 @@ export default function CosmoDexRegistrationModal({
     });
   };
 
-  // Determine active steps dynamically
-  const activeSteps: { num: 1 | 2 | 3 | 4; label: string }[] = [{ num: 1, label: 'Personal' }];
-  if (hasStep2Fields) activeSteps.push({ num: 2, label: 'Academic' });
-  if (hasStep3Fields) activeSteps.push({ num: 3, label: 'Profiles' });
-  if (isTeamEvent) activeSteps.push({ num: 4, label: 'Team' });
-
-  const totalSteps = activeSteps.length;
-  const currentStepIndex = activeSteps.findIndex(s => s.num === step);
+  const inputClass = "w-full bg-white/[0.04] border border-white/[0.1] rounded-xl py-2.5 px-3.5 text-xs text-white placeholder:text-white/30 focus:outline-none focus:border-[#E873C3] transition-colors";
+  const selectClass = "w-full bg-[#0b0717] border border-white/[0.1] rounded-xl py-2.5 px-3.5 text-xs text-white focus:outline-none focus:border-[#E873C3] transition-colors [color-scheme:dark] cursor-pointer";
+  const labelClass = "text-[11px] font-bold text-white/70 mb-1 block";
 
   return (
     <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto">
-      <div className="bg-[#0b0717] border border-white/[0.12] rounded-3xl max-w-xl w-full flex flex-col shadow-2xl relative overflow-hidden my-8">
-        
+      <div className="bg-[#0b0717] border border-white/[0.12] rounded-3xl max-w-xl w-full flex flex-col shadow-2xl relative overflow-hidden my-6">
+
         {/* Top Header Banner */}
-        <div className="bg-gradient-to-r from-[#E873C3] via-[#a84dc2] to-[#8D37D6] p-6 text-white relative">
+        <div className="bg-gradient-to-r from-[#E873C3] via-[#a84dc2] to-[#8D37D6] p-5 text-white relative">
           <button
             onClick={onClose}
-            className="absolute top-5 right-5 text-white/70 hover:text-white bg-black/20 hover:bg-black/40 w-8 h-8 rounded-full flex items-center justify-center transition-colors"
+            className="absolute top-4 right-4 text-white/70 hover:text-white bg-black/20 hover:bg-black/40 w-8 h-8 rounded-full flex items-center justify-center transition-colors cursor-pointer"
           >
-            <X size={18} />
+            <X size={16} />
           </button>
-          
-          <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-white/80 mb-1">
-            <Sparkles size={14} /> CosmoDex Candidate Pass
+
+          <div className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-white/80 mb-0.5">
+            <Sparkles size={13} /> Event Registration
           </div>
-          <h2 className="text-xl font-black text-white">{eventTitle}</h2>
-          <p className="text-xs text-white/80 mt-1">Complete your official event registration details</p>
+          <h2 className="text-lg font-black text-white">{eventTitle}</h2>
+          <p className="text-xs text-white/80">Confirm your participation details</p>
         </div>
 
-        {/* Progress Bar & Indicators */}
-        <div className="px-6 pt-5 pb-2 border-b border-white/[0.06]">
-          <div className="flex items-center justify-between mb-2">
-            {activeSteps.map(({ num, label }) => (
-              <div key={num} className="flex items-center gap-2">
-                <div
-                  className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-all ${
-                    step === num
-                      ? 'bg-[#E873C3] text-white shadow-lg shadow-[#E873C3]/30 scale-110'
-                      : step > num
-                      ? 'bg-[#3DCB7F] text-black font-extrabold'
-                      : 'bg-white/[0.08] text-white/40'
-                  }`}
-                >
-                  {step > num ? <CheckCircle2 size={15} /> : num}
-                </div>
-                <span className={`text-xs font-semibold hidden sm:inline ${step === num ? 'text-white' : 'text-white/40'}`}>
-                  {label}
-                </span>
-              </div>
-            ))}
-          </div>
-          <div className="w-full bg-white/[0.06] h-1.5 rounded-full overflow-hidden">
-            <div
-              className="bg-[#E873C3] h-full transition-all duration-300 ease-out"
-              style={{ width: `${((currentStepIndex + 1) / totalSteps) * 100}%` }}
-            />
-          </div>
-        </div>
-
-        {/* Body Form */}
-        <div className="p-6 flex flex-col gap-4 max-h-[65vh] overflow-y-auto">
+        {/* Scrollable Form Body */}
+        <div className="p-5 flex flex-col gap-4 max-h-[65vh] overflow-y-auto">
           {(formError || errorMessage) && (
             <div className="p-3 bg-red-500/10 border border-red-500/30 rounded-xl text-red-400 text-xs font-medium">
               {formError || errorMessage}
             </div>
           )}
 
-          {/* STEP 1: Personal Information */}
-          {step === 1 && (
-            <div className="flex flex-col gap-4 animate-in fade-in duration-200">
-              <h3 className="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">
-                <User size={16} className="text-[#E873C3]" /> Personal Information
+          {/* Team Setup (If Team Event) */}
+          {isTeamEvent && (
+            <div className="bg-white/[0.02] border border-white/[0.08] rounded-2xl p-4 flex flex-col gap-3">
+              <h3 className="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-1.5">
+                <Users size={14} className="text-[#E873C3]" /> Team Setup
               </h3>
 
-              <div>
-                <label className="text-xs font-bold text-white/70 mb-1 block">Full Name *</label>
-                <div className="relative">
-                  <User size={16} className="absolute left-3.5 top-3 text-white/40" />
+              <div className="grid grid-cols-2 gap-2.5">
+                <button
+                  type="button"
+                  onClick={() => setTeamAction('create')}
+                  className={`p-3 rounded-xl border text-left flex flex-col gap-0.5 transition-all cursor-pointer ${teamAction === 'create'
+                      ? 'bg-[#E873C3]/15 border-[#E873C3] text-white'
+                      : 'bg-white/[0.03] border-white/[0.08] text-white/50 hover:bg-white/[0.05]'
+                    }`}
+                >
+                  <span className="text-xs font-bold">Create Team</span>
+                  <span className="text-[10px] text-white/60">Generate invite code</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setTeamAction('join')}
+                  className={`p-3 rounded-xl border text-left flex flex-col gap-0.5 transition-all cursor-pointer ${teamAction === 'join'
+                      ? 'bg-[#E873C3]/15 border-[#E873C3] text-white'
+                      : 'bg-white/[0.03] border-white/[0.08] text-white/50 hover:bg-white/[0.05]'
+                    }`}
+                >
+                  <span className="text-xs font-bold">Join Team</span>
+                  <span className="text-[10px] text-white/60">Enter team code</span>
+                </button>
+              </div>
+
+              {teamAction === 'create' ? (
+                <div>
+                  <label className={labelClass}>Team Name *</label>
                   <input
                     type="text"
-                    value={fullName}
-                    onChange={(e) => setFullName(e.target.value)}
-                    placeholder="Enter your full name"
-                    className="w-full bg-white/[0.04] border border-white/[0.1] rounded-xl py-2.5 pl-10 pr-4 text-sm text-white placeholder:text-white/30 focus:outline-none focus:border-[#E873C3] transition-colors"
+                    value={teamName}
+                    onChange={(e) => setTeamName(e.target.value)}
+                    placeholder="Enter your team name"
+                    className={inputClass}
                   />
                 </div>
+              ) : (
+                <div>
+                  <label className={labelClass}>Team Invite Code *</label>
+                  <input
+                    type="text"
+                    value={teamCode}
+                    onChange={(e) => setTeamCode(e.target.value.toUpperCase())}
+                    placeholder="e.g. TM-8X92K"
+                    className={inputClass + " font-mono uppercase tracking-wider"}
+                  />
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Personal Information */}
+          <div className="bg-white/[0.02] border border-white/[0.08] rounded-2xl p-4 flex flex-col gap-3">
+            <h3 className="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-1.5">
+              <User size={14} className="text-[#E873C3]" /> Personal Details
+            </h3>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label className={labelClass}>Full Name *</label>
+                <input
+                  type="text"
+                  value={fullName}
+                  onChange={(e) => setFullName(e.target.value)}
+                  placeholder="Enter full name"
+                  className={inputClass}
+                />
               </div>
 
               <div>
-                <label className="text-xs font-bold text-white/70 mb-1 block">Email Address *</label>
-                <div className="relative">
-                  <Mail size={16} className="absolute left-3.5 top-3 text-white/40" />
-                  <input
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="name@domain.com"
-                    className="w-full bg-white/[0.04] border border-white/[0.1] rounded-xl py-2.5 pl-10 pr-4 text-sm text-white placeholder:text-white/30 focus:outline-none focus:border-[#E873C3] transition-colors"
-                  />
-                </div>
+                <label className={labelClass}>Email Address *</label>
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="name@domain.com"
+                  className={inputClass}
+                />
               </div>
 
               {cfg.phone.enabled && (
                 <div>
-                  <label className="text-xs font-bold text-white/70 mb-1 block">
-                    Mobile Number {cfg.phone.required ? '*' : '(Optional)'}
-                  </label>
-                  <div className="relative">
-                    <Phone size={16} className="absolute left-3.5 top-3 text-white/40" />
-                    <input
-                      type="tel"
-                      value={phone}
-                      onChange={(e) => setPhone(e.target.value)}
-                      placeholder="+91 9876543210"
-                      className="w-full bg-white/[0.04] border border-white/[0.1] rounded-xl py-2.5 pl-10 pr-4 text-sm text-white placeholder:text-white/30 focus:outline-none focus:border-[#E873C3] transition-colors"
-                    />
-                  </div>
+                  <label className={labelClass}>Mobile Number {cfg.phone.required ? '*' : ''}</label>
+                  <input
+                    type="tel"
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
+                    placeholder="+91 9876543210"
+                    className={inputClass}
+                  />
                 </div>
               )}
 
               {cfg.gender.enabled && (
                 <div>
-                  <label className="text-xs font-bold text-white/70 mb-1 block">
-                    Gender {cfg.gender.required ? '*' : '(Optional)'}
-                  </label>
+                  <label className={labelClass}>Gender {cfg.gender.required ? '*' : ''}</label>
                   <select
                     value={gender}
                     onChange={(e) => setGender(e.target.value)}
-                    className="w-full bg-[#0b0717] border border-white/[0.1] rounded-xl py-2.5 px-4 text-sm text-white focus:outline-none focus:border-[#E873C3] transition-colors [color-scheme:dark] cursor-pointer"
+                    className={selectClass}
                   >
                     <option value="Male">Male</option>
                     <option value="Female">Female</option>
@@ -399,358 +365,238 @@ export default function CosmoDexRegistrationModal({
                 </div>
               )}
             </div>
-          )}
+          </div>
 
-          {/* STEP 2: Academic / Professional */}
-          {step === 2 && hasStep2Fields && (
-            <div className="flex flex-col gap-4 animate-in fade-in duration-200">
-              <h3 className="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">
-                <GraduationCap size={16} className="text-[#E873C3]" /> Education & Background
+          {/* Academic / Organization (If enabled) */}
+          {hasEducationFields && (
+            <div className="bg-white/[0.02] border border-white/[0.08] rounded-2xl p-4 flex flex-col gap-3">
+              <h3 className="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-1.5">
+                <Building2 size={14} className="text-[#E873C3]" /> Organization & Education
               </h3>
 
-              <div>
-                <label className="text-xs font-bold text-white/70 mb-1 block">Category</label>
-                <select
-                  value={userType}
-                  onChange={(e) => setUserType(e.target.value)}
-                  className="w-full bg-[#0b0717] border border-white/[0.1] rounded-xl py-2.5 px-4 text-sm text-white focus:outline-none focus:border-[#E873C3] transition-colors [color-scheme:dark] cursor-pointer"
-                >
-                  <option value="College Student">College Student</option>
-                  <option value="School Student">School Student</option>
-                  <option value="Working Professional">Working Professional</option>
-                  <option value="Fresher / Job Seeker">Fresher / Job Seeker</option>
-                </select>
-              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="sm:col-span-2">
+                  <label className={labelClass}>Participant Category</label>
+                  <select
+                    value={userType}
+                    onChange={(e) => setUserType(e.target.value)}
+                    className={selectClass}
+                  >
+                    <option value="College Student">College Student</option>
+                    <option value="School Student">School Student</option>
+                    <option value="Working Professional">Working Professional</option>
+                    <option value="Fresher / Job Seeker">Fresher / Job Seeker</option>
+                  </select>
+                </div>
 
-              {cfg.college_org.enabled && (
-                <div>
-                  <label className="text-xs font-bold text-white/70 mb-1 block">
-                    College / Organization Name {cfg.college_org.required ? '*' : '(Optional)'}
-                  </label>
-                  <div className="relative">
-                    <Building2 size={16} className="absolute left-3.5 top-3 text-white/40" />
+                {cfg.college_org.enabled && (
+                  <div className="sm:col-span-2">
+                    <label className={labelClass}>College / Organization {cfg.college_org.required ? '*' : ''}</label>
                     <input
                       type="text"
                       value={collegeOrg}
                       onChange={(e) => setCollegeOrg(e.target.value)}
-                      placeholder="Institute / Company name"
-                      className="w-full bg-white/[0.04] border border-white/[0.1] rounded-xl py-2.5 pl-10 pr-4 text-sm text-white placeholder:text-white/30 focus:outline-none focus:border-[#E873C3] transition-colors"
+                      placeholder="Institute or company name"
+                      className={inputClass}
                     />
                   </div>
-                </div>
-              )}
+                )}
 
-              {(cfg.degree.enabled || cfg.year_of_study.enabled) && (
-                <div className="grid grid-cols-2 gap-3">
-                  {cfg.degree.enabled && (
-                    <div>
-                      <label className="text-xs font-bold text-white/70 mb-1 block">
-                        Degree {cfg.degree.required ? '*' : '(Optional)'}
-                      </label>
-                      <input
-                        type="text"
-                        value={degree}
-                        onChange={(e) => setDegree(e.target.value)}
-                        placeholder="e.g. B.Tech / B.Sc"
-                        className="w-full bg-white/[0.04] border border-white/[0.1] rounded-xl py-2.5 px-3 text-sm text-white placeholder:text-white/30 focus:outline-none focus:border-[#E873C3] transition-colors"
-                      />
-                    </div>
-                  )}
+                {cfg.degree.enabled && (
+                  <div>
+                    <label className={labelClass}>Degree {cfg.degree.required ? '*' : ''}</label>
+                    <input
+                      type="text"
+                      value={degree}
+                      onChange={(e) => setDegree(e.target.value)}
+                      placeholder="e.g. B.Tech / B.Sc"
+                      className={inputClass}
+                    />
+                  </div>
+                )}
 
-                  {cfg.year_of_study.enabled && (
-                    <div>
-                      <label className="text-xs font-bold text-white/70 mb-1 block">
-                        Year of Study {cfg.year_of_study.required ? '*' : '(Optional)'}
-                      </label>
-                      <select
-                        value={yearOfStudy}
-                        onChange={(e) => setYearOfStudy(e.target.value)}
-                        className="w-full bg-[#0b0717] border border-white/[0.1] rounded-xl py-2.5 px-3 text-sm text-white focus:outline-none focus:border-[#E873C3] transition-colors [color-scheme:dark] cursor-pointer"
-                      >
-                        <option value="1st Year">1st Year</option>
-                        <option value="2nd Year">2nd Year</option>
-                        <option value="3rd Year">3rd Year</option>
-                        <option value="4th Year">4th Year</option>
-                        <option value="Postgraduate">Postgraduate</option>
-                        <option value="Graduated">Graduated</option>
-                      </select>
-                    </div>
-                  )}
-                </div>
-              )}
+                {cfg.year_of_study.enabled && (
+                  <div>
+                    <label className={labelClass}>Year of Study {cfg.year_of_study.required ? '*' : ''}</label>
+                    <select
+                      value={yearOfStudy}
+                      onChange={(e) => setYearOfStudy(e.target.value)}
+                      className={selectClass}
+                    >
+                      <option value="1st Year">1st Year</option>
+                      <option value="2nd Year">2nd Year</option>
+                      <option value="3rd Year">3rd Year</option>
+                      <option value="4th Year">4th Year</option>
+                      <option value="Postgraduate">Postgraduate</option>
+                      <option value="Graduated">Graduated</option>
+                    </select>
+                  </div>
+                )}
 
-              {cfg.branch.enabled && (
-                <div>
-                  <label className="text-xs font-bold text-white/70 mb-1 block">
-                    Branch / Specialization {cfg.branch.required ? '*' : '(Optional)'}
-                  </label>
-                  <input
-                    type="text"
-                    value={branch}
-                    onChange={(e) => setBranch(e.target.value)}
-                    placeholder="e.g. Computer Science, AI, Electronics"
-                    className="w-full bg-white/[0.04] border border-white/[0.1] rounded-xl py-2.5 px-4 text-sm text-white placeholder:text-white/30 focus:outline-none focus:border-[#E873C3] transition-colors"
-                  />
-                </div>
-              )}
+                {cfg.branch.enabled && (
+                  <div>
+                    <label className={labelClass}>Branch / Specialization {cfg.branch.required ? '*' : ''}</label>
+                    <input
+                      type="text"
+                      value={branch}
+                      onChange={(e) => setBranch(e.target.value)}
+                      placeholder="e.g. Computer Science"
+                      className={inputClass}
+                    />
+                  </div>
+                )}
 
-              {cfg.city_state.enabled && (
-                <div>
-                  <label className="text-xs font-bold text-white/70 mb-1 block">
-                    City & State {cfg.city_state.required ? '*' : '(Optional)'}
-                  </label>
-                  <div className="relative">
-                    <MapPin size={16} className="absolute left-3.5 top-3 text-white/40" />
+                {cfg.city_state.enabled && (
+                  <div>
+                    <label className={labelClass}>City & State {cfg.city_state.required ? '*' : ''}</label>
                     <input
                       type="text"
                       value={cityState}
                       onChange={(e) => setCityState(e.target.value)}
-                      placeholder="e.g. New Delhi, Delhi"
-                      className="w-full bg-white/[0.04] border border-white/[0.1] rounded-xl py-2.5 pl-10 pr-4 text-sm text-white placeholder:text-white/30 focus:outline-none focus:border-[#E873C3] transition-colors"
+                      placeholder="e.g. Mumbai, Maharashtra"
+                      className={inputClass}
                     />
                   </div>
-                </div>
-              )}
+                )}
+              </div>
             </div>
           )}
 
-          {/* STEP 3: Profiles & Handles */}
-          {step === 3 && hasStep3Fields && (
-            <div className="flex flex-col gap-4 animate-in fade-in duration-200">
-              <h3 className="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">
-                <Github size={16} className="text-[#E873C3]" /> Profiles & Handles
+          {/* Coding & Profiles (If enabled) */}
+          {hasProfileFields && (
+            <div className="bg-white/[0.02] border border-white/[0.08] rounded-2xl p-4 flex flex-col gap-3">
+              <h3 className="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-1.5">
+                <Code size={14} className="text-[#E873C3]" /> Profiles & Handles
               </h3>
 
-              {cfg.github_url.enabled && (
-                <div>
-                  <label className="text-xs font-bold text-white/70 mb-1 block">
-                    GitHub Profile {cfg.github_url.required ? '*' : '(Optional)'}
-                  </label>
-                  <div className="relative">
-                    <Github size={16} className="absolute left-3.5 top-3 text-white/40" />
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {cfg.github_url.enabled && (
+                  <div>
+                    <label className={labelClass}>GitHub Profile {cfg.github_url.required ? '*' : ''}</label>
                     <input
                       type="url"
                       value={githubUrl}
                       onChange={(e) => setGithubUrl(e.target.value)}
-                      placeholder="https://github.com/yourusername"
-                      className="w-full bg-white/[0.04] border border-white/[0.1] rounded-xl py-2.5 pl-10 pr-4 text-sm text-white placeholder:text-white/30 focus:outline-none focus:border-[#E873C3] transition-colors"
+                      placeholder="https://github.com/username"
+                      className={inputClass}
                     />
                   </div>
-                </div>
-              )}
+                )}
 
-              {cfg.linkedin_url.enabled && (
-                <div>
-                  <label className="text-xs font-bold text-white/70 mb-1 block">
-                    LinkedIn Profile {cfg.linkedin_url.required ? '*' : '(Optional)'}
-                  </label>
-                  <div className="relative">
-                    <Linkedin size={16} className="absolute left-3.5 top-3 text-white/40" />
+                {cfg.linkedin_url.enabled && (
+                  <div>
+                    <label className={labelClass}>LinkedIn Profile {cfg.linkedin_url.required ? '*' : ''}</label>
                     <input
                       type="url"
                       value={linkedinUrl}
                       onChange={(e) => setLinkedinUrl(e.target.value)}
-                      placeholder="https://linkedin.com/in/yourusername"
-                      className="w-full bg-white/[0.04] border border-white/[0.1] rounded-xl py-2.5 pl-10 pr-4 text-sm text-white placeholder:text-white/30 focus:outline-none focus:border-[#E873C3] transition-colors"
+                      placeholder="https://linkedin.com/in/username"
+                      className={inputClass}
                     />
                   </div>
-                </div>
-              )}
+                )}
 
-              {cfg.portfolio_url.enabled && (
-                <div>
-                  <label className="text-xs font-bold text-white/70 mb-1 block">
-                    Portfolio Website {cfg.portfolio_url.required ? '*' : '(Optional)'}
-                  </label>
-                  <div className="relative">
-                    <Globe size={16} className="absolute left-3.5 top-3 text-white/40" />
+                {cfg.portfolio_url.enabled && (
+                  <div>
+                    <label className={labelClass}>Portfolio URL {cfg.portfolio_url.required ? '*' : ''}</label>
                     <input
                       type="url"
                       value={portfolioUrl}
                       onChange={(e) => setPortfolioUrl(e.target.value)}
                       placeholder="https://yourportfolio.com"
-                      className="w-full bg-white/[0.04] border border-white/[0.1] rounded-xl py-2.5 pl-10 pr-4 text-sm text-white placeholder:text-white/30 focus:outline-none focus:border-[#E873C3] transition-colors"
+                      className={inputClass}
                     />
                   </div>
-                </div>
-              )}
+                )}
 
-              {cfg.resume_url.enabled && (
-                <div>
-                  <label className="text-xs font-bold text-white/70 mb-1 block">
-                    Resume Drive Link {cfg.resume_url.required ? '*' : '(Optional)'}
-                  </label>
-                  <div className="relative">
-                    <Globe size={16} className="absolute left-3.5 top-3 text-white/40" />
+                {cfg.resume_url.enabled && (
+                  <div>
+                    <label className={labelClass}>Resume Drive Link {cfg.resume_url.required ? '*' : ''}</label>
                     <input
                       type="url"
                       value={resumeUrl}
                       onChange={(e) => setResumeUrl(e.target.value)}
                       placeholder="https://drive.google.com/file/d/..."
-                      className="w-full bg-white/[0.04] border border-white/[0.1] rounded-xl py-2.5 pl-10 pr-4 text-sm text-white placeholder:text-white/30 focus:outline-none focus:border-[#E873C3] transition-colors"
+                      className={inputClass}
                     />
                   </div>
-                </div>
-              )}
+                )}
 
-              {cfg.coding_handle.enabled && (
-                <div>
-                  <label className="text-xs font-bold text-white/70 mb-1 block">
-                    Coding Handle (Codeforces / LeetCode) {cfg.coding_handle.required ? '*' : '(Optional)'}
-                  </label>
-                  <div className="relative">
-                    <Code size={16} className="absolute left-3.5 top-3 text-white/40" />
+                {cfg.coding_handle.enabled && (
+                  <div>
+                    <label className={labelClass}>Coding Handle {cfg.coding_handle.required ? '*' : ''}</label>
                     <input
                       type="text"
                       value={codingHandle}
                       onChange={(e) => setCodingHandle(e.target.value)}
-                      placeholder="e.g. tourist / leet_coder"
-                      className="w-full bg-white/[0.04] border border-white/[0.1] rounded-xl py-2.5 pl-10 pr-4 text-sm text-white placeholder:text-white/30 focus:outline-none focus:border-[#E873C3] transition-colors"
+                      placeholder="e.g. tourist / leetcoder"
+                      className={inputClass}
                     />
                   </div>
-                </div>
-              )}
+                )}
 
-              {cfg.preferred_language.enabled && (
-                <div>
-                  <label className="text-xs font-bold text-white/70 mb-1 block">
-                    Preferred Primary Language {cfg.preferred_language.required ? '*' : '(Optional)'}
-                  </label>
-                  <select
-                    value={preferredLanguage}
-                    onChange={(e) => setPreferredLanguage(e.target.value)}
-                    className="w-full bg-[#0b0717] border border-white/[0.1] rounded-xl py-2.5 px-4 text-sm text-white focus:outline-none focus:border-[#E873C3] transition-colors [color-scheme:dark] cursor-pointer"
-                  >
-                    <option value="C++">C++ 20</option>
-                    <option value="Python">Python 3.11</option>
-                    <option value="Java">Java 21</option>
-                    <option value="JavaScript">JavaScript / TypeScript</option>
-                    <option value="Go">Go</option>
-                    <option value="Rust">Rust</option>
-                  </select>
-                </div>
-              )}
+                {cfg.preferred_language.enabled && (
+                  <div>
+                    <label className={labelClass}>Preferred Language {cfg.preferred_language.required ? '*' : ''}</label>
+                    <select
+                      value={preferredLanguage}
+                      onChange={(e) => setPreferredLanguage(e.target.value)}
+                      className={selectClass}
+                    >
+                      <option value="C++">C++ 20</option>
+                      <option value="Python">Python 3.11</option>
+                      <option value="Java">Java 21</option>
+                      <option value="JavaScript">JavaScript / TypeScript</option>
+                      <option value="Go">Go</option>
+                      <option value="Rust">Rust</option>
+                    </select>
+                  </div>
+                )}
 
-              {cfg.referral_source.enabled && (
-                <div>
-                  <label className="text-xs font-bold text-white/70 mb-1 block">
-                    How did you hear about this event? {cfg.referral_source.required ? '*' : '(Optional)'}
-                  </label>
-                  <select
-                    value={referralSource}
-                    onChange={(e) => setReferralSource(e.target.value)}
-                    className="w-full bg-[#0b0717] border border-white/[0.1] rounded-xl py-2.5 px-4 text-sm text-white focus:outline-none focus:border-[#E873C3] transition-colors [color-scheme:dark] cursor-pointer"
-                  >
-                    <option value="CosmoDex Platform">CosmoDex Platform</option>
-                    <option value="College Club / Society">College Club / Society</option>
-                    <option value="LinkedIn / Social Media">LinkedIn / Social Media</option>
-                    <option value="Friends / Classmates">Friends / Classmates</option>
-                    <option value="Other">Other</option>
-                  </select>
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* STEP 4: Team Setup (If Team Event) */}
-          {step === 4 && isTeamEvent && (
-            <div className="flex flex-col gap-4 animate-in fade-in duration-200">
-              <h3 className="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">
-                <Users size={16} className="text-[#E873C3]" /> Team Setup
-              </h3>
-
-              <div className="grid grid-cols-2 gap-3">
-                <button
-                  type="button"
-                  onClick={() => setTeamAction('create')}
-                  className={`p-3.5 rounded-xl border text-left flex flex-col gap-1 transition-all ${
-                    teamAction === 'create'
-                      ? 'bg-[#E873C3]/15 border-[#E873C3] text-white'
-                      : 'bg-white/[0.03] border-white/[0.1] text-white/50 hover:bg-white/[0.05]'
-                  }`}
-                >
-                  <span className="text-xs font-bold">Create New Team</span>
-                  <span className="text-[11px] text-white/60">Generate a unique invite code</span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => setTeamAction('join')}
-                  className={`p-3.5 rounded-xl border text-left flex flex-col gap-1 transition-all ${
-                    teamAction === 'join'
-                      ? 'bg-[#E873C3]/15 border-[#E873C3] text-white'
-                      : 'bg-white/[0.03] border-white/[0.1] text-white/50 hover:bg-white/[0.05]'
-                  }`}
-                >
-                  <span className="text-xs font-bold">Join Existing Team</span>
-                  <span className="text-[11px] text-white/60">Enter leader&apos;s code</span>
-                </button>
+                {cfg.referral_source.enabled && (
+                  <div className="sm:col-span-2">
+                    <label className={labelClass}>How did you hear about this event? {cfg.referral_source.required ? '*' : ''}</label>
+                    <select
+                      value={referralSource}
+                      onChange={(e) => setReferralSource(e.target.value)}
+                      className={selectClass}
+                    >
+                      <option value="CosmoDex Platform">CosmoDex Platform</option>
+                      <option value="College Club / Society">College Club / Society</option>
+                      <option value="LinkedIn / Social Media">LinkedIn / Social Media</option>
+                      <option value="Friends / Classmates">Friends / Classmates</option>
+                      <option value="Other">Other</option>
+                    </select>
+                  </div>
+                )}
               </div>
-
-              {teamAction === 'create' ? (
-                <div>
-                  <label className="text-xs font-bold text-white/70 mb-1 block">Team Name *</label>
-                  <input
-                    type="text"
-                    value={teamName}
-                    onChange={(e) => setTeamName(e.target.value)}
-                    placeholder="Enter your cool team name"
-                    className="w-full bg-white/[0.04] border border-white/[0.1] rounded-xl py-2.5 px-4 text-sm text-white placeholder:text-white/30 focus:outline-none focus:border-[#E873C3] transition-colors"
-                  />
-                </div>
-              ) : (
-                <div>
-                  <label className="text-xs font-bold text-white/70 mb-1 block">Team Invite Code *</label>
-                  <input
-                    type="text"
-                    value={teamCode}
-                    onChange={(e) => setTeamCode(e.target.value.toUpperCase())}
-                    placeholder="e.g. TM-8X92K"
-                    className="w-full bg-white/[0.04] border border-white/[0.1] rounded-xl py-2.5 px-4 text-sm font-mono text-white placeholder:text-white/30 uppercase tracking-wider focus:outline-none focus:border-[#E873C3] transition-colors"
-                  />
-                </div>
-              )}
             </div>
           )}
         </div>
 
         {/* Modal Controls Footer */}
-        <div className="p-6 border-t border-white/[0.06] bg-black/40 flex items-center justify-between">
-          {currentStepIndex > 0 ? (
-            <button
-              type="button"
-              onClick={handleBack}
-              disabled={submitting}
-              className="px-4 py-2 rounded-xl text-xs font-bold text-white/70 bg-white/[0.06] hover:bg-white/[0.12] transition-colors flex items-center gap-1.5 disabled:opacity-50"
-            >
-              <ArrowLeft size={14} /> Back
-            </button>
-          ) : (
-            <div />
-          )}
+        <div className="p-4 border-t border-white/[0.08] bg-black/40 flex items-center justify-between gap-3">
+          <button
+            type="button"
+            onClick={onClose}
+            disabled={submitting}
+            className="px-4 py-2.5 rounded-xl text-xs font-bold text-white/60 hover:text-white bg-white/[0.04] hover:bg-white/[0.08] transition-colors cursor-pointer"
+          >
+            Cancel
+          </button>
 
-          {currentStepIndex < totalSteps - 1 ? (
-            <button
-              type="button"
-              onClick={handleNext}
-              className="px-5 py-2.5 rounded-xl text-xs font-bold text-white bg-gradient-to-r from-[#E873C3] to-[#8D37D6] hover:opacity-90 shadow-lg shadow-[#E873C3]/25 transition-all flex items-center gap-1.5"
-            >
-              Continue <ArrowRight size={14} />
-            </button>
-          ) : (
-            <button
-              type="button"
-              onClick={handleSubmitFinal}
-              disabled={submitting}
-              className="px-6 py-2.5 rounded-xl text-xs font-extrabold text-black bg-[#3DCB7F] hover:bg-[#32b870] shadow-lg shadow-[#3DCB7F]/25 transition-all flex items-center gap-1.5 disabled:opacity-50"
-            >
-              {submitting ? (
-                <>Registering...</>
-              ) : (
-                <>Complete Registration <CheckCircle2 size={14} /></>
-              )}
-            </button>
-          )}
+          <button
+            type="button"
+            onClick={validateAndSubmit}
+            disabled={submitting}
+            className="px-6 py-2.5 rounded-xl text-xs font-extrabold text-black bg-[#3DCB7F] hover:bg-[#32b870] shadow-lg shadow-[#3DCB7F]/25 transition-all flex items-center gap-1.5 disabled:opacity-50 cursor-pointer"
+          >
+            {submitting ? (
+              <>Registering...</>
+            ) : (
+              <>Complete Registration <CheckCircle2 size={14} /></>
+            )}
+          </button>
         </div>
 
       </div>

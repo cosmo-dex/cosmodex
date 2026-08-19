@@ -98,12 +98,14 @@ function EventCardComponent({ event }: { event: EventCard }) {
         </div>
 
         {/* Status badge */}
-        <div className={`absolute top-3 right-3 flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-black uppercase backdrop-blur-sm ${isLive ? 'text-[#E873C3] bg-[#E873C3]/15 border border-[#E873C3]/40' :
+        <div className={`absolute top-3 right-3 flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-black uppercase backdrop-blur-sm ${
+            isLive ? 'text-[#E873C3] bg-[#E873C3]/15 border border-[#E873C3]/40' :
             isUpcoming ? 'text-[#3DCB7F] bg-[#3DCB7F]/12 border border-[#3DCB7F]/30' :
-              'text-white/40 bg-white/[0.06] border border-white/10'
+            isEnded ? 'text-[#F5A623] bg-[#F5A623]/10 border border-[#F5A623]/30' :
+            'text-white/40 bg-white/[0.06] border border-white/10'
           }`}>
           {isLive && <span className="w-1.5 h-1.5 rounded-full bg-[#E873C3] animate-pulse" />}
-          {isLive ? 'LIVE' : isUpcoming ? 'Upcoming' : 'Ended'}
+          {isLive ? 'LIVE' : isUpcoming ? 'Upcoming' : isEnded ? 'Ended' : event.status}
         </div>
 
         {/* Prize pill */}
@@ -202,9 +204,10 @@ const TYPE_FILTERS = [
 ];
 const STATUS_FILTERS = [
   { key: '', label: 'All Status' },
-  { key: 'published', label: '📋 Upcoming' },
   { key: 'ongoing', label: '🔴 Live' },
-  { key: 'ended', label: '✅ Ended' },
+  { key: 'published', label: '📋 Upcoming' },
+  { key: 'ended', label: '✅ Ended / Closed' },
+  { key: 'draft', label: '📝 Draft' },
 ];
 const PARTICIPATION_FILTERS = [
   { key: '', label: 'All Modes' },

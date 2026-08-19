@@ -213,11 +213,7 @@ export default function EventDetailPage() {
       const data = await res.json();
       if (res.ok) {
         setShowRegModal(false);
-        if (data.email_sent === false) {
-          setRegMsg(`🎉 Registered successfully! (Note: Delivery of confirmation email to ${payload.details.email} failed or was delayed)`);
-        } else {
-          setRegMsg(`🎉 Registered successfully! Confirmation email sent to ${payload.details.email}`);
-        }
+        setRegMsg('🎉 Registered successfully! You are now enrolled.');
         fetchEvent();
       } else {
         setRegMsg(data.error ?? 'Failed to complete registration');
@@ -289,7 +285,12 @@ export default function EventDetailPage() {
 
   const TABS: { key: Tab; label: string }[] = [
     { key: 'about', label: 'Overview' },
-    { key: 'rounds', label: `Rounds & Timeline ${event.rounds_json?.length ? `(${event.rounds_json.length})` : ''}` },
+    {
+      key: 'rounds',
+      label: isCodingContest
+        ? 'Timeline & Schedule'
+        : `Rounds & Timeline ${event.rounds_json?.length ? `(${event.rounds_json.length})` : ''}`,
+    },
     { key: 'prizes', label: 'Prizes & Rewards' },
     { key: 'rules', label: 'Rules' },
     { key: 'leaderboard', label: 'Leaderboard' },
@@ -647,10 +648,12 @@ export default function EventDetailPage() {
           {/* TAB 2: ROUNDS & TIMELINE */}
           {activeTab === 'rounds' && (
             <div className="bg-white/[0.02] border border-white/[0.06] rounded-2xl p-6 flex flex-col gap-6">
-              <h2 className="text-xs font-bold text-white/30 uppercase tracking-widest">Competition Rounds & Schedule</h2>
+              <h2 className="text-xs font-bold text-white/30 uppercase tracking-widest">
+                {isCodingContest ? 'Contest Schedule & Timeline' : 'Competition Rounds & Schedule'}
+              </h2>
 
-              {/* Custom Multi-Stage Rounds */}
-              {event.rounds_json && event.rounds_json.length > 0 ? (
+              {/* Multi-Stage Rounds (Hackathons only) */}
+              {!isCodingContest && event.rounds_json && event.rounds_json.length > 0 ? (
                 <div className="flex flex-col gap-4">
                   {event.rounds_json.map((round, idx) => {
                     const rStart = round.starts_at ? new Date(round.starts_at) : null;
@@ -707,7 +710,7 @@ export default function EventDetailPage() {
                 </div>
               ) : event.timeline_json && event.timeline_json.length > 0 ? (
                 <div className="relative flex flex-col gap-0 pl-4">
-                  <div className="absolute left-6 top-2 bottom-2 w-px bg-gradient-to-b from-[#E873C3]/60 via-white/10 to-transparent" />
+                  <div className="absolute left-6 top-2 bottom-2 w-px bg-gradient-to-b from-[#4ECDC4]/60 via-white/10 to-transparent" />
                   {event.timeline_json.map((entry, i) => {
                     const isPast = entry.date ? new Date() >= new Date(entry.date) : entry.done;
                     return (
@@ -715,7 +718,7 @@ export default function EventDetailPage() {
                         <div
                           className="absolute left-1.5 top-0.5 w-3.5 h-3.5 rounded-full border-2 flex items-center justify-center"
                           style={isPast
-                            ? { background: '#E873C3', borderColor: '#E873C3', boxShadow: '0 0 10px rgba(232,115,195,0.6)' }
+                            ? { background: '#4ECDC4', borderColor: '#4ECDC4', boxShadow: '0 0 10px rgba(78,205,196,0.6)' }
                             : { background: '#06020f', borderColor: 'rgba(255,255,255,0.2)' }
                           }
                         />
@@ -732,7 +735,20 @@ export default function EventDetailPage() {
                   })}
                 </div>
               ) : (
-                <p className="text-white/30 text-sm">No specific rounds details configured.</p>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <div className="p-4 bg-white/[0.02] border border-white/[0.06] rounded-xl flex flex-col gap-1">
+                    <span className="text-xs font-bold text-white/40 uppercase">Starts At</span>
+                    <span className="text-sm font-bold text-white">{event.starts_at ? new Date(event.starts_at).toLocaleString('en-IN', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'TBA'}</span>
+                  </div>
+                  <div className="p-4 bg-white/[0.02] border border-white/[0.06] rounded-xl flex flex-col gap-1">
+                    <span className="text-xs font-bold text-white/40 uppercase">Ends At</span>
+                    <span className="text-sm font-bold text-white">{event.ends_at ? new Date(event.ends_at).toLocaleString('en-IN', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'TBA'}</span>
+                  </div>
+                  <div className="p-4 bg-white/[0.02] border border-white/[0.06] rounded-xl flex flex-col gap-1">
+                    <span className="text-xs font-bold text-white/40 uppercase">Registration Deadline</span>
+                    <span className="text-sm font-bold text-white">{event.registration_deadline ? new Date(event.registration_deadline).toLocaleString('en-IN', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'Open'}</span>
+                  </div>
+                </div>
               )}
             </div>
           )}
