@@ -408,25 +408,61 @@ function CodingPanel({
     return () => { document.removeEventListener('mousemove', onMove); document.removeEventListener('mouseup', onUp); };
   }, []);
 
-  const handleRun = useCallback(() => {
+  const handleRun = useCallback(async () => {
     if (runningCode || !code.trim()) return;
     setRunningCode(true);
     setActiveTab('tests');
-    setTimeout(() => {
-      const passed = code.includes('cout') || code.includes('print') || code.includes('System.out') || code.includes('console.log') || code.includes('return');
-      let log = `[CosmoDex Runner]\nCompiling ${language.toUpperCase()}...\n\n`;
-      const results: TestResultItem[] = sampleCases.map((tc, i) => {
-        const exp = tc.output?.trim() || '';
-        const actual = passed ? exp : 'Execution returned no output.';
-        log += `Case #${i + 1}\nInput: ${tc.input}\nExpected: ${exp}\nActual: ${actual}\n${passed ? '✓ PASSED' : '❌ FAILED'}\n\n`;
-        return { testIndex: i + 1, input: tc.input, expectedOutput: exp, actualOutput: actual, passed };
-      });
-      if (results.length === 0) {
-        log += `Stdin: ${customStdin || 'None'}\nOutput: Execution completed.\n`;
+    try {
+      let log = `[Judge0 Runner] Compiling & Executing ${language.toUpperCase()}...\n\n`;
+      let totalTime = 0;
+      const testCasesToRun = sampleCases.length > 0
+        ? sampleCases
+        : [{ input: customStdin || '', output: '', isPublic: true }];
+
+      const results: TestResultItem[] = [];
+
+      for (let i = 0; i < testCasesToRun.length; i++) {
+        const tc = testCasesToRun[i];
+        const res = await fetch('/api/judge0/execute', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            source_code: code,
+            language,
+            stdin: tc.input,
+            expected_output: tc.output,
+          }),
+        });
+        const data = await res.json();
+        const passed = Boolean(data.passed);
+        const actual = data.stdout || data.stderr || 'No output.';
+        if (data.time) totalTime += parseFloat(data.time) * 1000;
+
+        log += `Case #${i + 1}: ${passed ? '✓ PASSED' : '❌ FAILED'}\nInput: ${tc.input || '(empty)'}\nExpected: ${tc.output || '(any)'}\nActual: ${actual}\n\n`;
+        results.push({
+          testIndex: i + 1,
+          input: tc.input,
+          expectedOutput: tc.output,
+          actualOutput: actual,
+          passed,
+        });
       }
-      setTerminalOutput({ status: 'SUCCESS', stdout: log, executionTimeMs: Math.floor(Math.random() * 30) + 8, testResults: results });
+
+      const allPassed = results.every(r => r.passed);
+      setTerminalOutput({
+        status: allPassed ? 'SUCCESS' : 'ERROR',
+        stdout: log,
+        executionTimeMs: Math.round(totalTime) || 15,
+        testResults: results,
+      });
+    } catch {
+      setTerminalOutput({
+        status: 'ERROR',
+        stdout: 'Network error executing code.',
+      });
+    } finally {
       setRunningCode(false);
-    }, 700);
+    }
   }, [runningCode, code, language, sampleCases, customStdin]);
 
   return (
