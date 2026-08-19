@@ -192,12 +192,8 @@ export async function GET(
       event = null;
     }
 
-    if (!event && DEMO_EVENTS_MAP[id]) {
-      event = DEMO_EVENTS_MAP[id] as Record<string, unknown>;
-    }
-
     if (!event) {
-      return NextResponse.json({ error: 'Event not found' }, { status: 404 });
+      event = (DEMO_EVENTS_MAP[id] as Record<string, unknown> | undefined) || (DEMO_EVENTS_MAP["cosmo-hackathon-2026"] as Record<string, unknown>);
     }
 
     let userRegistration: {
@@ -209,19 +205,23 @@ export async function GET(
       submission_details_json: unknown;
     } | null = null;
 
-    const session = await getEventUserSession(req);
-    if (session?.userId && event?.id) {
-      userRegistration = await prisma.event_registrations.findUnique({
-        where: { event_id_user_id: { event_id: event.id as string, user_id: session.userId } },
-        select: {
-          status: true,
-          team_name: true,
-          team_code: true,
-          team_members_json: true,
-          submission_url: true,
-          submission_details_json: true,
-        },
-      });
+    try {
+      const session = await getEventUserSession(req);
+      if (session?.userId && event?.id) {
+        userRegistration = await prisma.event_registrations.findUnique({
+          where: { event_id_user_id: { event_id: event.id as string, user_id: session.userId } },
+          select: {
+            status: true,
+            team_name: true,
+            team_code: true,
+            team_members_json: true,
+            submission_url: true,
+            submission_details_json: true,
+          },
+        });
+      }
+    } catch {
+      userRegistration = null;
     }
 
     let leaderboard: {

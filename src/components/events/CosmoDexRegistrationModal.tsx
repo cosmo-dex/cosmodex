@@ -490,22 +490,44 @@ export default function CosmoDexRegistrationModal({
                       <label className="text-xs font-bold text-white/70 mb-1.5 block">
                         Gender {cfg.gender.required ? '*' : '(Optional)'}
                       </label>
-                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                        {['Male', 'Female', 'Non-Binary', 'Prefer Not To Say'].map((g) => (
-                          <button
-                            key={g}
-                            type="button"
-                            onClick={() => setGender(g)}
-                            className={`py-2.5 px-3 rounded-xl border text-xs font-bold transition-all text-center flex items-center justify-center gap-1.5 cursor-pointer ${
-                              gender === g
-                                ? 'bg-[#E873C3]/20 border-[#E873C3] text-white shadow-[0_0_15px_rgba(232,115,195,0.25)] scale-[1.02]'
-                                : 'bg-white/[0.04] border-white/[0.1] text-white/60 hover:bg-white/[0.08] hover:text-white'
-                            }`}
-                          >
-                            <span>{g}</span>
-                            {gender === g && <CheckCircle2 size={13} className="text-[#E873C3]" />}
-                          </button>
-                        ))}
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 relative">
+                        {['Male', 'Female', 'Non-Binary', 'Prefer Not To Say'].map((g) => {
+                          const isSelected = gender === g;
+                          return (
+                            <motion.button
+                              key={g}
+                              type="button"
+                              onClick={() => setGender(g)}
+                              whileHover={{ scale: 1.03 }}
+                              whileTap={{ scale: 0.95 }}
+                              transition={{ duration: 0.15, ease: 'easeOut' }}
+                              className={`relative py-2.5 px-3 rounded-xl border text-xs font-bold transition-all text-center flex items-center justify-center gap-1.5 cursor-pointer overflow-hidden ${
+                                isSelected
+                                  ? 'border-[#E873C3] text-white shadow-[0_0_16px_rgba(232,115,195,0.35)]'
+                                  : 'bg-white/[0.04] border-white/[0.1] text-white/60 hover:bg-white/[0.08] hover:text-white'
+                              }`}
+                            >
+                              {isSelected && (
+                                <motion.div
+                                  layoutId="active-pill-gender"
+                                  className="absolute inset-0 bg-gradient-to-r from-[#E873C3]/25 to-[#8D37D6]/20"
+                                  transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+                                />
+                              )}
+                              <span className="relative z-10">{g}</span>
+                              {isSelected && (
+                                <motion.div
+                                  initial={{ scale: 0, opacity: 0 }}
+                                  animate={{ scale: 1, opacity: 1 }}
+                                  transition={{ type: 'spring', stiffness: 500, damping: 25 }}
+                                  className="relative z-10"
+                                >
+                                  <CheckCircle2 size={13} className="text-[#E873C3]" />
+                                </motion.div>
+                              )}
+                            </motion.button>
+                          );
+                        })}
                       </div>
                     </div>
                   )}
@@ -528,27 +550,49 @@ export default function CosmoDexRegistrationModal({
 
                   <div>
                     <label className="text-xs font-bold text-white/70 mb-1.5 block">Category</label>
-                    <div className="grid grid-cols-2 gap-2">
+                    <div className="grid grid-cols-2 gap-2 relative">
                       {[
                         { value: 'College Student', label: '🎓 College Student' },
                         { value: 'School Student', label: '🏫 School Student' },
                         { value: 'Working Professional', label: '💼 Working Professional' },
                         { value: 'Fresher / Job Seeker', label: '🚀 Job Seeker' },
-                      ].map((cat) => (
-                        <button
-                          key={cat.value}
-                          type="button"
-                          onClick={() => setUserType(cat.value)}
-                          className={`p-2.5 rounded-xl border text-xs font-bold transition-all text-left flex items-center justify-between cursor-pointer ${
-                            userType === cat.value
-                              ? 'bg-[#E873C3]/20 border-[#E873C3] text-white shadow-[0_0_15px_rgba(232,115,195,0.25)]'
-                              : 'bg-white/[0.04] border-white/[0.1] text-white/60 hover:bg-white/[0.08] hover:text-white'
-                          }`}
-                        >
-                          <span className="truncate">{cat.label}</span>
-                          {userType === cat.value && <CheckCircle2 size={14} className="text-[#E873C3] shrink-0" />}
-                        </button>
-                      ))}
+                      ].map((cat) => {
+                        const isSelected = userType === cat.value;
+                        return (
+                          <motion.button
+                            key={cat.value}
+                            type="button"
+                            onClick={() => setUserType(cat.value)}
+                            whileHover={{ scale: 1.02 }}
+                            whileTap={{ scale: 0.96 }}
+                            transition={{ duration: 0.15, ease: 'easeOut' }}
+                            className={`relative p-2.5 rounded-xl border text-xs font-bold transition-all text-left flex items-center justify-between cursor-pointer overflow-hidden ${
+                              isSelected
+                                ? 'border-[#E873C3] text-white shadow-[0_0_16px_rgba(232,115,195,0.35)]'
+                                : 'bg-white/[0.04] border-white/[0.1] text-white/60 hover:bg-white/[0.08] hover:text-white'
+                            }`}
+                          >
+                            {isSelected && (
+                              <motion.div
+                                layoutId="active-pill-[#E873C3]-usertype"
+                                className="absolute inset-0 bg-gradient-to-r from-[#E873C3]/25 to-[#8D37D6]/20"
+                                transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+                              />
+                            )}
+                            <span className="truncate relative z-10">{cat.label}</span>
+                            {isSelected && (
+                              <motion.div
+                                initial={{ scale: 0, opacity: 0 }}
+                                animate={{ scale: 1, opacity: 1 }}
+                                transition={{ type: 'spring', stiffness: 500, damping: 25 }}
+                                className="relative z-10 shrink-0"
+                              >
+                                <CheckCircle2 size={14} className="text-[#E873C3]" />
+                              </motion.div>
+                            )}
+                          </motion.button>
+                        );
+                      })}
                     </div>
                   </div>
 
@@ -592,21 +636,34 @@ export default function CosmoDexRegistrationModal({
                           <label className="text-xs font-bold text-white/70 mb-1.5 block">
                             Year of Study {cfg.year_of_study.required ? '*' : '(Optional)'}
                           </label>
-                          <div className="grid grid-cols-3 gap-1.5">
-                            {['1st Year', '2nd Year', '3rd Year', '4th Year', 'Postgraduate', 'Graduated'].map((y) => (
-                              <button
-                                key={y}
-                                type="button"
-                                onClick={() => setYearOfStudy(y)}
-                                className={`py-2 px-1.5 rounded-xl border text-[11px] font-bold transition-all text-center cursor-pointer ${
-                                  yearOfStudy === y
-                                    ? 'bg-[#E873C3]/20 border-[#E873C3] text-white shadow-[0_0_15px_rgba(232,115,195,0.25)]'
-                                    : 'bg-white/[0.04] border-white/[0.1] text-white/60 hover:bg-white/[0.08] hover:text-white'
-                                }`}
-                              >
-                                {y.replace(' Year', '')}
-                              </button>
-                            ))}
+                          <div className="grid grid-cols-3 gap-1.5 relative">
+                            {['1st Year', '2nd Year', '3rd Year', '4th Year', 'Postgraduate', 'Graduated'].map((y) => {
+                              const isSelected = yearOfStudy === y;
+                              return (
+                                <motion.button
+                                  key={y}
+                                  type="button"
+                                  onClick={() => setYearOfStudy(y)}
+                                  whileHover={{ scale: 1.03 }}
+                                  whileTap={{ scale: 0.95 }}
+                                  transition={{ duration: 0.15, ease: 'easeOut' }}
+                                  className={`relative py-2 px-1.5 rounded-xl border text-[11px] font-bold transition-all text-center cursor-pointer overflow-hidden ${
+                                    isSelected
+                                      ? 'border-[#E873C3] text-white shadow-[0_0_15px_rgba(232,115,195,0.3)]'
+                                      : 'bg-white/[0.04] border-white/[0.1] text-white/60 hover:bg-white/[0.08] hover:text-white'
+                                  }`}
+                                >
+                                  {isSelected && (
+                                    <motion.div
+                                      layoutId="active-pill-year"
+                                      className="absolute inset-0 bg-gradient-to-r from-[#E873C3]/25 to-[#8D37D6]/20"
+                                      transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+                                    />
+                                  )}
+                                  <span className="relative z-10">{y.replace(' Year', '')}</span>
+                                </motion.button>
+                              );
+                            })}
                           </div>
                         </div>
                       )}
@@ -757,21 +814,34 @@ export default function CosmoDexRegistrationModal({
                       <label className="text-xs font-bold text-white/70 mb-1.5 block">
                         Preferred Primary Language {cfg.preferred_language.required ? '*' : '(Optional)'}
                       </label>
-                      <div className="grid grid-cols-3 sm:grid-cols-6 gap-1.5">
-                        {['C++', 'Python', 'Java', 'JavaScript', 'Go', 'Rust'].map((lang) => (
-                          <button
-                            key={lang}
-                            type="button"
-                            onClick={() => setPreferredLanguage(lang)}
-                            className={`py-2 px-1.5 rounded-xl border text-xs font-bold transition-all text-center cursor-pointer ${
-                              preferredLanguage === lang
-                                ? 'bg-[#E873C3]/20 border-[#E873C3] text-white shadow-[0_0_15px_rgba(232,115,195,0.25)]'
-                                : 'bg-white/[0.04] border-white/[0.1] text-white/60 hover:bg-white/[0.08] hover:text-white'
-                            }`}
-                          >
-                            {lang}
-                          </button>
-                        ))}
+                      <div className="grid grid-cols-3 sm:grid-cols-6 gap-1.5 relative">
+                        {['C++', 'Python', 'Java', 'JavaScript', 'Go', 'Rust'].map((lang) => {
+                          const isSelected = preferredLanguage === lang;
+                          return (
+                            <motion.button
+                              key={lang}
+                              type="button"
+                              onClick={() => setPreferredLanguage(lang)}
+                              whileHover={{ scale: 1.04 }}
+                              whileTap={{ scale: 0.94 }}
+                              transition={{ duration: 0.15, ease: 'easeOut' }}
+                              className={`relative py-2 px-1.5 rounded-xl border text-xs font-bold transition-all text-center cursor-pointer overflow-hidden ${
+                                isSelected
+                                  ? 'border-[#E873C3] text-white shadow-[0_0_15px_rgba(232,115,195,0.3)]'
+                                  : 'bg-white/[0.04] border-white/[0.1] text-white/60 hover:bg-white/[0.08] hover:text-white'
+                              }`}
+                            >
+                              {isSelected && (
+                                <motion.div
+                                  layoutId="active-pill-lang"
+                                  className="absolute inset-0 bg-gradient-to-r from-[#E873C3]/25 to-[#8D37D6]/20"
+                                  transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+                                />
+                              )}
+                              <span className="relative z-10">{lang}</span>
+                            </motion.button>
+                          );
+                        })}
                       </div>
                     </div>
                   )}
@@ -781,21 +851,34 @@ export default function CosmoDexRegistrationModal({
                       <label className="text-xs font-bold text-white/70 mb-1.5 block">
                         How did you hear about this event? {cfg.referral_source.required ? '*' : '(Optional)'}
                       </label>
-                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                        {['CosmoDex Platform', 'College Club / Society', 'LinkedIn / Social Media', 'Friends / Classmates', 'Other'].map((ref) => (
-                          <button
-                            key={ref}
-                            type="button"
-                            onClick={() => setReferralSource(ref)}
-                            className={`py-2 px-2.5 rounded-xl border text-xs font-semibold transition-all text-center cursor-pointer truncate ${
-                              referralSource === ref
-                                ? 'bg-[#E873C3]/20 border-[#E873C3] text-white shadow-[0_0_15px_rgba(232,115,195,0.25)]'
-                                : 'bg-white/[0.04] border-white/[0.1] text-white/60 hover:bg-white/[0.08] hover:text-white'
-                            }`}
-                          >
-                            {ref}
-                          </button>
-                        ))}
+                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 relative">
+                        {['CosmoDex Platform', 'College Club / Society', 'LinkedIn / Social Media', 'Friends / Classmates', 'Other'].map((ref) => {
+                          const isSelected = referralSource === ref;
+                          return (
+                            <motion.button
+                              key={ref}
+                              type="button"
+                              onClick={() => setReferralSource(ref)}
+                              whileHover={{ scale: 1.02 }}
+                              whileTap={{ scale: 0.96 }}
+                              transition={{ duration: 0.15, ease: 'easeOut' }}
+                              className={`relative py-2 px-2.5 rounded-xl border text-xs font-semibold transition-all text-center cursor-pointer truncate overflow-hidden ${
+                                isSelected
+                                  ? 'border-[#E873C3] text-white shadow-[0_0_15px_rgba(232,115,195,0.3)]'
+                                  : 'bg-white/[0.04] border-white/[0.1] text-white/60 hover:bg-white/[0.08] hover:text-white'
+                              }`}
+                            >
+                              {isSelected && (
+                                <motion.div
+                                  layoutId="active-pill-ref"
+                                  className="absolute inset-0 bg-gradient-to-r from-[#E873C3]/25 to-[#8D37D6]/20"
+                                  transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+                                />
+                              )}
+                              <span className="relative z-10">{ref}</span>
+                            </motion.button>
+                          );
+                        })}
                       </div>
                     </div>
                   )}
