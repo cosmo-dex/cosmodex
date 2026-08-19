@@ -217,7 +217,10 @@ export default function SubmitProjectPage() {
     }
   };
 
-  const handleSubmitContest = async () => {
+  const handleSubmitContest = async (
+    questionTimes?: Record<string, number>,
+    totalTimeSeconds?: number,
+  ) => {
     setSubmitting(true);
     setMsg('');
     try {
@@ -228,6 +231,8 @@ export default function SubmitProjectPage() {
           submission_url: `${typeof window !== 'undefined' ? window.location.origin : ''}/events/${eventId}/submission`,
           mcqAnswers,
           codeAnswers,
+          questionTimes: questionTimes ?? {},
+          totalTimeSeconds: totalTimeSeconds ?? 0,
           submitted_at: new Date().toISOString(),
         }),
       });

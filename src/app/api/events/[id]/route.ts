@@ -75,20 +75,32 @@ export async function GET(
       });
     }
 
-    let leaderboard: { rank: number | null; score: number; username: string; avatar_url: string | null }[] = [];
+    let leaderboard: {
+      rank: number | null;
+      score: number;
+      username: string;
+      avatar_url: string | null;
+      totalTimeSeconds?: number;
+      correctCount?: number;
+    }[] = [];
     if (event.status === 'ongoing' || event.status === 'ended') {
       const lb = await prisma.event_leaderboard.findMany({
         where: { event_id: event.id },
-        orderBy: { score: 'desc' },
+        orderBy: [{ rank: 'asc' }, { score: 'desc' }],
         take: 50,
         include: { users: { select: { username: true, avatar_url: true } } },
       });
-      leaderboard = lb.map((entry) => ({
-        rank: entry.rank,
-        score: entry.score,
-        username: entry.users.username,
-        avatar_url: entry.users.avatar_url,
-      }));
+      leaderboard = lb.map((entry) => {
+        const meta = (entry.metadata_json as Record<string, unknown>) || {};
+        return {
+          rank: entry.rank,
+          score: entry.score,
+          username: entry.users.username,
+          avatar_url: entry.users.avatar_url,
+          totalTimeSeconds: typeof meta.totalTimeSeconds === 'number' ? meta.totalTimeSeconds : undefined,
+          correctCount: typeof meta.correctCount === 'number' ? meta.correctCount : undefined,
+        };
+      });
     }
 
     const subCfg = event.submission_config as Record<string, unknown> | null;
