@@ -4,7 +4,6 @@ import { useEffect, useMemo, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Brain, Code2, Globe, Trophy } from "lucide-react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
 import SmoothScroll from "@/components/landing/SmoothScroll";
 import { Podium } from "./Podium";
 import { RankTable } from "./RankTable";

@@ -10,7 +10,7 @@ import {
   Zap, Star, Hammer, BookOpen, CheckCircle, AlertCircle,
   UserCheck, Wrench, ArrowLeft, ExternalLink,
   Flame, Award, ShieldCheck, Copy, Check, Send, Sparkles,
-  UsersRound, Globe, Medal, Layers
+  UsersRound, Globe, Medal
 } from 'lucide-react';
 import CosmoDexRegistrationModal, { CosmoDexRegistrationDetails, CosmoDexRegistrationFieldsConfig } from '@/components/events/CosmoDexRegistrationModal';
 

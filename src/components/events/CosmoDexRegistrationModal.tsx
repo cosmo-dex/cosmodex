@@ -142,6 +142,7 @@ export default function CosmoDexRegistrationModal({
         const saved = localStorage.getItem('cosmodex_saved_candidate_profile');
         if (saved) {
           const parsed = JSON.parse(saved);
+          /* eslint-disable react-hooks/set-state-in-effect */
           if (parsed.full_name && !initialName) setFullName(parsed.full_name);
           if (parsed.email && !initialEmail) setEmail(parsed.email);
           if (parsed.phone) setPhone(parsed.phone);
@@ -159,6 +160,7 @@ export default function CosmoDexRegistrationModal({
           if (parsed.coding_handle) setCodingHandle(parsed.coding_handle);
           if (parsed.preferred_language) setPreferredLanguage(parsed.preferred_language);
           if (parsed.referral_source) setReferralSource(parsed.referral_source);
+          /* eslint-enable react-hooks/set-state-in-effect */
         }
       } catch (e) {
         console.error('Failed to load saved candidate profile cache:', e);

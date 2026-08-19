@@ -10,7 +10,7 @@ import {
   CalendarDays, Trophy, Users, Clock, Search,
   Zap, Hammer, BookOpen, Star, ChevronRight, ChevronDown, Check,
   UserCheck, UsersRound, Flame, Lock, Globe, BadgeCheck, Sparkles, RefreshCw, X, RotateCcw,
-  Rocket, Terminal, Cpu, Layers, CheckCircle2, LucideIcon
+  Rocket, Terminal, Layers, CheckCircle2, LucideIcon
 } from 'lucide-react';
 
 interface EventCard {
