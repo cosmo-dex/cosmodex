@@ -2,11 +2,12 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
+import Link from 'next/link';
 import AdminLayout from '@/components/admin/AdminLayout';
 import {
   CalendarDays, Users, Trophy, Settings, ArrowLeft,
   Save, Zap, Search, Ban, RotateCcw, Plus, Trash2,
-  ExternalLink, FileText, Mail, Download, X, Send, Copy,
+  ExternalLink, FileText, Download, X, Send, Copy,
   Sparkles, Code2, ListChecks
 } from 'lucide-react';
 
@@ -230,12 +231,7 @@ export default function EventControlPage() {
     document.body.removeChild(link);
   };
 
-  // Broadcast
-  const [showBroadcastModal, setShowBroadcastModal] = useState(false);
-  const [broadcastSubject, setBroadcastSubject] = useState('');
-  const [broadcastMessage, setBroadcastMessage] = useState('');
-  const [sendingBroadcast, setSendingBroadcast] = useState(false);
-  const [broadcastStatus, setBroadcastStatus] = useState('');
+
 
   // Leaderboard
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
@@ -372,14 +368,6 @@ export default function EventControlPage() {
     fetchEvent();
   };
 
-  const handleStartEventNow = async () => {
-    await fetch(`/api/admin/super/events/${eventId}`, {
-      method: 'PATCH', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ status: 'ongoing', start_now: true }),
-    });
-    fetchEvent();
-  };
-
   const handleStartRegistrationNow = async () => {
     await fetch(`/api/admin/super/events/${eventId}`, {
       method: 'PATCH', headers: { 'Content-Type': 'application/json' },
@@ -392,14 +380,6 @@ export default function EventControlPage() {
     await fetch(`/api/admin/super/events/${eventId}`, {
       method: 'PATCH', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ registration_open: false }),
-    });
-    fetchEvent();
-  };
-
-  const handleEndEventNow = async () => {
-    await fetch(`/api/admin/super/events/${eventId}`, {
-      method: 'PATCH', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ status: 'ended', registration_open: false }),
     });
     fetchEvent();
   };
@@ -466,24 +446,7 @@ export default function EventControlPage() {
     fetchLeaderboard();
   };
 
-  const handleSendBroadcast = async () => {
-    if (!broadcastSubject.trim() || !broadcastMessage.trim()) return;
-    setSendingBroadcast(true);
-    setBroadcastStatus('');
-    try {
-      const res = await fetch(`/api/admin/super/events/${eventId}`, {
-        method: 'PATCH', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ notify_participants: true, update_subject: broadcastSubject, update_message: broadcastMessage }),
-      });
-      if (res.ok) {
-        setBroadcastStatus('🎉 Email broadcast sent to all registered participants!');
-        setTimeout(() => { setShowBroadcastModal(false); setBroadcastSubject(''); setBroadcastMessage(''); setBroadcastStatus(''); }, 2000);
-      } else {
-        setBroadcastStatus('Failed to send broadcast.');
-      }
-    } catch { setBroadcastStatus('Network error'); }
-    finally { setSendingBroadcast(false); }
-  };
+
 
   const handleSettingsSave = async () => {
     setSettingsSaving(true);
@@ -569,38 +532,6 @@ export default function EventControlPage() {
               </div>
               {event.tagline && <p className="text-sm text-white/40">{event.tagline}</p>}
             </div>
-
-            {/* Quick Action Buttons */}
-            <div className="flex items-center gap-2 flex-wrap">
-              <button onClick={() => setShowBroadcastModal(true)}
-                className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold text-white bg-[#8D37D6]/20 border border-[#8D37D6]/40 hover:bg-[#8D37D6]/30 transition-all">
-                <Mail size={13} /> Broadcast Email
-              </button>
-
-              {event.status !== 'ongoing' ? (
-                <button onClick={handleStartEventNow}
-                  className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-black text-white bg-gradient-to-r from-[#E873C3] to-[#8D37D6] hover:opacity-90 shadow-lg shadow-[#E873C3]/20 transition-all">
-                  <Zap size={13} /> Start Event NOW (Go LIVE)
-                </button>
-              ) : (
-                <button onClick={handleEndEventNow}
-                  className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold text-white bg-[#F5A623]/20 border border-[#F5A623]/40 hover:bg-[#F5A623]/30 transition-all">
-                  🏁 End Event NOW
-                </button>
-              )}
-
-              {!event.registration_open ? (
-                <button onClick={handleStartRegistrationNow}
-                  className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-black text-black bg-[#3DCB7F] hover:bg-[#32b870] shadow-lg shadow-[#3DCB7F]/20 transition-all">
-                  🔓 Start Registration NOW
-                </button>
-              ) : (
-                <button onClick={handleCloseRegistrationNow}
-                  className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold text-white bg-red-500/20 border border-red-500/40 hover:bg-red-500/30 transition-all">
-                  🔒 End Registration NOW
-                </button>
-              )}
-            </div>
           </div>
         </div>
 
@@ -619,19 +550,35 @@ export default function EventControlPage() {
         {activeTab === 'overview' && (
           <div className="flex flex-col gap-4">
 
-            {/* Event & Registration Control Center */}
-            <div className="bg-gradient-to-r from-[#120a28] to-[#0a0618] border border-white/[0.1] rounded-2xl p-6 flex flex-col gap-4 shadow-xl">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-white/[0.08]">
+            {/* Unified Event Lifecycle Controls */}
+            <div className="bg-white/[0.02] border border-white/[0.08] rounded-2xl p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-lg">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: sc.border, color: sc.text }}>
+                  <Zap size={18} />
+                </div>
                 <div>
-                  <h2 className="text-sm font-black text-white uppercase tracking-wider flex items-center gap-2">
-                    <Zap size={16} className="text-[#E873C3]" /> Event & Registration Lifecycle Control Center
-                  </h2>
-                  <p className="text-xs text-white/50 mt-0.5">
-                    Start or end registration, set the event LIVE, or override event status at any time.
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-bold text-white/50 uppercase tracking-wider">Event Status:</span>
+                    <span className="px-2.5 py-0.5 rounded-full text-xs font-extrabold uppercase" style={{ color: sc.text, background: sc.bg, border: `1px solid ${sc.border}` }}>
+                      {event.status === 'ongoing' ? '🔴 LIVE NOW' : event.status}
+                    </span>
+                  </div>
+                  <p className="text-xs text-white/40 mt-0.5">
+                    {event.status === 'ongoing'
+                      ? 'Competition is actively running. Participants can access the arena and submit solutions.'
+                      : event.status === 'published'
+                        ? 'Event is published and visible to participants on the events catalog.'
+                        : event.status === 'ended'
+                          ? 'Event has concluded. Submissions are closed.'
+                          : 'Event is in draft mode.'}
                   </p>
                 </div>
-                <div className="flex items-center gap-2">
-                  <span className="text-xs font-bold text-white/40">Status Override:</span>
+              </div>
+
+              <div className="flex items-center gap-3 shrink-0 flex-wrap">
+                {/* Status Selector */}
+                <div className="flex items-center gap-1.5">
+                  <span className="text-xs font-bold text-white/40">Status:</span>
                   <select
                     value={event.status}
                     onChange={(e) => handleEventStatusChange(e.target.value)}
@@ -644,77 +591,17 @@ export default function EventControlPage() {
                     <option value="archived">Archived</option>
                   </select>
                 </div>
-              </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {/* 1. Registration Control Box */}
-                <div className="bg-white/[0.02] border border-white/[0.06] rounded-xl p-4 flex flex-col gap-3">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold text-white/60 uppercase tracking-wider">Candidate Registration</span>
-                    <span className={`px-2.5 py-0.5 rounded-full text-[11px] font-extrabold uppercase ${event.registration_open ? 'text-[#3DCB7F] bg-[#3DCB7F]/10 border border-[#3DCB7F]/30' : 'text-red-400 bg-red-500/10 border border-red-500/30'
-                      }`}>
-                      {event.registration_open ? '🔓 Open for Signups' : '🔒 Closed'}
-                    </span>
-                  </div>
-
-                  <p className="text-xs text-white/40 leading-relaxed">
-                    {event.registration_open
-                      ? 'Candidates can currently view the event page and submit registration details.'
-                      : 'Candidate registrations are locked. Users cannot register until opened.'}
-                  </p>
-
-                  <div className="flex items-center gap-2 mt-1">
-                    {!event.registration_open ? (
-                      <button
-                        onClick={handleStartRegistrationNow}
-                        className="flex-1 py-2.5 px-4 rounded-xl text-xs font-black text-black bg-[#3DCB7F] hover:bg-[#32b870] shadow-lg shadow-[#3DCB7F]/20 transition-all flex items-center justify-center gap-1.5"
-                      >
-                        🔓 Start / Open Registration NOW
-                      </button>
-                    ) : (
-                      <button
-                        onClick={handleCloseRegistrationNow}
-                        className="flex-1 py-2.5 px-4 rounded-xl text-xs font-black text-white bg-red-500/20 border border-red-500/40 hover:bg-red-500/30 transition-all flex items-center justify-center gap-1.5"
-                      >
-                        🔒 End / Close Registration NOW
-                      </button>
-                    )}
-                  </div>
-                </div>
-
-                {/* 2. Event Live Status Control Box */}
-                <div className="bg-white/[0.02] border border-white/[0.06] rounded-xl p-4 flex flex-col gap-3">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold text-white/60 uppercase tracking-wider">Event Execution State</span>
-                    <span className="px-2.5 py-0.5 rounded-full text-[11px] font-extrabold uppercase" style={{ color: sc.text, background: sc.bg, border: `1px solid ${sc.border}` }}>
-                      {event.status === 'ongoing' ? '🔴 LIVE NOW' : event.status}
-                    </span>
-                  </div>
-
-                  <p className="text-xs text-white/40 leading-relaxed">
-                    {event.status === 'ongoing'
-                      ? 'The event is LIVE. Participants can access contest arenas, submit projects, or attempt questions.'
-                      : 'Setting event LIVE activates live arenas, timers, and submission portals instantly.'}
-                  </p>
-
-                  <div className="flex items-center gap-2 mt-1">
-                    {event.status !== 'ongoing' ? (
-                      <button
-                        onClick={handleStartEventNow}
-                        className="flex-1 py-2.5 px-4 rounded-xl text-xs font-black text-white bg-gradient-to-r from-[#E873C3] to-[#8D37D6] hover:opacity-90 shadow-lg shadow-[#E873C3]/20 transition-all flex items-center justify-center gap-1.5"
-                      >
-                        ⚡ Start Event NOW (Go LIVE)
-                      </button>
-                    ) : (
-                      <button
-                        onClick={handleEndEventNow}
-                        className="flex-1 py-2.5 px-4 rounded-xl text-xs font-black text-white bg-[#F5A623]/20 border border-[#F5A623]/40 hover:bg-[#F5A623]/30 transition-all flex items-center justify-center gap-1.5"
-                      >
-                        🏁 End Event NOW
-                      </button>
-                    )}
-                  </div>
-                </div>
+                {/* Single Registration Toggle Button */}
+                <button
+                  onClick={() => event.registration_open ? handleCloseRegistrationNow() : handleStartRegistrationNow()}
+                  className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${event.registration_open
+                      ? 'text-red-400 bg-red-500/10 border border-red-500/30 hover:bg-red-500/20'
+                      : 'text-[#3DCB7F] bg-[#3DCB7F]/10 border border-[#3DCB7F]/30 hover:bg-[#3DCB7F]/20'
+                    }`}
+                >
+                  {event.registration_open ? '🔒 Close Registration' : '🔓 Open Registration'}
+                </button>
               </div>
             </div>
 
@@ -1518,7 +1405,7 @@ export default function EventControlPage() {
               </div>
 
               <div className="flex flex-col gap-4 overflow-y-auto pr-1 flex-1 text-xs">
-                
+
                 {/* 1. Submission Link / Target URL */}
                 <div className="bg-white/[0.02] border border-white/[0.08] rounded-2xl p-4 flex flex-col gap-2">
                   <span className="text-[10px] font-bold text-[#4ECDC4] uppercase tracking-wider">Submission Link / Target URL</span>
@@ -1547,7 +1434,7 @@ export default function EventControlPage() {
 
                 {/* 3. Submitted Code Answers */}
                 {inspectSubmissionReg.submission_details_json?.codeAnswers &&
-                Object.keys(inspectSubmissionReg.submission_details_json.codeAnswers as unknown as Record<string, string>).length > 0 ? (
+                  Object.keys(inspectSubmissionReg.submission_details_json.codeAnswers as unknown as Record<string, string>).length > 0 ? (
                   <div className="bg-white/[0.02] border border-white/[0.08] rounded-2xl p-4 flex flex-col gap-3">
                     <span className="text-[10px] font-bold text-[#3DCB7F] uppercase tracking-wider">
                       Submitted Coding Solutions ({Object.keys(inspectSubmissionReg.submission_details_json.codeAnswers as unknown as Record<string, string>).length})
@@ -1573,7 +1460,7 @@ export default function EventControlPage() {
 
                 {/* 4. Submitted MCQ Answers */}
                 {inspectSubmissionReg.submission_details_json?.mcqAnswers &&
-                Object.keys(inspectSubmissionReg.submission_details_json.mcqAnswers as unknown as Record<string, string>).length > 0 ? (
+                  Object.keys(inspectSubmissionReg.submission_details_json.mcqAnswers as unknown as Record<string, string>).length > 0 ? (
                   <div className="bg-white/[0.02] border border-white/[0.08] rounded-2xl p-4 flex flex-col gap-2">
                     <span className="text-[10px] font-bold text-[#F5A623] uppercase tracking-wider">
                       Submitted MCQ Answers ({Object.keys(inspectSubmissionReg.submission_details_json.mcqAnswers as unknown as Record<string, string>).length})
@@ -1782,9 +1669,8 @@ export default function EventControlPage() {
                   return (
                     <div
                       key={key}
-                      className={`p-3.5 rounded-xl border transition-all ${
-                        isEnabled ? 'bg-white/[0.03] border-white/[0.12]' : 'bg-white/[0.01] border-white/[0.05] opacity-60'
-                      }`}
+                      className={`p-3.5 rounded-xl border transition-all ${isEnabled ? 'bg-white/[0.03] border-white/[0.12]' : 'bg-white/[0.01] border-white/[0.05] opacity-60'
+                        }`}
                     >
                       <div className="flex items-center justify-between mb-1.5">
                         <span className="text-xs font-bold text-white">{label}</span>
@@ -1849,48 +1735,6 @@ export default function EventControlPage() {
         )}
       </div>
 
-      {/* BROADCAST MODAL */}
-      {showBroadcastModal && (
-        <div className="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-[#0c0818] border border-white/[0.12] rounded-3xl p-6 max-w-lg w-full flex flex-col gap-5 shadow-2xl relative">
-            <button onClick={() => setShowBroadcastModal(false)} className="absolute top-5 right-5 text-white/40 hover:text-white">✕</button>
-            <div>
-              <span className="text-xs font-bold text-[#E873C3] uppercase tracking-wider">Email Broadcast</span>
-              <h2 className="text-xl font-black text-white mt-0.5">Send Announcement to Participants</h2>
-              <p className="text-xs text-white/50 mt-1">This will be sent to all {event._count.event_registrations} registered participants of <strong className="text-white">{event.title}</strong>.</p>
-            </div>
-
-            {broadcastStatus && (
-              <div className={`p-3 rounded-xl text-xs font-bold ${broadcastStatus.startsWith('🎉') ? 'bg-[#3DCB7F]/10 border border-[#3DCB7F]/30 text-[#3DCB7F]' : 'bg-red-500/10 border border-red-500/30 text-red-400'}`}>
-                {broadcastStatus}
-              </div>
-            )}
-
-            <div className="flex flex-col gap-4">
-              <div>
-                <label className={lc}>Subject Line *</label>
-                <input value={broadcastSubject} onChange={e => setBroadcastSubject(e.target.value)}
-                  placeholder="e.g. Round 1 Starts Today" className={ic} />
-              </div>
-              <div>
-                <label className={lc}>Announcement Message *</label>
-                <textarea value={broadcastMessage} onChange={e => setBroadcastMessage(e.target.value)} rows={5}
-                  placeholder="Write the update message to send to participants..."
-                  className={ic + ' resize-none leading-relaxed'} />
-              </div>
-            </div>
-
-            <div className="flex justify-end gap-3 pt-2">
-              <button onClick={() => setShowBroadcastModal(false)} className="px-4 py-2.5 rounded-xl text-xs font-bold text-white/50 hover:text-white">Cancel</button>
-              <button onClick={handleSendBroadcast} disabled={sendingBroadcast || !broadcastSubject.trim() || !broadcastMessage.trim()}
-                className="px-6 py-2.5 rounded-xl text-xs font-bold text-white disabled:opacity-40 transition-all flex items-center gap-1.5"
-                style={{ background: 'linear-gradient(135deg, #E873C3, #8D37D6)', boxShadow: '0 4px 20px rgba(232,115,195,0.4)' }}>
-                {sendingBroadcast ? 'Sending...' : '✉️ Send Announcement →'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </AdminLayout>
   );
 }

@@ -97,16 +97,7 @@ export default function SuperAdminEventsPage() {
     fetchEvents();
   };
 
-  const handleToggleReg = async (id: string, currentOpen: boolean) => {
-    setActionLoading(id + 'reg');
-    await fetch(`/api/admin/super/events/${id}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ registration_open: !currentOpen, auto_publish: true }),
-    });
-    setActionLoading(null);
-    fetchEvents();
-  };
+
 
   const handleDelete = async (id: string) => {
     setActionLoading(id + 'delete');
@@ -117,7 +108,6 @@ export default function SuperAdminEventsPage() {
   };
 
   const statusGroups: Record<string, number> = {};
-  // Count across all (this is local, for UI summary pills)
   events.forEach(e => { statusGroups[e.status] = (statusGroups[e.status] ?? 0) + 1; });
 
   return (
@@ -231,44 +221,12 @@ export default function SuperAdminEventsPage() {
 
                     {/* Right: actions */}
                     <div className="flex items-center gap-2 shrink-0 flex-wrap">
-                      {/* Registration Toggle */}
-                      <button
-                        onClick={() => handleToggleReg(event.id, !!event.registration_open)}
-                        disabled={actionLoading === event.id + 'reg'}
-                        className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all disabled:opacity-50 ${event.registration_open
-                            ? 'text-red-400 bg-red-500/10 border border-red-500/30 hover:bg-red-500/20'
-                            : 'text-[#3DCB7F] bg-[#3DCB7F]/10 border border-[#3DCB7F]/30 hover:bg-[#3DCB7F]/20'
-                          }`}
-                        title={event.registration_open ? 'Close Registration' : 'Open Registration'}
-                      >
-                        {event.registration_open ? '🔒 Close Reg' : '🔓 Open Reg'}
-                      </button>
-
-                      {/* Go LIVE button */}
-                      {event.status !== 'ongoing' ? (
-                        <button
-                          onClick={() => handleStatusChange(event.id, 'ongoing', { start_now: true })}
-                          disabled={actionLoading === event.id + 'ongoing'}
-                          className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-black text-white bg-gradient-to-r from-[#E873C3] to-[#8D37D6] hover:opacity-90 transition-all disabled:opacity-50"
-                        >
-                          <Zap size={11} /> Go LIVE
-                        </button>
-                      ) : (
-                        <button
-                          onClick={() => handleStatusChange(event.id, 'ended', { registration_open: false })}
-                          disabled={actionLoading === event.id + 'ended'}
-                          className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-bold text-[#F5A623] bg-[#F5A623]/10 border border-[#F5A623]/30 hover:bg-[#F5A623]/20 transition-all disabled:opacity-50"
-                        >
-                          End Event
-                        </button>
-                      )}
-
-                      {/* Status Override Selector */}
+                      {/* Status Selector */}
                       <select
                         value={event.status}
                         onChange={(e) => handleStatusChange(event.id, e.target.value)}
                         disabled={actionLoading === event.id + event.status}
-                        className="bg-[#0e0a1c] text-white border border-white/[0.12] rounded-lg px-2 py-1 text-xs font-semibold focus:outline-none focus:border-[#E873C3] cursor-pointer"
+                        className="bg-[#0e0a1c] text-white border border-white/[0.12] rounded-lg px-2.5 py-1.5 text-xs font-semibold focus:outline-none focus:border-[#E873C3] cursor-pointer"
                       >
                         <option value="draft">Draft</option>
                         <option value="published">Published</option>
@@ -277,12 +235,12 @@ export default function SuperAdminEventsPage() {
                         <option value="archived">Archived</option>
                       </select>
 
-                      {/* Edit */}
+                      {/* Manage */}
                       <Link
                         href={`/super-admin/events/${event.id}`}
-                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-white/60 bg-white/[0.04] border border-white/[0.08] hover:bg-white/[0.08] transition-all"
+                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-white bg-white/[0.06] border border-white/[0.12] hover:bg-white/[0.12] transition-all"
                       >
-                        <Pencil size={12} />Manage
+                        <Pencil size={12} /> Manage
                         <ChevronRight size={12} />
                       </Link>
 
