@@ -16,14 +16,16 @@ export async function POST(
 
   try {
     const body = await req.json();
-    const { submission_url, demo_url, video_url, tech_stack, description, mcqAnswers, codeAnswers } = body as {
+    const { submission_url, demo_url, video_url, tech_stack, description, mcqAnswers, codeAnswers, questionTimes, totalTimeSeconds } = body as {
       submission_url?: string;
       demo_url?: string;
       video_url?: string;
       tech_stack?: string;
       description?: string;
-      mcqAnswers?: Record<string, string>;
+      mcqAnswers?: Record<string, string | string[]>;
       codeAnswers?: Record<string, string>;
+      questionTimes?: Record<string, number>;
+      totalTimeSeconds?: number;
     };
 
     if (!submission_url) {
@@ -57,6 +59,8 @@ export async function POST(
       description: description ?? null,
       mcqAnswers: mcqAnswers ?? null,
       codeAnswers: codeAnswers ?? null,
+      questionTimes: questionTimes ?? {},
+      totalTimeSeconds: totalTimeSeconds ?? 0,
       submitted_at: new Date().toISOString(),
     };
 

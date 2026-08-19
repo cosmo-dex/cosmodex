@@ -191,6 +191,7 @@ function McqPanel({
   questionIndex,
   totalQuestions,
   chosenId,
+  timeSpentSeconds,
   onChoose,
   onPrev,
   onNext,
@@ -198,12 +199,36 @@ function McqPanel({
   question: MCQQuestionItem;
   questionIndex: number;
   totalQuestions: number;
-  chosenId: string | undefined;
+  chosenId: string | string[] | undefined;
+  timeSpentSeconds?: number;
   onChoose: (id: string) => void;
   onPrev: () => void;
   onNext: () => void;
 }) {
   const questionText = question.questionText || question.question || '';
+
+  const selectedList: string[] = useMemo(() => {
+    if (!chosenId) return [];
+    if (Array.isArray(chosenId)) return chosenId;
+    return String(chosenId).split(',').filter(Boolean);
+  }, [chosenId]);
+
+  const handleToggle = (optId: string) => {
+    let nextList: string[];
+    if (selectedList.includes(optId)) {
+      nextList = selectedList.filter(id => id !== optId);
+    } else {
+      nextList = [...selectedList, optId];
+    }
+    onChoose(nextList.join(','));
+  };
+
+  const fmtTime = (sec?: number) => {
+    if (!sec || sec < 0) return '0s';
+    const m = Math.floor(sec / 60);
+    const s = sec % 60;
+    return m > 0 ? `${m}m ${s}s` : `${s}s`;
+  };
 
   return (
     <motion.div
@@ -224,13 +249,16 @@ function McqPanel({
         <div className="flex items-center justify-between gap-4 mb-5 flex-wrap relative z-10">
           <div className="flex items-center gap-2 flex-wrap">
             <span className="px-3.5 py-1 rounded-full text-xs font-mono font-bold uppercase tracking-wider bg-purple-900/60 text-purple-300 border border-purple-500/40">
-              Multiple Choice
+              Multiple Choice (Select All Correct)
             </span>
             {(question.marks || question.points) && (
               <span className="px-3 py-1 rounded-full text-xs font-mono font-bold border border-amber-500/40 bg-amber-950/60 text-amber-300">
                 ⚡ {question.marks || question.points} pts
               </span>
             )}
+            <span className="px-3 py-1 rounded-full text-xs font-mono font-bold border border-cyan-500/40 bg-cyan-950/60 text-cyan-300 flex items-center gap-1">
+              <Clock size={11} /> {fmtTime(timeSpentSeconds)}
+            </span>
           </div>
           <span className="text-xs font-mono text-white/30 font-bold">Q{questionIndex + 1} of {totalQuestions}</span>
         </div>
@@ -254,7 +282,7 @@ function McqPanel({
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6 relative z-10">
           {question.options.map((opt, idx) => {
             const letter = String.fromCharCode(65 + idx);
-            const isChosen = chosenId === opt.id;
+            const isChosen = selectedList.includes(opt.id);
             return (
               <motion.button
                 key={opt.id}
@@ -263,7 +291,7 @@ function McqPanel({
                 transition={{ delay: idx * 0.06, duration: 0.22 }}
                 whileHover={{ y: -6, scale: 1.02, transition: { duration: 0.12, ease: 'easeOut' } }}
                 whileTap={{ scale: 0.97, y: -2, transition: { duration: 0.05 } }}
-                onClick={() => onChoose(opt.id)}
+                onClick={() => handleToggle(opt.id)}
                 className={cn(
                   'group relative p-5 rounded-2xl border text-left flex items-center gap-4 cursor-pointer backdrop-blur-md overflow-hidden transition-colors duration-150',
                   isChosen
@@ -380,25 +408,61 @@ function CodingPanel({
     return () => { document.removeEventListener('mousemove', onMove); document.removeEventListener('mouseup', onUp); };
   }, []);
 
-  const handleRun = useCallback(() => {
+  const handleRun = useCallback(async () => {
     if (runningCode || !code.trim()) return;
     setRunningCode(true);
     setActiveTab('tests');
-    setTimeout(() => {
-      const passed = code.includes('cout') || code.includes('print') || code.includes('System.out') || code.includes('console.log') || code.includes('return');
-      let log = `[CosmoDex Runner]\nCompiling ${language.toUpperCase()}...\n\n`;
-      const results: TestResultItem[] = sampleCases.map((tc, i) => {
-        const exp = tc.output?.trim() || '';
-        const actual = passed ? exp : 'Execution returned no output.';
-        log += `Case #${i + 1}\nInput: ${tc.input}\nExpected: ${exp}\nActual: ${actual}\n${passed ? '✓ PASSED' : '❌ FAILED'}\n\n`;
-        return { testIndex: i + 1, input: tc.input, expectedOutput: exp, actualOutput: actual, passed };
-      });
-      if (results.length === 0) {
-        log += `Stdin: ${customStdin || 'None'}\nOutput: Execution completed.\n`;
+    try {
+      let log = `[Judge0 Runner] Compiling & Executing ${language.toUpperCase()}...\n\n`;
+      let totalTime = 0;
+      const testCasesToRun = sampleCases.length > 0
+        ? sampleCases
+        : [{ input: customStdin || '', output: '', isPublic: true }];
+
+      const results: TestResultItem[] = [];
+
+      for (let i = 0; i < testCasesToRun.length; i++) {
+        const tc = testCasesToRun[i];
+        const res = await fetch('/api/judge0/execute', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            source_code: code,
+            language,
+            stdin: tc.input,
+            expected_output: tc.output,
+          }),
+        });
+        const data = await res.json();
+        const passed = Boolean(data.passed);
+        const actual = data.stdout || data.stderr || 'No output.';
+        if (data.time) totalTime += parseFloat(data.time) * 1000;
+
+        log += `Case #${i + 1}: ${passed ? '✓ PASSED' : '❌ FAILED'}\nInput: ${tc.input || '(empty)'}\nExpected: ${tc.output || '(any)'}\nActual: ${actual}\n\n`;
+        results.push({
+          testIndex: i + 1,
+          input: tc.input,
+          expectedOutput: tc.output,
+          actualOutput: actual,
+          passed,
+        });
       }
-      setTerminalOutput({ status: 'SUCCESS', stdout: log, executionTimeMs: Math.floor(Math.random() * 30) + 8, testResults: results });
+
+      const allPassed = results.every(r => r.passed);
+      setTerminalOutput({
+        status: allPassed ? 'SUCCESS' : 'ERROR',
+        stdout: log,
+        executionTimeMs: Math.round(totalTime) || 15,
+        testResults: results,
+      });
+    } catch {
+      setTerminalOutput({
+        status: 'ERROR',
+        stdout: 'Network error executing code.',
+      });
+    } finally {
       setRunningCode(false);
-    }, 700);
+    }
   }, [runningCode, code, language, sampleCases, customStdin]);
 
   return (
@@ -718,7 +782,7 @@ export interface EventContestArenaProps {
   onCodeChange: (questionId: string, code: string) => void;
   onLanguageChange: (lang: string) => void;
   onNavigate: (idx: number) => void;
-  onSubmit: () => void;
+  onSubmit: (questionTimes?: Record<string, number>, totalTimeSeconds?: number) => void;
   onBack: () => void;
 }
 
@@ -742,6 +806,25 @@ export default function EventContestArena({
   onBack,
 }: EventContestArenaProps) {
   const activeQ = questions[selectedQuestionIdx];
+
+  // Active question time tracker (seconds per question)
+  const [questionTimes, setQuestionTimes] = useState<Record<string, number>>({});
+  const activeQId = activeQ?.id;
+
+  useEffect(() => {
+    if (!activeQId) return;
+    const interval = setInterval(() => {
+      setQuestionTimes(prev => ({
+        ...prev,
+        [activeQId]: (prev[activeQId] || 0) + 1,
+      }));
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [activeQId]);
+
+  const totalTimeSeconds = useMemo(() => {
+    return Object.values(questionTimes).reduce((acc, curr) => acc + curr, 0);
+  }, [questionTimes]);
 
   const [contestTimer, setContestTimer] = useState<{ hours: string; minutes: string; seconds: string; isEnded: boolean }>({
     hours: '00',
@@ -796,11 +879,15 @@ export default function EventContestArena({
     q.type === 'mcq' ? !!mcqAnswers[q.id] : !!(codeAnswers[q.id]?.trim())
   ).length;
 
+  const handleFinishSubmit = () => {
+    onSubmit(questionTimes, totalTimeSeconds);
+  };
+
   const goNext = () => {
     if (selectedQuestionIdx < questions.length - 1) {
       onNavigate(selectedQuestionIdx + 1);
     } else {
-      onSubmit();
+      handleFinishSubmit();
     }
   };
 
@@ -868,7 +955,7 @@ export default function EventContestArena({
             <span>{questions.length}</span>
           </div>
           <button
-            onClick={onSubmit}
+            onClick={handleFinishSubmit}
             disabled={submitting || contestTimer.isEnded}
             className="px-5 py-2 rounded-xl text-xs font-black text-black bg-[#3DCB7F] hover:bg-[#32b870] shadow-lg shadow-[#3DCB7F]/20 transition-all flex items-center gap-1.5 disabled:opacity-50 cursor-pointer"
           >
@@ -907,6 +994,7 @@ export default function EventContestArena({
                 questionIndex={selectedQuestionIdx}
                 totalQuestions={questions.length}
                 chosenId={mcqAnswers[activeQ.id]}
+                timeSpentSeconds={questionTimes[activeQ.id] || 0}
                 onChoose={(id) => onMcqAnswer(activeQ.id, id)}
                 onPrev={goPrev}
                 onNext={goNext}
@@ -925,7 +1013,7 @@ export default function EventContestArena({
                 onReset={() => onCodeChange(activeQ.id, (activeQ as CodingQuestionItem).starterCode?.[selectedLanguage] || DEFAULT_STARTERS[selectedLanguage] || '')}
                 onPrev={goPrev}
                 onNext={goNext}
-                onSubmitAll={onSubmit}
+                onSubmitAll={handleFinishSubmit}
                 submitting={submitting}
               />
             )}
@@ -938,6 +1026,9 @@ export default function EventContestArena({
         <div className="flex items-center gap-3">
           <span className="text-[10px] font-mono font-bold text-purple-300/50 uppercase tracking-widest">
             CosmoDex Contest
+          </span>
+          <span className="text-[10px] font-mono text-cyan-400/70">
+            Total Time: {Math.floor(totalTimeSeconds / 60)}m {totalTimeSeconds % 60}s
           </span>
         </div>
         <div className="flex items-center gap-3">

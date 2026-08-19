@@ -79,11 +79,28 @@ interface EventDetail {
   _count: { event_registrations: number };
 }
 
-const TYPE_META: Record<string, { label: string; icon: React.ComponentType<{ size?: number }>; color: string }> = {
-  hackathon: { label: 'Hackathon', icon: Zap, color: '#E873C3' },
-  coding_contest: { label: 'Coding Contest', icon: Hammer, color: '#4ECDC4' },
-  workshop: { label: 'Workshop', icon: BookOpen, color: '#F5A623' },
-  challenge: { label: 'Challenge', icon: Star, color: '#8D37D6' },
+interface LeaderboardEntry {
+  rank: number | null;
+  score: number;
+  username: string;
+  avatar_url: string | null;
+  totalTimeSeconds?: number;
+  correctCount?: number;
+}
+interface UserRegistration {
+  status: string;
+  team_name: string | null;
+  team_code: string | null;
+  team_members_json: { userId: string; username: string; joinedAt: string }[] | null;
+  submission_url: string | null;
+  submission_details_json: { demo_url?: string; video_url?: string; tech_stack?: string; description?: string; submitted_at?: string } | null;
+}
+
+const TYPE_META: Record<string, { label: string; icon: React.ComponentType<{ size?: number }>; color: string; glow: string }> = {
+  hackathon: { label: 'Hackathon', icon: Zap, color: '#E873C3', glow: 'rgba(232,115,195,0.4)' },
+  coding_contest: { label: 'Coding Contest', icon: Hammer, color: '#4ECDC4', glow: 'rgba(78,205,196,0.4)' },
+  workshop: { label: 'Workshop', icon: BookOpen, color: '#F5A623', glow: 'rgba(245,166,35,0.4)' },
+  challenge: { label: 'Challenge', icon: Star, color: '#8D37D6', glow: 'rgba(141,55,214,0.4)' },
 };
 
 type Tab = 'about' | 'rounds' | 'prizes' | 'rules' | 'leaderboard' | 'faqs';
@@ -132,7 +149,7 @@ export default function EventDetailPage() {
     submission_url: string | null;
     submission_details_json?: { tech_stack?: string } | null;
   } | null>(null);
-  const [leaderboard, setLeaderboard] = useState<{ rank: number | null; score: number; username: string; avatar_url: string | null }[]>([]);
+  const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
   const [loading, setLoading] = useState(true);
 
   const [activeTab, setActiveTab] = useState<Tab>('about');
@@ -762,36 +779,37 @@ export default function EventDetailPage() {
                 </div>
               ) : (
                 <div className="divide-y divide-white/[0.04]">
-                  {leaderboard.map((entry, i) => (
-                    <div key={i} className={`flex items-center gap-4 px-6 py-4 ${i < 3 ? 'bg-white/[0.01]' : ''}`}>
-                      <span className="text-lg font-black w-8 text-center" style={{ color: i === 0 ? '#FFD700' : i === 1 ? '#C0C0C0' : i === 2 ? '#CD7F32' : '#6b7280' }}>
-                        #{entry.rank ?? i + 1}
-                      </span>
-                      <div className="w-8 h-8 rounded-full bg-[#E873C3]/20 border border-[#E873C3]/30 flex items-center justify-center text-xs font-black text-[#E873C3]">
-                        {entry.username[0].toUpperCase()}
-                      </div>
-                      <span className="flex-1 text-sm font-bold text-white">{entry.username}</span>
-                      <span className="text-sm font-black" style={{ color: i === 0 ? '#FFD700' : '#E873C3' }}>{entry.score.toLocaleString()} pts</span>
-                    </div>
-                  ))}
+                  {leaderboard.map((entry, i) => {
+                    const rankNum = entry.rank ?? i + 1;
+                    const totalSec = entry.totalTimeSeconds;
+                    const m = totalSec !== undefined ? Math.floor(totalSec / 60) : null;
+                    const s = totalSec !== undefined ? totalSec % 60 : null;
+                    const timeStr = m !== null && s !== null ? (m > 0 ? `${m}m ${s}s` : `${s}s`) : null;
 
-                  {/* Timeline Checklist */}
-                  {event.timeline_json && event.timeline_json.length > 0 && (
-                    <div className="bg-white/[0.02] border border-white/[0.06] rounded-2xl p-6">
-                      <h2 className="text-xs font-bold text-white/30 uppercase tracking-widest mb-6">Schedule Timeline</h2>
-                      <div className="relative pl-6 border-l-2 border-white/10 flex flex-col gap-6">
-                        {event.timeline_json.map((item, idx) => (
-                          <div key={idx} className="relative flex flex-col gap-1">
-                            <div className={`absolute -left-[31px] top-0 w-4 h-4 rounded-full border-2 ${
-                              item.done ? 'bg-[#3DCB7F] border-[#3DCB7F]' : 'bg-[#06020f] border-white/30'
-                            }`} />
-                            <span className="text-xs font-bold text-white/40">{item.date}</span>
-                            <span className={`text-sm font-bold ${item.done ? 'text-white' : 'text-white/70'}`}>{item.label}</span>
-                          </div>
-                        ))}
+                    return (
+                      <div key={i} className={`flex items-center gap-4 px-6 py-4 ${i < 3 ? 'bg-white/[0.01]' : ''}`}>
+                        <span className="text-lg font-black w-8 text-center" style={{ color: i === 0 ? '#FFD700' : i === 1 ? '#C0C0C0' : i === 2 ? '#CD7F32' : '#6b7280' }}>
+                          #{rankNum}
+                        </span>
+                        <div className="w-8 h-8 rounded-full bg-[#E873C3]/20 border border-[#E873C3]/30 flex items-center justify-center text-xs font-black text-[#E873C3]">
+                          {entry.username[0].toUpperCase()}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <span className="text-sm font-bold text-white block truncate">{entry.username}</span>
+                          {timeStr && (
+                            <span className="text-[11px] font-mono text-cyan-300/80 flex items-center gap-1 mt-0.5">
+                              ⏱️ {timeStr}
+                            </span>
+                          )}
+                        </div>
+                        <div className="text-right">
+                          <span className="text-sm font-black block" style={{ color: i === 0 ? '#FFD700' : '#E873C3' }}>
+                            {entry.score.toLocaleString()} pts
+                          </span>
+                        </div>
                       </div>
-                    </div>
-                  )}
+                    );
+                  })}
                 </div>
               )}
             </div>

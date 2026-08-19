@@ -217,7 +217,10 @@ export default function SubmitProjectPage() {
     }
   };
 
-  const handleSubmitContest = async () => {
+  const handleSubmitContest = async (
+    questionTimes?: Record<string, number>,
+    totalTimeSeconds?: number,
+  ) => {
     setSubmitting(true);
     setMsg('');
     try {
@@ -228,6 +231,8 @@ export default function SubmitProjectPage() {
           submission_url: `${typeof window !== 'undefined' ? window.location.origin : ''}/events/${eventId}/submission`,
           mcqAnswers,
           codeAnswers,
+          questionTimes: questionTimes ?? {},
+          totalTimeSeconds: totalTimeSeconds ?? 0,
           submitted_at: new Date().toISOString(),
         }),
       });
@@ -249,22 +254,26 @@ export default function SubmitProjectPage() {
 
   const mode = submissionConfig?.mode ?? 'platform';
 
-  // Deterministically shuffle questions & options per user
+  // Deterministically order: All MCQs first (shuffled per user), then all Coding questions at the end (unshuffled)
   const questions = useMemo(() => {
     const rawQuestions = (submissionConfig?.assessment_details?.questions ?? []) as QuestionItem[];
     if (!rawQuestions || rawQuestions.length === 0) return [];
     const userSeed = (currentUserId || 'cosmodex-participant') + '-' + eventId;
-    // 1. Shuffle question order for this user
-    const shuffledQList = shuffleWithSeed(rawQuestions, `${userSeed}-questions`);
 
-    // 2. For each MCQ, shuffle option order for this user
-    return shuffledQList.map((q) => {
+    const rawMcqs = rawQuestions.filter((q) => q.type === 'mcq');
+    const rawCoding = rawQuestions.filter((q) => q.type !== 'mcq');
+
+    // 1. Shuffle only MCQs and their options
+    const processedMcqs = shuffleWithSeed(rawMcqs, `${userSeed}-mcq-questions`).map((q) => {
       if (q.type === 'mcq' && q.options && q.options.length > 0) {
         const shuffledOptions = shuffleWithSeed(q.options, `${userSeed}-${q.id}-opts`);
         return { ...q, options: shuffledOptions };
       }
       return q;
     });
+
+    // 2. Coding questions ALWAYS come at the end after MCQs with NO shuffling
+    return [...processedMcqs, ...rawCoding];
   }, [submissionConfig?.assessment_details?.questions, currentUserId, eventId]);
 
   const isCodingContest = eventType === 'coding_contest' || (questions && questions.length > 0);
