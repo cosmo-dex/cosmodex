@@ -1,15 +1,14 @@
 "use client";
 
-import { useRef, useState } from "react";
-import { motion, useInView } from "framer-motion";
-import { Check } from "lucide-react";
+import { useRef, useState, useEffect } from "react";
+import { motion, useInView, AnimatePresence } from "framer-motion";
+import { Check, Star } from "lucide-react";
 import RisingStars from "@/components/landing/RisingStars";
 
 /* ─── Types ─────────────────────────────────────────────────────────────────── */
 interface PricingPlan {
   name: string;
   price: number;
-  originalPrice?: number;
   yearlyPrice: number;
   period: string;
   features: string[];
@@ -30,12 +29,13 @@ const plans: PricingPlan[] = [
     period: "month",
     features: [
       "5 courses per month",
+      "Basic battle arena access",
       "Community Discord access",
       "Progress tracking",
       "Mobile app included",
     ],
     description: "Perfect for exploring the cosmos at your own pace.",
-    buttonText: "Free",
+    buttonText: "Start for Free",
     href: "/onboarding",
     isPopular: false,
     accentColor: "#c084fc",
@@ -44,42 +44,40 @@ const plans: PricingPlan[] = [
   },
   {
     name: "Pro",
-    price: 0,
-    originalPrice: 49,
-    yearlyPrice: 0,
+    price: 12,
+    yearlyPrice: 9,
     period: "month",
     features: [
       "Unlimited courses",
-      "Battle Arena",
+      "Full battle arena access",
       "Priority community support",
       "Advanced analytics",
       "AI-powered code review",
       "Certificate of completion",
     ],
     description: "For serious learners ready to level up fast.",
-    buttonText: "Free",
+    buttonText: "Go Pro",
     href: "/onboarding",
-    isPopular: false,
+    isPopular: true,
     accentColor: "#ff2d78",
     accentRgb: "255,45,120",
     gradient: "linear-gradient(135deg, #ff2d78 0%, #9b30ff 100%)",
   },
   {
     name: "Elite",
-    price: 0,
-    originalPrice: 99,
-    yearlyPrice: 0,
+    price: 29,
+    yearlyPrice: 22,
     period: "month",
     features: [
       "Everything in Pro",
-      "Battle Arena",
       "1-on-1 mentorship sessions",
       "Early feature access",
       "Private elite community",
+      "Custom learning paths",
       "Job placement support",
     ],
     description: "The full cosmic experience for the elite few.",
-    buttonText: "Free",
+    buttonText: "Join Elite",
     href: "/onboarding",
     isPopular: false,
     accentColor: "#ff6ba8",
@@ -88,56 +86,149 @@ const plans: PricingPlan[] = [
   },
 ];
 
+/* ─── Animated price number ──────────────────────────────────────────────────── */
+function AnimatedPrice({ value }: { value: number }) {
+  const [displayed, setDisplayed] = useState(value);
+  const [animating, setAnimating] = useState(false);
+  const prevRef = useRef(value);
+
+  useEffect(() => {
+    if (prevRef.current === value) return;
+    prevRef.current = value;
+    setAnimating(true);
+    // Quickly count toward new value
+    const start = displayed;
+    const end = value;
+    const diff = end - start;
+    const steps = 16;
+    let step = 0;
+    const id = setInterval(() => {
+      step++;
+      setDisplayed(Math.round(start + (diff * step) / steps));
+      if (step >= steps) {
+        clearInterval(id);
+        setDisplayed(end);
+        setAnimating(false);
+      }
+    }, 18);
+    return () => clearInterval(id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [value]);
+
+  return (
+    <span
+      style={{
+        display: "inline-block",
+        transition: "transform 0.2s ease",
+        transform: animating ? "scale(1.05)" : "scale(1)",
+      }}
+    >
+      ${displayed}
+    </span>
+  );
+}
+
 /* ─── Pricing Card ───────────────────────────────────────────────────────────── */
 function PricingCard({
   plan,
+  isMonthly,
   index,
 }: {
   plan: PricingPlan;
   isMonthly: boolean;
   index: number;
 }) {
+  const price = isMonthly ? plan.price : plan.yearlyPrice;
   const cardRef = useRef<HTMLDivElement>(null);
   const isInView = useInView(cardRef, { once: true, margin: "-60px" });
-  const [isHovered, setIsHovered] = useState(false);
+
+  const isCenter = index === 1;
+  const isSide = index === 0 || index === 2;
 
   return (
     <motion.div
       ref={cardRef}
       initial={{ opacity: 0, y: 48, scale: 0.95 }}
-      animate={isInView ? { opacity: 1, y: 0, scale: 1 } : {}}
-      whileHover={{ y: -10, scale: 1.02 }}
-      onHoverStart={() => setIsHovered(true)}
-      onHoverEnd={() => setIsHovered(false)}
+      animate={
+        isInView
+          ? {
+            opacity: 1,
+            y: isCenter ? -16 : 0,
+            scale: isSide ? 0.95 : 1,
+          }
+          : {}
+      }
       transition={{
-        duration: 0.35,
-        delay: index * 0.1,
+        duration: 0.85,
+        delay: index * 0.12,
         ease: [0.16, 1, 0.3, 1],
       }}
       style={{
         position: "relative",
         borderRadius: "24px",
         padding: "2px",
-        background: isHovered ? plan.gradient : "rgba(255,255,255,0.07)",
-        boxShadow: isHovered
-          ? `0 16px 48px rgba(${plan.accentRgb}, 0.35)`
-          : "0 4px 20px rgba(0,0,0,0.2)",
-        zIndex: isHovered ? 10 : 1,
+        background: plan.isPopular
+          ? plan.gradient
+          : "rgba(255,255,255,0.07)",
+        zIndex: isCenter ? 2 : 1,
         flex: "1 1 0",
         minWidth: 0,
-        transition: "background 0.3s ease, box-shadow 0.3s ease",
       }}
     >
+      {/* Popular badge */}
+      {plan.isPopular && (
+        <div
+          style={{
+            position: "absolute",
+            top: "-14px",
+            left: "50%",
+            transform: "translateX(-50%)",
+            background: plan.gradient,
+            borderRadius: "100px",
+            padding: "5px 16px",
+            display: "flex",
+            alignItems: "center",
+            gap: "6px",
+            zIndex: 10,
+            boxShadow: `0 4px 20px rgba(${plan.accentRgb}, 0.5)`,
+          }}
+        >
+          <Star
+            size={11}
+            fill="white"
+            stroke="none"
+          />
+          <span
+            style={{
+              fontSize: "11px",
+              fontWeight: 700,
+              color: "white",
+              letterSpacing: "0.06em",
+              textTransform: "uppercase",
+              fontFamily: "var(--font-body), 'Fira Code', monospace",
+            }}
+          >
+            Most Popular
+          </span>
+        </div>
+      )}
+
       {/* Inner card */}
       <div
         style={{
           borderRadius: "22px",
-          background: "#0a0812",
-          border: "1px solid rgba(255,255,255,0.07)",
+          background: plan.isPopular
+            ? "rgba(10,8,18,0.92)"
+            : "rgba(10,8,18,0.75)",
+          border: plan.isPopular
+            ? "none"
+            : "1px solid rgba(255,255,255,0.07)",
           padding: "36px 32px 32px",
           height: "100%",
           display: "flex",
           flexDirection: "column",
+          backdropFilter: "blur(12px)",
+          WebkitBackdropFilter: "blur(12px)",
         }}
       >
         {/* Plan name */}
@@ -151,83 +242,73 @@ function PricingCard({
         >
           <span
             style={{
-              fontSize: "16px",
+              fontSize: "15px",
               fontWeight: 700,
-              color: isHovered ? "#ffffff" : "rgba(240,230,255,0.75)",
+              color: "rgba(240,230,255,0.65)",
               fontFamily: "var(--font-display), sans-serif",
               letterSpacing: "-0.01em",
-              transition: "color 0.3s ease",
             }}
           >
             {plan.name}
           </span>
         </div>
 
-        {/* Price / Strikethrough & Free */}
+        {/* Price */}
         <div
           style={{
-            marginTop: "16px",
+            marginTop: "20px",
             marginBottom: "4px",
             display: "flex",
             alignItems: "baseline",
             justifyContent: "center",
-            gap: "10px",
+            gap: "4px",
           }}
         >
-          {plan.originalPrice ? (
-            <>
-              <span
-                style={{
-                  fontSize: "clamp(22px, 2.2vw, 28px)",
-                  fontWeight: 600,
-                  textDecoration: "line-through",
-                  color: "rgba(240,230,255,0.38)",
-                  fontFamily: "var(--font-display), sans-serif",
-                }}
-              >
-                ₹{plan.originalPrice}
-              </span>
-              <span
-                style={{
-                  fontSize: "clamp(36px, 3.8vw, 48px)",
-                  fontWeight: 800,
-                  letterSpacing: "-0.04em",
-                  color: isHovered ? "#ffffff" : "rgba(240,230,255,0.95)",
-                  fontFamily: "var(--font-display), sans-serif",
-                  lineHeight: 1,
-                }}
-              >
-                Free
-              </span>
-            </>
-          ) : (
+          <span
+            style={{
+              fontSize: "clamp(40px, 4vw, 52px)",
+              fontWeight: 800,
+              letterSpacing: "-0.05em",
+              color: plan.isPopular ? "#ffffff" : "rgba(240,230,255,0.9)",
+              fontFamily: "var(--font-display), sans-serif",
+              lineHeight: 1,
+            }}
+          >
+            <AnimatedPrice value={price} />
+          </span>
+          {price > 0 && (
             <span
               style={{
-                fontSize: "clamp(36px, 3.8vw, 48px)",
-                fontWeight: 800,
-                letterSpacing: "-0.04em",
-                color: isHovered ? "#ffffff" : "rgba(240,230,255,0.95)",
-                fontFamily: "var(--font-display), sans-serif",
-                lineHeight: 1,
+                fontSize: "14px",
+                color: "rgba(240,230,255,0.4)",
+                fontFamily: "var(--font-body), 'Fira Code', monospace",
+                marginBottom: "2px",
               }}
             >
-              Free
+              / {plan.period}
             </span>
           )}
         </div>
 
-        <p
-          style={{
-            fontSize: "12px",
-            color: "rgba(240,230,255,0.38)",
-            fontFamily: "var(--font-body), 'Fira Code', monospace",
-            marginBottom: "28px",
-            minHeight: "18px",
-            textAlign: "center",
-          }}
-        >
-          100% free for limited time
-        </p>
+        <AnimatePresence mode="wait">
+          <motion.p
+            key={isMonthly ? "monthly" : "yearly"}
+            initial={{ opacity: 0, y: -4 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 4 }}
+            transition={{ duration: 0.2 }}
+            style={{
+              fontSize: "12px",
+              color: "rgba(240,230,255,0.32)",
+              fontFamily: "var(--font-body), 'Fira Code', monospace",
+              marginBottom: "28px",
+              minHeight: "18px",
+              textAlign: "center",
+            }}
+          >
+            {price === 0 ? "always free" : isMonthly ? "billed monthly" : "billed annually"}
+          </motion.p>
+        </AnimatePresence>
 
         {/* Features */}
         <ul
@@ -247,7 +328,7 @@ function PricingCard({
                 alignItems: "flex-start",
                 gap: "10px",
                 fontSize: "14px",
-                color: "rgba(240,230,255,0.78)",
+                color: "rgba(240,230,255,0.72)",
                 fontFamily: "var(--font-body), 'Fira Code', monospace",
                 lineHeight: 1.5,
               }}
@@ -259,13 +340,12 @@ function PricingCard({
                   width: "18px",
                   height: "18px",
                   borderRadius: "50%",
-                  background: `rgba(${plan.accentRgb}, ${isHovered ? "0.22" : "0.12"})`,
-                  border: `1px solid rgba(${plan.accentRgb}, ${isHovered ? "0.5" : "0.3"})`,
+                  background: `rgba(${plan.accentRgb}, 0.12)`,
+                  border: `1px solid rgba(${plan.accentRgb}, 0.3)`,
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
                   color: plan.accentColor,
-                  transition: "all 0.3s ease",
                 }}
               >
                 <Check size={10} strokeWidth={3} />
@@ -280,8 +360,7 @@ function PricingCard({
           style={{
             height: "1px",
             margin: "24px 0 20px",
-            background: `linear-gradient(90deg, transparent, rgba(${plan.accentRgb}, ${isHovered ? "0.45" : "0.2"}), transparent)`,
-            transition: "background 0.3s ease",
+            background: `linear-gradient(90deg, transparent, rgba(${plan.accentRgb}, 0.25), transparent)`,
           }}
         />
 
@@ -301,15 +380,40 @@ function PricingCard({
             letterSpacing: "-0.01em",
             textDecoration: "none",
             cursor: "pointer",
-            transition: "all 0.3s ease",
-            background: isHovered ? plan.gradient : "rgba(255,255,255,0.05)",
-            color: isHovered ? "#ffffff" : "rgba(240,230,255,0.85)",
-            border: isHovered
+            transition: "all 0.3s cubic-bezier(0.16,1,0.3,1)",
+            background: plan.isPopular
+              ? plan.gradient
+              : "rgba(255,255,255,0.05)",
+            color: plan.isPopular ? "#ffffff" : "rgba(240,230,255,0.8)",
+            border: plan.isPopular
               ? "none"
               : `1px solid rgba(${plan.accentRgb}, 0.25)`,
-            boxShadow: isHovered
-              ? `0 8px 32px rgba(${plan.accentRgb}, 0.45)`
+            boxShadow: plan.isPopular
+              ? `0 8px 32px rgba(${plan.accentRgb}, 0.4)`
               : "none",
+          }}
+          onMouseEnter={(e) => {
+            const el = e.currentTarget as HTMLElement;
+            if (plan.isPopular) {
+              el.style.transform = "translateY(-2px)";
+              el.style.boxShadow = `0 14px 40px rgba(${plan.accentRgb}, 0.55)`;
+            } else {
+              el.style.background = `rgba(${plan.accentRgb}, 0.12)`;
+              el.style.borderColor = `rgba(${plan.accentRgb}, 0.45)`;
+              el.style.color = plan.accentColor;
+              el.style.transform = "translateY(-2px)";
+            }
+          }}
+          onMouseLeave={(e) => {
+            const el = e.currentTarget as HTMLElement;
+            el.style.transform = "translateY(0)";
+            if (plan.isPopular) {
+              el.style.boxShadow = `0 8px 32px rgba(${plan.accentRgb}, 0.4)`;
+            } else {
+              el.style.background = "rgba(255,255,255,0.05)";
+              el.style.borderColor = `rgba(${plan.accentRgb}, 0.25)`;
+              el.style.color = "rgba(240,230,255,0.8)";
+            }
           }}
         >
           {plan.buttonText}
@@ -337,6 +441,33 @@ function PricingCard({
 export default function JoinClubSection() {
   const ref = useRef<HTMLDivElement>(null);
   const isInView = useInView(ref, { once: true, margin: "-80px" });
+  const [isMonthly, setIsMonthly] = useState(true);
+  const switchRef = useRef<HTMLButtonElement>(null);
+
+  const handleToggle = async () => {
+    const next = !isMonthly;
+    setIsMonthly(next);
+
+    // Confetti only when switching TO yearly (saving money = celebrate)
+    if (!next && switchRef.current) {
+      const { default: confetti } = await import("canvas-confetti");
+      const rect = switchRef.current.getBoundingClientRect();
+      confetti({
+        particleCount: 60,
+        spread: 70,
+        origin: {
+          x: (rect.left + rect.width / 2) / window.innerWidth,
+          y: (rect.top + rect.height / 2) / window.innerHeight,
+        },
+        colors: ["#ff2d78", "#9b30ff", "#c084fc", "#ff6ba8", "#ffffff"],
+        ticks: 220,
+        gravity: 1.1,
+        decay: 0.93,
+        startVelocity: 28,
+        shapes: ["circle", "square"],
+      });
+    }
+  };
 
   return (
     <section
@@ -348,7 +479,7 @@ export default function JoinClubSection() {
         overflow: "hidden",
       }}
     >
-      {/* Dark + blur overlay */}
+      {/* Dark + blur overlay — sits above the scroll animation canvas but below RisingStars */}
       <div
         aria-hidden="true"
         style={{
@@ -362,7 +493,7 @@ export default function JoinClubSection() {
         }}
       />
 
-      {/* Rising stars background */}
+      {/* Rising stars background — above the blur overlay */}
       <RisingStars count={70} intensity={0.75} style={{ zIndex: 1 }} />
 
       <div className="container-custom" ref={ref} style={{ position: "relative", zIndex: 2 }}>
@@ -376,7 +507,7 @@ export default function JoinClubSection() {
             <svg width="11" height="11" viewBox="0 0 12 12" fill="none" aria-hidden="true">
               <path d="M6 1l1.5 3h3l-2.5 2 1 3L6 7.5 3 9l1-3L1.5 4h3L6 1z" fill="currentColor" />
             </svg>
-            Early Access Pricing
+            Pricing
           </div>
 
           <h2
@@ -405,9 +536,105 @@ export default function JoinClubSection() {
           >
             Simple, transparent pricing. No hidden fees.{" "}
             <span style={{ color: "rgba(240,230,255,0.72)" }}>
-              All plans 100% free during early access.
+              Cancel anytime.
             </span>
           </p>
+        </motion.div>
+
+        {/* ── Billing toggle ── */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={isInView ? { opacity: 1, y: 0 } : {}}
+          transition={{ duration: 0.75, delay: 0.15, ease: [0.16, 1, 0.3, 1] }}
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: "14px",
+            marginBottom: "56px",
+          }}
+        >
+          <span
+            style={{
+              fontSize: "14px",
+              fontWeight: 600,
+              color: isMonthly ? "rgba(240,230,255,0.9)" : "rgba(240,230,255,0.4)",
+              fontFamily: "var(--font-body), 'Fira Code', monospace",
+              transition: "color 0.25s ease",
+            }}
+          >
+            Monthly
+          </span>
+
+          {/* Toggle track */}
+          <button
+            ref={switchRef}
+            onClick={handleToggle}
+            aria-label="Toggle billing period"
+            style={{
+              position: "relative",
+              width: "52px",
+              height: "28px",
+              borderRadius: "100px",
+              border: "1px solid rgba(255,255,255,0.12)",
+              background: isMonthly
+                ? "rgba(255,255,255,0.08)"
+                : "linear-gradient(135deg, #ff2d78, #9b30ff)",
+              cursor: "pointer",
+              transition: "background 0.35s ease, border-color 0.35s ease",
+              boxShadow: isMonthly
+                ? "none"
+                : "0 4px 20px rgba(255,45,120,0.4)",
+            }}
+          >
+            {/* Thumb */}
+            <motion.div
+              animate={{ x: isMonthly ? 2 : 26 }}
+              transition={{ type: "spring", stiffness: 400, damping: 30 }}
+              style={{
+                position: "absolute",
+                top: "3px",
+                width: "20px",
+                height: "20px",
+                borderRadius: "50%",
+                background: "#ffffff",
+                boxShadow: "0 1px 4px rgba(0,0,0,0.4)",
+              }}
+            />
+          </button>
+
+          <span
+            style={{
+              fontSize: "14px",
+              fontWeight: 600,
+              color: !isMonthly ? "rgba(240,230,255,0.9)" : "rgba(240,230,255,0.4)",
+              fontFamily: "var(--font-body), 'Fira Code', monospace",
+              display: "flex",
+              alignItems: "center",
+              gap: "8px",
+              transition: "color 0.25s ease",
+            }}
+          >
+            Yearly
+            <span
+              style={{
+                fontSize: "11px",
+                fontWeight: 700,
+                padding: "3px 9px",
+                borderRadius: "100px",
+                background: "rgba(255,45,120,0.12)",
+                border: "1px solid rgba(255,45,120,0.28)",
+                color: "#ff6ba8",
+                letterSpacing: "0.04em",
+                textTransform: "uppercase",
+                fontFamily: "var(--font-body), 'Fira Code', monospace",
+                transition: "opacity 0.25s ease",
+                opacity: !isMonthly ? 1 : 0.5,
+              }}
+            >
+              Save 20%
+            </span>
+          </span>
         </motion.div>
 
         {/* ── Pricing cards ── */}
@@ -415,7 +642,7 @@ export default function JoinClubSection() {
           style={{
             display: "flex",
             gap: "20px",
-            alignItems: "stretch",
+            alignItems: "flex-end",
           }}
           className="pricing-grid"
         >
@@ -423,7 +650,7 @@ export default function JoinClubSection() {
             <PricingCard
               key={plan.name}
               plan={plan}
-              isMonthly={true}
+              isMonthly={isMonthly}
               index={i}
             />
           ))}
@@ -443,8 +670,39 @@ export default function JoinClubSection() {
           }}
         >
           All plans include access to our mobile app, community Discord, and base course library.
+          Need a team plan?{" "}
+          <a
+            href="#"
+            style={{
+              color: "#c084fc",
+              textDecoration: "none",
+              fontWeight: 600,
+              transition: "color 0.2s ease",
+            }}
+            onMouseEnter={(e) =>
+              ((e.currentTarget as HTMLElement).style.color = "#ff6ba8")
+            }
+            onMouseLeave={(e) =>
+              ((e.currentTarget as HTMLElement).style.color = "#c084fc")
+            }
+          >
+            Contact us →
+          </a>
         </motion.p>
       </div>
+
+      {/* ── Responsive styles ── */}
+      <style>{`
+        @media (max-width: 768px) {
+          .pricing-grid {
+            flex-direction: column !important;
+            align-items: stretch !important;
+          }
+          .pricing-grid > * {
+            transform: none !important;
+          }
+        }
+      `}</style>
     </section>
   );
 }
