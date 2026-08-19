@@ -11,55 +11,56 @@ export async function POST(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  const session = await getEventUserSession(req);
-  if (!session?.userId) {
-    return NextResponse.json({ error: 'Please log in to register for this event' }, { status: 401 });
-  }
-
   const { id } = await params;
   const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
 
-  let body: {
-    email?: string;
-    team_name?: string;
-    team_code?: string;
-    action?: string;
-    details?: {
-      full_name?: string;
-      email?: string;
-      phone?: string;
-      gender?: string;
-      user_type?: string;
-      college_org?: string;
-      degree?: string;
-      branch?: string;
-      year_of_study?: string;
-      city_state?: string;
-      github_url?: string;
-      linkedin_url?: string;
-      referral_source?: string;
-    };
-  } = {};
-
-  try { body = await req.json(); } catch { }
-
   try {
-    const event = await prisma.events.findFirst({
-      where: isUuid ? { OR: [{ id }, { slug: id }] } : { slug: id },
-      select: {
-        id: true,
-        title: true,
-        starts_at: true,
-        slug: true,
-        registration_open: true,
-        registration_deadline: true,
-        max_participants: true,
-        status: true,
-        participation_type: true,
-        max_team_size: true,
-        _count: { select: { event_registrations: true } },
-      },
-    });
+    const [session, bodyRaw, event] = await Promise.all([
+      getEventUserSession(req),
+      req.json().catch(() => ({})),
+      prisma.events.findFirst({
+        where: isUuid ? { OR: [{ id }, { slug: id }] } : { slug: id },
+        select: {
+          id: true,
+          title: true,
+          starts_at: true,
+          slug: true,
+          registration_open: true,
+          registration_deadline: true,
+          max_participants: true,
+          status: true,
+          participation_type: true,
+          max_team_size: true,
+          _count: { select: { event_registrations: true } },
+        },
+      }),
+    ]);
+
+    if (!session?.userId) {
+      return NextResponse.json({ error: 'Please log in to register for this event' }, { status: 401 });
+    }
+
+    const body = (bodyRaw || {}) as {
+      email?: string;
+      team_name?: string;
+      team_code?: string;
+      action?: string;
+      details?: {
+        full_name?: string;
+        email?: string;
+        phone?: string;
+        gender?: string;
+        user_type?: string;
+        college_org?: string;
+        degree?: string;
+        branch?: string;
+        year_of_study?: string;
+        city_state?: string;
+        github_url?: string;
+        linkedin_url?: string;
+        referral_source?: string;
+      };
+    };
 
     if (!event || !['published', 'ongoing'].includes(event.status ?? '')) {
       return NextResponse.json({ error: 'Event not found or not open' }, { status: 404 });
@@ -208,19 +209,21 @@ export async function DELETE(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  const session = await getEventUserSession(req);
-  if (!session?.userId) {
-    return NextResponse.json({ error: 'Please log in to manage your registration' }, { status: 401 });
-  }
-
   const { id } = await params;
   const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
 
   try {
-    const event = await prisma.events.findFirst({
-      where: isUuid ? { OR: [{ id }, { slug: id }] } : { slug: id },
-      select: { id: true },
-    });
+    const [session, event] = await Promise.all([
+      getEventUserSession(req),
+      prisma.events.findFirst({
+        where: isUuid ? { OR: [{ id }, { slug: id }] } : { slug: id },
+        select: { id: true },
+      }),
+    ]);
+
+    if (!session?.userId) {
+      return NextResponse.json({ error: 'Please log in to manage your registration' }, { status: 401 });
+    }
 
     if (!event) return NextResponse.json({ error: 'Event not found' }, { status: 404 });
 
