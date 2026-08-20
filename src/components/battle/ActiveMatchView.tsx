@@ -257,6 +257,9 @@ export default function ActiveMatchView({ socket, matchInfo, userId, username, o
         setMcqState(state);
         if (state.status === 'ACTIVE') {
           setRoundReveal(null);
+          if (typeof state.timeRemaining === 'number') {
+            setMcqTimer(state.timeRemaining);
+          }
         }
       });
 
@@ -268,6 +271,7 @@ export default function ActiveMatchView({ socket, matchInfo, userId, username, o
         setMcqState(state);
         setRoundReveal(null);
         setSelectedAnswer(null);
+        setMcqTimer(state.timeRemaining ?? 15);
       });
 
       socket.on('mcq_match_ended', (data: { winnerId: string | null; reason: string }) => {
@@ -402,21 +406,16 @@ export default function ActiveMatchView({ socket, matchInfo, userId, username, o
     return () => clearInterval(interval);
   }, [waitingDecision]);
 
-  // Real-time MCQ Question Round Countdown Effect (Production Synced)
+  // Real-time MCQ Question Round Countdown Effect (Production Synced - Smooth 15s -> 0s)
   useEffect(() => {
-    if (!isMcq || !mcqState || roundReveal || matchResult) return;
-    const initialTime = mcqState.timeRemaining ?? 15;
-    const timer = setTimeout(() => {
-      setMcqTimer(initialTime);
-    }, 0);
+    if (!isMcq || roundReveal || matchResult) return;
     const interval = setInterval(() => {
       setMcqTimer((prev) => (prev <= 1 ? 0 : prev - 1));
     }, 1000);
     return () => {
-      clearTimeout(timer);
       clearInterval(interval);
     };
-  }, [isMcq, mcqState, roundReveal, matchResult]);
+  }, [isMcq, roundReveal, matchResult]);
 
   // Real-time Overall Match Elapsed Timer Effect
   useEffect(() => {
