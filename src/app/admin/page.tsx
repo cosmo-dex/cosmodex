@@ -31,7 +31,7 @@ const ADMIN_PANELS = [
     role: 'arena_admin',
     label: 'Battle Arena Admin',
     subtitle: 'Arena & match control',
-    description: 'Manage battle problems, test cases, ELO ratings, and monitor active matches.',
+    description: 'Manage coding challenges, MCQ battle questions, test cases, and problem banks.',
     icon: Swords,
     gradient: 'from-[#FF6B35] via-[#F5A623] to-[#C0392B]',
     glow: 'rgba(255,107,53,0.4)',
@@ -185,7 +185,7 @@ export default function AdminGatewayPage() {
                 </button>
               </form>
 
-              <p className="mt-5 text-xs text-white/30 text-center">
+              <p className="mt-4 text-xs text-white/30 text-center">
                 Access is restricted to authorized administrators. Unauthorized attempts are logged.
               </p>
             </div>
