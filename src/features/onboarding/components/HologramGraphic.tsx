@@ -30,7 +30,7 @@ export default function HologramGraphic({
       } ${className}`}
     >
       <Image
-        src={`/images/avatars/${id.toLowerCase()}.png`}
+        src={`/images/avatars/${id.toLowerCase()}.webp`}
         alt={`${id} Hologram Avatar`}
         width={pixelSize}
         height={pixelSize}
