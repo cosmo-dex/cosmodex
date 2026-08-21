@@ -1,13 +1,31 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-/**
- * GET /api/battle/leaderboard
- * Queries real player stats via Prisma when DATABASE_URL is configured,
- * or gracefully falls back to mock stats for local testing.
- * Query: ?mode=code|mcq (default: code)
- */
+interface LeaderboardEntry {
+  rank: number;
+  userId: string;
+  username: string;
+  elo: number;
+  wins: number;
+  losses: number;
+  draws: number;
+}
+
+const memoryCache = new Map<string, { timestamp: number; data: LeaderboardEntry[] }>();
+const CACHE_TTL_MS = 10_000;
+
 export async function GET(req: NextRequest) {
   const mode = req.nextUrl.searchParams.get('mode') === 'mcq' ? 'mcq' : 'code';
+  const now = Date.now();
+
+  const cached = memoryCache.get(mode);
+  if (cached && now - cached.timestamp < CACHE_TTL_MS) {
+    return NextResponse.json(cached.data, {
+      headers: {
+        'Cache-Control': 'public, s-maxage=10, stale-while-revalidate=60',
+        'X-Cache': 'HIT',
+      },
+    });
+  }
 
   if (process.env.DATABASE_URL) {
     try {
@@ -16,8 +34,14 @@ export async function GET(req: NextRequest) {
         orderBy: {
           [mode === 'mcq' ? 'mcq_elo_rating' : 'elo_rating']: 'desc',
         },
-        take: 20,
-        include: {
+        take: 50,
+        select: {
+          user_id: true,
+          elo_rating: true,
+          mcq_elo_rating: true,
+          wins: true,
+          losses: true,
+          draws: true,
           users: {
             select: {
               username: true,
@@ -27,45 +51,46 @@ export async function GET(req: NextRequest) {
       });
 
       if (stats && stats.length > 0) {
-        const entries = stats.map((item, idx) => ({
+        const entries: LeaderboardEntry[] = stats.map((item, idx) => ({
           rank: idx + 1,
           userId: item.user_id,
           username: item.users?.username ?? 'Anonymous',
-          elo: mode === 'mcq' ? item.mcq_elo_rating : item.elo_rating,
-          wins: item.wins,
-          losses: item.losses,
-          draws: item.draws,
+          elo: mode === 'mcq' ? (item.mcq_elo_rating ?? 1000) : (item.elo_rating ?? 1000),
+          wins: item.wins ?? 0,
+          losses: item.losses ?? 0,
+          draws: item.draws ?? 0,
         }));
 
-        return NextResponse.json(entries);
+        memoryCache.set(mode, { timestamp: now, data: entries });
+
+        return NextResponse.json(entries, {
+          headers: {
+            'Cache-Control': 'public, s-maxage=10, stale-while-revalidate=60',
+            'X-Cache': 'MISS',
+          },
+        });
       }
     } catch (err) {
-      console.warn('[battle/leaderboard] Database query failed, using fallback stats:', err);
+      console.warn('[battle/leaderboard] DB query failed, using fallback:', err);
     }
   }
 
-  // Fallback stats for local testing when DATABASE_URL is not set or DB is offline
-  const stats = Array.from({ length: 20 }, (_, i) => ({
-    user_id: `user-${i + 1}`,
-    elo_rating: 2000 - i * 25,
-    mcq_elo_rating: 2200 - i * 20,
+  const fallbackStats = Array.from({ length: 20 }, (_, i) => ({
+    rank: i + 1,
+    userId: `user-${i + 1}`,
+    username: `Player${i + 1}`,
+    elo: mode === 'mcq' ? 2200 - i * 20 : 2000 - i * 25,
     wins: 40 - i,
     losses: i,
     draws: i % 3,
-    users: {
-      username: `Player${i + 1}`,
+  }));
+
+  memoryCache.set(mode, { timestamp: now, data: fallbackStats });
+
+  return NextResponse.json(fallbackStats, {
+    headers: {
+      'Cache-Control': 'public, s-maxage=10, stale-while-revalidate=60',
+      'X-Cache': 'FALLBACK',
     },
-  }));
-
-  const entries = stats.map((item, idx) => ({
-    rank: idx + 1,
-    userId: item.user_id,
-    username: item.users?.username ?? 'Anonymous',
-    elo: mode === 'mcq' ? item.mcq_elo_rating : item.elo_rating,
-    wins: item.wins,
-    losses: item.losses,
-    draws: item.draws,
-  }));
-
-  return NextResponse.json(entries);
+  });
 }

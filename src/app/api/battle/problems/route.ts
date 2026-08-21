@@ -8,9 +8,17 @@ export async function GET(req: NextRequest) {
     const url = new URL(`${BATTLE_URL}/api/problems`);
     if (difficulty) url.searchParams.set('difficulty', difficulty);
 
-    const res = await fetch(url.toString(), { cache: 'no-store' });
+    const res = await fetch(url.toString(), {
+      next: { revalidate: 60 },
+      headers: { 'Accept': 'application/json' },
+    });
     const data = await res.json();
-    return NextResponse.json(data, { status: res.status });
+    return NextResponse.json(data, {
+      status: res.status,
+      headers: {
+        'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=300',
+      },
+    });
   } catch {
     return NextResponse.json({ error: 'Battle Arena backend unreachable' }, { status: 503 });
   }

@@ -235,6 +235,10 @@ export async function GET(req: NextRequest) {
         currentModuleTitle: e.modules?.title ?? null,
         enrolledAt: e.enrolled_at?.toISOString() ?? null,
       })),
+    }, {
+      headers: {
+        'Cache-Control': 'private, max-age=5, stale-while-revalidate=15',
+      },
     });
   } catch (err) {
     console.error('[user/stats] Error:', err);

@@ -35,6 +35,8 @@ interface ProblemDetails {
   difficulty: string;
   basePoints: number;
   testCases: { id: string; input: string; expected: string; isPublic: boolean }[];
+  starterCodes?: Record<string, string>;
+  starter_codes_json?: Record<string, string>;
 }
 
 const MOCK_PROBLEMS: Record<number, ProblemDetails> = {
@@ -462,6 +464,8 @@ export default function ActiveMatchView({ socket, matchInfo, userId, username, o
           setProblem(data);
           setExecResult(null);
           setRunResult(null);
+          const starter = data.starterCodes?.[language] || data.starter_codes_json?.[language] || STARTERS[language] || "";
+          setCode(starter);
         }
       })
       .catch(() => {
@@ -471,7 +475,7 @@ export default function ActiveMatchView({ socket, matchInfo, userId, username, o
     return () => {
       ignore = true;
     };
-  }, [problemId, isMcq]);
+  }, [problemId, isMcq, language]);
 
   const handleForfeit = () => {
     if (socket && matchInfo.roomId) {
@@ -487,7 +491,8 @@ export default function ActiveMatchView({ socket, matchInfo, userId, username, o
   const handleLangChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const newLang = e.target.value;
     setLanguage(newLang);
-    setCode(STARTERS[newLang] || "");
+    const starter = problem?.starterCodes?.[newLang] || problem?.starter_codes_json?.[newLang] || STARTERS[newLang] || "";
+    setCode(starter);
   };
 
   const handleRunCode = () => {

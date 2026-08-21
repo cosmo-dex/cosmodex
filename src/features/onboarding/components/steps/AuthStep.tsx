@@ -12,13 +12,14 @@ interface AuthStepProps {
 
 export default function AuthStep({ onNext, updateData }: AuthStepProps) {
   const router = useRouter();
-  const [isLogin, setIsLogin] = useState(() => {
+  const [authMode, setAuthMode] = useState<'login' | 'signup'>(() => {
     if (typeof window !== 'undefined') {
       const params = new URLSearchParams(window.location.search);
-      return params.get('mode') === 'login';
+      return params.get('mode') === 'login' ? 'login' : 'signup';
     }
-    return false;
+    return 'signup';
   });
+
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -31,7 +32,7 @@ export default function AuthStep({ onNext, updateData }: AuthStepProps) {
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-
+  const isLogin = authMode === 'login';
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -105,7 +106,7 @@ export default function AuthStep({ onNext, updateData }: AuthStepProps) {
   return (
     <div className="cosmo-glass p-8 sm:p-10 w-full max-w-sm mx-auto shadow-2xl relative overflow-hidden">
       <motion.div
-        key={isLogin ? 'login' : 'signup'}
+        key={authMode}
         initial={{ opacity: 0, x: isLogin ? -20 : 20 }}
         animate={{ opacity: 1, x: 0 }}
         transition={{ duration: 0.3 }}
@@ -128,14 +129,15 @@ export default function AuthStep({ onNext, updateData }: AuthStepProps) {
                 setEmail(e.target.value);
                 setError('');
               }}
-              placeholder="Email"
+              placeholder="Email address"
               className="cosmo-input text-sm"
               required
             />
           </div>
+
           <div className="relative">
             <input
-              type={showPassword ? "text" : "password"}
+              type={showPassword ? 'text' : 'password'}
               value={password}
               onChange={(e) => {
                 const val = e.target.value;
@@ -168,9 +170,13 @@ export default function AuthStep({ onNext, updateData }: AuthStepProps) {
           <button
             type="submit"
             disabled={!isFormValid || isSubmitting}
-            className="cosmo-btn-primary w-full py-4 text-base mt-4"
+            className="cosmo-btn-primary w-full py-4 text-base mt-4 cursor-pointer disabled:opacity-50"
           >
-            {isSubmitting ? 'Checking...' : (isLogin ? 'Log in' : 'Sign up for free')}
+            {isSubmitting
+              ? 'Please wait...'
+              : isLogin
+              ? 'Log in'
+              : 'Sign up for free'}
           </button>
         </form>
 
@@ -190,7 +196,6 @@ export default function AuthStep({ onNext, updateData }: AuthStepProps) {
             className="cosmo-btn-secondary py-3 text-sm font-medium"
           >
             <div className="w-4 h-4 rounded-full flex items-center justify-center">
-              {/* Simple Google SVG icon */}
               <svg viewBox="0 0 24 24" className="w-4 h-4">
                 <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
                 <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
@@ -212,29 +217,20 @@ export default function AuthStep({ onNext, updateData }: AuthStepProps) {
           </button>
         </div>
 
-        <div className="text-center text-sm space-y-4">
-          {!isLogin && (
-            <p className="text-white/40 text-xs">
-              By signing up, I agree to Cosmodex&apos;s <a href="#" className="underline hover:text-white transition-colors">Terms</a>.
-            </p>
-          )}
-
+        <div className="text-center text-sm space-y-3">
           <p className="text-cosmo-text-muted">
-            {isLogin ? "Need an account? " : "Already have an account? "}
+            {isLogin ? 'Need an account? ' : 'Already have an account? '}
             <button
               type="button"
-              onClick={() => setIsLogin(!isLogin)}
-              className="text-[#38bdf8] hover:text-[#7dd3fc] font-medium transition-colors hover:underline"
+              onClick={() => {
+                setError('');
+                setAuthMode(isLogin ? 'signup' : 'login');
+              }}
+              className="text-[#38bdf8] hover:text-[#7dd3fc] font-medium transition-colors hover:underline cursor-pointer"
             >
-              {isLogin ? "Sign up" : "Log in"}
+              {isLogin ? 'Sign up' : 'Log in'}
             </button>
           </p>
-
-          {isLogin && (
-            <button type="button" className="text-white/40 hover:text-white/80 text-xs transition-colors hover:underline block w-full">
-              Reset password
-            </button>
-          )}
         </div>
       </motion.div>
     </div>
