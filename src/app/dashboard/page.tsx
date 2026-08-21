@@ -48,7 +48,11 @@ export default async function DashboardPage() {
 
   if (userId) {
     try {
-      const [arenaStats, userBadges, recentProgress, userEnrollments] = await Promise.all([
+      const [dbUser, arenaStats, userBadges, recentProgress, userEnrollments] = await Promise.all([
+        prisma.users.findUnique({
+          where: { id: userId },
+          select: { avatar_url: true, username: true, experience_level: true, level: true, xp_total: true },
+        }),
         prisma.arena_stats.findUnique({
           where: { user_id: userId },
           select: { current_streak: true, total_xp: true, total_solved: true },
@@ -84,6 +88,14 @@ export default async function DashboardPage() {
           take: 5,
         }),
       ]);
+
+      if (dbUser) {
+        if (dbUser.avatar_url) avatarId = dbUser.avatar_url;
+        if (dbUser.username) username = dbUser.username;
+        if (dbUser.level) level = dbUser.level;
+        if (dbUser.xp_total !== null && dbUser.xp_total !== undefined) xpTotal = dbUser.xp_total;
+        if (dbUser.experience_level) experienceLevel = dbUser.experience_level;
+      }
 
       streak = arenaStats?.current_streak ?? 0;
       badgeCount = userBadges.length;

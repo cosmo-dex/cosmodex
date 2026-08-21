@@ -3,6 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { Star, Flame, Shield, Award } from "lucide-react";
+import { getAvatarUrl, getAvatarCls } from "@/lib/avatar";
 
 interface ProfileCardProps {
   username?: string;
@@ -13,14 +14,6 @@ interface ProfileCardProps {
   streak?: number;
   badgeCount?: number;
 }
-
-const AVATAR_CLASSES: Record<string, string> = {
-  av1: 'bg-gradient-1',
-  av2: 'bg-gradient-2',
-  av3: 'bg-gradient-3',
-  av4: 'bg-gradient-to-br from-fuchsia-500 to-cyan-500',
-  av5: 'bg-gradient-to-br from-indigo-500 to-purple-600',
-};
 
 function getRankLabel(experienceLevel: string | null | undefined): string {
   if (experienceLevel === 'Advanced') return 'Commander';
@@ -39,10 +32,8 @@ export default function ProfileCard({
 }: ProfileCardProps) {
   const xpNeeded = level * 1000;
   const xpPct = Math.min((xpTotal / xpNeeded) * 100, 100);
-
-  const avatarCls = avatarId && AVATAR_CLASSES[avatarId]
-    ? AVATAR_CLASSES[avatarId]
-    : 'bg-gradient-to-br from-[#E873C3] to-[#8D37D6]';
+  const avatarCls = getAvatarCls(avatarId);
+  const avatarUrl = getAvatarUrl(avatarId);
 
   const stats = [
     {
@@ -81,11 +72,13 @@ export default function ProfileCard({
         <div className="relative shrink-0">
           <div className={`w-16 h-16 rounded-full border-2 border-[#E873C3] overflow-hidden ${avatarCls} flex items-center justify-center shadow-[0_0_20px_rgba(232,115,195,0.3)]`}>
             <Image
-              src="/images/mascot.png"
+              src={avatarUrl}
               alt="User avatar"
               width={64}
               height={64}
-              className="object-cover"
+              sizes="64px"
+              priority
+              className="w-full h-full object-cover"
             />
           </div>
         </div>

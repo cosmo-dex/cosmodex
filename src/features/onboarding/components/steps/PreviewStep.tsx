@@ -1,5 +1,6 @@
+import Image from 'next/image';
 import { motion } from 'motion/react';
-import { ArrowLeft, ArrowRight, UserCircle } from 'lucide-react';
+import { ArrowLeft, ArrowRight } from 'lucide-react';
 import { OnboardingData } from '../../types/onboarding';
 import { AVATARS } from '../../theme/constants';
 
@@ -42,14 +43,17 @@ export default function PreviewStep({ data, onNext, onBack }: PreviewStepProps) 
         <div className="relative -mt-16 flex justify-center">
           <div className="p-2 bg-cosmo-surface backdrop-blur-xl rounded-full border border-cosmo-border shadow-xl">
              <div className={`w-28 h-28 rounded-full ${avatar.cls} flex items-center justify-center p-1 relative overflow-hidden`}>
-               <div className="absolute inset-0 bg-black/20 mix-blend-overlay" />
-               <motion.div 
-                  animate={{ rotate: 360 }}
-                  transition={{ duration: 15, repeat: Infinity, ease: "linear" }}
-                  className="w-full h-full rounded-full border-2 border-dashed border-white/40 flex items-center justify-center"
-               >
-                  <UserCircle size={40} className="text-white/60" />
-               </motion.div>
+               <div className="w-full h-full rounded-full overflow-hidden flex items-center justify-center border-2 border-white/30">
+                 <Image
+                   src={avatar.image}
+                   alt={avatar.name}
+                   width={112}
+                   height={112}
+                   sizes="112px"
+                   priority
+                   className="w-full h-full object-cover"
+                 />
+               </div>
              </div>
           </div>
         </div>
