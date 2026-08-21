@@ -1,9 +1,9 @@
 export const AVATARS = [
-  { id: 'av1', name: 'Nebula', cls: 'bg-gradient-1' },
-  { id: 'av2', name: 'Nova', cls: 'bg-gradient-2' },
-  { id: 'av3', name: 'Quasar', cls: 'bg-gradient-3' },
-  { id: 'av4', name: 'Pulsar', cls: 'bg-gradient-to-br from-fuchsia-500 to-cyan-500' },
-  { id: 'av5', name: 'Void', cls: 'bg-gradient-to-br from-indigo-500 to-purple-600' },
+  { id: 'av1', name: 'Nebula', image: '/images/avatars/nebula.webp', cls: 'bg-gradient-1' },
+  { id: 'av2', name: 'Nova', image: '/images/avatars/nova.webp', cls: 'bg-gradient-2' },
+  { id: 'av3', name: 'Quasar', image: '/images/avatars/quasar.webp', cls: 'bg-gradient-3' },
+  { id: 'av4', name: 'Pulsar', image: '/images/avatars/pulsar.webp', cls: 'bg-gradient-to-br from-fuchsia-500 to-cyan-500' },
+  { id: 'av5', name: 'Void', image: '/images/avatars/void.webp', cls: 'bg-gradient-to-br from-indigo-500 to-purple-600' },
 ];
 
 export const INTERESTS_OPTIONS = [
