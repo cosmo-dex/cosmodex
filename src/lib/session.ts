@@ -55,16 +55,21 @@ function base64UrlToBuffer(base64Url: string): Uint8Array {
 }
 
 /**
- * Imports the HMAC-SHA256 CryptoKey
+ * Imports and caches the HMAC-SHA256 CryptoKey in memory for high-performance session validation
  */
+let cachedCryptoKeyPromise: Promise<CryptoKey> | null = null;
+
 async function getCryptoKey(): Promise<CryptoKey> {
-  return crypto.subtle.importKey(
-    'raw',
-    textEncoder.encode(SECRET_KEY),
-    { name: 'HMAC', hash: 'SHA-256' },
-    false,
-    ['sign', 'verify']
-  );
+  if (!cachedCryptoKeyPromise) {
+    cachedCryptoKeyPromise = crypto.subtle.importKey(
+      'raw',
+      textEncoder.encode(SECRET_KEY),
+      { name: 'HMAC', hash: 'SHA-256' },
+      false,
+      ['sign', 'verify']
+    );
+  }
+  return cachedCryptoKeyPromise;
 }
 
 /**
