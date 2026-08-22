@@ -117,22 +117,69 @@ interface ProfileContentProps {
   interests: string[];
   xpTotal: number;
   level: number;
-  experienceLevel: string | null;
+  experienceLevel?: string | null;
   streak: number;
   badgeCount: number;
   badges?: Badge[];
-  starPoints: number;
-  rankThreshold: number;
+  starPoints?: number;
+  rankThreshold?: number;
   bio?: string;
   avatarUrl?: string;
   arenaWins?: number;
   arenaLosses?: number;
 }
 
-function getRankLabel(experienceLevel: string | null | undefined): string {
-  if (experienceLevel === 'Advanced') return 'Commander';
-  if (experienceLevel === 'Intermediate') return 'Explorer';
-  return 'Initiate';
+function getProfileRankInfo(xpTotal: number, level: number) {
+  const currentXP = Math.max(xpTotal, (level - 1) * 500);
+
+  if (currentXP >= 20000 || level >= 20) {
+    const prev = 20000;
+    const target = 50000;
+    const pct = Math.min(100, Math.max(5, ((currentXP - prev) / (target - prev)) * 100));
+    return {
+      rankLabel: 'Star Coder',
+      nextRankLabel: 'Cosmic Legend',
+      currentXP,
+      targetXP: target,
+      pct,
+    };
+  }
+
+  if (currentXP >= 7500 || level >= 10) {
+    const prev = 7500;
+    const target = 20000;
+    const pct = Math.min(100, Math.max(5, ((currentXP - prev) / (target - prev)) * 100));
+    return {
+      rankLabel: 'Astronaut',
+      nextRankLabel: 'Star Coder',
+      currentXP,
+      targetXP: target,
+      pct,
+    };
+  }
+
+  if (currentXP >= 2500 || level >= 5) {
+    const prev = 2500;
+    const target = 7500;
+    const pct = Math.min(100, Math.max(5, ((currentXP - prev) / (target - prev)) * 100));
+    return {
+      rankLabel: 'Navigator',
+      nextRankLabel: 'Astronaut',
+      currentXP,
+      targetXP: target,
+      pct,
+    };
+  }
+
+  const target = 2500;
+  const pct = Math.min(100, Math.max(5, (currentXP / target) * 100));
+  return {
+    rankLabel: 'Explorer',
+    nextRankLabel: 'Navigator',
+    currentXP,
+    targetXP: target,
+    pct,
+  };
 }
 
 function formatJoinDate(iso: string | null): string {
@@ -145,12 +192,11 @@ export default function ProfileContent({
   username: initialUsername,
   createdAt,
   interests: initialInterests,
-  level,
-  experienceLevel,
+  xpTotal = 0,
+  level = 1,
   streak,
   badgeCount,
-  starPoints,
-  rankThreshold,
+  starPoints = 0,
   bio: initialBio = 'Full-Stack Cosmo Coder 🌌 Grinding Python, React & AI algorithms on CosmoDeX.',
   avatarUrl: initialAvatarUrl = '/images/avatars/nebula.webp',
   arenaWins = 12,
@@ -266,7 +312,7 @@ export default function ProfileContent({
     });
   };
 
-  const rankProgress = Math.min((starPoints / rankThreshold) * 100, 100);
+  const rankInfo = getProfileRankInfo(xpTotal || starPoints, level);
   const totalBattles = arenaWins + arenaLosses;
   const winRate = totalBattles > 0 ? Math.round((arenaWins / totalBattles) * 100) : 0;
 
@@ -364,7 +410,7 @@ export default function ProfileContent({
                       ✦
                     </div>
                     <div>
-                      <p className="font-bold text-white text-lg leading-none">{starPoints}</p>
+                      <p className="font-bold text-white text-lg leading-none">{rankInfo.currentXP.toLocaleString()}</p>
                       <p className="text-[10px] font-mono uppercase tracking-wider text-white/50 mt-1">
                         Star Points
                       </p>
@@ -377,7 +423,7 @@ export default function ProfileContent({
                     </div>
                     <div>
                       <p className="font-bold text-white text-sm leading-none mt-0.5">
-                        {getRankLabel(experienceLevel)}
+                        {rankInfo.rankLabel}
                       </p>
                       <p className="text-[10px] font-mono uppercase tracking-wider text-white/50 mt-1">
                         Rank
@@ -418,16 +464,16 @@ export default function ProfileContent({
                         Current Progress
                       </p>
                       <p className="text-sm font-medium text-white/80">
-                        <span className="text-white font-bold">{starPoints}</span> / {rankThreshold} ✦
+                        <span className="text-white font-bold">{rankInfo.currentXP.toLocaleString()}</span> / {rankInfo.targetXP.toLocaleString()} ✦
                       </p>
                     </div>
-                    <p className="text-xs font-mono text-slate-400">to Silver Rank</p>
+                    <p className="text-xs font-mono text-slate-400">to {rankInfo.nextRankLabel} Rank</p>
                   </div>
                   <div className="h-2 w-full bg-black/40 rounded-full overflow-hidden border border-white/5 relative">
                     <motion.div
                       className="absolute top-0 left-0 h-full bg-gradient-to-r from-[#FFD700] via-[#F59E0B] to-[#E873C3] rounded-full shadow-[0_0_10px_rgba(255,215,0,0.5)]"
                       initial={{ width: 0 }}
-                      animate={{ width: `${rankProgress}%` }}
+                      animate={{ width: `${rankInfo.pct}%` }}
                       transition={{ ease: 'easeOut', duration: 1.5, delay: 0.2 }}
                     />
                   </div>
