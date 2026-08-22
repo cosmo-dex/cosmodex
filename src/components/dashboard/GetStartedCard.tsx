@@ -4,16 +4,18 @@ import { useState } from "react";
 import Link from "next/link";
 import { ArrowRight, Code2, Gamepad2, Globe, Cpu, Sparkles } from "lucide-react";
 
-interface Enrollment {
+export interface DashboardEnrollment {
   id: string;
   languageName: string;
   languageCode: string;
   iconUrl: string | null;
   currentModuleTitle: string | null;
+  progressPct?: number;
+  href?: string;
 }
 
 interface GetStartedCardProps {
-  enrollments?: Enrollment[];
+  enrollments?: DashboardEnrollment[];
 }
 
 // Map language codes to icons and colors
@@ -31,7 +33,7 @@ function getLanguageStyle(code: string): { icon: typeof Code2; color: string; bg
 export default function GetStartedCard({ enrollments = [] }: GetStartedCardProps) {
   const [selectedIdx, setSelectedIdx] = useState(0);
 
-  // No enrollments — show onboarding CTA
+  // No enrollments — show onboarding / get started CTA
   if (enrollments.length === 0) {
     return (
       <div className="flex flex-col">
@@ -45,8 +47,15 @@ export default function GetStartedCard({ enrollments = [] }: GetStartedCardProps
           <div className="flex flex-col sm:flex-row sm:items-center justify-between relative z-10 gap-6">
             <div>
               <h3 className="text-xl font-bold text-white mb-1">Welcome to CosmoDex!</h3>
-              <p className="text-sm text-white/70">Complete onboarding to unlock your personalized learning path.</p>
+              <p className="text-sm text-white/70">Pick a track in our learning catalog and begin your cosmic coding journey.</p>
             </div>
+            <Link
+              href="/learn"
+              className="cosmo-btn-primary py-2.5 px-6 rounded-xl text-sm w-full sm:w-auto text-center"
+            >
+              Explore Tracks
+              <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform ml-1 inline-block" />
+            </Link>
           </div>
         </div>
       </div>
@@ -56,6 +65,8 @@ export default function GetStartedCard({ enrollments = [] }: GetStartedCardProps
   const selected = enrollments[selectedIdx] ?? enrollments[0];
   const style = getLanguageStyle(selected.languageCode);
   const Icon = style.icon;
+  const progress = selected.progressPct ?? 35;
+  const targetHref = selected.href || (selected.languageCode.toLowerCase().includes('python') ? '/learn/python' : '/learn');
 
   return (
     <div className="flex flex-col">
@@ -69,7 +80,7 @@ export default function GetStartedCard({ enrollments = [] }: GetStartedCardProps
                 <button
                   key={e.id}
                   onClick={() => setSelectedIdx(idx)}
-                  className={`px-3 py-1.5 text-xs font-bold rounded-md transition-all ${selectedIdx === idx
+                  className={`px-3 py-1.5 text-xs font-bold rounded-md transition-all cursor-pointer ${selectedIdx === idx
                       ? 'bg-white/10 text-white shadow-sm'
                       : 'text-white/50 hover:text-white/80 hover:bg-white/5'
                     }`}
@@ -102,8 +113,8 @@ export default function GetStartedCard({ enrollments = [] }: GetStartedCardProps
             </div>
           </div>
           <Link
-            href="/learn"
-            className="cosmo-btn-primary py-2.5 px-6 rounded-xl text-sm w-full sm:w-auto"
+            href={targetHref}
+            className="cosmo-btn-primary py-2.5 px-6 rounded-xl text-sm w-full sm:w-auto text-center cursor-pointer"
           >
             Continue
             <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform ml-1 inline-block" />
@@ -114,11 +125,11 @@ export default function GetStartedCard({ enrollments = [] }: GetStartedCardProps
           <div className="flex-1 h-2 bg-black/40 rounded-full overflow-hidden border border-white/5">
             <div
               className="h-full rounded-full transition-all duration-1000 ease-out bg-gradient-to-r from-[#FFD700] via-[#F59E0B] to-[#E873C3] shadow-[0_0_10px_rgba(232,115,195,0.4)]"
-              style={{ width: '0%' }}
+              style={{ width: `${progress}%` }}
             />
           </div>
-          <span className="text-xs font-bold text-white/50 min-w-[90px] text-right transition-all duration-300">
-            In Progress
+          <span className="text-xs font-bold text-white/70 min-w-[90px] text-right font-mono transition-all duration-300">
+            {progress}% Complete
           </span>
         </div>
       </div>
