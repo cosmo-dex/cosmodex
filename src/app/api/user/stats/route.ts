@@ -51,6 +51,7 @@ export async function GET(req: NextRequest) {
           username: true,
           level: true,
           experience_level: true,
+          avatar_url: true,
         },
       }),
 
@@ -203,6 +204,7 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json({
       username: user?.username ?? '',
+      avatarUrl: user?.avatar_url ?? null,
       level: user?.level ?? 1,
       experienceLevel: user?.experience_level ?? 'Beginner',
       elo: battleStats?.elo_rating ?? 1000,

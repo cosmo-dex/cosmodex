@@ -22,7 +22,7 @@ import {
 import Navbar from '@/components/navbar/Navbar';
 import DashboardBackground from '@/components/dashboard/DashboardBackground';
 import Footer from '@/components/dashboard/Footer';
-import { getAvatarUrl, getAvatarCls, AVATARS } from '@/lib/avatar';
+import { getAvatarUrl, getAvatarCls, AVATARS, type AvatarOption } from '@/lib/avatar';
 
 const ONBOARDING_SKILLS = [
   'Python',
@@ -810,7 +810,7 @@ export default function ProfileContent({
                       Choose Hologram Avatar
                     </label>
                     <div className="grid grid-cols-5 gap-2">
-                      {AVATARS.map((av) => {
+                      {AVATARS.map((av: AvatarOption) => {
                         const isSelected =
                           editData.avatarUrl === av.id ||
                           editData.avatarUrl === av.image ||

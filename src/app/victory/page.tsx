@@ -9,6 +9,7 @@ interface MatchResult {
   points: number;
   livesLeft: number;
   submissions: number;
+  timeTaken?: number;
   opponentName: string;
   myName: string;
   eloDelta: number | null;
@@ -313,12 +314,21 @@ export default function VictoryPage() {
               <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
             </svg>
           } />
-          <StatCard value={r.livesLeft} label="LIVES LEFT" color="#ef4444" icon={
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
-            </svg>
-          } />
-          <StatCard value={r.submissions} label="SUBMISSIONS" color="#06b6d4" icon={
+          {r.livesLeft > 0 ? (
+            <StatCard value={r.livesLeft} label="LIVES LEFT" color="#ef4444" icon={
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
+              </svg>
+            } />
+          ) : (
+            <StatCard value={Math.round(r.timeTaken ?? 0)} label="TOTAL TIME (s)" color="#38bdf8" icon={
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="10" />
+                <polyline points="12 6 12 12 16 14" />
+              </svg>
+            } />
+          )}
+          <StatCard value={r.submissions} label={r.livesLeft > 0 ? "SUBMISSIONS" : "CORRECT"} color="#06b6d4" icon={
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <polyline points="16 18 22 12 16 6" />
               <polyline points="8 6 2 12 8 18" />

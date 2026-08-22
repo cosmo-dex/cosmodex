@@ -9,7 +9,6 @@ import RisingStars from "@/components/landing/RisingStars";
 interface PricingPlan {
   name: string;
   price: number;
-  yearlyPrice: number;
   period: string;
   features: string[];
   description: string;
@@ -19,13 +18,14 @@ interface PricingPlan {
   accentColor: string;
   accentRgb: string;
   gradient: string;
+  limit?: string;
 }
 
 const plans: PricingPlan[] = [
   {
     name: "Free",
     price: 0,
-    yearlyPrice: 0,
+    limit: "Always Free",
     period: "month",
     features: [
       "5 courses per month",
@@ -44,8 +44,8 @@ const plans: PricingPlan[] = [
   },
   {
     name: "Pro",
-    price: 12,
-    yearlyPrice: 9,
+    price: 0,
+    limit: "Coming Soon",
     period: "month",
     features: [
       "Unlimited courses",
@@ -65,8 +65,8 @@ const plans: PricingPlan[] = [
   },
   {
     name: "Elite",
-    price: 29,
-    yearlyPrice: 22,
+    price: 0,
+    limit: "Coming Soon",
     period: "month",
     features: [
       "Everything in Pro",
@@ -138,7 +138,7 @@ function PricingCard({
   isMonthly: boolean;
   index: number;
 }) {
-  const price = isMonthly ? plan.price : plan.yearlyPrice;
+  const price = plan.price;
   const cardRef = useRef<HTMLDivElement>(null);
   const isInView = useInView(cardRef, { once: true, margin: "-60px" });
 
@@ -306,7 +306,7 @@ function PricingCard({
               textAlign: "center",
             }}
           >
-            {price === 0 ? "always free" : isMonthly ? "billed monthly" : "billed annually"}
+            {plan.limit}
           </motion.p>
         </AnimatePresence>
 
