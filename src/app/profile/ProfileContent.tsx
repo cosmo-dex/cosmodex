@@ -22,6 +22,7 @@ import {
 import Navbar from '@/components/navbar/Navbar';
 import DashboardBackground from '@/components/dashboard/DashboardBackground';
 import Footer from '@/components/dashboard/Footer';
+import { getAvatarUrl, getAvatarCls, AVATARS, type AvatarOption } from '@/lib/avatar';
 
 const ONBOARDING_SKILLS = [
   'Python',
@@ -151,7 +152,7 @@ export default function ProfileContent({
   starPoints,
   rankThreshold,
   bio: initialBio = 'Full-Stack Cosmo Coder 🌌 Grinding Python, React & AI algorithms on CosmoDeX.',
-  avatarUrl: initialAvatarUrl = '/images/mascot.png',
+  avatarUrl: initialAvatarUrl = '/images/avatars/nebula.webp',
   arenaWins = 12,
   arenaLosses = 3,
 }: ProfileContentProps) {
@@ -193,6 +194,7 @@ export default function ProfileContent({
           body: JSON.stringify({
             username: editData.username,
             interests: editData.skills,
+            avatarUrl: editData.avatarUrl,
           }),
         });
 
@@ -289,433 +291,429 @@ export default function ProfileContent({
 
         <div className="w-full max-w-6xl mx-auto px-4 py-8 sm:px-8">
           <div className="w-full flex flex-col lg:flex-row gap-6 lg:gap-8 pb-12">
-          {/* Left Column (Main Profile) */}
-          <div className="flex-1 flex flex-col cosmo-glass-panel border border-white/10 rounded-[32px] pb-10 overflow-hidden relative">
-            {/* Banner & Avatar Wrapper */}
-            <div className="relative">
-              {/* Banner Image */}
-              <div className="w-full h-56 sm:h-64 rounded-t-[32px] overflow-hidden relative">
-                <div className="w-full h-full bg-gradient-to-br from-[#2A0845] via-[#1a0b2e] to-[#0a0518] opacity-80" />
-                <div className="absolute inset-0 bg-gradient-to-t from-[#0a0518]/90 to-transparent" />
-                <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_30%_50%,rgba(232,115,195,0.15),transparent_60%)]" />
-                <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_70%_50%,rgba(141,55,214,0.1),transparent_60%)]" />
-              </div>
-
-              {/* Action Bar */}
-              <div className="absolute -bottom-16 left-0 right-0 px-6 sm:px-8 flex justify-end">
-                <button
-                  onClick={() => {
-                    setEditData(profile);
-                    setSaveError(null);
-                    setIsEditing(true);
-                  }}
-                  className="rounded-xl border border-white/15 bg-white/[0.06] px-4 py-2 sm:px-5 sm:py-2.5 text-sm font-semibold flex items-center gap-2 hover:border-[#E873C3]/50 hover:bg-[#E873C3]/15 hover:text-white transition-all text-white shadow-lg mt-auto mb-20 z-20 cursor-pointer"
-                >
-                  <Edit size={16} /> <span className="hidden sm:inline">Edit profile</span>
-                </button>
-              </div>
-
-              {/* Profile Custom User Image Avatar */}
-              <div className="absolute -bottom-16 left-6 sm:left-10 z-20">
-                <div className="w-32 h-32 sm:w-40 sm:h-40 rounded-full border-4 border-[#E873C3] shadow-[0_0_30px_rgba(232,115,195,0.4)] overflow-hidden bg-[#15151c] relative flex items-center justify-center">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={profile.avatarUrl || '/images/mascot.png'}
-                    alt={profile.name}
-                    className="w-full h-full object-cover"
-                    onError={(e) => {
-                      (e.target as HTMLImageElement).src = '/images/mascot.png';
-                    }}
-                  />
-                  <div className="absolute inset-0 ring-inset ring-2 ring-white/20 rounded-full pointer-events-none" />
-                </div>
-              </div>
-            </div>
-
-            {/* Profile Info */}
-            <div className="px-6 sm:px-10 mt-20">
-              <div className="flex items-center gap-3">
-                <h1 className="text-3xl sm:text-4xl font-display font-bold text-white tracking-wide">
-                  {profile.name}
-                </h1>
-                <span className="px-2.5 py-0.5 rounded-full bg-[#E873C3]/20 border border-[#E873C3]/40 text-[#E873C3] text-xs font-mono font-bold">
-                  Lvl {level}
-                </span>
-              </div>
-              <p className="text-white/60 text-base mt-1 font-mono">@{profile.username}</p>
-
-              {/* Personal Bio */}
-              <p className="text-slate-300 text-sm mt-3.5 leading-relaxed font-sans max-w-2xl">
-                {profile.bio}
-              </p>
-
-              <div className="flex items-center gap-2 text-white/50 text-sm mt-4 font-medium">
-                <Calendar size={16} /> Joined {formatJoinDate(createdAt)}
-              </div>
-
-              {/* ── Stats Grid Integrated inside Main Left Card ── */}
-              <div className="mt-6 pt-6 border-t border-white/10 grid grid-cols-2 sm:grid-cols-4 gap-3.5">
-                <div className="flex items-center gap-3 p-3 rounded-2xl border border-white/10 bg-white/[0.03]">
-                  <div className="text-[#FFD700] drop-shadow-[0_0_8px_rgba(255,215,0,0.6)] text-2xl">
-                    ✦
-                  </div>
-                  <div>
-                    <p className="font-bold text-white text-lg leading-none">{starPoints}</p>
-                    <p className="text-[10px] font-mono uppercase tracking-wider text-white/50 mt-1">
-                      Star Points
-                    </p>
-                  </div>
+            {/* Left Column (Main Profile) */}
+            <div className="flex-1 flex flex-col cosmo-glass-panel border border-white/10 rounded-[32px] pb-10 overflow-hidden relative">
+              {/* Banner & Avatar Wrapper */}
+              <div className="relative">
+                {/* Banner Image */}
+                <div className="w-full h-56 sm:h-64 rounded-t-[32px] overflow-hidden relative">
+                  <div className="w-full h-full bg-gradient-to-br from-[#2A0845] via-[#1a0b2e] to-[#0a0518] opacity-80" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-[#0a0518]/90 to-transparent" />
+                  <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_30%_50%,rgba(232,115,195,0.15),transparent_60%)]" />
+                  <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_70%_50%,rgba(141,55,214,0.1),transparent_60%)]" />
                 </div>
 
-                <div className="flex items-center gap-3 p-3 rounded-2xl border border-white/10 bg-white/[0.03]">
-                  <div className="text-[#CD7F32] drop-shadow-[0_0_8px_rgba(205,127,50,0.6)]">
-                    <Shield size={20} fill="currentColor" />
-                  </div>
-                  <div>
-                    <p className="font-bold text-white text-sm leading-none mt-0.5">
-                      {getRankLabel(experienceLevel)}
-                    </p>
-                    <p className="text-[10px] font-mono uppercase tracking-wider text-white/50 mt-1">
-                      Rank
-                    </p>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-3 p-3 rounded-2xl border border-white/10 bg-white/[0.03]">
-                  <div className="text-cyan-400 drop-shadow-[0_0_8px_rgba(34,211,238,0.6)]">
-                    <Award size={20} fill="currentColor" />
-                  </div>
-                  <div>
-                    <p className="font-bold text-white text-lg leading-none">{badgeCount}</p>
-                    <p className="text-[10px] font-mono uppercase tracking-wider text-white/50 mt-1">
-                      Badges
-                    </p>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-3 p-3 rounded-2xl border border-white/10 bg-white/[0.03]">
-                  <div className="text-orange-500 drop-shadow-[0_0_8px_rgba(249,115,22,0.6)]">
-                    <Flame size={20} fill="currentColor" />
-                  </div>
-                  <div>
-                    <p className="font-bold text-white text-lg leading-none">{streak}</p>
-                    <p className="text-[10px] font-mono uppercase tracking-wider text-white/50 mt-1">
-                      Day Streak
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Progress Bar towards Next Rank */}
-              <div className="mt-4 pt-4 border-t border-white/5">
-                <div className="flex justify-between items-end mb-2">
-                  <div>
-                    <p className="text-[10px] font-mono uppercase tracking-wider text-white/50 font-semibold mb-0.5">
-                      Current Progress
-                    </p>
-                    <p className="text-sm font-medium text-white/80">
-                      <span className="text-white font-bold">{starPoints}</span> / {rankThreshold} ✦
-                    </p>
-                  </div>
-                  <p className="text-xs font-mono text-slate-400">to Silver Rank</p>
-                </div>
-                <div className="h-2 w-full bg-black/40 rounded-full overflow-hidden border border-white/5 relative">
-                  <motion.div
-                    className="absolute top-0 left-0 h-full bg-gradient-to-r from-[#FFD700] via-[#F59E0B] to-[#E873C3] rounded-full shadow-[0_0_10px_rgba(255,215,0,0.5)]"
-                    initial={{ width: 0 }}
-                    animate={{ width: `${rankProgress}%` }}
-                    transition={{ ease: 'easeOut', duration: 1.5, delay: 0.2 }}
-                  />
-                </div>
-              </div>
-
-              {/* Navigation Tabs */}
-              <div className="flex items-center gap-8 mt-10 border-b border-white/10 text-base font-semibold tracking-wide">
-                <button
-                  onClick={() => setActiveTab('overview')}
-                  className={`pb-4 px-1 -mb-[1px] transition-colors cursor-pointer relative ${
-                    activeTab === 'overview' ? 'text-white' : 'text-white/40 hover:text-white/80'
-                  }`}
-                >
-                  Overview
-                  {activeTab === 'overview' && (
-                    <motion.div
-                      layoutId="activeProfileNavTab"
-                      transition={{ type: "spring", stiffness: 400, damping: 30 }}
-                      className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-[#E873C3] to-[#8D37D6] shadow-[0_0_12px_rgba(232,115,195,0.8)]"
-                    />
-                  )}
-                </button>
-                <button
-                  onClick={() => setActiveTab('practice')}
-                  className={`pb-4 px-1 -mb-[1px] transition-colors cursor-pointer relative ${
-                    activeTab === 'practice' ? 'text-white' : 'text-white/40 hover:text-white/80'
-                  }`}
-                >
-                  Practice & Lessons
-                  {activeTab === 'practice' && (
-                    <motion.div
-                      layoutId="activeProfileNavTab"
-                      transition={{ type: "spring", stiffness: 400, damping: 30 }}
-                      className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-[#E873C3] to-[#8D37D6] shadow-[0_0_12px_rgba(232,115,195,0.8)]"
-                    />
-                  )}
-                </button>
-                <button
-                  onClick={() => setActiveTab('battles')}
-                  className={`pb-4 px-1 -mb-[1px] transition-colors cursor-pointer relative ${
-                    activeTab === 'battles' ? 'text-white' : 'text-white/40 hover:text-white/80'
-                  }`}
-                >
-                  Battle Stats
-                  {activeTab === 'battles' && (
-                    <motion.div
-                      layoutId="activeProfileNavTab"
-                      transition={{ type: "spring", stiffness: 400, damping: 30 }}
-                      className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-[#E873C3] to-[#8D37D6] shadow-[0_0_12px_rgba(232,115,195,0.8)]"
-                    />
-                  )}
-                </button>
-              </div>
-
-              {/* Tab Content */}
-              <div className="mt-8">
-                {activeTab === 'overview' && (
-                  <div className="space-y-8">
-                    {/* Recent Activity Timeline */}
-                    <div>
-                      <h2 className="text-xl font-bold font-display text-white mb-4 tracking-wide">
-                        Recent Activity Log
-                      </h2>
-                      <div className="space-y-3">
-                        <div className="flex items-center justify-between p-4 rounded-xl border border-white/10 bg-white/[0.03] hover:border-[#E873C3]/40 transition-all">
-                          <div className="flex items-center gap-3">
-                            <div className="p-2 rounded-lg bg-[#E873C3]/15 text-[#E873C3]">
-                              <Award size={18} />
-                            </div>
-                            <div>
-                              <p className="text-sm font-bold text-white">Completed Exercise: Command Line Basics</p>
-                              <p className="text-xs text-slate-400 font-mono">Python Course • 10 XP Earned</p>
-                            </div>
-                          </div>
-                          <span className="text-xs font-mono text-slate-500">2 hours ago</span>
-                        </div>
-
-                        <div className="flex items-center justify-between p-4 rounded-xl border border-white/10 bg-white/[0.03] hover:border-[#00FFE9]/40 transition-all">
-                          <div className="flex items-center gap-3">
-                            <div className="p-2 rounded-lg bg-[#00FFE9]/15 text-[#00FFE9]">
-                              <Swords size={18} />
-                            </div>
-                            <div>
-                              <p className="text-sm font-bold text-white">Won MCQ Battle vs @CyberWizard</p>
-                              <p className="text-xs text-slate-400 font-mono">Battle Arena • +25 XP Earned • {winRate}% Win Rate ({arenaWins}W - {arenaLosses}L)</p>
-                            </div>
-                          </div>
-                          <span className="text-xs font-mono text-slate-500">Yesterday</span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {activeTab === 'practice' && (
-                  <div className="space-y-6">
-                    <h2 className="text-xl font-bold font-display text-white tracking-wide">
-                      Course Progress & Practice
-                    </h2>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <div className="p-5 rounded-2xl border border-white/10 bg-white/[0.03] space-y-3">
-                        <div className="flex items-center justify-between">
-                          <span className="text-sm font-bold text-white">Python Fundamentals</span>
-                          <span className="text-xs font-mono font-bold text-[#00FFE9]">2/6 Completed</span>
-                        </div>
-                        <div className="h-2 w-full bg-black/40 rounded-full overflow-hidden border border-white/5">
-                          <div className="h-full bg-gradient-to-r from-[#00FFE9] to-[#E873C3] w-1/3" />
-                        </div>
-                        <p className="text-xs text-slate-400">Next lesson: Variables & Data Types</p>
-                      </div>
-
-                      <div className="p-5 rounded-2xl border border-white/10 bg-white/[0.03] space-y-3">
-                        <div className="flex items-center justify-between">
-                          <span className="text-sm font-bold text-white">Web Development 101</span>
-                          <span className="text-xs font-mono text-slate-400">Coming Soon</span>
-                        </div>
-                        <div className="h-2 w-full bg-black/40 rounded-full overflow-hidden border border-white/5">
-                          <div className="h-full bg-white/10 w-0" />
-                        </div>
-                        <p className="text-xs text-slate-400">HTML & CSS Foundations</p>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {activeTab === 'battles' && (
-                  <div className="space-y-6">
-                    <h2 className="text-xl font-bold font-display text-white tracking-wide">
-                      Battle Arena Statistics
-                    </h2>
-                    <div className="grid grid-cols-3 gap-4 text-center">
-                      <div className="p-4 rounded-xl border border-white/10 bg-white/[0.03]">
-                        <p className="text-2xl font-bold text-white font-mono">{arenaWins}</p>
-                        <p className="text-xs font-mono uppercase text-emerald-400 mt-1">Victories</p>
-                      </div>
-                      <div className="p-4 rounded-xl border border-white/10 bg-white/[0.03]">
-                        <p className="text-2xl font-bold text-white font-mono">{arenaLosses}</p>
-                        <p className="text-xs font-mono uppercase text-rose-400 mt-1">Defeats</p>
-                      </div>
-                      <div className="p-4 rounded-xl border border-white/10 bg-white/[0.03]">
-                        <p className="text-2xl font-bold text-white font-mono">{winRate}%</p>
-                        <p className="text-xs font-mono uppercase text-[#00FFE9] mt-1">Win Rate</p>
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-
-          {/* Right Column (Sidebar Badges, Skills, Socials) */}
-          <div className="w-full lg:w-[320px] xl:w-[350px] flex flex-col gap-6 mt-8 lg:mt-0 px-4 sm:px-0">
-            {/* Interactive Badge Showcase (Moved to Top of Sidebar) */}
-            <div className="cosmo-glass-panel p-6 border border-white/10 rounded-3xl space-y-4">
-              <div className="flex items-center justify-between">
-                <h3 className="font-bold font-display text-white text-lg tracking-wide">
-                  Badges & Achievements
-                </h3>
-                <Trophy size={18} className="text-[#FFD700]" />
-              </div>
-
-              {/* Badge Filter Tabs with Smooth Sliding Pill */}
-              <div className="flex items-center gap-1.5 p-1 bg-white/[0.04] rounded-xl border border-white/10 relative">
-                {(['all', 'earned', 'locked'] as const).map((tab) => (
+                {/* Action Bar */}
+                <div className="absolute -bottom-16 left-0 right-0 px-6 sm:px-8 flex justify-end">
                   <button
-                    key={tab}
-                    onClick={() => setBadgeFilter(tab)}
-                    className={`flex-1 py-1 text-xs font-mono font-bold uppercase rounded-lg transition-all cursor-pointer relative z-10 ${
-                      badgeFilter === tab
-                        ? 'text-white'
-                        : 'text-slate-400 hover:text-white'
-                    }`}
+                    onClick={() => {
+                      setEditData(profile);
+                      setSaveError(null);
+                      setIsEditing(true);
+                    }}
+                    className="rounded-xl border border-white/15 bg-white/[0.06] px-4 py-2 sm:px-5 sm:py-2.5 text-sm font-semibold flex items-center gap-2 hover:border-[#E873C3]/50 hover:bg-[#E873C3]/15 hover:text-white transition-all text-white shadow-lg mt-auto mb-20 z-20 cursor-pointer"
                   >
-                    {badgeFilter === tab && (
+                    <Edit size={16} /> <span className="hidden sm:inline">Edit profile</span>
+                  </button>
+                </div>
+
+                {/* Profile Custom User Image Avatar */}
+                <div className="absolute -bottom-16 left-6 sm:left-10 z-20">
+                  <div className={`w-32 h-32 sm:w-40 sm:h-40 rounded-full border-4 border-[#E873C3] shadow-[0_0_30px_rgba(232,115,195,0.4)] overflow-hidden ${getAvatarCls(profile.avatarUrl)} relative flex items-center justify-center`}>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={getAvatarUrl(profile.avatarUrl)}
+                      alt={profile.name}
+                      loading="eager"
+                      fetchPriority="high"
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).src = '/images/avatars/nebula.webp';
+                      }}
+                    />
+                    <div className="absolute inset-0 ring-inset ring-2 ring-white/20 rounded-full pointer-events-none" />
+                  </div>
+                </div>
+              </div>
+
+              {/* Profile Info */}
+              <div className="px-6 sm:px-10 mt-20">
+                <div className="flex items-center gap-3">
+                  <h1 className="text-3xl sm:text-4xl font-display font-bold text-white tracking-wide">
+                    {profile.name}
+                  </h1>
+                  <span className="px-2.5 py-0.5 rounded-full bg-[#E873C3]/20 border border-[#E873C3]/40 text-[#E873C3] text-xs font-mono font-bold">
+                    Lvl {level}
+                  </span>
+                </div>
+                <p className="text-white/60 text-base mt-1 font-mono">@{profile.username}</p>
+
+                {/* Personal Bio */}
+                <p className="text-slate-300 text-sm mt-3.5 leading-relaxed font-sans max-w-2xl">
+                  {profile.bio}
+                </p>
+
+                <div className="flex items-center gap-2 text-white/50 text-sm mt-4 font-medium">
+                  <Calendar size={16} /> Joined {formatJoinDate(createdAt)}
+                </div>
+
+                {/* ── Stats Grid Integrated inside Main Left Card ── */}
+                <div className="mt-6 pt-6 border-t border-white/10 grid grid-cols-2 sm:grid-cols-4 gap-3.5">
+                  <div className="flex items-center gap-3 p-3 rounded-2xl border border-white/10 bg-white/[0.03]">
+                    <div className="text-[#FFD700] drop-shadow-[0_0_8px_rgba(255,215,0,0.6)] text-2xl">
+                      ✦
+                    </div>
+                    <div>
+                      <p className="font-bold text-white text-lg leading-none">{starPoints}</p>
+                      <p className="text-[10px] font-mono uppercase tracking-wider text-white/50 mt-1">
+                        Star Points
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-3 p-3 rounded-2xl border border-white/10 bg-white/[0.03]">
+                    <div className="text-[#CD7F32] drop-shadow-[0_0_8px_rgba(205,127,50,0.6)]">
+                      <Shield size={20} fill="currentColor" />
+                    </div>
+                    <div>
+                      <p className="font-bold text-white text-sm leading-none mt-0.5">
+                        {getRankLabel(experienceLevel)}
+                      </p>
+                      <p className="text-[10px] font-mono uppercase tracking-wider text-white/50 mt-1">
+                        Rank
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-3 p-3 rounded-2xl border border-white/10 bg-white/[0.03]">
+                    <div className="text-cyan-400 drop-shadow-[0_0_8px_rgba(34,211,238,0.6)]">
+                      <Award size={20} fill="currentColor" />
+                    </div>
+                    <div>
+                      <p className="font-bold text-white text-lg leading-none">{badgeCount}</p>
+                      <p className="text-[10px] font-mono uppercase tracking-wider text-white/50 mt-1">
+                        Badges
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-3 p-3 rounded-2xl border border-white/10 bg-white/[0.03]">
+                    <div className="text-orange-500 drop-shadow-[0_0_8px_rgba(249,115,22,0.6)]">
+                      <Flame size={20} fill="currentColor" />
+                    </div>
+                    <div>
+                      <p className="font-bold text-white text-lg leading-none">{streak}</p>
+                      <p className="text-[10px] font-mono uppercase tracking-wider text-white/50 mt-1">
+                        Day Streak
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Progress Bar towards Next Rank */}
+                <div className="mt-4 pt-4 border-t border-white/5">
+                  <div className="flex justify-between items-end mb-2">
+                    <div>
+                      <p className="text-[10px] font-mono uppercase tracking-wider text-white/50 font-semibold mb-0.5">
+                        Current Progress
+                      </p>
+                      <p className="text-sm font-medium text-white/80">
+                        <span className="text-white font-bold">{starPoints}</span> / {rankThreshold} ✦
+                      </p>
+                    </div>
+                    <p className="text-xs font-mono text-slate-400">to Silver Rank</p>
+                  </div>
+                  <div className="h-2 w-full bg-black/40 rounded-full overflow-hidden border border-white/5 relative">
+                    <motion.div
+                      className="absolute top-0 left-0 h-full bg-gradient-to-r from-[#FFD700] via-[#F59E0B] to-[#E873C3] rounded-full shadow-[0_0_10px_rgba(255,215,0,0.5)]"
+                      initial={{ width: 0 }}
+                      animate={{ width: `${rankProgress}%` }}
+                      transition={{ ease: 'easeOut', duration: 1.5, delay: 0.2 }}
+                    />
+                  </div>
+                </div>
+
+                {/* Navigation Tabs */}
+                <div className="flex items-center gap-8 mt-10 border-b border-white/10 text-base font-semibold tracking-wide">
+                  <button
+                    onClick={() => setActiveTab('overview')}
+                    className={`pb-4 px-1 -mb-[1px] transition-colors cursor-pointer relative ${activeTab === 'overview' ? 'text-white' : 'text-white/40 hover:text-white/80'
+                      }`}
+                  >
+                    Overview
+                    {activeTab === 'overview' && (
                       <motion.div
-                        layoutId="activeBadgeTab"
-                        transition={{ type: "spring", stiffness: 450, damping: 30 }}
-                        className="absolute inset-0 bg-gradient-to-r from-[#E873C3]/30 to-[#8D37D6]/40 border border-[#E873C3]/60 rounded-lg shadow-[0_0_12px_rgba(232,115,195,0.4)] z-[-1]"
+                        layoutId="activeProfileNavTab"
+                        transition={{ type: "spring", stiffness: 400, damping: 30 }}
+                        className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-[#E873C3] to-[#8D37D6] shadow-[0_0_12px_rgba(232,115,195,0.8)]"
                       />
                     )}
-                    {tab}
                   </button>
-                ))}
-              </div>
-
-              {/* Badges Grid with Smooth Motion */}
-              <div className="grid grid-cols-2 gap-2.5">
-                {filteredBadges.map((badge) => (
-                  <motion.div
-                    key={badge.id}
-                    layout
-                    whileHover={{ scale: 1.05, y: -2 }}
-                    whileTap={{ scale: 0.96 }}
-                    onClick={() => setSelectedBadgeModal(badge)}
-                    className={`p-3 rounded-xl border transition-all cursor-pointer flex flex-col items-center text-center space-y-1.5 ${
-                      badge.category === 'earned'
-                        ? 'bg-white/[0.04] border-white/15 hover:border-[#E873C3]/60 hover:bg-[#E873C3]/10 shadow-sm'
-                        : 'bg-white/[0.01] border-white/5 opacity-50 hover:opacity-80'
-                    }`}
-                  >
-                    <span className="text-2xl">{badge.icon}</span>
-                    <span className="text-xs font-bold text-white truncate w-full">
-                      {badge.name}
-                    </span>
-                    <span
-                      className={`text-[9px] font-mono font-bold px-1.5 py-0.5 rounded ${
-                        badge.rarity === 'Legendary'
-                          ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40'
-                          : badge.rarity === 'Epic'
-                          ? 'bg-purple-500/20 text-purple-300 border border-purple-500/40'
-                          : 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/40'
+                  <button
+                    onClick={() => setActiveTab('practice')}
+                    className={`pb-4 px-1 -mb-[1px] transition-colors cursor-pointer relative ${activeTab === 'practice' ? 'text-white' : 'text-white/40 hover:text-white/80'
                       }`}
-                    >
-                      {badge.rarity}
-                    </span>
-                  </motion.div>
-                ))}
+                  >
+                    Practice & Lessons
+                    {activeTab === 'practice' && (
+                      <motion.div
+                        layoutId="activeProfileNavTab"
+                        transition={{ type: "spring", stiffness: 400, damping: 30 }}
+                        className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-[#E873C3] to-[#8D37D6] shadow-[0_0_12px_rgba(232,115,195,0.8)]"
+                      />
+                    )}
+                  </button>
+                  <button
+                    onClick={() => setActiveTab('battles')}
+                    className={`pb-4 px-1 -mb-[1px] transition-colors cursor-pointer relative ${activeTab === 'battles' ? 'text-white' : 'text-white/40 hover:text-white/80'
+                      }`}
+                  >
+                    Battle Stats
+                    {activeTab === 'battles' && (
+                      <motion.div
+                        layoutId="activeProfileNavTab"
+                        transition={{ type: "spring", stiffness: 400, damping: 30 }}
+                        className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-[#E873C3] to-[#8D37D6] shadow-[0_0_12px_rgba(232,115,195,0.8)]"
+                      />
+                    )}
+                  </button>
+                </div>
+
+                {/* Tab Content */}
+                <div className="mt-8">
+                  {activeTab === 'overview' && (
+                    <div className="space-y-8">
+                      {/* Recent Activity Timeline */}
+                      <div>
+                        <h2 className="text-xl font-bold font-display text-white mb-4 tracking-wide">
+                          Recent Activity Log
+                        </h2>
+                        <div className="space-y-3">
+                          <div className="flex items-center justify-between p-4 rounded-xl border border-white/10 bg-white/[0.03] hover:border-[#E873C3]/40 transition-all">
+                            <div className="flex items-center gap-3">
+                              <div className="p-2 rounded-lg bg-[#E873C3]/15 text-[#E873C3]">
+                                <Award size={18} />
+                              </div>
+                              <div>
+                                <p className="text-sm font-bold text-white">Completed Exercise: Command Line Basics</p>
+                                <p className="text-xs text-slate-400 font-mono">Python Course • 10 XP Earned</p>
+                              </div>
+                            </div>
+                            <span className="text-xs font-mono text-slate-500">2 hours ago</span>
+                          </div>
+
+                          <div className="flex items-center justify-between p-4 rounded-xl border border-white/10 bg-white/[0.03] hover:border-[#00FFE9]/40 transition-all">
+                            <div className="flex items-center gap-3">
+                              <div className="p-2 rounded-lg bg-[#00FFE9]/15 text-[#00FFE9]">
+                                <Swords size={18} />
+                              </div>
+                              <div>
+                                <p className="text-sm font-bold text-white">Won MCQ Battle vs @CyberWizard</p>
+                                <p className="text-xs text-slate-400 font-mono">Battle Arena • +25 XP Earned • {winRate}% Win Rate ({arenaWins}W - {arenaLosses}L)</p>
+                              </div>
+                            </div>
+                            <span className="text-xs font-mono text-slate-500">Yesterday</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {activeTab === 'practice' && (
+                    <div className="space-y-6">
+                      <h2 className="text-xl font-bold font-display text-white tracking-wide">
+                        Course Progress & Practice
+                      </h2>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div className="p-5 rounded-2xl border border-white/10 bg-white/[0.03] space-y-3">
+                          <div className="flex items-center justify-between">
+                            <span className="text-sm font-bold text-white">Python Fundamentals</span>
+                            <span className="text-xs font-mono font-bold text-[#00FFE9]">2/6 Completed</span>
+                          </div>
+                          <div className="h-2 w-full bg-black/40 rounded-full overflow-hidden border border-white/5">
+                            <div className="h-full bg-gradient-to-r from-[#00FFE9] to-[#E873C3] w-1/3" />
+                          </div>
+                          <p className="text-xs text-slate-400">Next lesson: Variables & Data Types</p>
+                        </div>
+
+                        <div className="p-5 rounded-2xl border border-white/10 bg-white/[0.03] space-y-3">
+                          <div className="flex items-center justify-between">
+                            <span className="text-sm font-bold text-white">Web Development 101</span>
+                            <span className="text-xs font-mono text-slate-400">Coming Soon</span>
+                          </div>
+                          <div className="h-2 w-full bg-black/40 rounded-full overflow-hidden border border-white/5">
+                            <div className="h-full bg-white/10 w-0" />
+                          </div>
+                          <p className="text-xs text-slate-400">HTML & CSS Foundations</p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {activeTab === 'battles' && (
+                    <div className="space-y-6">
+                      <h2 className="text-xl font-bold font-display text-white tracking-wide">
+                        Battle Arena Statistics
+                      </h2>
+                      <div className="grid grid-cols-3 gap-4 text-center">
+                        <div className="p-4 rounded-xl border border-white/10 bg-white/[0.03]">
+                          <p className="text-2xl font-bold text-white font-mono">{arenaWins}</p>
+                          <p className="text-xs font-mono uppercase text-emerald-400 mt-1">Victories</p>
+                        </div>
+                        <div className="p-4 rounded-xl border border-white/10 bg-white/[0.03]">
+                          <p className="text-2xl font-bold text-white font-mono">{arenaLosses}</p>
+                          <p className="text-xs font-mono uppercase text-rose-400 mt-1">Defeats</p>
+                        </div>
+                        <div className="p-4 rounded-xl border border-white/10 bg-white/[0.03]">
+                          <p className="text-2xl font-bold text-white font-mono">{winRate}%</p>
+                          <p className="text-xs font-mono uppercase text-[#00FFE9] mt-1">Win Rate</p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
 
-            {/* Skills Card */}
-            <div className="cosmo-glass-panel p-6 border border-white/10 rounded-3xl">
-              <h3 className="font-bold font-display text-white mb-3 text-lg tracking-wide drop-shadow-sm">
-                Skills & Interests
-              </h3>
-              {profile.skills.length === 0 ? (
-                <p className="text-sm text-white/60 mb-6 font-medium">
-                  You haven&apos;t listed any skills yet.
-                </p>
-              ) : (
-                <div className="flex flex-wrap gap-2 mb-6">
-                  {profile.skills.map((skill) => (
-                    <div
-                      key={skill}
-                      className="px-3.5 py-1.5 bg-white/5 border border-white/10 rounded-xl text-xs font-semibold text-white/90"
+            {/* Right Column (Sidebar Badges, Skills, Socials) */}
+            <div className="w-full lg:w-[320px] xl:w-[350px] flex flex-col gap-6 mt-8 lg:mt-0 px-4 sm:px-0">
+              {/* Interactive Badge Showcase (Moved to Top of Sidebar) */}
+              <div className="cosmo-glass-panel p-6 border border-white/10 rounded-3xl space-y-4">
+                <div className="flex items-center justify-between">
+                  <h3 className="font-bold font-display text-white text-lg tracking-wide">
+                    Badges & Achievements
+                  </h3>
+                  <Trophy size={18} className="text-[#FFD700]" />
+                </div>
+
+                {/* Badge Filter Tabs with Smooth Sliding Pill */}
+                <div className="flex items-center gap-1.5 p-1 bg-white/[0.04] rounded-xl border border-white/10 relative">
+                  {(['all', 'earned', 'locked'] as const).map((tab) => (
+                    <button
+                      key={tab}
+                      onClick={() => setBadgeFilter(tab)}
+                      className={`flex-1 py-1 text-xs font-mono font-bold uppercase rounded-lg transition-all cursor-pointer relative z-10 ${badgeFilter === tab
+                        ? 'text-white'
+                        : 'text-slate-400 hover:text-white'
+                        }`}
                     >
-                      <span>{skill}</span>
-                    </div>
+                      {badgeFilter === tab && (
+                        <motion.div
+                          layoutId="activeBadgeTab"
+                          transition={{ type: "spring", stiffness: 450, damping: 30 }}
+                          className="absolute inset-0 bg-gradient-to-r from-[#E873C3]/30 to-[#8D37D6]/40 border border-[#E873C3]/60 rounded-lg shadow-[0_0_12px_rgba(232,115,195,0.4)] z-[-1]"
+                        />
+                      )}
+                      {tab}
+                    </button>
                   ))}
                 </div>
-              )}
-              <button
-                onClick={openEditSkillsModal}
-                className="rounded-xl border border-white/15 bg-white/[0.04] py-2.5 transition-all w-full text-xs font-mono font-bold uppercase tracking-wider flex items-center justify-center gap-2 text-white hover:border-[#E873C3]/50 hover:bg-[#E873C3]/10 hover:text-[#E873C3] cursor-pointer"
-              >
-                <Edit size={14} /> Edit Skills
-              </button>
-            </div>
 
-            {/* Socials Card */}
-            <div className="cosmo-glass-panel p-6 border border-white/10 rounded-3xl">
-              <h3 className="font-bold font-display text-white mb-4 text-lg tracking-wide drop-shadow-sm">
-                Social Links
-              </h3>
-              <div className="flex flex-col gap-2.5">
-                {Object.entries(profile.socials).map(([network, url]) => {
-                  if (!url) return null;
-
-                  let Icon = Globe;
-                  const label = network.toUpperCase();
-                  if (network === 'github') Icon = Globe;
-                  if (network === 'twitter') Icon = MessageCircle;
-                  if (network === 'linkedin') Icon = LinkIcon;
-                  if (network === 'discord') Icon = Share2;
-
-                  return (
-                    <a
-                      key={network}
-                      href={url.startsWith('http') ? url : `https://${url}`}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="flex items-center justify-between px-3.5 py-2.5 rounded-xl border border-white/10 bg-white/[0.04] text-slate-300 hover:border-[#E873C3]/50 hover:bg-[#E873C3]/10 hover:text-white transition-all text-xs font-medium cursor-pointer"
+                {/* Badges Grid with Smooth Motion */}
+                <div className="grid grid-cols-2 gap-2.5">
+                  {filteredBadges.map((badge) => (
+                    <motion.div
+                      key={badge.id}
+                      layout
+                      whileHover={{ scale: 1.05, y: -2 }}
+                      whileTap={{ scale: 0.96 }}
+                      onClick={() => setSelectedBadgeModal(badge)}
+                      className={`p-3 rounded-xl border transition-all cursor-pointer flex flex-col items-center text-center space-y-1.5 ${badge.category === 'earned'
+                        ? 'bg-white/[0.04] border-white/15 hover:border-[#E873C3]/60 hover:bg-[#E873C3]/10 shadow-sm'
+                        : 'bg-white/[0.01] border-white/5 opacity-50 hover:opacity-80'
+                        }`}
                     >
-                      <div className="flex items-center gap-2.5">
-                        <Icon size={16} className="text-[#E873C3]" />
-                        <span>{label}</span>
-                      </div>
-                      <span className="font-mono text-[10px] text-slate-400 truncate max-w-[120px]">
-                        {url.replace(/^https?:\/\//, '')}
+                      <span className="text-2xl">{badge.icon}</span>
+                      <span className="text-xs font-bold text-white truncate w-full">
+                        {badge.name}
                       </span>
-                    </a>
-                  );
-                })}
+                      <span
+                        className={`text-[9px] font-mono font-bold px-1.5 py-0.5 rounded ${badge.rarity === 'Legendary'
+                          ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40'
+                          : badge.rarity === 'Epic'
+                            ? 'bg-purple-500/20 text-purple-300 border border-purple-500/40'
+                            : 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/40'
+                          }`}
+                      >
+                        {badge.rarity}
+                      </span>
+                    </motion.div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Skills Card */}
+              <div className="cosmo-glass-panel p-6 border border-white/10 rounded-3xl">
+                <h3 className="font-bold font-display text-white mb-3 text-lg tracking-wide drop-shadow-sm">
+                  Skills & Interests
+                </h3>
+                {profile.skills.length === 0 ? (
+                  <p className="text-sm text-white/60 mb-6 font-medium">
+                    You haven&apos;t listed any skills yet.
+                  </p>
+                ) : (
+                  <div className="flex flex-wrap gap-2 mb-6">
+                    {profile.skills.map((skill) => (
+                      <div
+                        key={skill}
+                        className="px-3.5 py-1.5 bg-white/5 border border-white/10 rounded-xl text-xs font-semibold text-white/90"
+                      >
+                        <span>{skill}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                <button
+                  onClick={openEditSkillsModal}
+                  className="rounded-xl border border-white/15 bg-white/[0.04] py-2.5 transition-all w-full text-xs font-mono font-bold uppercase tracking-wider flex items-center justify-center gap-2 text-white hover:border-[#E873C3]/50 hover:bg-[#E873C3]/10 hover:text-[#E873C3] cursor-pointer"
+                >
+                  <Edit size={14} /> Edit Skills
+                </button>
+              </div>
+
+              {/* Socials Card */}
+              <div className="cosmo-glass-panel p-6 border border-white/10 rounded-3xl">
+                <h3 className="font-bold font-display text-white mb-4 text-lg tracking-wide drop-shadow-sm">
+                  Social Links
+                </h3>
+                <div className="flex flex-col gap-2.5">
+                  {Object.entries(profile.socials).map(([network, url]) => {
+                    if (!url) return null;
+
+                    let Icon = Globe;
+                    const label = network.toUpperCase();
+                    if (network === 'github') Icon = Globe;
+                    if (network === 'twitter') Icon = MessageCircle;
+                    if (network === 'linkedin') Icon = LinkIcon;
+                    if (network === 'discord') Icon = Share2;
+
+                    return (
+                      <a
+                        key={network}
+                        href={url.startsWith('http') ? url : `https://${url}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="flex items-center justify-between px-3.5 py-2.5 rounded-xl border border-white/10 bg-white/[0.04] text-slate-300 hover:border-[#E873C3]/50 hover:bg-[#E873C3]/10 hover:text-white transition-all text-xs font-medium cursor-pointer"
+                      >
+                        <div className="flex items-center gap-2.5">
+                          <Icon size={16} className="text-[#E873C3]" />
+                          <span>{label}</span>
+                        </div>
+                        <span className="font-mono text-[10px] text-slate-400 truncate max-w-[120px]">
+                          {url.replace(/^https?:\/\//, '')}
+                        </span>
+                      </a>
+                    );
+                  })}
+                </div>
               </div>
             </div>
           </div>
         </div>
-      </div>
 
-      {/* Page Footer */}
-      <Footer />
-    </div>
+        {/* Page Footer */}
+        <Footer />
+      </div>
 
       {/* Badge Detail Modal */}
       <AnimatePresence>
@@ -807,6 +805,43 @@ export default function ProfileContent({
                   data-lenis-prevent
                   className="flex-1 min-h-0 overflow-y-auto overscroll-contain pr-2 custom-scrollbar space-y-6 pb-6"
                 >
+                  <div>
+                    <label className="block text-xs font-mono font-bold uppercase tracking-wider text-slate-400 mb-2.5">
+                      Choose Hologram Avatar
+                    </label>
+                    <div className="grid grid-cols-5 gap-2">
+                      {AVATARS.map((av: AvatarOption) => {
+                        const isSelected =
+                          editData.avatarUrl === av.id ||
+                          editData.avatarUrl === av.image ||
+                          getAvatarUrl(editData.avatarUrl) === av.image;
+                        return (
+                          <button
+                            key={av.id}
+                            type="button"
+                            onClick={() => setEditData({ ...editData, avatarUrl: av.image })}
+                            className={`flex flex-col items-center p-1.5 rounded-xl border transition-all cursor-pointer ${isSelected
+                              ? 'border-[#E873C3] bg-[#E873C3]/15 shadow-[0_0_15px_rgba(232,115,195,0.4)] scale-105'
+                              : 'border-white/10 bg-white/5 hover:border-white/30 hover:scale-102'
+                              }`}
+                          >
+                            <div className={`w-12 h-12 rounded-lg overflow-hidden ${av.cls} p-0.5 mb-1.5`}>
+                              {/* eslint-disable-next-line @next/next/no-img-element */}
+                              <img
+                                src={av.image}
+                                alt={av.name}
+                                className="w-full h-full object-cover rounded-md"
+                              />
+                            </div>
+                            <span className={`text-[10px] font-mono font-bold truncate max-w-full ${isSelected ? 'text-[#E873C3]' : 'text-white/60'}`}>
+                              {av.name}
+                            </span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
                   {/* Display Name */}
                   <div>
                     <label className="block text-xs font-mono font-bold uppercase tracking-wider text-slate-400 mb-1.5">
