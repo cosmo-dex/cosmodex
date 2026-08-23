@@ -690,93 +690,123 @@ export default function ProfileContent({
                 </div>
               </div>
 
-            {/* Socials Card */}
-            <div className="cosmo-glass-panel p-6 border border-white/10 rounded-3xl">
-              <h3 className="font-bold font-display text-white mb-4 text-lg tracking-wide drop-shadow-sm">
-                Social Links
-              </h3>
-              <div className="flex flex-col gap-2.5">
-                {Object.entries(profile.socials).map(([network, url]) => {
-                  let Icon = Globe;
-                  const label = network.toUpperCase();
-                  if (network === 'github') Icon = Globe;
-                  if (network === 'twitter') Icon = MessageCircle;
-                  if (network === 'linkedin') Icon = LinkIcon;
-                  if (network === 'discord') Icon = Share2;
-                  if (network === 'portfolio') Icon = Globe;
+              {/* Skills Card */}
+              <div className="cosmo-glass-panel p-6 border border-white/10 rounded-3xl">
+                <h3 className="font-bold font-display text-white mb-3 text-lg tracking-wide drop-shadow-sm">
+                  Skills & Interests
+                </h3>
+                {profile.skills.length === 0 ? (
+                  <p className="text-sm text-white/60 mb-6 font-medium">
+                    You haven&apos;t listed any skills yet.
+                  </p>
+                ) : (
+                  <div className="flex flex-wrap gap-2 mb-6">
+                    {profile.skills.map((skill) => (
+                      <div
+                        key={skill}
+                        className="px-3.5 py-1.5 bg-white/5 border border-white/10 rounded-xl text-xs font-semibold text-white/90"
+                      >
+                        <span>{skill}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                <button
+                  onClick={openEditSkillsModal}
+                  className="rounded-xl border border-white/15 bg-white/[0.04] py-2.5 transition-all w-full text-xs font-mono font-bold uppercase tracking-wider flex items-center justify-center gap-2 text-white hover:border-[#E873C3]/50 hover:bg-[#E873C3]/10 hover:text-[#E873C3] cursor-pointer"
+                >
+                  <Edit size={14} /> Edit Skills
+                </button>
+              </div>
 
-                  const isEditingThis = editingSocial === network;
+              {/* Socials Card */}
+              <div className="cosmo-glass-panel p-6 border border-white/10 rounded-3xl">
+                <h3 className="font-bold font-display text-white mb-4 text-lg tracking-wide drop-shadow-sm">
+                  Social Links
+                </h3>
+                <div className="flex flex-col gap-2.5">
+                  {Object.entries(profile.socials).map(([network, url]) => {
+                    let Icon = Globe;
+                    const label = network.toUpperCase();
+                    if (network === 'github') Icon = Globe;
+                    if (network === 'twitter') Icon = MessageCircle;
+                    if (network === 'linkedin') Icon = LinkIcon;
+                    if (network === 'discord') Icon = Share2;
+                    if (network === 'portfolio') Icon = Globe;
 
-                  if (isEditingThis) {
+                    const isEditingThis = editingSocial === network;
+
+                    if (isEditingThis) {
+                      return (
+                        <div
+                          key={network}
+                          className="flex items-center gap-2 px-3 py-2 rounded-xl border border-[#E873C3]/60 bg-[#E873C3]/10 shadow-[0_0_15px_rgba(232,115,195,0.2)]"
+                        >
+                          <Icon size={16} className="text-[#E873C3] shrink-0" />
+                          <span className="text-xs font-bold text-white uppercase font-mono w-14 shrink-0">{label}</span>
+                          <input
+                            type="text"
+                            value={socialInputValue}
+                            onChange={(e) => setSocialInputValue(e.target.value)}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') saveSocialUrl(network);
+                              if (e.key === 'Escape') cancelEditingSocial();
+                            }}
+                            placeholder={`${network}.com/username`}
+                            className="flex-1 min-w-0 bg-black/60 border border-white/15 rounded-lg px-2.5 py-1 text-xs text-white focus:outline-none focus:border-[#E873C3] font-mono"
+                            autoFocus
+                          />
+                          <button
+                            onClick={() => saveSocialUrl(network)}
+                            className="p-1 rounded-lg bg-emerald-500/20 text-emerald-300 hover:bg-emerald-500/40 transition-colors cursor-pointer shrink-0"
+                            title="Save URL"
+                          >
+                            <CheckCircle2 size={15} />
+                          </button>
+                          <button
+                            onClick={cancelEditingSocial}
+                            className="p-1 rounded-lg bg-rose-500/20 text-rose-300 hover:bg-rose-500/40 transition-colors cursor-pointer shrink-0"
+                            title="Cancel"
+                          >
+                            <X size={15} />
+                          </button>
+                        </div>
+                      );
+                    }
+
                     return (
                       <div
                         key={network}
-                        className="flex items-center gap-2 px-3 py-2 rounded-xl border border-[#E873C3]/60 bg-[#E873C3]/10 shadow-[0_0_15px_rgba(232,115,195,0.2)]"
+                        className="flex items-center justify-between px-3.5 py-2.5 rounded-xl border border-white/10 bg-white/[0.04] text-slate-300 hover:border-[#E873C3]/50 hover:bg-[#E873C3]/10 hover:text-white transition-all text-xs font-medium group"
                       >
-                        <Icon size={16} className="text-[#E873C3] shrink-0" />
-                        <span className="text-xs font-bold text-white uppercase font-mono w-14 shrink-0">{label}</span>
-                        <input
-                          type="text"
-                          value={socialInputValue}
-                          onChange={(e) => setSocialInputValue(e.target.value)}
-                          onKeyDown={(e) => {
-                            if (e.key === 'Enter') saveSocialUrl(network);
-                            if (e.key === 'Escape') cancelEditingSocial();
+                        <a
+                          href={url ? (url.startsWith('http') ? url : `https://${url}`) : '#'}
+                          target={url ? '_blank' : undefined}
+                          rel="noreferrer"
+                          onClick={(e) => {
+                            if (!url) e.preventDefault();
                           }}
-                          placeholder={`${network}.com/username`}
-                          className="flex-1 min-w-0 bg-black/60 border border-white/15 rounded-lg px-2.5 py-1 text-xs text-white focus:outline-none focus:border-[#E873C3] font-mono"
-                          autoFocus
-                        />
-                        <button
-                          onClick={() => saveSocialUrl(network)}
-                          className="p-1 rounded-lg bg-emerald-500/20 text-emerald-300 hover:bg-emerald-500/40 transition-colors cursor-pointer shrink-0"
-                          title="Save URL"
+                          className="flex items-center justify-between flex-1 min-w-0 mr-2 cursor-pointer"
                         >
-                          <CheckCircle2 size={15} />
-                        </button>
+                          <div className="flex items-center gap-2.5">
+                            <Icon size={16} className="text-[#E873C3] shrink-0" />
+                            <span>{label}</span>
+                          </div>
+                          <span className="font-mono text-[10px] text-slate-400 truncate max-w-[110px]">
+                            {url ? url.replace(/^https?:\/\//, '') : <span className="italic text-slate-500">Not set</span>}
+                          </span>
+                        </a>
                         <button
-                          onClick={cancelEditingSocial}
-                          className="p-1 rounded-lg bg-rose-500/20 text-rose-300 hover:bg-rose-500/40 transition-colors cursor-pointer shrink-0"
-                          title="Cancel"
+                          onClick={() => startEditingSocial(network, url)}
+                          className="p-1.5 rounded-lg text-slate-400 hover:text-[#E873C3] hover:bg-white/10 transition-colors cursor-pointer shrink-0"
+                          title={`Edit ${label} URL`}
                         >
-                          <X size={15} />
+                          <Edit size={13} />
                         </button>
                       </div>
                     );
-                  }
-
-                  return (
-                    <div
-                      key={network}
-                      className="flex items-center justify-between px-3.5 py-2.5 rounded-xl border border-white/10 bg-white/[0.04] text-slate-300 hover:border-[#E873C3]/50 hover:bg-[#E873C3]/10 hover:text-white transition-all text-xs font-medium group"
-                    >
-                      <a
-                        href={url ? (url.startsWith('http') ? url : `https://${url}`) : '#'}
-                        target={url ? '_blank' : undefined}
-                        rel="noreferrer"
-                        onClick={(e) => {
-                          if (!url) e.preventDefault();
-                        }}
-                        className="flex items-center justify-between flex-1 min-w-0 mr-2 cursor-pointer"
-                      >
-                        <div className="flex items-center gap-2.5">
-                          <Icon size={16} className="text-[#E873C3] shrink-0" />
-                          <span>{label}</span>
-                        </div>
-                        <span className="font-mono text-[10px] text-slate-400 truncate max-w-[110px]">
-                          {url ? url.replace(/^https?:\/\//, '') : <span className="italic text-slate-500">Not set</span>}
-                        </span>
-                      </a>
-                      <button
-                        onClick={() => startEditingSocial(network, url)}
-                        className="p-1.5 rounded-lg text-slate-400 hover:text-[#E873C3] hover:bg-white/10 transition-colors cursor-pointer shrink-0"
-                        title={`Edit ${label} URL`}
-                      >
-                        <Edit size={13} />
-                      </button>
-                    </div>
-                  );
-                })}
+                  })}
+                </div>
               </div>
             </div>
           </div>
