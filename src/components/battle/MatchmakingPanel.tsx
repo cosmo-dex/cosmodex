@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element */
 "use client";
 
 import { useEffect, useState, useRef, useCallback } from "react";
@@ -5,6 +6,7 @@ import { Socket } from "socket.io-client";
 import { Swords, Flame, Terminal, ListChecks, Trophy, Zap, Clock, Timer, Award, CheckCircle2, XCircle, Sparkles } from "lucide-react";
 
 import MatchmakingCinematic from "@/components/battle/MatchmakingCinematic";
+import { getAvatarUrl } from "@/lib/avatar";
 
 type Mode = "code" | "mcq";
 type QueueState = "idle" | "queuing" | "matched";
@@ -15,11 +17,13 @@ interface MatchInfo {
   opponentId: string;
   opponentUsername: string;
   opponentElo: number;
+  opponentAvatar?: string | null;
   mode: Mode;
 }
 
 interface UserStats {
   username: string;
+  avatarUrl?: string | null;
   level: number;
   experienceLevel: string;
   elo: number;
@@ -75,7 +79,7 @@ export default function MatchmakingPanel({ socket, userId, username, onMatchFoun
   const [mode, setMode] = useState<Mode>("code");
   const [queueState, setQueueState] = useState<QueueState>("idle");
   const [phase, setPhase] = useState<CinematicPhase>("SEARCHING");
-  const [opponent, setOpponent] = useState<{ username: string; elo: number } | null>(null);
+  const [opponent, setOpponent] = useState<{ username: string; elo: number; avatar?: string } | null>(null);
   const [matchPayload, setMatchPayload] = useState<MatchInfo | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [stats, setStats] = useState<UserStats | null>(null);
@@ -130,7 +134,11 @@ export default function MatchmakingPanel({ socket, userId, username, onMatchFoun
     const handleMatchFound = (payload: MatchInfo) => {
       console.log("[MatchmakingPanel] match_found received", payload);
       setMatchPayload(payload);
-      setOpponent({ username: payload.opponentUsername, elo: payload.opponentElo });
+      setOpponent({
+        username: payload.opponentUsername,
+        elo: payload.opponentElo,
+        avatar: payload.opponentAvatar || undefined,
+      });
       setPhase("MATCH_FOUND");
       setQueueState("matched");
     };
@@ -252,10 +260,15 @@ export default function MatchmakingPanel({ socket, userId, username, onMatchFoun
               {/* Header: User Info & Avatar with Standardized Pill Badges */}
               <div className="flex items-center justify-between border-b border-white/10 pb-3 mb-3">
                 <div className="flex items-center gap-2.5 min-w-0">
-                  <div className="w-9 h-9 rounded-full bg-gradient-to-tr from-[#9E00F6] via-[#D95FD1] to-[#00FFE9] p-[2px] shrink-0 shadow-[0_0_12px_rgba(158,0,246,0.4)]">
-                    <div className="w-full h-full rounded-full bg-[#0d0f1d] flex items-center justify-center font-bold text-white text-sm font-display uppercase border border-white/10">
-                      {username ? username.charAt(0) : "S"}
-                    </div>
+                  <div className="w-9 h-9 rounded-full bg-gradient-to-tr from-[#9E00F6] via-[#D95FD1] to-[#00FFE9] p-[2px] shrink-0 shadow-[0_0_12px_rgba(158,0,246,0.4)] overflow-hidden">
+                    <img
+                      src={getAvatarUrl(stats?.avatarUrl)}
+                      alt={username || "User"}
+                      className="w-full h-full rounded-full object-cover border border-white/10"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).src = '/images/avatars/nebula.webp';
+                      }}
+                    />
                   </div>
 
                   <div className="min-w-0">

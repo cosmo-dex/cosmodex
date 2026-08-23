@@ -8,113 +8,63 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model arena_questions {
-  id                String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  created_by        String?             @db.Uuid
-  difficulty        String
-  topic             String?
-  language_code     String?
-  problem_text      String
-  test_cases_json   Json?               @default("[]")
-  hints_json        Json?               @default("[]")
-  time_limit_secs   Int?
-  xp_reward         Int?                @default(0)
-  is_active         Boolean?            @default(true)
-  created_at        DateTime?           @default(now()) @db.Timestamptz(6)
-  users             users?              @relation(fields: [created_by], references: [id], onUpdate: NoAction)
-  arena_submissions arena_submissions[]
-}
+model users {
+  id                                             String                  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  username                                       String
+  email                                          String                  @unique
+  password_hash                                  String?
+  auth_provider                                  String?
+  role                                           String?                 @default("student")
+  xp_total                                       Int?                    @default(0)
+  level                                          Int?                    @default(1)
+  avatar_url                                     String?
+  experience_level                               String?
+  interests                                      String[]                @default([])
+  is_active                                      Boolean?                @default(true)
+  created_at                                     DateTime?               @default(now()) @db.Timestamptz(6)
+  last_login_at                                  DateTime?               @db.Timestamptz(6)
 
-model arena_sessions {
-  id                  String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  user_id             String              @db.Uuid
-  language_id         String              @db.Uuid
-  difficulty          String?
-  topic_filter        String?
-  questions_solved    Int?                @default(0)
-  questions_attempted Int?                @default(0)
-  total_xp            Int?                @default(0)
-  started_at          DateTime?           @default(now()) @db.Timestamptz(6)
-  ended_at            DateTime?           @db.Timestamptz(6)
-  languages           languages           @relation(fields: [language_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  users               users               @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  arena_submissions   arena_submissions[]
-}
+  arena_stats                                    arena_stats?
+  battle_matches_p1                              battle_matches[]        @relation("BattlePlayer1Relation")
+  battle_matches_p2                              battle_matches[]        @relation("BattlePlayer2Relation")
+  battle_matches_winner                          battle_matches[]        @relation("BattleWinnerRelation")
+  battle_mcq_matches_p1                          battle_mcq_matches[]    @relation("BattleMcqPlayer1Relation")
+  battle_mcq_matches_p2                          battle_mcq_matches[]    @relation("BattleMcqPlayer2Relation")
+  battle_mcq_matches_winner                      battle_mcq_matches[]    @relation("BattleMcqWinnerRelation")
+  battle_submissions                             battle_submissions[]
+  battle_user_stats                              battle_user_stats?
+  enrollments                                    enrollments[]
+  event_leaderboard                              event_leaderboard[]
+  event_questions                                event_questions[]
+  event_registrations                            event_registrations[]
+  event_user_responses                           event_user_responses[]
+  events_created                                 events[]                @relation("EventsCreatedBy")
+  module_completions                             module_completions[]
+  modules                                        modules[]
+  progress                                       progress[]
+  questions                                      questions[]
+  skip_test_attempts                             skip_test_attempts[]
+  submissions                                    submissions[]
+  topics                                         topics[]
+  user_badges                                    user_badges[]
+  user_role_assignments                          user_role_assignments[] @relation("user_role_assignments_user_idTousers")
+  user_role_assigned_by                          user_role_assignments[] @relation("user_role_assignments_assigned_byTousers")
+  notifications_created                          notifications[]         @relation("NotificationsCreatedBy")
+  notifications_received                         notifications[]         @relation("NotificationsTargetUser")
+  user_notification_states                       user_notification_states[]
 
-model arena_stats {
-  id                 String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  user_id            String    @unique @db.Uuid
-  total_solved       Int?      @default(0)
-  current_streak     Int?      @default(0)
-  best_streak        Int?      @default(0)
-  total_xp           Int?      @default(0)
-  favourite_language String?
-  last_played_at     DateTime? @db.Timestamptz(6)
-  users              users     @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-}
-
-model arena_submissions {
-  id                String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  user_id           String          @db.Uuid
-  arena_question_id String          @db.Uuid
-  arena_session_id  String          @db.Uuid
-  code_text         String?
-  language_code     String?
-  is_correct        Boolean?        @default(false)
-  stdout            String?
-  stderr            String?
-  exec_time_ms      Int?
-  test_cases_passed Int?            @default(0)
-  created_at        DateTime?       @default(now()) @db.Timestamptz(6)
-  arena_questions   arena_questions @relation(fields: [arena_question_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  arena_sessions    arena_sessions  @relation(fields: [arena_session_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  users             users           @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-}
-
-model badges {
-  id            String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  name          String        @unique
-  description   String?
-  icon_url      String?
-  badge_type    String?
-  section       String?
-  criteria_json Json?         @default("{}")
-  user_badges   user_badges[]
-}
-
-model enrollments {
-  id                String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  user_id           String    @db.Uuid
-  language_id       String    @db.Uuid
-  current_module_id String?   @db.Uuid
-  enrolled_at       DateTime? @default(now()) @db.Timestamptz(6)
-  is_active         Boolean?  @default(true)
-  modules           modules?  @relation(fields: [current_module_id], references: [id], onUpdate: NoAction)
-  languages         languages @relation(fields: [language_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  users             users     @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  @@index([username])
 }
 
 model languages {
-  id             String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  code           String           @unique
+  id             String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  code           String        @unique
   name           String
   icon_url       String?
-  is_active      Boolean?         @default(true)
-  display_order  Int?             @default(0)
-  arena_sessions arena_sessions[]
+  is_active      Boolean?      @default(true)
+  display_order  Int?          @default(0)
   enrollments    enrollments[]
   modules        modules[]
-}
-
-model module_completions {
-  id              String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  user_id         String    @db.Uuid
-  module_id       String    @db.Uuid
-  total_xp_earned Int?      @default(0)
-  total_attempts  Int?      @default(0)
-  completed_at    DateTime? @default(now()) @db.Timestamptz(6)
-  modules         modules   @relation(fields: [module_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  users           users     @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
 }
 
 model modules {
@@ -130,6 +80,7 @@ model modules {
   is_published         Boolean?             @default(false)
   created_at           DateTime?            @default(now()) @db.Timestamptz(6)
   updated_at           DateTime?            @default(now()) @db.Timestamptz(6)
+
   enrollments          enrollments[]
   module_completions   module_completions[]
   users                users?               @relation(fields: [created_by], references: [id], onUpdate: NoAction)
@@ -140,19 +91,19 @@ model modules {
   topics               topics[]
 }
 
-model progress {
-  id              String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  user_id         String    @db.Uuid
-  module_id       String    @db.Uuid
-  question_id     String    @db.Uuid
-  is_correct      Boolean?  @default(false)
-  attempts_count  Int?      @default(0)
-  time_taken_secs Int?
-  xp_earned       Int?      @default(0)
-  completed_at    DateTime? @default(now()) @db.Timestamptz(6)
-  modules         modules   @relation(fields: [module_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  questions       questions @relation(fields: [question_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  users           users     @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+model topics {
+  id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  module_id      String   @db.Uuid
+  created_by     String?  @db.Uuid
+  title          String
+  avatar_script  String?
+  content_json   Json?    @default("{}")
+  animation_json Json?    @default("{}")
+  display_order  Int?     @default(0)
+  is_published   Boolean? @default(false)
+
+  users          users?   @relation(fields: [created_by], references: [id], onUpdate: NoAction)
+  modules        modules  @relation(fields: [module_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
 }
 
 model questions {
@@ -168,35 +119,52 @@ model questions {
   time_limit_secs Int?
   xp_reward       Int?          @default(0)
   display_order   Int?          @default(0)
+
   progress        progress[]
   users           users?        @relation(fields: [created_by], references: [id], onUpdate: NoAction)
   modules         modules       @relation(fields: [module_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
   submissions     submissions[]
 }
 
-model roles {
-  id                    String                  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  name                  String                  @unique
-  description           String?
-  permissions_json      Json?                   @default("{}")
-  created_at            DateTime?               @default(now()) @db.Timestamptz(6)
-  user_role_assignments user_role_assignments[]
+model enrollments {
+  id                String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  user_id           String    @db.Uuid
+  language_id       String    @db.Uuid
+  current_module_id String?   @db.Uuid
+  enrolled_at       DateTime? @default(now()) @db.Timestamptz(6)
+  is_active         Boolean?  @default(true)
+
+  modules           modules?  @relation(fields: [current_module_id], references: [id], onUpdate: NoAction)
+  languages         languages @relation(fields: [language_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  users             users     @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
 }
 
-model schema_migrations {
-  version String @id @unique(map: "schema_migrations_version_idx") @db.VarChar(14)
+model progress {
+  id              String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  user_id         String    @db.Uuid
+  module_id       String    @db.Uuid
+  question_id     String    @db.Uuid
+  is_correct      Boolean?  @default(false)
+  attempts_count  Int?      @default(0)
+  time_taken_secs Int?
+  xp_earned       Int?      @default(0)
+  completed_at    DateTime? @default(now()) @db.Timestamptz(6)
+
+  modules         modules   @relation(fields: [module_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  questions       questions @relation(fields: [question_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  users           users     @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
 }
 
-model skip_test_attempts {
-  id           String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  user_id      String    @db.Uuid
-  module_id    String    @db.Uuid
-  passed       Boolean?  @default(false)
-  score        Int?      @default(0)
-  max_score    Int?      @default(0)
-  attempted_at DateTime? @default(now()) @db.Timestamptz(6)
-  modules      modules   @relation(fields: [module_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  users        users     @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+model module_completions {
+  id              String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  user_id         String    @db.Uuid
+  module_id       String    @db.Uuid
+  total_xp_earned Int?      @default(0)
+  total_attempts  Int?      @default(0)
+  completed_at    DateTime? @default(now()) @db.Timestamptz(6)
+
+  modules         modules   @relation(fields: [module_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  users           users     @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
 }
 
 model submissions {
@@ -213,22 +181,169 @@ model submissions {
   test_cases_passed Int?      @default(0)
   test_cases_total  Int?      @default(0)
   created_at        DateTime? @default(now()) @db.Timestamptz(6)
+
   questions         questions @relation(fields: [question_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
   users             users     @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
 }
 
-model topics {
+model skip_test_attempts {
+  id           String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  user_id      String    @db.Uuid
+  module_id    String    @db.Uuid
+  passed       Boolean?  @default(false)
+  score        Int?      @default(0)
+  max_score    Int?      @default(0)
+  attempted_at DateTime? @default(now()) @db.Timestamptz(6)
+
+  modules      modules   @relation(fields: [module_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  users        users     @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+}
+
+model arena_stats {
+  id                 String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  user_id            String    @unique @db.Uuid
+  total_solved       Int?      @default(0)
+  current_streak     Int?      @default(0)
+  best_streak        Int?      @default(0)
+  total_xp           Int?      @default(0)
+  favourite_language String?
+  last_played_at     DateTime? @db.Timestamptz(6)
+
+  users              users     @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+}
+
+model battle_user_stats {
   id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  module_id      String   @db.Uuid
-  created_by     String?  @db.Uuid
-  title          String
-  avatar_script  String?
-  content_json   Json?    @default("{}")
-  animation_json Json?    @default("{}")
-  display_order  Int?     @default(0)
-  is_published   Boolean? @default(false)
-  users          users?   @relation(fields: [created_by], references: [id], onUpdate: NoAction)
-  modules        modules  @relation(fields: [module_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  user_id        String   @unique @db.Uuid
+  elo_rating     Int      @default(1000)
+  mcq_elo_rating Int      @default(1000)
+  wins           Int      @default(0)
+  losses         Int      @default(0)
+  draws          Int      @default(0)
+  created_at     DateTime @default(now()) @db.Timestamptz(6)
+  updated_at     DateTime @default(now()) @db.Timestamptz(6)
+
+  users          users    @relation(fields: [user_id], references: [id], onDelete: Cascade)
+}
+
+model battle_problems {
+  id                 String               @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  title              String
+  description        String
+  difficulty         String
+  base_points        Int
+  time_limit_sec     Int                  @default(2)
+  memory_limit_mb    Int                  @default(128)
+  created_at         DateTime             @default(now()) @db.Timestamptz(6)
+  task_id            String?
+  starter_codes_json Json?                @default("{}")
+  tags_json          Json?                @default("[]")
+
+  battle_submissions battle_submissions[]
+  test_cases         battle_test_cases[]
+
+  @@index([difficulty])
+}
+
+model battle_test_cases {
+  id         String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  problem_id String          @db.Uuid
+  input      String
+  expected   String
+  is_public  Boolean         @default(false)
+
+  problem    battle_problems @relation(fields: [problem_id], references: [id], onDelete: Cascade)
+
+  @@index([problem_id])
+  @@index([is_public])
+}
+
+model battle_matches {
+  id                 String               @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  player1_id         String               @db.Uuid
+  player2_id         String               @db.Uuid
+  winner_id          String?              @db.Uuid
+  started_at         DateTime             @default(now()) @db.Timestamptz(6)
+  ended_at           DateTime?            @db.Timestamptz(6)
+  status             String
+  player1_score      Int                  @default(0)
+  player2_score      Int                  @default(0)
+
+  player1            users                @relation("BattlePlayer1Relation", fields: [player1_id], references: [id])
+  player2            users                @relation("BattlePlayer2Relation", fields: [player2_id], references: [id])
+  winner             users?               @relation("BattleWinnerRelation", fields: [winner_id], references: [id])
+  battle_submissions battle_submissions[]
+
+  @@index([player1_id])
+  @@index([player2_id])
+  @@index([winner_id])
+}
+
+model battle_submissions {
+  id           String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  user_id      String          @db.Uuid
+  problem_id   String          @db.Uuid
+  match_id     String?         @db.Uuid
+  code         String
+  language     String
+  status       String
+  passed_count Int             @default(0)
+  total_count  Int             @default(0)
+  created_at   DateTime        @default(now()) @db.Timestamptz(6)
+
+  match        battle_matches? @relation(fields: [match_id], references: [id])
+  problem      battle_problems @relation(fields: [problem_id], references: [id], onDelete: Cascade)
+  user         users           @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@index([user_id])
+  @@index([problem_id])
+  @@index([match_id])
+}
+
+model battle_mcq_matches {
+  id            String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  player1_id    String    @db.Uuid
+  player2_id    String    @db.Uuid
+  winner_id     String?   @db.Uuid
+  started_at    DateTime  @default(now()) @db.Timestamptz(6)
+  ended_at      DateTime? @db.Timestamptz(6)
+  status        String
+  player1_score Int       @default(0)
+  player2_score Int       @default(0)
+  total_rounds  Int       @default(5)
+
+  player1       users     @relation("BattleMcqPlayer1Relation", fields: [player1_id], references: [id])
+  player2       users     @relation("BattleMcqPlayer2Relation", fields: [player2_id], references: [id])
+  winner        users?    @relation("BattleMcqWinnerRelation", fields: [winner_id], references: [id])
+
+  @@index([player1_id])
+  @@index([player2_id])
+  @@index([winner_id])
+}
+
+model battle_mcq_questions {
+  id            String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  task_id       String?
+  question      String
+  options_json  Json      @default("[]")
+  correct_index Int
+  difficulty    String
+  category      String
+  created_at    DateTime? @default(now()) @db.Timestamptz(6)
+
+  @@index([difficulty])
+  @@index([category])
+}
+
+model badges {
+  id            String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name          String        @unique
+  description   String?
+  icon_url      String?
+  badge_type    String?
+  section       String?
+  criteria_json Json?         @default("{}")
+  user_badges   user_badges[]
 }
 
 model user_badges {
@@ -236,8 +351,18 @@ model user_badges {
   user_id   String    @db.Uuid
   badge_id  String    @db.Uuid
   earned_at DateTime? @default(now()) @db.Timestamptz(6)
+
   badges    badges    @relation(fields: [badge_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
   users     users     @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+}
+
+model roles {
+  id                    String                  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name                  String                  @unique
+  description           String?
+  permissions_json      Json?                   @default("{}")
+  created_at            DateTime?               @default(now()) @db.Timestamptz(6)
+  user_role_assignments user_role_assignments[]
 }
 
 model user_role_assignments {
@@ -247,61 +372,10 @@ model user_role_assignments {
   assigned_by                                    String?   @db.Uuid
   assigned_at                                    DateTime? @default(now()) @db.Timestamptz(6)
   is_active                                      Boolean?  @default(true)
-  users_user_role_assignments_assigned_byTousers users?    @relation("user_role_assignments_assigned_byTousers", fields: [assigned_by], references: [id], onUpdate: NoAction)
+
+  assigned_by_user                               users?    @relation("user_role_assignments_assigned_byTousers", fields: [assigned_by], references: [id], onUpdate: NoAction)
   roles                                          roles     @relation(fields: [role_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  users_user_role_assignments_user_idTousers     users     @relation("user_role_assignments_user_idTousers", fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-}
-
-model users {
-  id                                                             String                  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  username                                                       String
-  email                                                          String                  @unique
-  password_hash                                                  String?
-  auth_provider                                                  String?
-  role                                                           String?                 @default("student")
-  xp_total                                                       Int?                    @default(0)
-  level                                                          Int?                    @default(1)
-  avatar_url                                                     String?
-  experience_level                                               String?
-  interests                                                      String[]                @default([])
-  is_active                                                      Boolean?                @default(true)
-  created_at                                                     DateTime?               @default(now()) @db.Timestamptz(6)
-  last_login_at                                                  DateTime?               @db.Timestamptz(6)
-  arena_questions                                                arena_questions[]
-  arena_sessions                                                 arena_sessions[]
-  arena_stats                                                    arena_stats?
-  arena_submissions                                              arena_submissions[]
-  battle_matches_p1                                              battle_matches[]        @relation("BattlePlayer1Relation")
-  battle_matches_p2                                              battle_matches[]        @relation("BattlePlayer2Relation")
-  battle_matches_winner                                          battle_matches[]        @relation("BattleWinnerRelation")
-  battle_mcq_matches_p1                                          battle_mcq_matches[]    @relation("BattleMcqPlayer1Relation")
-  battle_mcq_matches_p2                                          battle_mcq_matches[]    @relation("BattleMcqPlayer2Relation")
-  battle_mcq_matches_winner                                      battle_mcq_matches[]    @relation("BattleMcqWinnerRelation")
-  battle_submissions                                             battle_submissions[]
-  battle_user_stats                                              battle_user_stats?
-  enrollments                                                    enrollments[]
-  event_leaderboard                                              event_leaderboard[]
-  event_questions                                                event_questions[]
-  event_registrations                                            event_registrations[]
-  event_user_responses                                           event_user_responses[]
-  events_created                                                 events[]                @relation("EventsCreatedBy")
-  module_completions                                             module_completions[]
-  modules                                                        modules[]
-  progress                                                       progress[]
-  questions                                                      questions[]
-  skip_test_attempts                                             skip_test_attempts[]
-  submissions                                                    submissions[]
-  topics                                                         topics[]
-  user_badges                                                    user_badges[]
-  user_role_assignments_user_role_assignments_assigned_byTousers user_role_assignments[] @relation("user_role_assignments_assigned_byTousers")
-  user_role_assignments_user_role_assignments_user_idTousers     user_role_assignments[] @relation("user_role_assignments_user_idTousers")
-
-  // Notifications relations
-  notifications_created                                          notifications[]         @relation("NotificationsCreatedBy")
-  notifications_received                                         notifications[]         @relation("NotificationsTargetUser")
-  user_notification_states                                       user_notification_states[]
-
-  @@index([username])
+  user                                           users     @relation("user_role_assignments_user_idTousers", fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
 }
 
 model events {
@@ -337,6 +411,7 @@ model events {
   rounds_json           Json?                  @default("[]")
   submission_config     Json?                  @default("{}")
   results_published     Boolean?               @default(false)
+
   event_leaderboard     event_leaderboard[]
   event_questions       event_questions[]
   event_registrations   event_registrations[]
@@ -360,6 +435,7 @@ model event_registrations {
   team_members_json       Json?     @default("[]")
   details_json            Json?     @default("{}")
   email                   String?
+
   events                  events    @relation(fields: [event_id], references: [id], onDelete: Cascade)
   users                   users     @relation(fields: [user_id], references: [id], onDelete: Cascade)
 
@@ -376,132 +452,12 @@ model event_leaderboard {
   rank          Int?
   metadata_json Json?     @default("{}")
   updated_at    DateTime? @default(now()) @db.Timestamptz(6)
+
   events        events    @relation(fields: [event_id], references: [id], onDelete: Cascade)
   users         users     @relation(fields: [user_id], references: [id], onDelete: Cascade)
 
   @@unique([event_id, user_id])
   @@index([event_id])
-}
-
-model battle_user_stats {
-  id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  user_id        String   @unique @db.Uuid
-  elo_rating     Int      @default(1000)
-  mcq_elo_rating Int      @default(1000)
-  wins           Int      @default(0)
-  losses         Int      @default(0)
-  draws          Int      @default(0)
-  created_at     DateTime @default(now()) @db.Timestamptz(6)
-  updated_at     DateTime @default(now()) @db.Timestamptz(6)
-  users          users    @relation(fields: [user_id], references: [id], onDelete: Cascade)
-}
-
-model battle_problems {
-  id                 String               @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  title              String
-  description        String
-  difficulty         String
-  base_points        Int
-  time_limit_sec     Int                  @default(2)
-  memory_limit_mb    Int                  @default(128)
-  created_at         DateTime             @default(now()) @db.Timestamptz(6)
-  task_id            String?
-  starter_codes_json Json?                @default("{}")
-  tags_json          Json?                @default("[]")
-  battle_submissions battle_submissions[]
-  test_cases         battle_test_cases[]
-}
-
-model battle_test_cases {
-  id         String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  problem_id String          @db.Uuid
-  input      String
-  expected   String
-  is_public  Boolean         @default(false)
-  problem    battle_problems @relation(fields: [problem_id], references: [id], onDelete: Cascade)
-}
-
-model battle_matches {
-  id                 String               @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  player1_id         String               @db.Uuid
-  player2_id         String               @db.Uuid
-  winner_id          String?              @db.Uuid
-  started_at         DateTime             @default(now()) @db.Timestamptz(6)
-  ended_at           DateTime?            @db.Timestamptz(6)
-  status             String
-  player1_score      Int                  @default(0)
-  player2_score      Int                  @default(0)
-  player1            users                @relation("BattlePlayer1Relation", fields: [player1_id], references: [id])
-  player2            users                @relation("BattlePlayer2Relation", fields: [player2_id], references: [id])
-  winner             users?               @relation("BattleWinnerRelation", fields: [winner_id], references: [id])
-  battle_submissions battle_submissions[]
-
-  @@index([player1_id])
-  @@index([player2_id])
-  @@index([winner_id])
-}
-
-model battle_submissions {
-  id           String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  user_id      String          @db.Uuid
-  problem_id   String          @db.Uuid
-  match_id     String?         @db.Uuid
-  code         String
-  language     String
-  status       String
-  passed_count Int             @default(0)
-  total_count  Int             @default(0)
-  created_at   DateTime        @default(now()) @db.Timestamptz(6)
-  match        battle_matches? @relation(fields: [match_id], references: [id])
-  problem      battle_problems @relation(fields: [problem_id], references: [id], onDelete: Cascade)
-  user         users           @relation(fields: [user_id], references: [id], onDelete: Cascade)
-
-  @@index([user_id])
-  @@index([problem_id])
-  @@index([match_id])
-}
-
-model battle_mcq_matches {
-  id            String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  player1_id    String    @db.Uuid
-  player2_id    String    @db.Uuid
-  winner_id     String?   @db.Uuid
-  started_at    DateTime  @default(now()) @db.Timestamptz(6)
-  ended_at      DateTime? @db.Timestamptz(6)
-  status        String
-  player1_score Int       @default(0)
-  player2_score Int       @default(0)
-  total_rounds  Int       @default(5)
-  player1       users     @relation("BattleMcqPlayer1Relation", fields: [player1_id], references: [id])
-  player2       users     @relation("BattleMcqPlayer2Relation", fields: [player2_id], references: [id])
-  winner        users?    @relation("BattleMcqWinnerRelation", fields: [winner_id], references: [id])
-
-  @@index([player1_id])
-  @@index([player2_id])
-  @@index([winner_id])
-}
-
-model battle_mcq_questions {
-  id            String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  task_id       String?
-  question      String
-  options_json  Json      @default("[]")
-  correct_index Int
-  difficulty    String
-  category      String
-  created_at    DateTime? @default(now()) @db.Timestamptz(6)
-}
-
-model event_question_options {
-  id                   String                 @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  question_id          String                 @db.Uuid
-  option_text          String
-  is_correct           Boolean                @default(false)
-  display_order        Int                    @default(0)
-  event_questions      event_questions        @relation(fields: [question_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  event_user_responses event_user_responses[]
-
-  @@index([question_id])
 }
 
 model event_questions {
@@ -522,6 +478,7 @@ model event_questions {
   explanation            String?
   created_at             DateTime                 @default(now()) @db.Timestamptz(6)
   updated_at             DateTime                 @default(now()) @db.Timestamptz(6)
+
   event_question_options event_question_options[]
   users                  users?                   @relation(fields: [created_by], references: [id], onDelete: NoAction, onUpdate: NoAction)
   events                 events                   @relation(fields: [event_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
@@ -529,6 +486,19 @@ model event_questions {
 
   @@index([event_id])
   @@index([question_type])
+}
+
+model event_question_options {
+  id                   String                 @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  question_id          String                 @db.Uuid
+  option_text          String
+  is_correct           Boolean                @default(false)
+  display_order        Int                    @default(0)
+
+  event_questions      event_questions        @relation(fields: [question_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  event_user_responses event_user_responses[]
+
+  @@index([question_id])
 }
 
 model event_user_responses {
@@ -543,6 +513,7 @@ model event_user_responses {
   language_code          String?
   score_awarded          Int?                    @default(0)
   submitted_at           DateTime?               @default(now()) @db.Timestamptz(6)
+
   events                 events                  @relation(fields: [event_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
   event_question_options event_question_options? @relation(fields: [option_id], references: [id], onUpdate: NoAction)
   event_questions        event_questions         @relation(fields: [question_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
@@ -596,4 +567,3 @@ model user_notification_states {
   @@index([user_id])
   @@index([notification_id])
 }
-

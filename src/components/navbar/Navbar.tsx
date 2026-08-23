@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 
 import { NotificationBell } from "../notification/notification-bell";
+import { getAvatarUrl } from "@/lib/avatar";
 
 const navItems = [
   {
@@ -197,9 +198,8 @@ export default function Navbar() {
                     {item.isMegaMenu && (
                       <ChevronDown
                         size={13}
-                        className={`transition-transform duration-200 ${
-                          isOpen ? "rotate-180" : ""
-                        }`}
+                        className={`transition-transform duration-200 ${isOpen ? "rotate-180" : ""
+                          }`}
                       />
                     )}
                   </button>
@@ -229,57 +229,52 @@ export default function Navbar() {
                         Recommended
                       </p>
 
-                    <h4 className="mt-1 text-sm font-bold text-white">
-                      Start learning today
-                    </h4>
+                      <h4 className="mt-1 text-sm font-bold text-white">
+                        Start learning today
+                      </h4>
 
-                    {/* Python */}
-                    <Link
-                      href="/learn/python"
-                      onClick={closeMenus}
-                      className="group mt-5 flex gap-4 rounded-lg p-2 transition-colors hover:bg-white/[0.04]"
-                    >
-                      <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg border border-[#8b5cf6]/30 bg-[#2e1065]/50">
-                        <BookOpen
-                          size={22}
-                          className="text-[#8b5cf6]"
-                        />
-                      </div>
+                      <Link
+                        href="/learn/python"
+                        onClick={closeMenus}
+                        className="group mt-5 flex gap-4 rounded-lg p-2 transition-colors hover:bg-white/[0.04]"
+                      >
+                        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg border border-[#8b5cf6]/30 bg-[#2e1065]/50">
+                          <BookOpen
+                            size={22}
+                            className="text-[#8b5cf6]"
+                          />
+                        </div>
 
-                      <div>
-                        <h5 className="text-sm font-bold text-white group-hover:text-[#E873C3]">
-                          Python
-                        </h5>
+                        <div>
+                          <h5 className="text-sm font-bold text-white group-hover:text-[#E873C3]">
+                            Python
+                          </h5>
 
-                        <p className="mt-1 text-xs leading-relaxed text-white/55">
-                          Learn programming fundamentals with
-                          beginner-friendly exercises.
-                        </p>
-                      </div>
-                    </Link>
+                          <p className="mt-1 text-xs leading-relaxed text-white/55">
+                            Learn programming fundamentals with
+                            beginner-friendly exercises.
+                          </p>
+                        </div>
+                      </Link>
 
-                    <Link
-                      href="/learn"
-                      onClick={closeMenus}
-                      className="mt-4 block w-full rounded-md border border-[#E873C3]/30 bg-[#E873C3]/10 py-2.5 text-center text-xs font-bold text-[#E873C3] transition-all hover:bg-[#E873C3]/20"
-                    >
-                      All Courses →
-                    </Link>
+                      <Link
+                        href="/learn"
+                        onClick={closeMenus}
+                        className="mt-4 block w-full rounded-md border border-[#E873C3]/30 bg-[#E873C3]/10 py-2.5 text-center text-xs font-bold text-[#E873C3] transition-all hover:bg-[#E873C3]/20"
+                      >
+                        All Courses →
+                      </Link>
+                    </div>
                   </div>
-                </div>
-              )}
+                )}
               </div>
             );
           })}
         </nav>
 
-        {/* =====================================
-            RIGHT CONTROLS
-        ===================================== */}
         <div className="flex items-center gap-2">
 
-          {/* User */}
-          {user ? (
+          {user && (
             <Link
               href="/profile"
               className="flex items-center gap-2 pl-1 group cursor-pointer"
@@ -291,27 +286,15 @@ export default function Navbar() {
 
               <div className="flex h-8 w-8 items-center justify-center overflow-hidden rounded-full border border-[#E873C3]/70 bg-[#15151c] shadow-[0_0_12px_rgba(232,115,195,0.25)] group-hover:border-[#E873C3] group-hover:shadow-[0_0_18px_rgba(232,115,195,0.5)] transition-all">
                 <Image
-                  src="/images/mascot.png"
+                  src={getAvatarUrl(user.avatarId)}
                   alt="User avatar"
                   width={32}
                   height={32}
+                  sizes="32px"
+                  priority
                   className="h-full w-full object-cover"
                 />
               </div>
-            </Link>
-          ) : (
-            <Link
-              href="/profile"
-              className="flex h-8 w-8 items-center justify-center overflow-hidden rounded-full border border-white/10 bg-[#15151c] opacity-60 hover:opacity-100 hover:border-[#E873C3]/50 transition-all cursor-pointer"
-              title="View Profile"
-            >
-              <Image
-                src="/images/mascot.png"
-                alt="Guest avatar"
-                width={32}
-                height={32}
-                className="h-full w-full object-cover"
-              />
             </Link>
           )}
 
@@ -334,7 +317,7 @@ export default function Navbar() {
           )}
 
           {/* Notification (Positioned at the very end after Log out / Join Crew button) */}
-          <NotificationBell />
+          {user && <NotificationBell />}
 
           {/* Mobile button */}
           <button

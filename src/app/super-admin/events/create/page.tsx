@@ -7,7 +7,7 @@ import DateTimePicker from '@/components/admin/DateTimePicker';
 import {
   CalendarDays, Plus, Trash2, Save, UsersRound, Trophy, Layers,
   FileText, Link as LinkIcon, Globe, HelpCircle, CheckSquare, Code2,
-  ListChecks, Lightbulb, Scale, Sparkles, FileCode
+  ListChecks, Lightbulb, Scale, Sparkles, FileCode, Clock
 } from 'lucide-react';
 
 interface TimelineEntry { label: string; date: string; done: boolean }
@@ -30,6 +30,7 @@ interface MCQQuestion {
   options: MCQOption[];
   explanation?: string;
   marks: number;
+  timeLimitMin?: number;
 }
 
 interface TestCase { input: string; output: string; explanation?: string; isPublic: boolean }
@@ -45,6 +46,7 @@ interface CodingQuestion {
   timeLimitSec: number;
   memoryLimitMb: number;
   points: number;
+  timeLimitMin?: number;
   sampleTestCases: TestCase[];
 }
 
@@ -135,6 +137,7 @@ export default function CreateEventPage() {
   const [sponsors] = useState<SponsorEntry[]>([]);
 
   const [activeQuestionTab, setActiveQuestionTab] = useState<'all' | 'mcq' | 'coding'>('all');
+  const [contestDurationMinutes, setContestDurationMinutes] = useState<number>(60);
 
   const addMCQQuestion = () => {
     const newMCQ: MCQQuestion = {
@@ -143,12 +146,13 @@ export default function CreateEventPage() {
       title: `MCQ Question #${questions.filter(q => q.type === 'mcq').length + 1}`,
       questionText: '',
       options: [
-        { id: '1', text: 'Option A', isCorrect: true },
+        { id: '1', text: 'Option A', isCorrect: false },
         { id: '2', text: 'Option B', isCorrect: false },
         { id: '3', text: 'Option C', isCorrect: false },
         { id: '4', text: 'Option D', isCorrect: false },
       ],
       marks: 5,
+      timeLimitMin: 2,
     };
     setQuestions([...questions, newMCQ]);
   };
@@ -164,8 +168,9 @@ export default function CreateEventPage() {
       outputFormat: '',
       constraints: '1 <= N <= 10^5',
       timeLimitSec: 1,
+      timeLimitMin: 30,
       memoryLimitMb: 256,
-      points: 20,
+      points: 50,
       sampleTestCases: [{ input: '', output: '', isPublic: true }]
     };
     setQuestions([...questions, newCoding]);
@@ -192,6 +197,7 @@ export default function CreateEventPage() {
       } : undefined,
       assessment_details: eventType === 'coding_contest' ? {
         assessment_mode: assessmentMode,
+        duration_minutes: contestDurationMinutes,
         total_questions: questions.length,
         questions: questions,
       } : undefined
@@ -226,7 +232,7 @@ export default function CreateEventPage() {
       registration_fee: registrationFee || 'Free',
       registration_fields_config: regFieldsConfig,
       submission_config: buildSubmissionConfig(),
-      rounds_json: rounds.filter(r => r.title),
+      rounds_json: eventType === 'hackathon' ? rounds.filter(r => r.title) : [],
       prizes_json: prizes.filter(p => p.rank),
       timeline_json: timeline.filter(t => t.label),
       rules_json: rules.filter(r => r.text).map(r => r.text),
@@ -424,6 +430,52 @@ export default function CreateEventPage() {
             </div>
             <p className="text-xs text-white/50">Add questions for this contest. Questions will load automatically inside CosmoDex&apos;s built-in online IDE and test engine.</p>
 
+            <div className="bg-gradient-to-r from-purple-950/40 to-[#0c0818] p-4 rounded-2xl border border-purple-500/30 flex items-center justify-between gap-4 flex-wrap">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-purple-500/10 border border-purple-500/30 flex items-center justify-center text-purple-400">
+                  <Clock size={20} />
+                </div>
+                <div>
+                  <h4 className="text-sm font-black text-white flex items-center gap-2">
+                    Complete Contest Timing
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-purple-400 bg-purple-950/60 px-2 py-0.5 rounded border border-purple-500/30">
+                      Global Timer
+                    </span>
+                  </h4>
+                  <p className="text-xs text-white/50">Total time allowed for participants in the contest arena.</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <label className="text-xs font-bold text-white/60">Duration:</label>
+                <div className="flex items-center gap-1.5 bg-[#05020a] border border-white/15 px-3 py-1.5 rounded-xl">
+                  <input
+                    type="number"
+                    min={1}
+                    max={1440}
+                    value={contestDurationMinutes}
+                    onChange={(e) => setContestDurationMinutes(Math.max(1, Number(e.target.value)))}
+                    className="w-16 bg-transparent text-center font-bold text-white text-sm focus:outline-none"
+                  />
+                  <span className="text-xs text-white/40 font-bold">Minutes</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  {[30, 60, 90, 120].map((mins) => (
+                    <button
+                      key={mins}
+                      type="button"
+                      onClick={() => setContestDurationMinutes(mins)}
+                      className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all ${contestDurationMinutes === mins
+                          ? 'bg-purple-600 text-white shadow-md shadow-purple-600/30'
+                          : 'bg-white/5 text-white/40 hover:bg-white/10'
+                        }`}
+                    >
+                      {mins}m
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+
             {/* Quick Action Bar */}
             <div className="flex items-center justify-between bg-white/[0.03] border border-white/[0.06] p-3 rounded-xl">
               <div className="flex items-center gap-2">
@@ -487,10 +539,10 @@ export default function CreateEventPage() {
                             </div>
                             <div className="flex items-center gap-3">
                               <div className="flex items-center gap-1">
-                                <span className="text-xs text-white/40">Marks:</span>
+                                <span className="text-xs text-white/40">Points:</span>
                                 <input
                                   type="number"
-                                  value={q.marks}
+                                  value={q.marks ?? 5}
                                   onChange={e => updateQuestion(globalIdx, { ...q, marks: Number(e.target.value) })}
                                   className="w-14 px-2 py-0.5 bg-[#0e0a1c] border border-white/[0.1] rounded text-xs text-center text-white"
                                 />
@@ -521,7 +573,9 @@ export default function CreateEventPage() {
                           {/* MCQ Options */}
                           <div className="flex flex-col gap-2 pt-1">
                             <div className="flex items-center justify-between">
-                              <span className="text-[11px] font-bold text-white/40 uppercase">Answer Options (Click letter to mark Correct Answer)</span>
+                              <span className="text-[11px] font-bold text-white/50 uppercase">
+                                Question Options (A, B, C, D) <span className="text-white/30 font-normal normal-case">— Answer key is configured after event ends</span>
+                              </span>
                               <button
                                 type="button"
                                 onClick={() => {
@@ -539,17 +593,9 @@ export default function CreateEventPage() {
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                               {q.options.map((opt, optIdx) => (
                                 <div key={opt.id || optIdx} className="flex items-center gap-2 bg-white/[0.03] p-2 rounded-lg border border-white/[0.05]">
-                                  <button
-                                    type="button"
-                                    title="Click to mark as correct answer"
-                                    onClick={() => {
-                                      const newOpts = q.options.map((o, idx) => ({ ...o, isCorrect: idx === optIdx }));
-                                      updateQuestion(globalIdx, { ...q, options: newOpts });
-                                    }}
-                                    className={`w-6 h-6 rounded-full flex items-center justify-center font-bold text-xs shrink-0 transition-all ${opt.isCorrect ? 'bg-[#3DCB7F] text-black shadow-lg shadow-[#3DCB7F]/30' : 'bg-white/10 text-white/40 hover:bg-white/20'}`}
-                                  >
+                                  <div className="w-6 h-6 rounded-full flex items-center justify-center font-bold text-xs shrink-0 bg-white/10 text-white/70 border border-white/10">
                                     {String.fromCharCode(65 + optIdx)}
-                                  </button>
+                                  </div>
                                   <input
                                     value={opt.text}
                                     onChange={e => {
@@ -606,7 +652,7 @@ export default function CreateEventPage() {
                               <span className="text-xs text-white/40">Points:</span>
                               <input
                                 type="number"
-                                value={q.points}
+                                value={q.points ?? 50}
                                 onChange={e => updateQuestion(globalIdx, { ...q, points: Number(e.target.value) })}
                                 className="w-14 px-2 py-0.5 bg-[#0e0a1c] border border-white/[0.1] rounded text-xs text-center text-white"
                               />
@@ -799,9 +845,8 @@ export default function CreateEventPage() {
               return (
                 <div
                   key={key}
-                  className={`p-3.5 rounded-xl border transition-all ${
-                    isEnabled ? 'bg-white/[0.03] border-white/[0.12]' : 'bg-white/[0.01] border-white/[0.05] opacity-60'
-                  }`}
+                  className={`p-3.5 rounded-xl border transition-all ${isEnabled ? 'bg-white/[0.03] border-white/[0.12]' : 'bg-white/[0.01] border-white/[0.05] opacity-60'
+                    }`}
                 >
                   <div className="flex items-center justify-between mb-1.5">
                     <span className="text-xs font-bold text-white">{label}</span>
@@ -912,58 +957,60 @@ export default function CreateEventPage() {
           </div>
         )}
 
-        {/* Competition Rounds */}
-        <div className={sc}>
-          <div className="flex items-center justify-between">
-            <h2 className="text-xs font-bold text-[#E873C3] uppercase tracking-widest flex items-center gap-1.5">
-              <Layers size={14} /> Competition Rounds
-            </h2>
-            <button type="button"
-              onClick={() => setRounds(r => [...r, { id: `r${r.length + 1}`, title: '', description: '', type: 'coding', assessmentMode: 'mixed', starts_at: '', ends_at: '', action_url: '' }])}
-              className="flex items-center gap-1 text-xs font-bold text-[#E873C3] hover:underline">
-              <Plus size={13} /> Add Round
-            </button>
-          </div>
-          {rounds.length === 0 ? (
-            <p className="text-xs text-white/30 italic">No custom rounds configured. Click &quot;Add Round&quot; above to create competition stages.</p>
-          ) : (
-            <div className="flex flex-col gap-4">
-              {rounds.map((round, i) => (
-                <div key={i} className="p-4 bg-white/[0.03] border border-white/[0.07] rounded-xl flex flex-col gap-3">
-                  <div className="flex items-center justify-between">
-                    <span className="font-bold text-xs text-[#E873C3]">Round {i + 1}</span>
-                    <button type="button" onClick={() => setRounds(r => r.filter((_, j) => j !== i))} className="text-red-400 hover:text-red-300">
-                      <Trash2 size={13} />
-                    </button>
-                  </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    <input value={round.title}
-                      onChange={e => setRounds(r => r.map((x, j) => j === i ? { ...x, title: e.target.value } : x))}
-                      placeholder="Round Title (e.g. Round 1: Online Screening)" className={ic} />
-                    <select value={round.type}
-                      onChange={e => setRounds(r => r.map((x, j) => j === i ? { ...x, type: e.target.value as RoundEntry['type'] } : x))}
-                      className={selectStyle}>
-                      <option value="coding" className="bg-[#0c0818] text-white">Coding Challenge</option>
-                      <option value="quiz" className="bg-[#0c0818] text-white">Online Quiz / MCQ</option>
-                      <option value="submission" className="bg-[#0c0818] text-white">Project Submission</option>
-                      <option value="interview" className="bg-[#0c0818] text-white">Presentation / Finale</option>
-                      <option value="custom" className="bg-[#0c0818] text-white">Custom Stage</option>
-                    </select>
-                  </div>
-                  <input value={round.description}
-                    onChange={e => setRounds(r => r.map((x, j) => j === i ? { ...x, description: e.target.value } : x))}
-                    placeholder="Short round instructions..." className={ic} />
-                  <div className="grid grid-cols-2 gap-3">
-                    <DateTimePicker label="Round Starts At" value={round.starts_at}
-                      onChange={v => setRounds(r => r.map((x, j) => j === i ? { ...x, starts_at: v } : x))} />
-                    <DateTimePicker label="Round Ends At" value={round.ends_at}
-                      onChange={v => setRounds(r => r.map((x, j) => j === i ? { ...x, ends_at: v } : x))} />
-                  </div>
-                </div>
-              ))}
+        {/* Competition Rounds (Hackathons only) */}
+        {eventType === 'hackathon' && (
+          <div className={sc}>
+            <div className="flex items-center justify-between">
+              <h2 className="text-xs font-bold text-[#E873C3] uppercase tracking-widest flex items-center gap-1.5">
+                <Layers size={14} /> Competition Rounds
+              </h2>
+              <button type="button"
+                onClick={() => setRounds(r => [...r, { id: `r${r.length + 1}`, title: '', description: '', type: 'coding', assessmentMode: 'mixed', starts_at: '', ends_at: '', action_url: '' }])}
+                className="flex items-center gap-1 text-xs font-bold text-[#E873C3] hover:underline">
+                <Plus size={13} /> Add Round
+              </button>
             </div>
-          )}
-        </div>
+            {rounds.length === 0 ? (
+              <p className="text-xs text-white/30 italic">No custom rounds configured. Click &quot;Add Round&quot; above to create competition stages.</p>
+            ) : (
+              <div className="flex flex-col gap-4">
+                {rounds.map((round, i) => (
+                  <div key={i} className="p-4 bg-white/[0.03] border border-white/[0.07] rounded-xl flex flex-col gap-3">
+                    <div className="flex items-center justify-between">
+                      <span className="font-bold text-xs text-[#E873C3]">Round {i + 1}</span>
+                      <button type="button" onClick={() => setRounds(r => r.filter((_, j) => j !== i))} className="text-red-400 hover:text-red-300">
+                        <Trash2 size={13} />
+                      </button>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      <input value={round.title}
+                        onChange={e => setRounds(r => r.map((x, j) => j === i ? { ...x, title: e.target.value } : x))}
+                        placeholder="Round Title (e.g. Round 1: Online Screening)" className={ic} />
+                      <select value={round.type}
+                        onChange={e => setRounds(r => r.map((x, j) => j === i ? { ...x, type: e.target.value as RoundEntry['type'] } : x))}
+                        className={selectStyle}>
+                        <option value="coding" className="bg-[#0c0818] text-white">Coding Challenge</option>
+                        <option value="quiz" className="bg-[#0c0818] text-white">Online Quiz / MCQ</option>
+                        <option value="submission" className="bg-[#0c0818] text-white">Project Submission</option>
+                        <option value="interview" className="bg-[#0c0818] text-white">Presentation / Finale</option>
+                        <option value="custom" className="bg-[#0c0818] text-white">Custom Stage</option>
+                      </select>
+                    </div>
+                    <input value={round.description}
+                      onChange={e => setRounds(r => r.map((x, j) => j === i ? { ...x, description: e.target.value } : x))}
+                      placeholder="Short round instructions..." className={ic} />
+                    <div className="grid grid-cols-2 gap-3">
+                      <DateTimePicker label="Round Starts At" value={round.starts_at}
+                        onChange={v => setRounds(r => r.map((x, j) => j === i ? { ...x, starts_at: v } : x))} />
+                      <DateTimePicker label="Round Ends At" value={round.ends_at}
+                        onChange={v => setRounds(r => r.map((x, j) => j === i ? { ...x, ends_at: v } : x))} />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Prizes Builder */}
         <div className={sc}>

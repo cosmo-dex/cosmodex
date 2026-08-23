@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Navbar from '@/components/navbar/Navbar';
 import {
@@ -16,6 +16,7 @@ interface SubmissionConfig {
   required_fields?: string[];
   assessment_details?: {
     assessment_mode?: 'mcq_only' | 'coding_only' | 'mixed';
+    duration_minutes?: number;
     total_questions?: number;
     questions?: QuestionItem[];
   };
@@ -64,6 +65,25 @@ const DEFAULT_STARTERS: Record<string, string> = {
   javascript: `// Write your JavaScript solution here\n`,
 };
 
+function pseudoRandom(seed: number) {
+  const x = Math.sin(seed) * 10000;
+  return x - Math.floor(x);
+}
+
+function shuffleWithSeed<T>(array: T[], seedStr: string): T[] {
+  const arr = [...array];
+  let seed = 0;
+  for (let i = 0; i < seedStr.length; i++) {
+    seed = (seed << 5) - seed + seedStr.charCodeAt(i);
+    seed |= 0;
+  }
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(pseudoRandom(seed + i) * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
 export default function SubmitProjectPage() {
   const params = useParams();
   const router = useRouter();
@@ -71,6 +91,7 @@ export default function SubmitProjectPage() {
 
   const [eventTitle, setEventTitle] = useState('');
   const [eventType, setEventType] = useState('hackathon');
+  const [endsAt, setEndsAt] = useState<string | null>(null);
   const [submissionConfig, setSubmissionConfig] = useState<SubmissionConfig | null>(null);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -96,15 +117,12 @@ export default function SubmitProjectPage() {
 
   const fetchEventData = useCallback(async () => {
     try {
-      const [subRes, eventRes] = await Promise.all([
-        fetch(`/api/events/${eventId}/submit`),
-        fetch(`/api/events/${eventId}`),
-      ]);
-
+      const eventRes = await fetch(`/api/events/${eventId}`);
       if (eventRes.ok) {
         const data = await eventRes.json();
         setEventTitle(data.event?.title || '');
         setEventType(data.event?.event_type || 'hackathon');
+        setEndsAt(data.event?.ends_at || null);
         setSubmissionConfig(data.event?.submission_config ?? null);
 
         // Pre-fill starter code if contest questions exist
@@ -118,21 +136,19 @@ export default function SubmitProjectPage() {
           });
           setCodeAnswers(initialCodeState);
         }
-      }
 
-      if (subRes.ok) {
-        const data = await subRes.json();
-        if (data.submission && data.submission.submission_url) {
+        const reg = data.userRegistration;
+        if (reg?.submission_url) {
           setHasSubmitted(true);
-          setSubmissionUrl(data.submission.submission_url || '');
-          const d = data.submission.submission_details_json || {};
-          if (d.submitted_at) setSubmittedAt(d.submitted_at);
-          setDemoUrl(d.demo_url || '');
-          setVideoUrl(d.video_url || '');
-          setTechStack(d.tech_stack || '');
-          setDescription(d.description || '');
-          if (d.mcqAnswers) setMcqAnswers(d.mcqAnswers);
-          if (d.codeAnswers) setCodeAnswers(d.codeAnswers);
+          setSubmissionUrl(reg.submission_url || '');
+          const d = (reg.submission_details_json as Record<string, unknown>) || {};
+          if (typeof d.submitted_at === 'string') setSubmittedAt(d.submitted_at);
+          if (typeof d.demo_url === 'string') setDemoUrl(d.demo_url);
+          if (typeof d.video_url === 'string') setVideoUrl(d.video_url);
+          if (typeof d.tech_stack === 'string') setTechStack(d.tech_stack);
+          if (typeof d.description === 'string') setDescription(d.description);
+          if (d.mcqAnswers && typeof d.mcqAnswers === 'object') setMcqAnswers(d.mcqAnswers as Record<string, string>);
+          if (d.codeAnswers && typeof d.codeAnswers === 'object') setCodeAnswers(d.codeAnswers as Record<string, string>);
         }
       }
     } finally {
@@ -186,7 +202,10 @@ export default function SubmitProjectPage() {
     }
   };
 
-  const handleSubmitContest = async () => {
+  const handleSubmitContest = async (
+    questionTimes?: Record<string, number>,
+    totalTimeSeconds?: number,
+  ) => {
     setSubmitting(true);
     setMsg('');
     try {
@@ -197,6 +216,8 @@ export default function SubmitProjectPage() {
           submission_url: `${typeof window !== 'undefined' ? window.location.origin : ''}/events/${eventId}/submission`,
           mcqAnswers,
           codeAnswers,
+          questionTimes: questionTimes ?? {},
+          totalTimeSeconds: totalTimeSeconds ?? 0,
           submitted_at: new Date().toISOString(),
         }),
       });
@@ -217,7 +238,29 @@ export default function SubmitProjectPage() {
 
 
   const mode = submissionConfig?.mode ?? 'platform';
-  const questions = (submissionConfig?.assessment_details?.questions ?? []) as QuestionItem[];
+
+  // Deterministically order: All MCQs first (shuffled per user), then all Coding questions at the end (unshuffled)
+  const questions = useMemo(() => {
+    const rawQuestions = (submissionConfig?.assessment_details?.questions ?? []) as QuestionItem[];
+    if (!rawQuestions || rawQuestions.length === 0) return [];
+    const userSeed = 'cosmodex-' + eventId;
+
+    const rawMcqs = rawQuestions.filter((q) => q.type === 'mcq');
+    const rawCoding = rawQuestions.filter((q) => q.type !== 'mcq');
+
+    // 1. Shuffle only MCQs and their options
+    const processedMcqs = shuffleWithSeed(rawMcqs, `${userSeed}-mcq-questions`).map((q) => {
+      if (q.type === 'mcq' && q.options && q.options.length > 0) {
+        const shuffledOptions = shuffleWithSeed(q.options, `${userSeed}-${q.id}-opts`);
+        return { ...q, options: shuffledOptions };
+      }
+      return q;
+    });
+
+    // 2. Coding questions ALWAYS come at the end after MCQs with NO shuffling
+    return [...processedMcqs, ...rawCoding];
+  }, [submissionConfig?.assessment_details?.questions, eventId]);
+
   const isCodingContest = eventType === 'coding_contest' || (questions && questions.length > 0);
 
   const ic = 'w-full px-4 py-3 bg-white/[0.04] border border-white/[0.08] rounded-xl text-sm text-white placeholder:text-white/30 focus:outline-none focus:border-[#E873C3] transition-colors';
@@ -229,59 +272,7 @@ export default function SubmitProjectPage() {
     </div>
   );
 
-  // --- ALREADY SUBMITTED VIEW ---
-  if (hasSubmitted) {
-    return (
-      <div className="min-h-screen bg-[#06020f] text-white flex flex-col font-sans">
-        <Navbar />
-        <div className="pt-28 pb-20 max-w-xl mx-auto px-6 w-full flex-1 flex flex-col justify-center">
-          <div className="bg-[#0c0818] border border-white/[0.1] rounded-3xl p-8 shadow-2xl flex flex-col items-center text-center gap-6">
-            <div className="w-20 h-20 rounded-full bg-[#3DCB7F]/10 border border-[#3DCB7F]/30 flex items-center justify-center shadow-lg shadow-[#3DCB7F]/10">
-              <CheckCircle2 size={44} className="text-[#3DCB7F]" />
-            </div>
 
-            <div>
-              <span className="text-xs font-black text-[#3DCB7F] uppercase tracking-widest bg-[#3DCB7F]/10 px-3 py-1 rounded-full border border-[#3DCB7F]/30">
-                Submission Confirmed
-              </span>
-              <h1 className="text-2xl font-black text-white mt-3">You Have Already Submitted</h1>
-              <p className="text-xs text-white/50 leading-relaxed mt-2 max-w-md mx-auto">
-                Your entry for <strong className="text-white">{eventTitle || 'this event'}</strong> has been successfully recorded. Multiple submissions are not allowed.
-              </p>
-            </div>
-
-            <div className="w-full bg-white/[0.02] border border-white/[0.06] rounded-2xl p-4 flex flex-col gap-2 text-left">
-              <div className="flex items-center justify-between text-xs pb-2 border-b border-white/[0.06]">
-                <span className="text-white/40 font-bold uppercase">Submission Status</span>
-                <span className="text-[#3DCB7F] font-bold">Confirmed ✓</span>
-              </div>
-              {submittedAt && (
-                <div className="flex items-center justify-between text-xs pt-1">
-                  <span className="text-white/40">Submitted On:</span>
-                  <span className="text-white font-mono">{new Date(submittedAt).toLocaleString()}</span>
-                </div>
-              )}
-              {submissionUrl && (
-                <div className="flex items-center justify-between text-xs pt-1">
-                  <span className="text-white/40">Submission Link:</span>
-                  <a href={submissionUrl} target="_blank" rel="noopener noreferrer" className="text-[#4ECDC4] hover:underline font-mono text-[11px] truncate max-w-[220px]">
-                    {submissionUrl}
-                  </a>
-                </div>
-              )}
-            </div>
-
-            <button
-              onClick={() => router.push(`/events/${eventId}`)}
-              className="w-full py-3.5 rounded-xl font-bold text-xs text-black bg-[#3DCB7F] hover:bg-[#32b870] shadow-lg shadow-[#3DCB7F]/20 transition-all flex items-center justify-center gap-2 cursor-pointer"
-            >
-              <ArrowLeft size={14} /> Return to Event Details
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   if (mode !== 'platform') {
     const targetUrl = mode === 'google_form'
@@ -322,6 +313,8 @@ export default function SubmitProjectPage() {
       <EventContestArena
         eventTitle={eventTitle}
         eventId={eventId}
+        endsAt={endsAt}
+        durationMinutes={submissionConfig?.assessment_details?.duration_minutes}
         questions={questions as ArenaQuestionItem[]}
         mcqAnswers={mcqAnswers}
         codeAnswers={codeAnswers}
@@ -329,6 +322,7 @@ export default function SubmitProjectPage() {
         selectedLanguage={selectedLanguage}
         submitting={submitting}
         msg={msg}
+        hasSubmitted={hasSubmitted}
         onMcqAnswer={(qId, optId) => setMcqAnswers(prev => ({ ...prev, [qId]: optId }))}
         onCodeChange={(qId, code) => setCodeAnswers(prev => ({ ...prev, [qId]: code }))}
         onLanguageChange={(lang) => setSelectedLanguage(lang)}
@@ -350,11 +344,32 @@ export default function SubmitProjectPage() {
         </button>
 
         <div className="bg-[#0c0818] border border-white/[0.08] rounded-3xl p-8 shadow-2xl flex flex-col gap-6">
-          <div>
-            <span className="text-xs font-bold text-[#E873C3] uppercase tracking-wider">Project Submission</span>
-            <h1 className="text-2xl font-black text-white mt-1">{eventTitle || 'Submit Solution'}</h1>
-            <p className="text-xs text-white/40 mt-1">Submit your code repository, live demo, and project overview for evaluation.</p>
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <span className="text-xs font-bold text-[#E873C3] uppercase tracking-wider">Project Submission</span>
+              <h1 className="text-2xl font-black text-white mt-1">{eventTitle || 'Submit Solution'}</h1>
+              <p className="text-xs text-white/40 mt-1">Submit your code repository, live demo, and project overview for evaluation.</p>
+            </div>
+            {hasSubmitted && (
+              <span className="px-3.5 py-1.5 rounded-full text-xs font-bold bg-[#3DCB7F]/15 text-[#3DCB7F] border border-[#3DCB7F]/30 flex items-center gap-1.5 shrink-0">
+                <CheckCircle2 size={14} /> Submitted
+              </span>
+            )}
           </div>
+
+          {hasSubmitted && (
+            <div className="p-3.5 bg-[#3DCB7F]/10 border border-[#3DCB7F]/30 rounded-2xl flex items-center justify-between gap-3 text-xs">
+              <div className="flex items-center gap-2 text-[#3DCB7F] font-bold">
+                <CheckCircle2 size={15} />
+                <span>Submitted</span>
+              </div>
+              {submittedAt && (
+                <span className="text-white/40 text-[11px]">
+                  {new Date(submittedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                </span>
+              )}
+            </div>
+          )}
 
           {msg && (
             <div className={`p-4 rounded-xl text-xs font-bold ${msg.startsWith('🎉') ? 'bg-[#3DCB7F]/10 border border-[#3DCB7F]/30 text-[#3DCB7F]' : 'bg-red-500/10 border border-red-500/30 text-red-400'}`}>
@@ -388,7 +403,7 @@ export default function SubmitProjectPage() {
 
             <button type="submit" disabled={submitting}
               className="py-3.5 rounded-xl font-bold text-sm text-black bg-[#3DCB7F] hover:bg-[#32b870] flex items-center justify-center gap-2 transition-all shadow-lg shadow-[#3DCB7F]/20 disabled:opacity-40 mt-2 cursor-pointer">
-              <Send size={15} />{submitting ? 'Submitting...' : 'Submit Solution →'}
+              <Send size={15} />{submitting ? 'Submitting...' : hasSubmitted ? 'Update Submission →' : 'Submit Solution →'}
             </button>
           </form>
         </div>

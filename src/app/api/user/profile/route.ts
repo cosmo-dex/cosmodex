@@ -52,15 +52,19 @@ export async function PATCH(req: NextRequest) {
     const sessionData: SessionPayload = session;
 
     const body = await req.json();
-    const { username, interests } = body as {
+    const { username, interests, avatarUrl, avatar_url } = body as {
       username?: string;
       interests?: string[];
+      avatarUrl?: string;
+      avatar_url?: string;
     };
 
     // Build update payload (only update fields that are provided)
     const updateData: Record<string, unknown> = {};
     if (username !== undefined) updateData.username = username.trim();
     if (interests !== undefined) updateData.interests = interests;
+    const targetAvatar = avatarUrl !== undefined ? avatarUrl : avatar_url;
+    if (targetAvatar !== undefined) updateData.avatar_url = targetAvatar;
 
     if (Object.keys(updateData).length === 0) {
       return NextResponse.json({ error: 'No fields to update' }, { status: 400 });
@@ -97,6 +101,7 @@ export async function PATCH(req: NextRequest) {
     const signedToken = await signSession({
       ...sessionData,
       username: updatedUser.username,
+      avatarId: updatedUser.avatar_url ?? null,
       interests: updatedUser.interests,
     });
 

@@ -23,6 +23,7 @@ export default async function ProfilePage() {
 
   let arenaWins = 0;
   let arenaLosses = 0;
+  let avatarUrl = '/images/avatars/nebula.webp';
 
   if (parsed) {
     userId = parsed.userId || null;
@@ -33,6 +34,7 @@ export default async function ProfilePage() {
     xpTotal = parsed.xpTotal ?? xpTotal;
     level = parsed.level ?? level;
     experienceLevel = parsed.experienceLevel || experienceLevel;
+    avatarUrl = parsed.avatarId || avatarUrl;
   }
 
   // Fetch live data from DB
@@ -44,6 +46,7 @@ export default async function ProfilePage() {
           select: {
             username: true,
             email: true,
+            avatar_url: true,
             interests: true,
             xp_total: true,
             level: true,
@@ -70,6 +73,7 @@ export default async function ProfilePage() {
       if (dbUser) {
         username = dbUser.username;
         email = dbUser.email;
+        avatarUrl = dbUser.avatar_url || avatarUrl;
         interests = dbUser.interests ?? [];
         xpTotal = dbUser.xp_total ?? 0;
         level = dbUser.level ?? 1;
@@ -113,7 +117,7 @@ export default async function ProfilePage() {
       starPoints={starPoints}
       rankThreshold={rankThreshold}
       bio="Full-Stack Cosmo Coder 🌌 Grinding Python, React & AI algorithms on CosmoDeX."
-      avatarUrl="/images/mascot.png"
+      avatarUrl={avatarUrl}
       arenaWins={arenaWins}
       arenaLosses={arenaLosses}
     />

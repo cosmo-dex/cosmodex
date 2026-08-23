@@ -1,5 +1,6 @@
+import Image from 'next/image';
 import { motion } from 'motion/react';
-import { ArrowLeft, ArrowRight, UserCircle } from 'lucide-react';
+import { ArrowLeft, ArrowRight } from 'lucide-react';
 import { OnboardingData } from '../../types/onboarding';
 import { AVATARS } from '../../theme/constants';
 
@@ -44,16 +45,19 @@ export default function AvatarStep({ data, onNext, onBack, updateData }: AvatarS
             >
               <div className={`absolute inset-0 rounded-2xl bg-white transition-opacity ${isSelected ? 'opacity-100' : 'opacity-0 group-hover:opacity-20'}`} />
               <div className={`relative w-20 h-20 sm:w-24 sm:h-24 rounded-xl ${avatar.cls} flex items-center justify-center p-1 overflow-hidden`}>
-                <div className="absolute inset-0 bg-black/20 mix-blend-overlay" />
-                <motion.div 
-                   animate={isSelected ? { rotate: 360 } : { rotate: 0 }}
-                   transition={{ duration: 10, repeat: Infinity, ease: "linear" }}
-                   className={`w-full h-full rounded-lg border-2 ${isSelected ? 'border-white/50' : 'border-white/20'} flex flex-col items-center justify-center`}
-                >
-                  <UserCircle size={32} className="text-white/60 mb-1" />
-                </motion.div>
+                <div className="relative w-full h-full rounded-lg overflow-hidden flex items-center justify-center">
+                  <Image
+                    src={avatar.image}
+                    alt={avatar.name}
+                    width={96}
+                    height={96}
+                    sizes="(max-width: 640px) 80px, 96px"
+                    priority
+                    className="w-full h-full object-cover"
+                  />
+                </div>
               </div>
-              <div className={`mt-3 text-xs font-mono font-medium tracking-wide text-center transition-colors ${isSelected ? 'text-[#E873C3] drop-shadow-[0_0_8px_rgba(232,115,195,0.5)]' : 'text-white/50'}`}>
+              <div className={`mt-3 text-xs font-mono font-medium tracking-wide text-center transition-colors ${isSelected ? 'text-[#E873C3] drop-shadow-[0_0_8px_rgba(232,115,195,0.5)] font-bold' : 'text-white/70'}`}>
                 {avatar.name}
               </div>
             </motion.button>

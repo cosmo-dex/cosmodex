@@ -6,7 +6,7 @@ import Editor, { Monaco } from '@monaco-editor/react';
 import {
   ChevronLeft, ChevronRight, CheckCircle2, Terminal,
   Play, RotateCcw, Copy, Check, Code, Zap,
-  ListChecks, ArrowLeft, Send,
+  ListChecks, ArrowLeft, Send, Clock,
 } from 'lucide-react';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -22,6 +22,8 @@ export interface MCQQuestionItem {
   codeSnippet?: string;
   options: MCQOption[];
   marks?: number;
+  points?: number;
+  timeLimitMin?: number;
 }
 
 export interface TestCase {
@@ -44,6 +46,7 @@ export interface CodingQuestionItem {
   points?: number;
   marks?: number;
   timeLimitSec?: number;
+  timeLimitMin?: number;
   memoryLimitMb?: number;
   sampleTestCases?: TestCase[];
   testCases?: TestCase[];
@@ -188,6 +191,7 @@ function McqPanel({
   questionIndex,
   totalQuestions,
   chosenId,
+  timeSpentSeconds,
   onChoose,
   onPrev,
   onNext,
@@ -195,12 +199,36 @@ function McqPanel({
   question: MCQQuestionItem;
   questionIndex: number;
   totalQuestions: number;
-  chosenId: string | undefined;
+  chosenId: string | string[] | undefined;
+  timeSpentSeconds?: number;
   onChoose: (id: string) => void;
   onPrev: () => void;
   onNext: () => void;
 }) {
   const questionText = question.questionText || question.question || '';
+
+  const selectedList: string[] = useMemo(() => {
+    if (!chosenId) return [];
+    if (Array.isArray(chosenId)) return chosenId;
+    return String(chosenId).split(',').filter(Boolean);
+  }, [chosenId]);
+
+  const handleToggle = (optId: string) => {
+    let nextList: string[];
+    if (selectedList.includes(optId)) {
+      nextList = selectedList.filter(id => id !== optId);
+    } else {
+      nextList = [...selectedList, optId];
+    }
+    onChoose(nextList.join(','));
+  };
+
+  const fmtTime = (sec?: number) => {
+    if (!sec || sec < 0) return '0s';
+    const m = Math.floor(sec / 60);
+    const s = sec % 60;
+    return m > 0 ? `${m}m ${s}s` : `${s}s`;
+  };
 
   return (
     <motion.div
@@ -221,13 +249,16 @@ function McqPanel({
         <div className="flex items-center justify-between gap-4 mb-5 flex-wrap relative z-10">
           <div className="flex items-center gap-2 flex-wrap">
             <span className="px-3.5 py-1 rounded-full text-xs font-mono font-bold uppercase tracking-wider bg-purple-900/60 text-purple-300 border border-purple-500/40">
-              Multiple Choice
+              Multiple Choice (Select All Correct)
             </span>
-            {question.marks && (
+            {(question.marks || question.points) && (
               <span className="px-3 py-1 rounded-full text-xs font-mono font-bold border border-amber-500/40 bg-amber-950/60 text-amber-300">
-                ⚡ {question.marks} pts
+                ⚡ {question.marks || question.points} pts
               </span>
             )}
+            <span className="px-3 py-1 rounded-full text-xs font-mono font-bold border border-cyan-500/40 bg-cyan-950/60 text-cyan-300 flex items-center gap-1">
+              <Clock size={11} /> {fmtTime(timeSpentSeconds)}
+            </span>
           </div>
           <span className="text-xs font-mono text-white/30 font-bold">Q{questionIndex + 1} of {totalQuestions}</span>
         </div>
@@ -251,7 +282,7 @@ function McqPanel({
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6 relative z-10">
           {question.options.map((opt, idx) => {
             const letter = String.fromCharCode(65 + idx);
-            const isChosen = chosenId === opt.id;
+            const isChosen = selectedList.includes(opt.id);
             return (
               <motion.button
                 key={opt.id}
@@ -260,7 +291,7 @@ function McqPanel({
                 transition={{ delay: idx * 0.06, duration: 0.22 }}
                 whileHover={{ y: -6, scale: 1.02, transition: { duration: 0.12, ease: 'easeOut' } }}
                 whileTap={{ scale: 0.97, y: -2, transition: { duration: 0.05 } }}
-                onClick={() => onChoose(opt.id)}
+                onClick={() => handleToggle(opt.id)}
                 className={cn(
                   'group relative p-5 rounded-2xl border text-left flex items-center gap-4 cursor-pointer backdrop-blur-md overflow-hidden transition-colors duration-150',
                   isChosen
@@ -377,25 +408,61 @@ function CodingPanel({
     return () => { document.removeEventListener('mousemove', onMove); document.removeEventListener('mouseup', onUp); };
   }, []);
 
-  const handleRun = useCallback(() => {
+  const handleRun = useCallback(async () => {
     if (runningCode || !code.trim()) return;
     setRunningCode(true);
     setActiveTab('tests');
-    setTimeout(() => {
-      const passed = code.includes('cout') || code.includes('print') || code.includes('System.out') || code.includes('console.log') || code.includes('return');
-      let log = `[CosmoDex Runner]\nCompiling ${language.toUpperCase()}...\n\n`;
-      const results: TestResultItem[] = sampleCases.map((tc, i) => {
-        const exp = tc.output?.trim() || '';
-        const actual = passed ? exp : 'Execution returned no output.';
-        log += `Case #${i + 1}\nInput: ${tc.input}\nExpected: ${exp}\nActual: ${actual}\n${passed ? '✓ PASSED' : '❌ FAILED'}\n\n`;
-        return { testIndex: i + 1, input: tc.input, expectedOutput: exp, actualOutput: actual, passed };
-      });
-      if (results.length === 0) {
-        log += `Stdin: ${customStdin || 'None'}\nOutput: Execution completed.\n`;
+    try {
+      let log = `[Judge0 Runner] Compiling & Executing ${language.toUpperCase()}...\n\n`;
+      let totalTime = 0;
+      const testCasesToRun = sampleCases.length > 0
+        ? sampleCases
+        : [{ input: customStdin || '', output: '', isPublic: true }];
+
+      const results: TestResultItem[] = [];
+
+      for (let i = 0; i < testCasesToRun.length; i++) {
+        const tc = testCasesToRun[i];
+        const res = await fetch('/api/judge0/execute', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            source_code: code,
+            language,
+            stdin: tc.input,
+            expected_output: tc.output,
+          }),
+        });
+        const data = await res.json();
+        const passed = Boolean(data.passed);
+        const actual = data.stdout || data.stderr || 'No output.';
+        if (data.time) totalTime += parseFloat(data.time) * 1000;
+
+        log += `Case #${i + 1}: ${passed ? '✓ PASSED' : '❌ FAILED'}\nInput: ${tc.input || '(empty)'}\nExpected: ${tc.output || '(any)'}\nActual: ${actual}\n\n`;
+        results.push({
+          testIndex: i + 1,
+          input: tc.input,
+          expectedOutput: tc.output,
+          actualOutput: actual,
+          passed,
+        });
       }
-      setTerminalOutput({ status: 'SUCCESS', stdout: log, executionTimeMs: Math.floor(Math.random() * 30) + 8, testResults: results });
+
+      const allPassed = results.every(r => r.passed);
+      setTerminalOutput({
+        status: allPassed ? 'SUCCESS' : 'ERROR',
+        stdout: log,
+        executionTimeMs: Math.round(totalTime) || 15,
+        testResults: results,
+      });
+    } catch {
+      setTerminalOutput({
+        status: 'ERROR',
+        stdout: 'Network error executing code.',
+      });
+    } finally {
       setRunningCode(false);
-    }, 700);
+    }
   }, [runningCode, code, language, sampleCases, customStdin]);
 
   return (
@@ -423,7 +490,7 @@ function CodingPanel({
           </div>
           {(question.points || question.marks) && (
             <span className="text-xs font-bold text-[#FFD700] bg-[#FFD700]/10 px-2.5 py-1 rounded-lg border border-[#FFD700]/30">
-              🌟 {question.points || question.marks} XP
+              🌟 {question.points || question.marks} pts
             </span>
           )}
         </div>
@@ -702,6 +769,8 @@ function CodingPanel({
 export interface EventContestArenaProps {
   eventTitle: string;
   eventId: string;
+  endsAt?: string | null;
+  durationMinutes?: number;
   questions: QuestionItem[];
   mcqAnswers: Record<string, string>;
   codeAnswers: Record<string, string>;
@@ -709,16 +778,20 @@ export interface EventContestArenaProps {
   selectedLanguage: string;
   submitting: boolean;
   msg: string;
+  hasSubmitted?: boolean;
   onMcqAnswer: (questionId: string, optionId: string) => void;
   onCodeChange: (questionId: string, code: string) => void;
   onLanguageChange: (lang: string) => void;
   onNavigate: (idx: number) => void;
-  onSubmit: () => void;
+  onSubmit: (questionTimes?: Record<string, number>, totalTimeSeconds?: number) => void;
   onBack: () => void;
 }
 
 export default function EventContestArena({
   eventTitle,
+  eventId,
+  endsAt,
+  durationMinutes,
   questions,
   mcqAnswers,
   codeAnswers,
@@ -726,6 +799,7 @@ export default function EventContestArena({
   selectedLanguage,
   submitting,
   msg,
+  hasSubmitted,
   onMcqAnswer,
   onCodeChange,
   onLanguageChange,
@@ -735,15 +809,87 @@ export default function EventContestArena({
 }: EventContestArenaProps) {
   const activeQ = questions[selectedQuestionIdx];
 
+  // Active question time tracker (seconds per question)
+  const [questionTimes, setQuestionTimes] = useState<Record<string, number>>({});
+  const activeQId = activeQ?.id;
+
+  useEffect(() => {
+    if (!activeQId) return;
+    const interval = setInterval(() => {
+      setQuestionTimes(prev => ({
+        ...prev,
+        [activeQId]: (prev[activeQId] || 0) + 1,
+      }));
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [activeQId]);
+
+  const totalTimeSeconds = useMemo(() => {
+    return Object.values(questionTimes).reduce((acc, curr) => acc + curr, 0);
+  }, [questionTimes]);
+
+  const [contestTimer, setContestTimer] = useState<{ hours: string; minutes: string; seconds: string; isEnded: boolean }>({
+    hours: '00',
+    minutes: '00',
+    seconds: '00',
+    isEnded: false,
+  });
+
+  useEffect(() => {
+    let targetTime: number | null = null;
+
+    if (durationMinutes && durationMinutes > 0) {
+      const storageKey = `cosmodex_contest_${eventId}_deadline`;
+      const storedDeadline = typeof window !== 'undefined' ? localStorage.getItem(storageKey) : null;
+      if (storedDeadline) {
+        targetTime = Number(storedDeadline);
+      } else {
+        const newDeadline = Date.now() + durationMinutes * 60 * 1000;
+        targetTime = newDeadline;
+        if (typeof window !== 'undefined') {
+          localStorage.setItem(storageKey, String(newDeadline));
+        }
+      }
+    } else if (endsAt) {
+      targetTime = new Date(endsAt).getTime();
+    }
+
+    if (!targetTime) return;
+
+    function calc() {
+      const diff = targetTime! - Date.now();
+      if (diff <= 0) {
+        setContestTimer({ hours: '00', minutes: '00', seconds: '00', isEnded: true });
+        return;
+      }
+      const h = Math.floor(diff / 3600000);
+      const m = Math.floor((diff % 3600000) / 60000);
+      const s = Math.floor((diff % 60000) / 1000);
+      setContestTimer({
+        hours: String(h).padStart(2, '0'),
+        minutes: String(m).padStart(2, '0'),
+        seconds: String(s).padStart(2, '0'),
+        isEnded: false,
+      });
+    }
+    calc();
+    const timer = setInterval(calc, 1000);
+    return () => clearInterval(timer);
+  }, [durationMinutes, endsAt, eventId]);
+
   const solvedCount = questions.filter((q) =>
     q.type === 'mcq' ? !!mcqAnswers[q.id] : !!(codeAnswers[q.id]?.trim())
   ).length;
+
+  const handleFinishSubmit = () => {
+    onSubmit(questionTimes, totalTimeSeconds);
+  };
 
   const goNext = () => {
     if (selectedQuestionIdx < questions.length - 1) {
       onNavigate(selectedQuestionIdx + 1);
     } else {
-      onSubmit();
+      handleFinishSubmit();
     }
   };
 
@@ -793,8 +939,22 @@ export default function EventContestArena({
           ))}
         </div>
 
-        {/* Right: solved count + finish button */}
         <div className="flex items-center gap-3 shrink-0 ml-2">
+          {hasSubmitted && (
+            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#3DCB7F]/15 border border-[#3DCB7F]/40 text-[#3DCB7F] font-bold text-xs">
+              <CheckCircle2 size={13} />
+              <span>Submitted</span>
+            </div>
+          )}
+          {(durationMinutes || endsAt) && (
+            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-purple-950/70 border border-purple-500/40 text-purple-200">
+              <Clock size={13} className="text-[#E873C3] animate-pulse" />
+              <span className="text-[10px] font-bold text-white/50 uppercase">Time Left:</span>
+              <span className="font-mono font-black text-xs text-white">
+                {contestTimer.hours}:{contestTimer.minutes}:{contestTimer.seconds}
+              </span>
+            </div>
+          )}
           <div className="flex items-center gap-1.5 text-xs font-mono font-bold text-white/40">
             <ListChecks size={13} className="text-[#3DCB7F]" />
             <span className="text-[#3DCB7F]">{solvedCount}</span>
@@ -802,21 +962,20 @@ export default function EventContestArena({
             <span>{questions.length}</span>
           </div>
           <button
-            onClick={onSubmit}
-            disabled={submitting}
+            onClick={handleFinishSubmit}
+            disabled={submitting || contestTimer.isEnded}
             className="px-5 py-2 rounded-xl text-xs font-black text-black bg-[#3DCB7F] hover:bg-[#32b870] shadow-lg shadow-[#3DCB7F]/20 transition-all flex items-center gap-1.5 disabled:opacity-50 cursor-pointer"
           >
             <Send size={13} />
-            {submitting ? 'Submitting…' : 'Finish & Submit →'}
+            {submitting ? 'Submitting…' : hasSubmitted ? 'Update Submission' : 'Finish & Submit →'}
           </button>
         </div>
       </div>
 
       {/* ── Message Banner ── */}
       {msg && (
-        <div className={`relative z-30 mx-4 mt-3 p-3 rounded-xl text-xs font-bold shrink-0 ${
-          msg.startsWith('🎉') ? 'bg-[#3DCB7F]/10 border border-[#3DCB7F]/30 text-[#3DCB7F]' : 'bg-red-500/10 border border-red-500/30 text-red-400'
-        }`}>
+        <div className={`relative z-30 mx-4 mt-3 p-3 rounded-xl text-xs font-bold shrink-0 ${msg.startsWith('🎉') ? 'bg-[#3DCB7F]/10 border border-[#3DCB7F]/30 text-[#3DCB7F]' : 'bg-red-500/10 border border-red-500/30 text-red-400'
+          }`}>
           {msg}
         </div>
       )}
@@ -841,6 +1000,7 @@ export default function EventContestArena({
                 questionIndex={selectedQuestionIdx}
                 totalQuestions={questions.length}
                 chosenId={mcqAnswers[activeQ.id]}
+                timeSpentSeconds={questionTimes[activeQ.id] || 0}
                 onChoose={(id) => onMcqAnswer(activeQ.id, id)}
                 onPrev={goPrev}
                 onNext={goNext}
@@ -859,7 +1019,7 @@ export default function EventContestArena({
                 onReset={() => onCodeChange(activeQ.id, (activeQ as CodingQuestionItem).starterCode?.[selectedLanguage] || DEFAULT_STARTERS[selectedLanguage] || '')}
                 onPrev={goPrev}
                 onNext={goNext}
-                onSubmitAll={onSubmit}
+                onSubmitAll={handleFinishSubmit}
                 submitting={submitting}
               />
             )}
@@ -872,6 +1032,9 @@ export default function EventContestArena({
         <div className="flex items-center gap-3">
           <span className="text-[10px] font-mono font-bold text-purple-300/50 uppercase tracking-widest">
             CosmoDex Contest
+          </span>
+          <span className="text-[10px] font-mono text-cyan-400/70">
+            Total Time: {Math.floor(totalTimeSeconds / 60)}m {totalTimeSeconds % 60}s
           </span>
         </div>
         <div className="flex items-center gap-3">
@@ -888,9 +1051,15 @@ export default function EventContestArena({
           <span className="text-[10px] font-mono font-bold text-white/30 tracking-wider">
             Q {selectedQuestionIdx + 1} / {questions.length}
           </span>
-          <span className="text-[10px] font-bold text-[#3DCB7F]">
-            {solvedCount > 0 ? `${Math.round((solvedCount / questions.length) * 100)}% done` : 'Not started'}
-          </span>
+          {hasSubmitted ? (
+            <span className="text-[10px] font-bold text-[#3DCB7F] bg-[#3DCB7F]/10 px-2 py-0.5 rounded border border-[#3DCB7F]/30 flex items-center gap-1">
+              <CheckCircle2 size={11} /> Submitted
+            </span>
+          ) : (
+            <span className="text-[10px] font-bold text-[#3DCB7F]">
+              {solvedCount > 0 ? `${Math.round((solvedCount / questions.length) * 100)}% done` : 'Not started'}
+            </span>
+          )}
         </div>
       </div>
     </div>

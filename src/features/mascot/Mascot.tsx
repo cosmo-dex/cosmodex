@@ -165,7 +165,18 @@ export default function Mascot() {
     }
   };
 
-  if (pathname === '/onboarding' || pathname?.startsWith('/onboarding/') || pathname?.startsWith('/battle')) {
+  if (
+    !pathname ||
+    pathname === '/onboarding' ||
+    pathname.startsWith('/onboarding/') ||
+    pathname.startsWith('/battle') ||
+    pathname === '/admin' ||
+    pathname.startsWith('/admin/') ||
+    pathname.startsWith('/super-admin') ||
+    pathname.startsWith('/learning-admin') ||
+    pathname.startsWith('/arena-admin') ||
+    pathname.includes('admin')
+  ) {
     return null;
   }
 

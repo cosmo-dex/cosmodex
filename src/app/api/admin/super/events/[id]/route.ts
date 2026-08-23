@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { verifyAdminSession } from '@/lib/adminAuth';
-import { sendEventUpdateNotificationEmail } from '@/lib/email';
 
 export async function GET(
   req: NextRequest,
@@ -49,7 +48,6 @@ export async function PATCH(
       participation_type, min_team_size, max_team_size,
       enter_event_url, rounds_json, prizes_json, eligibility, registration_fee,
       submission_config,
-      notify_participants, update_subject, update_message
     } = body;
 
     const VALID_STATUSES = ['draft', 'published', 'ongoing', 'ended', 'archived'];
@@ -105,30 +103,6 @@ export async function PATCH(
     }
 
     const updated = await prisma.events.update({ where: { id }, data: updateData });
-
-    if (status === 'ongoing' || notify_participants) {
-      const regUsers = await prisma.event_registrations.findMany({
-        where: { event_id: id, status: 'registered' },
-        select: { email: true, users: { select: { email: true } } },
-      });
-      const emails = regUsers.map(r => r.email || r.users?.email).filter(Boolean) as string[];
-
-      if (emails.length > 0) {
-        const subj = update_subject || (status === 'ongoing' ? '🔴 Event is LIVE Now!' : 'Event Schedule Update');
-        const msg = update_message || (status === 'ongoing' ? 'The competition has officially started. Click the button on the event page to enter the live arena and view challenges.' : 'Event details have been updated by the organizing team.');
-
-        try {
-          await sendEventUpdateNotificationEmail({
-            toEmails: emails,
-            eventTitle: updated.title,
-            subject: subj,
-            message: msg,
-          });
-        } catch (emailErr) {
-          console.error('[PATCH /api/admin/super/events/[id]] Broadcast email error:', emailErr);
-        }
-      }
-    }
 
     return NextResponse.json({ event: updated });
   } catch (err) {

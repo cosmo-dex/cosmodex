@@ -8,7 +8,6 @@ export async function GET(req: NextRequest) {
     const session = await verifySession(sessionCookie?.value);
     const userId = session?.userId;
 
-    // Fetch active notifications
     const whereCondition = userId
       ? {
         is_active: true,
@@ -98,60 +97,64 @@ export async function PATCH(req: NextRequest) {
     const now = new Date();
 
     if (action === 'read_all') {
-      for (const n of eligibleNotifications) {
-        await prisma.user_notification_states.upsert({
-          where: {
-            user_id_notification_id: {
+      await Promise.all(
+        eligibleNotifications.map((n) =>
+          prisma.user_notification_states.upsert({
+            where: {
+              user_id_notification_id: {
+                user_id: userId,
+                notification_id: n.id,
+              },
+            },
+            update: {
+              is_read: true,
+              read_at: now,
+              updated_at: now,
+            },
+            create: {
               user_id: userId,
               notification_id: n.id,
+              is_read: true,
+              read_at: now,
+              is_cleared: false,
+              created_at: now,
+              updated_at: now,
             },
-          },
-          update: {
-            is_read: true,
-            read_at: now,
-            updated_at: now,
-          },
-          create: {
-            user_id: userId,
-            notification_id: n.id,
-            is_read: true,
-            read_at: now,
-            is_cleared: false,
-            created_at: now,
-            updated_at: now,
-          },
-        });
-      }
+          })
+        )
+      );
 
       return NextResponse.json({ success: true, message: 'All marked as read' });
     }
 
     if (action === 'clear_all') {
-      for (const n of eligibleNotifications) {
-        await prisma.user_notification_states.upsert({
-          where: {
-            user_id_notification_id: {
+      await Promise.all(
+        eligibleNotifications.map((n) =>
+          prisma.user_notification_states.upsert({
+            where: {
+              user_id_notification_id: {
+                user_id: userId,
+                notification_id: n.id,
+              },
+            },
+            update: {
+              is_cleared: true,
+              cleared_at: now,
+              updated_at: now,
+            },
+            create: {
               user_id: userId,
               notification_id: n.id,
+              is_read: true,
+              read_at: now,
+              is_cleared: true,
+              cleared_at: now,
+              created_at: now,
+              updated_at: now,
             },
-          },
-          update: {
-            is_cleared: true,
-            cleared_at: now,
-            updated_at: now,
-          },
-          create: {
-            user_id: userId,
-            notification_id: n.id,
-            is_read: true,
-            read_at: now,
-            is_cleared: true,
-            cleared_at: now,
-            created_at: now,
-            updated_at: now,
-          },
-        });
-      }
+          })
+        )
+      );
 
       return NextResponse.json({ success: true, message: 'All notifications cleared' });
     }

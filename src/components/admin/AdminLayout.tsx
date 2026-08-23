@@ -9,7 +9,6 @@ import {
   Swords,
   LayoutDashboard,
   Users,
-  ScrollText,
   UserPlus,
   Key,
   LogOut,
@@ -18,6 +17,8 @@ import {
   ChevronRight,
   CalendarDays,
   Bell,
+  Layers,
+  FileQuestion,
 } from 'lucide-react';
 
 interface AdminUser {
@@ -44,15 +45,14 @@ const NAV_BY_ROLE: Record<string, NavItem[]> = {
   ],
   learning_admin: [
     { label: 'Overview', href: '/learning-admin', icon: LayoutDashboard },
-    { label: 'Notifications', href: '/super-admin/notifications', icon: Bell },
+    { label: 'Courses & Tracks', href: '/learning-admin/courses', icon: BookOpen },
+    { label: 'Modules & Stations', href: '/learning-admin/modules', icon: Layers },
+    { label: 'Exercise Bank', href: '/learning-admin/questions', icon: FileQuestion },
     { label: 'Change Password', href: '/learning-admin/change-password', icon: Key },
   ],
   arena_admin: [
     { label: 'Overview', href: '/arena-admin', icon: LayoutDashboard },
     { label: 'Battle Problems', href: '/arena-admin/problems', icon: Swords },
-    { label: 'Match Monitor', href: '/arena-admin/matches', icon: ScrollText },
-    { label: 'ELO Ladder', href: '/arena-admin/stats', icon: Users },
-    { label: 'Notifications', href: '/super-admin/notifications', icon: Bell },
     { label: 'Change Password', href: '/arena-admin/change-password', icon: Key },
   ],
 };

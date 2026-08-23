@@ -1,18 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { Prisma } from '@prisma/client';
-import { SESSION_COOKIE } from '@/lib/adminAuth';
-import { sendRegistrationConfirmationEmail } from '@/lib/email';
-
-function getSession(req: NextRequest) {
-  const cookie = req.cookies.get(SESSION_COOKIE);
-  if (!cookie?.value) return null;
-  try {
-    return JSON.parse(cookie.value) as { userId: string; username: string; role: string; email?: string };
-  } catch {
-    return null;
-  }
-}
+import { getEventUserSession } from '@/lib/eventAuth';
 
 function generateTeamCode(): string {
   return Math.random().toString(36).substring(2, 8).toUpperCase();
@@ -22,55 +11,56 @@ export async function POST(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  const session = getSession(req);
-  if (!session?.userId) {
-    return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
-  }
-
   const { id } = await params;
   const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
 
-  let body: {
-    email?: string;
-    team_name?: string;
-    team_code?: string;
-    action?: string;
-    details?: {
-      full_name?: string;
-      email?: string;
-      phone?: string;
-      gender?: string;
-      user_type?: string;
-      college_org?: string;
-      degree?: string;
-      branch?: string;
-      year_of_study?: string;
-      city_state?: string;
-      github_url?: string;
-      linkedin_url?: string;
-      referral_source?: string;
-    };
-  } = {};
-
-  try { body = await req.json(); } catch { }
-
   try {
-    const event = await prisma.events.findFirst({
-      where: isUuid ? { OR: [{ id }, { slug: id }] } : { slug: id },
-      select: {
-        id: true,
-        title: true,
-        starts_at: true,
-        slug: true,
-        registration_open: true,
-        registration_deadline: true,
-        max_participants: true,
-        status: true,
-        participation_type: true,
-        max_team_size: true,
-        _count: { select: { event_registrations: true } },
-      },
-    });
+    const [session, bodyRaw, event] = await Promise.all([
+      getEventUserSession(req),
+      req.json().catch(() => ({})),
+      prisma.events.findFirst({
+        where: isUuid ? { OR: [{ id }, { slug: id }] } : { slug: id },
+        select: {
+          id: true,
+          title: true,
+          starts_at: true,
+          slug: true,
+          registration_open: true,
+          registration_deadline: true,
+          max_participants: true,
+          status: true,
+          participation_type: true,
+          max_team_size: true,
+          _count: { select: { event_registrations: true } },
+        },
+      }),
+    ]);
+
+    if (!session?.userId) {
+      return NextResponse.json({ error: 'Please log in to register for this event' }, { status: 401 });
+    }
+
+    const body = (bodyRaw || {}) as {
+      email?: string;
+      team_name?: string;
+      team_code?: string;
+      action?: string;
+      details?: {
+        full_name?: string;
+        email?: string;
+        phone?: string;
+        gender?: string;
+        user_type?: string;
+        college_org?: string;
+        degree?: string;
+        branch?: string;
+        year_of_study?: string;
+        city_state?: string;
+        github_url?: string;
+        linkedin_url?: string;
+        referral_source?: string;
+      };
+    };
 
     if (!event || !['published', 'ongoing'].includes(event.status ?? '')) {
       return NextResponse.json({ error: 'Event not found or not open' }, { status: 404 });
@@ -108,7 +98,6 @@ export async function POST(
 
     const isTeamEvent = event.participation_type === 'team';
     let resultRegistration;
-    let finalTeamName: string | null = null;
     let finalTeamCode: string | null = null;
 
     if (existing) {
@@ -121,7 +110,6 @@ export async function POST(
           details_json: detailsJson as Prisma.InputJsonValue,
         },
       });
-      finalTeamName = existing.team_name;
       finalTeamCode = existing.team_code;
     } else {
       if (event.max_participants && event._count.event_registrations >= event.max_participants) {
@@ -184,7 +172,6 @@ export async function POST(
           },
         });
 
-        finalTeamName = leaderReg.team_name;
         finalTeamCode = body.team_code;
       } else {
         const teamCode = generateTeamCode();
@@ -203,31 +190,14 @@ export async function POST(
           },
         });
 
-        finalTeamName = teamName;
         finalTeamCode = teamCode;
       }
-    }
-
-    let emailSent = false;
-    try {
-      emailSent = await sendRegistrationConfirmationEmail({
-        toEmail: userEmail,
-        userName: candidateName,
-        eventTitle: event.title,
-        startsAt: event.starts_at ? event.starts_at.toISOString() : null,
-        teamName: finalTeamName,
-        teamCode: finalTeamCode,
-        enterUrl: `${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/events/${event.slug || event.id}`,
-      });
-    } catch (emailErr) {
-      console.error('[POST /api/events/[id]/register] Email confirmation error:', emailErr);
     }
 
     return NextResponse.json({
       registration: resultRegistration,
       team_code: finalTeamCode,
       created_team: body.action === 'create_team',
-      email_sent: emailSent,
     });
   } catch (err) {
     console.error('[POST /api/events/[id]/register] Error:', err);
@@ -239,19 +209,21 @@ export async function DELETE(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  const session = getSession(req);
-  if (!session?.userId) {
-    return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
-  }
-
   const { id } = await params;
   const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
 
   try {
-    const event = await prisma.events.findFirst({
-      where: isUuid ? { OR: [{ id }, { slug: id }] } : { slug: id },
-      select: { id: true },
-    });
+    const [session, event] = await Promise.all([
+      getEventUserSession(req),
+      prisma.events.findFirst({
+        where: isUuid ? { OR: [{ id }, { slug: id }] } : { slug: id },
+        select: { id: true },
+      }),
+    ]);
+
+    if (!session?.userId) {
+      return NextResponse.json({ error: 'Please log in to manage your registration' }, { status: 401 });
+    }
 
     if (!event) return NextResponse.json({ error: 'Event not found' }, { status: 404 });
 
