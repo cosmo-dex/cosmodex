@@ -20,6 +20,7 @@ export default function StationCard({ chapter, onLaunchMission }: StationCardPro
   useEffect(() => {
     const defaultEx =
       chapter.exercises.find((ex) => ex.isUnlocked) || chapter.exercises[0];
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setSelectedExercise(defaultEx);
   }, [chapter]);
 

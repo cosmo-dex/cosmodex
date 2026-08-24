@@ -17,7 +17,6 @@ import {
   Lightbulb,
   Lock,
   CheckCircle2,
-  HelpCircle,
   GripVertical,
   Timer,
   Clock,
@@ -34,7 +33,6 @@ import {
   Cpu,
   Layers,
   Code2,
-  Share2,
   History,
 } from "lucide-react";
 import Editor from "@monaco-editor/react";
@@ -477,13 +475,6 @@ export default function MissionModal({
   // Time Cooldown timer in seconds for unlocking subsequent hints
   const [hintCooldownSeconds, setHintCooldownSeconds] = useState<number>(0);
 
-  // Accordion open states for Hints
-  const [openHintAccordions, setOpenHintAccordions] = useState<Record<number, boolean>>({
-    1: false,
-    2: false,
-    3: false,
-  });
-
   // Default Sidebar Width percentage set to 35% (Giving 65% to Code Editor area!)
   const [sidebarWidthPercent, setSidebarWidthPercent] = useState<number>(35);
   const [isDraggingDivider, setIsDraggingDivider] = useState<boolean>(false);
@@ -519,6 +510,7 @@ export default function MissionModal({
 
   useEffect(() => {
     if (exercise) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setCode(
         exercise.initialCode ||
         `# Exercise: ${exercise.title}\n# Write your Python code below\n\nprint("Hello, ${exercise.title}!")`
@@ -536,7 +528,6 @@ export default function MissionModal({
       setShowCustomInput(false);
       setCustomInputVal("");
       setIsBookmarked(false);
-      setOpenHintAccordions({ 1: false, 2: false, 3: false });
       confettiFiredRef.current = false;
     }
   }, [exercise]);
@@ -672,16 +663,11 @@ export default function MissionModal({
 
   const handleRevealHint = (hintNum: number) => {
     setRevealedHintsCount(hintNum);
-    setOpenHintAccordions((prev) => ({ ...prev, [hintNum]: true }));
     if (hintNum === 1) {
       setHintCooldownSeconds(30);
     } else if (hintNum === 2) {
       setHintCooldownSeconds(45);
     }
-  };
-
-  const toggleHintAccordion = (hintNum: number) => {
-    setOpenHintAccordions((prev) => ({ ...prev, [hintNum]: !prev[hintNum] }));
   };
 
   if (!isOpen || !chapter || !exercise) return null;
