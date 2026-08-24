@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   Calendar,
   Edit,
+  Camera,
   Shield,
   Award,
   Flame,
@@ -364,21 +365,50 @@ export default function ProfileContent({
                 </div>
 
                 {/* Profile Custom User Image Avatar */}
-                <div className="absolute -bottom-16 left-6 sm:left-10 z-20">
-                  <div className={`w-32 h-32 sm:w-40 sm:h-40 rounded-full border-4 border-[#E873C3] shadow-[0_0_30px_rgba(232,115,195,0.4)] overflow-hidden ${getAvatarCls(profile.avatarUrl)} relative flex items-center justify-center`}>
+                <div className="absolute -bottom-16 left-6 sm:left-10 z-20 group/avatar">
+                  <div
+                    onClick={() => {
+                      setEditData(profile);
+                      setSaveError(null);
+                      setIsEditing(true);
+                    }}
+                    title="Change profile picture"
+                    className={`w-32 h-32 sm:w-40 sm:h-40 rounded-full border-4 border-[#E873C3] shadow-[0_0_30px_rgba(232,115,195,0.4)] overflow-hidden ${getAvatarCls(profile.avatarUrl)} relative flex items-center justify-center cursor-pointer transition-transform duration-300 hover:scale-[1.02]`}
+                  >
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
                       src={getAvatarUrl(profile.avatarUrl)}
                       alt={profile.name}
                       loading="eager"
                       fetchPriority="high"
-                      className="w-full h-full object-cover"
+                      className="w-full h-full object-cover transition-transform duration-300 group-hover/avatar:scale-105"
                       onError={(e) => {
                         (e.target as HTMLImageElement).src = '/images/avatars/nebula.webp';
                       }}
                     />
+
+                    {/* Dark Hover Overlay with Camera Icon */}
+                    <div className="absolute inset-0 rounded-full bg-black/60 opacity-0 group-hover/avatar:opacity-100 flex flex-col items-center justify-center gap-1 transition-opacity duration-250 text-white backdrop-blur-[2px]">
+                      <Camera size={24} className="text-white drop-shadow-md" />
+                      <span className="text-[10px] font-mono font-bold tracking-wider uppercase text-white/90">Change</span>
+                    </div>
+
                     <div className="absolute inset-0 ring-inset ring-2 ring-white/20 rounded-full pointer-events-none" />
                   </div>
+
+                  {/* Floating Camera Button Badge */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setEditData(profile);
+                      setSaveError(null);
+                      setIsEditing(true);
+                    }}
+                    title="Change profile picture"
+                    className="absolute bottom-1 right-1 sm:bottom-2 sm:right-2 p-2.5 sm:p-3 rounded-full bg-gradient-to-tr from-[#9b30ff] to-[#E873C3] text-white shadow-[0_4px_16px_rgba(232,115,195,0.5)] border-2 border-[#120C20] hover:scale-110 active:scale-95 transition-all cursor-pointer z-30"
+                  >
+                    <Camera size={16} className="drop-shadow sm:w-5 sm:h-5" />
+                  </button>
                 </div>
               </div>
 
@@ -885,6 +915,20 @@ export default function ProfileContent({
                           </button>
                         );
                       })}
+                    </div>
+
+                    {/* Custom Avatar Image URL Input */}
+                    <div className="mt-3.5 pt-3.5 border-t border-white/10">
+                      <label className="block text-[11px] font-mono text-slate-400 mb-1.5">
+                        Or paste Custom Image URL
+                      </label>
+                      <input
+                        type="url"
+                        placeholder="https://example.com/avatar.png"
+                        value={editData.avatarUrl ?? ''}
+                        onChange={(e) => setEditData({ ...editData, avatarUrl: e.target.value })}
+                        className="w-full bg-black/40 border border-white/10 rounded-xl px-3.5 py-2 text-white focus:outline-none focus:border-[#E873C3] transition-colors text-xs font-mono"
+                      />
                     </div>
                   </div>
 
