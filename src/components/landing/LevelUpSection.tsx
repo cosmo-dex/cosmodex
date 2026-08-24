@@ -2,22 +2,57 @@
 
 import { useRef } from "react";
 import { motion, useInView } from "framer-motion";
+import Link from "next/link";
+import Image from "next/image";
+import { Swords, BookOpen, Flame, Zap, ArrowRight, Sparkles } from "lucide-react";
 
-const milestones = [
-  { level: 1, label: "Explorer", xp: 0, color: "#40e0ff", rgb: "64,224,255" },
-  { level: 5, label: "Navigator", xp: 2500, color: "#b06aff", rgb: "176,106,255" },
-  { level: 10, label: "Astronaut", xp: 7500, color: "#ff6ef7", rgb: "255,110,247" },
-  { level: 20, label: "Star Coder", xp: 20000, color: "#ff4d8f", rgb: "255,77,143" },
+const MILESTONES = [
+  { level: 1, label: "Explorer", xp: 0, color: "#a8b2d1", rgb: "168,178,209", icon: "/images/ranks/explorer.webp" },
+  { level: 5, label: "Astronaut", xp: 5000, color: "#40e0ff", rgb: "64,224,255", icon: "/images/ranks/astronaut.webp" },
+  { level: 10, label: "Navigator", xp: 7500, color: "#00b4d8", rgb: "0,180,216", icon: "/images/ranks/navigator.webp" },
+  { level: 20, label: "Star Coder", xp: 10000, color: "#4895ef", rgb: "72,149,239", icon: "/images/ranks/star_coder.webp" },
+  { level: 35, label: "Galaxy Master", xp: 15000, color: "#7209b7", rgb: "114,9,183", icon: "/images/ranks/galaxy_master.webp" },
+  { level: 50, label: "Celestial Master", xp: 20000, color: "#b5179e", rgb: "181,23,158", icon: "/images/ranks/celestial_master.webp" },
+];
+
+const PROGRESSION_RULES = [
+  {
+    icon: Swords,
+    title: "Battle Arena Victory",
+    xp: "+850 ✦",
+    color: "#9b30ff",
+    rgb: "155,48,255",
+    rule: "Win 1v1 Code & MCQ Battles to boost XP and ELO rating.",
+  },
+  {
+    icon: BookOpen,
+    title: "Course Lessons Solved",
+    xp: "+150 ✦",
+    color: "#ff6ba8",
+    rgb: "255,107,168",
+    rule: "Complete interactive coding lessons, terminal exercises & quizzes.",
+  },
+  {
+    icon: Flame,
+    title: "7-Day Daily Streak",
+    xp: "+350 ✦",
+    color: "#c084fc",
+    rgb: "192,132,252",
+    rule: "Maintain active daily learning grind across the platform.",
+  },
+  {
+    icon: Zap,
+    title: "Level Up Formula",
+    xp: "500 ✦ / Lvl",
+    color: "#40e0ff",
+    rgb: "64,224,255",
+    rule: "Every 500 ✦ XP unlocks a new level and climbs cosmic league tiers.",
+  },
 ];
 
 export default function LevelUpSection() {
   const ref = useRef<HTMLDivElement>(null);
   const isInView = useInView(ref, { once: true, margin: "-80px" });
-
-  // Simulated current progress
-  const currentXP = 3200;
-  const nextLevelXP = 7500;
-  const progressPct = Math.min((currentXP / nextLevelXP) * 100, 100);
 
   return (
     <section
@@ -31,7 +66,7 @@ export default function LevelUpSection() {
         WebkitBackdropFilter: "blur(4px)",
       }}
     >
-      {/* Radial tint */}
+      {/* Background tint */}
       <div
         aria-hidden="true"
         style={{
@@ -49,13 +84,13 @@ export default function LevelUpSection() {
           initial={{ opacity: 0, y: 32 }}
           animate={isInView ? { opacity: 1, y: 0 } : {}}
           transition={{ duration: 0.85, ease: [0.16, 1, 0.3, 1] }}
-          style={{ textAlign: "center", marginBottom: "80px" }}
+          style={{ textAlign: "center", marginBottom: "48px" }}
         >
           <div className="badge" style={{ marginBottom: "22px" }}>
             <svg width="11" height="11" viewBox="0 0 12 12" fill="none" aria-hidden="true">
               <path d="M6 1l1.5 3h3l-2.5 2 1 3L6 7.5 3 9l1-3L1.5 4h3L6 1z" fill="currentColor" />
             </svg>
-            Progression
+            Progression & Cosmic Leagues
           </div>
           <h2
             style={{
@@ -68,397 +103,345 @@ export default function LevelUpSection() {
               fontFamily: "var(--font-display), sans-serif",
             }}
           >
-            <span style={{ color: "rgba(240,230,255,0.9)" }}>Level Up Your</span>
-            <br />
+            <span style={{ color: "rgba(240,230,255,0.9)" }}>Level Up Your</span>{" "}
             <span style={{ color: "#ffffff" }}>Learning.</span>
           </h2>
           <p
             style={{
               fontSize: "17px",
               color: "rgba(240,230,255,0.48)",
-              maxWidth: "460px",
+              maxWidth: "540px",
               margin: "0 auto",
               lineHeight: 1.65,
               fontFamily: "var(--font-body), 'Fira Code', monospace",
             }}
           >
-            Every lesson, challenge, and streak earns you ✦. Watch your rank
-            climb as you conquer the cosmos.
+            Earn XP from lessons, battle arenas, and daily streaks to conquer cosmic leagues.
           </p>
         </motion.div>
 
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "1fr 1fr",
-            gap: "64px",
-            alignItems: "start",
-            perspective: "1200px",
-          }}
-          className="levelup-grid"
+        {/* ── 1ST BLOCK: Start Onboarding CTA ── */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={isInView ? { opacity: 1, y: 0 } : {}}
+          transition={{ duration: 0.7, delay: 0.1 }}
+          style={{ marginBottom: "48px" }}
         >
-          {/* Left: XP progress card (3D) */}
-          <motion.div
-            initial={{ opacity: 0, x: -40 }}
-            animate={isInView ? { opacity: 1, x: 0 } : {}}
-            whileHover={{
-              rotateX: 4,
-              rotateY: -6,
-              scale: 1.025,
-              z: 20,
+          <div
+            style={{
+              padding: "32px",
+              borderRadius: "24px",
+              background: "linear-gradient(135deg, rgba(155,48,255,0.12) 0%, rgba(18,12,32,0.85) 50%, rgba(8,5,16,0.95) 100%)",
+              border: "1.5px solid rgba(155,48,255,0.35)",
+              boxShadow: "0 16px 48px rgba(155,48,255,0.25), inset 0 1.5px 1px rgba(255,255,255,0.2)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              flexWrap: "wrap",
+              gap: "24px",
+              transform: "translateZ(0)",
             }}
-            transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
           >
-            <div
-              style={{
-                background: "linear-gradient(135deg, rgba(18,12,32,0.88), rgba(8,5,16,0.95))",
-                border: "1.5px solid rgba(255,255,255,0.14)",
-                borderRadius: "24px",
-                padding: "32px",
-                boxShadow: "0 24px 60px rgba(0,0,0,0.7), inset 0 1.5px 1px rgba(255,255,255,0.18)",
-                transformStyle: "preserve-3d",
-                backdropFilter: "blur(16px)",
-                WebkitBackdropFilter: "blur(16px)",
-              }}
-            >
-              {/* Level badge (3D Glowing Orb) */}
+            <div>
               <div
                 style={{
                   display: "flex",
                   alignItems: "center",
-                  gap: "18px",
-                  marginBottom: "28px",
-                  transform: "translateZ(24px)",
+                  gap: "8px",
+                  fontSize: "12px",
+                  fontWeight: 700,
+                  color: "#c084fc",
+                  letterSpacing: "0.08em",
+                  textTransform: "uppercase",
+                  fontFamily: "var(--font-mono), 'Fira Code', monospace",
+                  marginBottom: "8px",
                 }}
               >
+                <Sparkles size={14} /> Start Your Cosmic Journey
+              </div>
+              <h3
+                style={{
+                  fontSize: "22px",
+                  fontWeight: 700,
+                  color: "#ffffff",
+                  fontFamily: "var(--font-body), sans-serif",
+                  margin: "0 0 6px 0",
+                }}
+              >
+                Ready to Level Up and Unlock Cosmic Leagues?
+              </h3>
+              <p
+                style={{
+                  fontSize: "13.5px",
+                  color: "rgba(240,230,255,0.6)",
+                  fontFamily: "var(--font-body), 'Fira Code', monospace",
+                  margin: 0,
+                  maxWidth: "560px",
+                }}
+              >
+                Join thousands of developers earning XP through interactive coding lessons, 1v1 battle matches, and daily streaks.
+              </p>
+            </div>
+
+            <Link
+              href="/login"
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "10px",
+                padding: "14px 28px",
+                borderRadius: "14px",
+                background: "linear-gradient(135deg, #9b30ff 0%, #ff2d78 100%)",
+                color: "#ffffff",
+                fontSize: "14.5px",
+                fontWeight: 700,
+                fontFamily: "var(--font-body), sans-serif",
+                boxShadow: "0 8px 24px rgba(155,48,255,0.45)",
+                transition: "transform 0.25s ease, box-shadow 0.25s ease",
+                textDecoration: "none",
+                flexShrink: 0,
+              }}
+            >
+              Start Onboarding <ArrowRight size={18} />
+            </Link>
+          </div>
+        </motion.div>
+
+        {/* ── 2ND BLOCK: 6 Horizontal Sleek Rank Items Track ── */}
+        <motion.div
+          initial={{ opacity: 0, y: 32 }}
+          animate={isInView ? { opacity: 1, y: 0 } : {}}
+          transition={{ duration: 0.85, delay: 0.2 }}
+          style={{ marginBottom: "56px" }}
+        >
+          <div
+            style={{
+              fontSize: "12px",
+              fontWeight: 700,
+              letterSpacing: "0.09em",
+              textTransform: "uppercase",
+              color: "rgba(240,230,255,0.35)",
+              marginBottom: "20px",
+              fontFamily: "var(--font-body), 'Fira Code', monospace",
+            }}
+          >
+            ✦ Cosmic League Ranks
+          </div>
+
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(6, 1fr)",
+              gap: "16px",
+            }}
+            className="leagues-grid"
+          >
+            {MILESTONES.map((m, i) => (
+              <motion.div
+                key={m.level}
+                initial={{ opacity: 0, y: 20 }}
+                animate={isInView ? { opacity: 1, y: 0 } : {}}
+                whileHover={{
+                  y: -6,
+                  scale: 1.04,
+                }}
+                transition={{ duration: 0.3, delay: 0.2 + i * 0.05, ease: [0.16, 1, 0.3, 1] }}
+                style={{
+                  padding: "20px 14px",
+                  borderRadius: "20px",
+                  background: "linear-gradient(135deg, rgba(18,12,32,0.88), rgba(8,5,16,0.95))",
+                  border: `1.5px solid rgba(${m.rgb}, 0.4)`,
+                  boxShadow: `0 8px 24px rgba(0,0,0,0.4), 0 0 20px rgba(${m.rgb}, 0.15)`,
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  textAlign: "center",
+                  cursor: "pointer",
+                  willChange: "transform",
+                  transform: "translateZ(0)",
+                }}
+              >
+                {/* Rank Badge Custom Image Icon */}
                 <div
                   style={{
                     position: "relative",
-                    width: "68px",
-                    height: "68px",
-                    borderRadius: "20px",
-                    background: "radial-gradient(circle at 35% 30%, rgba(255,45,120,0.5) 0%, rgba(155,48,255,0.3) 60%, rgba(10,5,20,0.95) 100%)",
-                    border: "1.5px solid rgba(255,45,120,0.6)",
+                    width: "64px",
+                    height: "64px",
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
-                    boxShadow: "0 10px 30px rgba(255,45,120,0.45), inset 0 2px 4px rgba(255,255,255,0.4)",
-                    transform: "translateZ(20px)",
-                    overflow: "hidden",
+                    marginBottom: "12px",
+                    filter: `drop-shadow(0 0 14px rgba(${m.rgb}, 0.6))`,
+                    flexShrink: 0,
                   }}
                 >
-                  <div
-                    style={{
-                      position: "absolute",
-                      top: "2px",
-                      left: "8px",
-                      right: "8px",
-                      height: "18px",
-                      borderRadius: "100px",
-                      background: "linear-gradient(180deg, rgba(255,255,255,0.4) 0%, rgba(255,255,255,0) 100%)",
-                      pointerEvents: "none",
-                    }}
+                  <Image
+                    src={m.icon}
+                    alt={m.label}
+                    width={64}
+                    height={64}
+                    style={{ objectFit: "contain", width: "100%", height: "100%" }}
                   />
-                  <span
-                    style={{
-                      fontSize: "26px",
-                      fontWeight: 900,
-                      fontFamily: "var(--font-display), sans-serif",
-                      color: "#ffffff",
-                      textShadow: "0 0 16px rgba(255,45,120,0.9), 0 2px 4px rgba(0,0,0,0.9)",
-                    }}
-                  >
-                    7
-                  </span>
                 </div>
-                <div>
-                  <div
-                    style={{
-                      fontSize: "18px",
-                      fontWeight: 700,
-                      color: "rgba(240,230,255,0.95)",
-                      fontFamily: "var(--font-display), sans-serif",
-                      letterSpacing: "-0.02em",
-                      marginBottom: "4px",
-                    }}
-                  >
-                    Navigator
-                  </div>
-                  <div
-                    style={{
-                      fontSize: "12.5px",
-                      color: "rgba(240,230,255,0.35)",
-                      fontFamily: "var(--font-mono), 'Fira Code', monospace",
-                    }}
-                  >
-                    {currentXP.toLocaleString()} / {nextLevelXP.toLocaleString()} ✦
-                  </div>
-                </div>
-              </div>
 
-              {/* XP bar */}
-              <div style={{ marginBottom: "28px", transform: "translateZ(18px)" }}>
+                {/* Rank Name */}
                 <div
                   style={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    marginBottom: "8px",
+                    fontSize: "14.5px",
+                    fontWeight: 700,
+                    color: "#ffffff",
+                    fontFamily: "var(--font-body), sans-serif",
+                    letterSpacing: "-0.01em",
+                    marginBottom: "6px",
                   }}
                 >
-                  <span
-                    style={{
-                      fontSize: "11px",
-                      color: "rgba(240,230,255,0.35)",
-                      fontFamily: "var(--font-body), 'Fira Code', monospace",
-                      fontWeight: 600,
-                      letterSpacing: "0.06em",
-                      textTransform: "uppercase",
-                    }}
-                  >
-                    ✦ Progress
-                  </span>
-                  <span
-                    style={{
-                      fontSize: "11px",
-                      color: "#c084fc",
-                      fontFamily: "var(--font-mono), 'Fira Code', monospace",
-                      fontWeight: 600,
-                    }}
-                  >
-                    {Math.round(progressPct)}%
-                  </span>
+                  {m.label}
                 </div>
+
+                {/* Required XP Tag */}
                 <div
                   style={{
-                    height: "8px",
-                    borderRadius: "4px",
-                    background: "rgba(255,255,255,0.06)",
-                    overflow: "hidden",
+                    padding: "3px 10px",
+                    borderRadius: "100px",
+                    fontSize: "10.5px",
+                    fontWeight: 700,
+                    background: `rgba(${m.rgb}, 0.14)`,
+                    border: `1px solid rgba(${m.rgb}, 0.35)`,
+                    color: m.color,
+                    fontFamily: "var(--font-mono), 'Fira Code', monospace",
+                  }}
+                >
+                  {m.xp === 0 ? "0 ✦ XP" : `${m.xp.toLocaleString()} ✦ XP`}
+                </div>
+              </motion.div>
+            ))}
+          </div>
+        </motion.div>
+
+        {/* ── 3RD BLOCK: Earning Rules Bar (Horizontal Grid) ── */}
+        <motion.div
+          initial={{ opacity: 0, y: 24 }}
+          animate={isInView ? { opacity: 1, y: 0 } : {}}
+          transition={{ duration: 0.75, delay: 0.3 }}
+        >
+          <div
+            style={{
+              fontSize: "12px",
+              fontWeight: 700,
+              letterSpacing: "0.09em",
+              textTransform: "uppercase",
+              color: "rgba(240,230,255,0.35)",
+              marginBottom: "18px",
+              fontFamily: "var(--font-body), 'Fira Code', monospace",
+            }}
+          >
+            ✦ Progression Rules & Guidelines
+          </div>
+
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(4, 1fr)",
+              gap: "16px",
+            }}
+            className="rules-grid"
+          >
+            {PROGRESSION_RULES.map((rule) => {
+              const Icon = rule.icon;
+              return (
+                <div
+                  key={rule.title}
+                  style={{
+                    padding: "20px",
+                    borderRadius: "20px",
+                    background: "linear-gradient(135deg, rgba(18,12,32,0.85), rgba(8,5,16,0.95))",
                     border: "1px solid rgba(255,255,255,0.08)",
+                    boxShadow: "0 8px 24px rgba(0,0,0,0.4)",
+                    display: "flex",
+                    flexDirection: "column",
+                    justifyContent: "space-between",
+                    willChange: "transform",
+                    transform: "translateZ(0)",
                   }}
                 >
-                  <motion.div
-                    initial={{ width: 0 }}
-                    animate={isInView ? { width: `${progressPct}%` } : { width: 0 }}
-                    transition={{ duration: 1.2, delay: 0.4, ease: [0.16, 1, 0.3, 1] }}
-                    style={{
-                      height: "100%",
-                      background: "linear-gradient(90deg, #ff2d78, #c084fc, #9b30ff)",
-                      borderRadius: "4px",
-                      boxShadow: "0 0 16px rgba(255,45,120,0.6)",
-                    }}
-                  />
-                </div>
-              </div>
-
-              {/* XP sources */}
-              <div style={{ display: "flex", flexDirection: "column", gap: "10px", transform: "translateZ(14px)" }}>
-                {[
-                  { label: "Lessons completed", xp: "+150 ✦", color: "#ff6ba8" },
-                  { label: "Daily streak (7 days)", xp: "+350 ✦", color: "#c084fc" },
-                  { label: "Battle challenge won", xp: "+850 ✦", color: "#9b30ff" },
-                ].map((item) => (
-                  <div
-                    key={item.label}
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "space-between",
-                      padding: "10px 14px",
-                      borderRadius: "12px",
-                      background: "rgba(255,255,255,0.03)",
-                      border: "1px solid rgba(255,255,255,0.06)",
-                      boxShadow: "inset 0 1px 0 rgba(255,255,255,0.05)",
-                    }}
-                  >
-                    <span
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "12px" }}>
+                    <div
                       style={{
-                        fontSize: "13px",
-                        color: "rgba(240,230,255,0.58)",
-                        fontFamily: "var(--font-body), 'Fira Code', monospace",
+                        width: "38px",
+                        height: "38px",
+                        borderRadius: "12px",
+                        background: `rgba(${rule.rgb}, 0.15)`,
+                        border: `1px solid rgba(${rule.rgb}, 0.35)`,
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        color: rule.color,
                       }}
                     >
-                      {item.label}
-                    </span>
+                      <Icon size={18} fill="currentColor" />
+                    </div>
                     <span
                       style={{
                         fontSize: "12px",
-                        color: item.color,
-                        fontFamily: "var(--font-mono), 'Fira Code', monospace",
                         fontWeight: 700,
+                        color: rule.color,
+                        fontFamily: "var(--font-mono), 'Fira Code', monospace",
+                        padding: "3px 10px",
+                        borderRadius: "100px",
+                        background: `rgba(${rule.rgb}, 0.1)`,
+                        border: `1px solid rgba(${rule.rgb}, 0.25)`,
                       }}
                     >
-                      {item.xp}
+                      {rule.xp}
                     </span>
                   </div>
-                ))}
-              </div>
-            </div>
-          </motion.div>
-
-          {/* Right: milestone ladder (3D cards with 3D Orb Badges) */}
-          <motion.div
-            initial={{ opacity: 0, x: 40 }}
-            animate={isInView ? { opacity: 1, x: 0 } : {}}
-            transition={{ duration: 0.9, delay: 0.15, ease: [0.16, 1, 0.3, 1] }}
-            style={{ display: "flex", flexDirection: "column", gap: "16px" }}
-          >
-            <div
-              style={{
-                fontSize: "11px",
-                fontWeight: 700,
-                letterSpacing: "0.09em",
-                textTransform: "uppercase",
-                color: "rgba(240,230,255,0.28)",
-                marginBottom: "8px",
-                fontFamily: "var(--font-body), 'Fira Code', monospace",
-              }}
-            >
-              Rank Milestones
-            </div>
-            {milestones.map((m, i) => {
-              const reached = currentXP >= m.xp;
-              return (
-                <motion.div
-                  key={m.level}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={isInView ? { opacity: 1, y: 0 } : {}}
-                  whileHover={{
-                    rotateX: -5,
-                    rotateY: 8,
-                    scale: 1.03,
-                    z: 25,
-                  }}
-                  transition={{ duration: 0.35, delay: 0.2 + i * 0.08, ease: [0.16, 1, 0.3, 1] }}
-                  style={{
-                    padding: "20px 24px",
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "18px",
-                    opacity: reached ? 1 : 0.6,
-                    borderRadius: "20px",
-                    background: reached
-                      ? `linear-gradient(135deg, rgba(${m.rgb}, 0.18) 0%, rgba(18,12,32,0.85) 50%, rgba(8,5,16,0.95) 100%)`
-                      : "linear-gradient(135deg, rgba(255,255,255,0.04) 0%, rgba(10,7,20,0.7) 100%)",
-                    border: reached
-                      ? `1.5px solid rgba(${m.rgb}, 0.5)`
-                      : "1px solid rgba(255,255,255,0.08)",
-                    boxShadow: reached
-                      ? `0 16px 40px rgba(${m.rgb}, 0.25), inset 0 1.5px 1px rgba(255,255,255,0.25), 0 4px 20px rgba(0,0,0,0.5)`
-                      : "0 8px 24px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.06)",
-                    transformStyle: "preserve-3d",
-                    cursor: "pointer",
-                    position: "relative",
-                  }}
-                >
-                  {/* 3D Orb / Shield Badge */}
-                  <div
-                    style={{
-                      position: "relative",
-                      width: "52px",
-                      height: "52px",
-                      borderRadius: "16px",
-                      background: reached
-                        ? `radial-gradient(circle at 35% 30%, rgba(${m.rgb}, 0.5) 0%, rgba(${m.rgb}, 0.2) 60%, rgba(10,5,20,0.9) 100%)`
-                        : "radial-gradient(circle at 35% 30%, rgba(255,255,255,0.08) 0%, rgba(15,10,25,0.7) 100%)",
-                      border: `1.5px solid ${reached ? m.color : "rgba(255,255,255,0.12)"}`,
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      flexShrink: 0,
-                      boxShadow: reached
-                        ? `0 8px 24px rgba(${m.rgb}, 0.45), inset 0 2px 4px rgba(255,255,255,0.4), inset 0 -2px 6px rgba(0,0,0,0.8)`
-                        : "0 4px 12px rgba(0,0,0,0.4), inset 0 1px 2px rgba(255,255,255,0.08)",
-                      transform: "translateZ(24px)",
-                      overflow: "hidden",
-                    }}
-                  >
-                    {/* 3D Specular Highlight Gloss */}
+                  <div>
                     <div
                       style={{
-                        position: "absolute",
-                        top: "2px",
-                        left: "6px",
-                        right: "6px",
-                        height: "14px",
-                        borderRadius: "100px",
-                        background: "linear-gradient(180deg, rgba(255,255,255,0.35) 0%, rgba(255,255,255,0) 100%)",
-                        pointerEvents: "none",
-                      }}
-                    />
-                    <span
-                      style={{
-                        fontSize: m.level >= 10 ? "14px" : "17px",
-                        fontWeight: 900,
-                        color: reached ? "#ffffff" : "rgba(240,230,255,0.3)",
-                        fontFamily: "var(--font-display), sans-serif",
-                        textShadow: reached
-                          ? `0 0 12px ${m.color}, 0 2px 4px rgba(0,0,0,0.9)`
-                          : "none",
-                        transform: "translateZ(8px)",
-                      }}
-                    >
-                      {m.level}
-                    </span>
-                  </div>
-
-                  <div style={{ flex: 1, transform: "translateZ(16px)" }}>
-                    <div
-                      style={{
-                        fontSize: "16px",
+                        fontSize: "15px",
                         fontWeight: 700,
-                        color: reached ? "rgba(240,230,255,0.95)" : "rgba(240,230,255,0.4)",
-                        fontFamily: "var(--font-display), sans-serif",
-                        letterSpacing: "-0.01em",
-                        marginBottom: "3px",
+                        color: "#ffffff",
+                        fontFamily: "var(--font-body), sans-serif",
+                        marginBottom: "4px",
                       }}
                     >
-                      {m.label}
+                      {rule.title}
                     </div>
-                    <div
+                    <p
                       style={{
-                        fontSize: "11.5px",
-                        color: "rgba(240,230,255,0.32)",
-                        fontFamily: "var(--font-mono), 'Fira Code', monospace",
-                      }}
-                    >
-                      {m.xp === 0 ? "Starting rank" : `${m.xp.toLocaleString()} ✦ required`}
-                    </div>
-                  </div>
-
-                  {reached && (
-                    <div
-                      style={{
-                        padding: "4px 12px",
-                        borderRadius: "100px",
-                        fontSize: "10px",
-                        fontWeight: 700,
-                        background: `rgba(${m.rgb}, 0.15)`,
-                        border: `1.5px solid rgba(${m.rgb}, 0.5)`,
-                        color: m.color,
+                        fontSize: "12px",
+                        color: "rgba(240,230,255,0.42)",
                         fontFamily: "var(--font-body), 'Fira Code', monospace",
-                        letterSpacing: "0.04em",
-                        textTransform: "uppercase",
-                        flexShrink: 0,
-                        boxShadow: `0 0 16px rgba(${m.rgb}, 0.35), inset 0 1px 0 rgba(255,255,255,0.3)`,
-                        transform: "translateZ(22px)",
+                        lineHeight: 1.45,
+                        margin: 0,
                       }}
                     >
-                      Reached
-                    </div>
-                  )}
-                </motion.div>
+                      {rule.rule}
+                    </p>
+                  </div>
+                </div>
               );
             })}
-          </motion.div>
-        </div>
+          </div>
+        </motion.div>
       </div>
 
+      {/* ── Responsive Grid Styles ── */}
       <style>{`
-        @media (max-width: 768px) {
-          .levelup-grid {
-            grid-template-columns: 1fr !important;
-            gap: 40px !important;
+        @media (max-width: 1200px) {
+          .leagues-grid {
+            grid-template-columns: repeat(3, 1fr) !important;
+          }
+          .rules-grid {
+            grid-template-columns: repeat(2, 1fr) !important;
+          }
+        }
+        @media (max-width: 640px) {
+          .leagues-grid {
+            grid-template-columns: repeat(2, 1fr) !important;
+          }
+          .rules-grid {
+            grid-template-columns: repeat(1, 1fr) !important;
           }
         }
       `}</style>

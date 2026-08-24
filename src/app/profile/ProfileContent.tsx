@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   Calendar,
   Edit,
+  Camera,
   Shield,
   Award,
   Flame,
@@ -117,22 +118,69 @@ interface ProfileContentProps {
   interests: string[];
   xpTotal: number;
   level: number;
-  experienceLevel: string | null;
+  experienceLevel?: string | null;
   streak: number;
   badgeCount: number;
   badges?: Badge[];
-  starPoints: number;
-  rankThreshold: number;
+  starPoints?: number;
+  rankThreshold?: number;
   bio?: string;
   avatarUrl?: string;
   arenaWins?: number;
   arenaLosses?: number;
 }
 
-function getRankLabel(experienceLevel: string | null | undefined): string {
-  if (experienceLevel === 'Advanced') return 'Commander';
-  if (experienceLevel === 'Intermediate') return 'Explorer';
-  return 'Initiate';
+function getProfileRankInfo(xpTotal: number, level: number) {
+  const currentXP = Math.max(xpTotal, (level - 1) * 500);
+
+  if (currentXP >= 20000 || level >= 20) {
+    const prev = 20000;
+    const target = 50000;
+    const pct = Math.min(100, Math.max(5, ((currentXP - prev) / (target - prev)) * 100));
+    return {
+      rankLabel: 'Star Coder',
+      nextRankLabel: 'Cosmic Legend',
+      currentXP,
+      targetXP: target,
+      pct,
+    };
+  }
+
+  if (currentXP >= 7500 || level >= 10) {
+    const prev = 7500;
+    const target = 20000;
+    const pct = Math.min(100, Math.max(5, ((currentXP - prev) / (target - prev)) * 100));
+    return {
+      rankLabel: 'Astronaut',
+      nextRankLabel: 'Star Coder',
+      currentXP,
+      targetXP: target,
+      pct,
+    };
+  }
+
+  if (currentXP >= 2500 || level >= 5) {
+    const prev = 2500;
+    const target = 7500;
+    const pct = Math.min(100, Math.max(5, ((currentXP - prev) / (target - prev)) * 100));
+    return {
+      rankLabel: 'Navigator',
+      nextRankLabel: 'Astronaut',
+      currentXP,
+      targetXP: target,
+      pct,
+    };
+  }
+
+  const target = 2500;
+  const pct = Math.min(100, Math.max(5, (currentXP / target) * 100));
+  return {
+    rankLabel: 'Explorer',
+    nextRankLabel: 'Navigator',
+    currentXP,
+    targetXP: target,
+    pct,
+  };
 }
 
 function formatJoinDate(iso: string | null): string {
@@ -145,12 +193,11 @@ export default function ProfileContent({
   username: initialUsername,
   createdAt,
   interests: initialInterests,
-  level,
-  experienceLevel,
+  xpTotal = 0,
+  level = 1,
   streak,
   badgeCount,
-  starPoints,
-  rankThreshold,
+  starPoints = 0,
   bio: initialBio = 'Full-Stack Cosmo Coder 🌌 Grinding Python, React & AI algorithms on CosmoDeX.',
   avatarUrl: initialAvatarUrl = '/images/avatars/nebula.webp',
   arenaWins = 12,
@@ -314,7 +361,7 @@ export default function ProfileContent({
     });
   };
 
-  const rankProgress = Math.min((starPoints / rankThreshold) * 100, 100);
+  const rankInfo = getProfileRankInfo(xpTotal || starPoints, level);
   const totalBattles = arenaWins + arenaLosses;
   const winRate = totalBattles > 0 ? Math.round((arenaWins / totalBattles) * 100) : 0;
 
@@ -366,21 +413,50 @@ export default function ProfileContent({
                 </div>
 
                 {/* Profile Custom User Image Avatar */}
-                <div className="absolute -bottom-16 left-6 sm:left-10 z-20">
-                  <div className={`w-32 h-32 sm:w-40 sm:h-40 rounded-full border-4 border-[#E873C3] shadow-[0_0_30px_rgba(232,115,195,0.4)] overflow-hidden ${getAvatarCls(profile.avatarUrl)} relative flex items-center justify-center`}>
+                <div className="absolute -bottom-16 left-6 sm:left-10 z-20 group/avatar">
+                  <div
+                    onClick={() => {
+                      setEditData(profile);
+                      setSaveError(null);
+                      setIsEditing(true);
+                    }}
+                    title="Change profile picture"
+                    className={`w-32 h-32 sm:w-40 sm:h-40 rounded-full border-4 border-[#E873C3] shadow-[0_0_30px_rgba(232,115,195,0.4)] overflow-hidden ${getAvatarCls(profile.avatarUrl)} relative flex items-center justify-center cursor-pointer transition-transform duration-300 hover:scale-[1.02]`}
+                  >
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
                       src={getAvatarUrl(profile.avatarUrl)}
                       alt={profile.name}
                       loading="eager"
                       fetchPriority="high"
-                      className="w-full h-full object-cover"
+                      className="w-full h-full object-cover transition-transform duration-300 group-hover/avatar:scale-105"
                       onError={(e) => {
                         (e.target as HTMLImageElement).src = '/images/avatars/nebula.webp';
                       }}
                     />
+
+                    {/* Dark Hover Overlay with Camera Icon */}
+                    <div className="absolute inset-0 rounded-full bg-black/60 opacity-0 group-hover/avatar:opacity-100 flex flex-col items-center justify-center gap-1 transition-opacity duration-250 text-white backdrop-blur-[2px]">
+                      <Camera size={24} className="text-white drop-shadow-md" />
+                      <span className="text-[10px] font-mono font-bold tracking-wider uppercase text-white/90">Change</span>
+                    </div>
+
                     <div className="absolute inset-0 ring-inset ring-2 ring-white/20 rounded-full pointer-events-none" />
                   </div>
+
+                  {/* Floating Camera Button Badge */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setEditData(profile);
+                      setSaveError(null);
+                      setIsEditing(true);
+                    }}
+                    title="Change profile picture"
+                    className="absolute bottom-1 right-1 sm:bottom-2 sm:right-2 p-2.5 sm:p-3 rounded-full bg-gradient-to-tr from-[#9b30ff] to-[#E873C3] text-white shadow-[0_4px_16px_rgba(232,115,195,0.5)] border-2 border-[#120C20] hover:scale-110 active:scale-95 transition-all cursor-pointer z-30"
+                  >
+                    <Camera size={16} className="drop-shadow sm:w-5 sm:h-5" />
+                  </button>
                 </div>
               </div>
 
@@ -412,7 +488,7 @@ export default function ProfileContent({
                       ✦
                     </div>
                     <div>
-                      <p className="font-bold text-white text-lg leading-none">{starPoints}</p>
+                      <p className="font-bold text-white text-lg leading-none">{rankInfo.currentXP.toLocaleString()}</p>
                       <p className="text-[10px] font-mono uppercase tracking-wider text-white/50 mt-1">
                         Star Points
                       </p>
@@ -425,7 +501,7 @@ export default function ProfileContent({
                     </div>
                     <div>
                       <p className="font-bold text-white text-sm leading-none mt-0.5">
-                        {getRankLabel(experienceLevel)}
+                        {rankInfo.rankLabel}
                       </p>
                       <p className="text-[10px] font-mono uppercase tracking-wider text-white/50 mt-1">
                         Rank
@@ -466,16 +542,16 @@ export default function ProfileContent({
                         Current Progress
                       </p>
                       <p className="text-sm font-medium text-white/80">
-                        <span className="text-white font-bold">{starPoints}</span> / {rankThreshold} ✦
+                        <span className="text-white font-bold">{rankInfo.currentXP.toLocaleString()}</span> / {rankInfo.targetXP.toLocaleString()} ✦
                       </p>
                     </div>
-                    <p className="text-xs font-mono text-slate-400">to Silver Rank</p>
+                    <p className="text-xs font-mono text-slate-400">to {rankInfo.nextRankLabel} Rank</p>
                   </div>
                   <div className="h-2 w-full bg-black/40 rounded-full overflow-hidden border border-white/5 relative">
                     <motion.div
                       className="absolute top-0 left-0 h-full bg-gradient-to-r from-[#FFD700] via-[#F59E0B] to-[#E873C3] rounded-full shadow-[0_0_10px_rgba(255,215,0,0.5)]"
                       initial={{ width: 0 }}
-                      animate={{ width: `${rankProgress}%` }}
+                      animate={{ width: `${rankInfo.pct}%` }}
                       transition={{ ease: 'easeOut', duration: 1.5, delay: 0.2 }}
                     />
                   </div>
@@ -940,6 +1016,20 @@ export default function ProfileContent({
                           </button>
                         );
                       })}
+                    </div>
+
+                    {/* Custom Avatar Image URL Input */}
+                    <div className="mt-3.5 pt-3.5 border-t border-white/10">
+                      <label className="block text-[11px] font-mono text-slate-400 mb-1.5">
+                        Or paste Custom Image URL
+                      </label>
+                      <input
+                        type="url"
+                        placeholder="https://example.com/avatar.png"
+                        value={editData.avatarUrl ?? ''}
+                        onChange={(e) => setEditData({ ...editData, avatarUrl: e.target.value })}
+                        className="w-full bg-black/40 border border-white/10 rounded-xl px-3.5 py-2 text-white focus:outline-none focus:border-[#E873C3] transition-colors text-xs font-mono"
+                      />
                     </div>
                   </div>
 
