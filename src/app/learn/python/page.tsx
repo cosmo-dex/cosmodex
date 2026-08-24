@@ -110,6 +110,20 @@ export default function PythonCoursePage() {
     setIsMissionOpen(true);
   };
 
+  const handleCloseMission = () => {
+    setIsMissionOpen(false);
+    if (activeMissionChapter) {
+      setTimeout(() => {
+        const el =
+          document.getElementById(activeMissionChapter.id) ||
+          document.getElementById(`station-${activeMissionChapter.id}`);
+        if (el) {
+          el.scrollIntoView({ behavior: "smooth", block: "center" });
+        }
+      }, 150);
+    }
+  };
+
   const handleCompleteExercise = (chapterId: string, exerciseId: string) => {
     setChapters((prevChapters) => {
       let newlyUnlockedNextStation = false;
@@ -297,7 +311,7 @@ export default function PythonCoursePage() {
         isOpen={isMissionOpen}
         chapter={activeMissionChapter}
         exercise={activeMissionExercise}
-        onClose={() => setIsMissionOpen(false)}
+        onClose={handleCloseMission}
         onCompleteExercise={handleCompleteExercise}
         onNextMission={handleNextMission}
       />

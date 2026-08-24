@@ -9,6 +9,14 @@ export interface Exercise {
   isBonus?: boolean;
   instruction?: string;
   initialCode?: string;
+  hints?: string[];
+  difficulty?: "Basic" | "Easy" | "Medium" | "Hard";
+  accuracy?: string;
+  submissionsCount?: string;
+  constraints?: string[];
+  expectedComplexity?: { time: string; space: string };
+  companyTags?: string[];
+  exampleBoxes?: { input: string; output: string; explanation?: string }[];
 }
 
 export type PlanetType =

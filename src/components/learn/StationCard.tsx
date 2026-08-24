@@ -1,7 +1,8 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { motion, Variants } from "framer-motion";
-import { Play, Star, AlertCircle, Rocket, CheckCircle2, BookOpen } from "lucide-react";
+import { Play, Star, AlertCircle, Rocket, CheckCircle2, BookOpen, Target } from "lucide-react";
 import Link from "next/link";
 import { Chapter, Exercise } from "./pythonData";
 
@@ -13,6 +14,14 @@ interface StationCardProps {
 export default function StationCard({ chapter, onLaunchMission }: StationCardProps) {
   const firstUnlockedExercise =
     chapter.exercises.find((ex) => ex.isUnlocked) || chapter.exercises[0];
+
+  const [selectedExercise, setSelectedExercise] = useState<Exercise>(firstUnlockedExercise);
+
+  useEffect(() => {
+    const defaultEx =
+      chapter.exercises.find((ex) => ex.isUnlocked) || chapter.exercises[0];
+    setSelectedExercise(defaultEx);
+  }, [chapter]);
 
   const rowVariants: Variants = {
     hidden: { opacity: 0, x: -10 },
@@ -46,7 +55,7 @@ export default function StationCard({ chapter, onLaunchMission }: StationCardPro
       </p>
 
       {/* XP Earn Indicator */}
-      <div className="flex items-center gap-1.5 text-xs font-mono font-bold text-amber-400 mb-6 bg-amber-400/10 px-3 py-1.5 rounded-lg border border-amber-400/20 w-fit">
+      <div className="flex items-center gap-1.5 text-xs font-mono font-bold text-amber-400 mb-5 bg-amber-400/10 px-3 py-1.5 rounded-lg border border-amber-400/20 w-fit">
         <Star size={14} className="fill-amber-400 text-amber-400" />
         <span>{chapter.xpValue} XP</span>
       </div>
@@ -59,59 +68,101 @@ export default function StationCard({ chapter, onLaunchMission }: StationCardPro
         </div>
       )}
 
-      {/* Exercises List */}
-      <div className="flex flex-col gap-2.5 mb-6">
-        {chapter.exercises.map((exercise, i) => (
-          <motion.div
-            key={exercise.id}
-            custom={i}
-            initial="hidden"
-            animate="visible"
-            variants={rowVariants}
-            onClick={() => onLaunchMission && onLaunchMission(chapter, exercise)}
-            className={`flex items-center justify-between p-3 rounded-xl border text-xs font-mono transition-all cursor-pointer ${
-              exercise.isCompleted
-                ? "bg-emerald-950/30 border-emerald-500/50 text-emerald-200 shadow-[0_0_12px_rgba(16,185,129,0.15)] hover:border-emerald-400 hover:bg-emerald-950/50"
-                : exercise.isUnlocked
-                ? "bg-[#120d28] border-cyan-500/40 text-white hover:border-cyan-400 hover:bg-[#181135]"
-                : "bg-[#120d28]/70 border-purple-500/25 text-white/80 hover:border-purple-400 hover:bg-[#181135]"
-            }`}
-          >
-            <div className="flex items-center gap-3 min-w-0">
-              <span
-                className={`text-[10px] uppercase font-bold shrink-0 w-20 ${
-                  exercise.isCompleted
-                    ? "text-emerald-400"
-                    : exercise.isUnlocked
-                    ? "text-cyan-400/80"
-                    : "text-purple-400/80"
-                }`}
-              >
-                {exercise.numberLabel}
-              </span>
-              <span className={`truncate font-medium ${exercise.isCompleted ? "text-emerald-300 line-through opacity-85" : ""}`}>
-                {exercise.title}
-              </span>
-            </div>
+      {/* Exercises Selector List */}
+      <div className="flex flex-col gap-2.5 mb-5">
+        <div className="text-[11px] font-mono uppercase tracking-wider text-white/50 mb-0.5 flex items-center justify-between">
+          <span>Select Exercise to Preview</span>
+          <span className="text-cyan-400 font-bold">{selectedExercise?.numberLabel} Selected</span>
+        </div>
 
-            <div className="shrink-0 ml-2 flex items-center gap-2">
-              {exercise.isCompleted ? (
-                <>
-                  <span className="text-[10px] font-bold text-emerald-400 bg-emerald-950/80 px-2 py-0.5 rounded border border-emerald-500/40 uppercase tracking-widest hidden sm:inline">
-                    Done
+        {chapter.exercises.map((exercise, i) => {
+          const isSelected = selectedExercise?.id === exercise.id;
+
+          return (
+            <motion.div
+              key={exercise.id}
+              custom={i}
+              initial="hidden"
+              animate="visible"
+              variants={rowVariants}
+              onClick={() => setSelectedExercise(exercise)}
+              className={`flex items-center justify-between p-3 rounded-xl border text-xs font-mono transition-all cursor-pointer ${
+                isSelected
+                  ? "bg-[#1b123d] border-cyan-400 shadow-[0_0_18px_rgba(0,200,255,0.3)] ring-1 ring-cyan-400/70"
+                  : exercise.isCompleted
+                  ? "bg-emerald-950/20 border-emerald-500/40 text-emerald-200 hover:border-emerald-400"
+                  : exercise.isUnlocked
+                  ? "bg-[#120d28] border-purple-500/30 text-white hover:border-cyan-500/50 hover:bg-[#181135]"
+                  : "bg-[#120d28]/70 border-white/10 text-white/70 hover:border-purple-400"
+              }`}
+            >
+              <div className="flex items-center gap-3 min-w-0">
+                <span
+                  className={`text-[10px] uppercase font-bold shrink-0 w-20 ${
+                    isSelected
+                      ? "text-cyan-300 font-extrabold"
+                      : exercise.isCompleted
+                      ? "text-emerald-400"
+                      : exercise.isUnlocked
+                      ? "text-cyan-400/80"
+                      : "text-purple-400/80"
+                  }`}
+                >
+                  {exercise.numberLabel}
+                </span>
+                <span
+                  className={`truncate font-medium ${
+                    isSelected ? "text-white font-bold" : exercise.isCompleted ? "text-emerald-300 line-through opacity-85" : ""
+                  }`}
+                >
+                  {exercise.title}
+                </span>
+              </div>
+
+              <div className="shrink-0 ml-2 flex items-center gap-2">
+                {exercise.isCompleted ? (
+                  <>
+                    <span className="text-[10px] font-bold text-emerald-400 bg-emerald-950/80 px-2 py-0.5 rounded border border-emerald-500/40 uppercase tracking-widest hidden sm:inline">
+                      Done
+                    </span>
+                    <CheckCircle2 size={16} className="text-emerald-400 fill-emerald-400/20" />
+                  </>
+                ) : isSelected ? (
+                  <span className="text-[10px] font-bold text-cyan-300 bg-cyan-950/80 px-2 py-0.5 rounded border border-cyan-500/40 uppercase tracking-widest">
+                    Selected
                   </span>
-                  <CheckCircle2 size={16} className="text-emerald-400 fill-emerald-400/20" />
-                </>
-              ) : exercise.isUnlocked ? (
-                <Play size={14} className="text-cyan-400 fill-cyan-400" />
-              ) : (
-                <Play size={14} className="text-purple-400 fill-purple-400" />
-              )}
-            </div>
-          </motion.div>
-        ))}
+                ) : exercise.isUnlocked ? (
+                  <Play size={14} className="text-cyan-400 fill-cyan-400 opacity-60" />
+                ) : (
+                  <Play size={14} className="text-purple-400 fill-purple-400 opacity-40" />
+                )}
+              </div>
+            </motion.div>
+          );
+        })}
       </div>
 
+      {/* Selected Exercise Target Card */}
+      {selectedExercise && (
+        <div className="p-3.5 mb-5 rounded-xl bg-[#120a2e] border border-cyan-500/30 flex flex-col gap-1.5 shadow-inner">
+          <div className="flex items-center justify-between text-[11px] font-mono font-bold text-cyan-300">
+            <span className="flex items-center gap-1.5">
+              <Target size={13} className="text-cyan-400" />
+              {selectedExercise.numberLabel}: {selectedExercise.title}
+            </span>
+            {selectedExercise.isCompleted && (
+              <span className="text-emerald-400 text-[10px] bg-emerald-950/60 px-2 py-0.5 rounded border border-emerald-500/30">
+                Completed
+              </span>
+            )}
+          </div>
+          <p className="text-xs font-mono text-white/80 leading-relaxed">
+            {selectedExercise.instruction || chapter.description}
+          </p>
+        </div>
+      )}
+
+      {/* Action Buttons */}
       <div className="flex flex-col sm:flex-row gap-2.5">
         {(chapter.documentation || chapter.theoryLessonId) && (
           <Link
@@ -125,11 +176,15 @@ export default function StationCard({ chapter, onLaunchMission }: StationCardPro
 
         <button
           type="button"
-          onClick={() => onLaunchMission && onLaunchMission(chapter, firstUnlockedExercise)}
+          onClick={() => onLaunchMission && onLaunchMission(chapter, selectedExercise)}
           className="flex-1 py-3 px-4 rounded-xl font-bold font-mono text-xs tracking-wider uppercase transition-all duration-300 flex items-center justify-center gap-2 cursor-pointer transform active:scale-98 bg-gradient-to-r from-[#FF007A] via-[#E000FF] to-[#9E00F6] text-white hover:opacity-95 shadow-md shadow-pink-500/20 hover:shadow-pink-500/40"
         >
           <Rocket size={15} />
-          <span>{chapter.isUnlocked ? "Launch Mission" : "Preview Station"}</span>
+          <span>
+            {chapter.isUnlocked
+              ? `Launch Mission (${selectedExercise?.numberLabel || "IDE"})`
+              : "Preview Station"}
+          </span>
         </button>
       </div>
     </motion.div>

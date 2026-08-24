@@ -190,7 +190,7 @@ export default function Mascot() {
           pointerEvents: chatOpen ? "none" : "auto",
         }}
         transition={{ duration: 0.2 }}
-        className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-[9999] w-[110px] h-[146px] sm:w-[130px] sm:h-[173px] select-none touch-none cursor-grab active:cursor-grabbing"
+        className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-40 w-[110px] h-[146px] sm:w-[130px] sm:h-[173px] select-none touch-none cursor-grab active:cursor-grabbing"
       >
         {/* Dark Theme Chat Bubble */}
         <div
