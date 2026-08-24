@@ -1,6 +1,5 @@
 import { NextRequest } from 'next/server';
 import { verifySession, SESSION_COOKIE as USER_SESSION_COOKIE } from '@/lib/session';
-import { SESSION_COOKIE as ADMIN_SESSION_COOKIE } from '@/lib/adminAuth';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import prisma from '@/lib/prisma';
@@ -13,6 +12,7 @@ export interface EventUserSession {
 }
 
 export async function getEventUserSession(req: NextRequest): Promise<EventUserSession | null> {
+  // 1. Check custom session cookie
   const userCookie = req.cookies.get(USER_SESSION_COOKIE);
   if (userCookie?.value) {
     const user = await verifySession(userCookie.value);
@@ -44,22 +44,6 @@ export async function getEventUserSession(req: NextRequest): Promise<EventUserSe
       }
     }
   } catch { }
-
-  // 3. Fallback to Admin session cookie
-  const adminCookie = req.cookies.get(ADMIN_SESSION_COOKIE);
-  if (adminCookie?.value) {
-    try {
-      const admin = JSON.parse(adminCookie.value);
-      if (admin?.userId) {
-        return {
-          userId: admin.userId,
-          username: admin.username || 'Admin',
-          email: admin.email,
-          role: admin.role,
-        };
-      }
-    } catch { }
-  }
 
   return null;
 }

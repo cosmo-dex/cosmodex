@@ -1,13 +1,6 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { verifySession, SESSION_COOKIE, type SessionPayload } from '@/lib/session';
 
-const ADMIN_ROLE_ROUTES: Record<string, string[]> = {
-  '/super-admin': ['super_admin'],
-  '/learning-admin': ['super_admin', 'learning_admin'],
-  '/arena-admin': ['super_admin', 'arena_admin'],
-  '/battle-admin': ['super_admin', 'arena_admin'],
-};
-
 const PROTECTED_USER_ROUTES = [
   '/dashboard',
   '/learn',
@@ -22,7 +15,6 @@ const PROTECTED_USER_ROUTES = [
 const PROTECTED_API_PREFIXES = [
   '/api/user',
   '/api/battle',
-  '/api/admin',
 ];
 
 function getSafeRedirectUrl(target: string | null, fallback: string): string {
@@ -43,32 +35,6 @@ export async function proxy(request: NextRequest) {
   if (isProtectedApi) {
     if (!user || !user.userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    if (pathname.startsWith('/api/admin')) {
-      const allowedAdminRoles = ['super_admin', 'learning_admin', 'arena_admin'];
-      if (!user.role || !allowedAdminRoles.includes(user.role)) {
-        return NextResponse.json({ error: 'Forbidden: Admin access required' }, { status: 403 });
-      }
-    }
-
-    return NextResponse.next();
-  }
-
-  const matchingAdminEntry = Object.entries(ADMIN_ROLE_ROUTES).find(([prefix]) =>
-    pathname.startsWith(prefix)
-  );
-
-  if (matchingAdminEntry) {
-    const [, allowedRoles] = matchingAdminEntry;
-
-    if (!user || !user.userId) {
-      return NextResponse.redirect(new URL('/admin', request.url));
-    }
-
-    const userRole = user.role || 'student';
-    if (!allowedRoles.includes(userRole)) {
-      return NextResponse.redirect(new URL('/admin', request.url));
     }
 
     return NextResponse.next();

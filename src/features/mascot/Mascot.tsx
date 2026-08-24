@@ -169,13 +169,7 @@ export default function Mascot() {
     !pathname ||
     pathname === '/onboarding' ||
     pathname.startsWith('/onboarding/') ||
-    pathname.startsWith('/battle') ||
-    pathname === '/admin' ||
-    pathname.startsWith('/admin/') ||
-    pathname.startsWith('/super-admin') ||
-    pathname.startsWith('/learning-admin') ||
-    pathname.startsWith('/arena-admin') ||
-    pathname.includes('admin')
+    pathname.startsWith('/battle')
   ) {
     return null;
   }
