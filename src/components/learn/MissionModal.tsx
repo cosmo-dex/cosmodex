@@ -633,12 +633,12 @@ export default function MissionModal({
           cleanUserOutput.toLowerCase() === expected.toLowerCase() ||
           cleanUserOutput.includes(expected);
 
-        const testCaseSummary = `=== CLIENT-SIDE TEST SIMULATION (0 SERVER COST) ===\n` +
+        const testCaseSummary =
           `[Test Case 1]: ${isMatch ? "PASSED ✓" : "EXECUTED"}\n` +
           `-----------------------------------\n` +
           `Expected Output:\n${expected}\n\n` +
           `Your Output:\n${cleanUserOutput}\n\n` +
-          `[Result]: ${isMatch ? "Correct Output Match! Ready for submission." : "Execution finished with exit code 0"}`;
+          `[Process finished with exit code 0]`;
 
         setOutput(testCaseSummary);
         setIsError(false);
