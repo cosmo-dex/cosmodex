@@ -616,14 +616,33 @@ export default function MissionModal({
 
   const handleRunCode = () => {
     setIsRunning(true);
-    setOutput("Executing script...");
+    setOutput("Executing script against test cases...");
     setIsError(false);
 
     setTimeout(() => {
       setIsRunning(false);
       const res = parsePythonCode(code);
-      setOutput(res.output);
-      setIsError(res.isError);
+      if (res.isError) {
+        setOutput(res.output);
+        setIsError(true);
+      } else {
+        const cleanUserOutput = res.output.split("\n\n[Process finished")[0].trim();
+        const expected = targetOutput.trim();
+        const isMatch =
+          cleanUserOutput === expected ||
+          cleanUserOutput.toLowerCase() === expected.toLowerCase() ||
+          cleanUserOutput.includes(expected);
+
+        const testCaseSummary = `=== CLIENT-SIDE TEST SIMULATION (0 SERVER COST) ===\n` +
+          `[Test Case 1]: ${isMatch ? "PASSED ✓" : "EXECUTED"}\n` +
+          `-----------------------------------\n` +
+          `Expected Output:\n${expected}\n\n` +
+          `Your Output:\n${cleanUserOutput}\n\n` +
+          `[Result]: ${isMatch ? "Correct Output Match! Ready for submission." : "Execution finished with exit code 0"}`;
+
+        setOutput(testCaseSummary);
+        setIsError(false);
+      }
       setHasRunCode(true);
     }, 500);
   };
