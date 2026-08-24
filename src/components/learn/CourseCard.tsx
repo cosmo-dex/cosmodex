@@ -37,7 +37,7 @@ export default function CourseCard({ course }: CourseCardProps) {
       : `/learn/${course.id}/theory/in-the-beginning`;
 
   return (
-    <Link href={targetHref} className="block">
+    <Link href={targetHref} scroll={true} className="block">
       <motion.div
         initial={{ opacity: 0, y: 15 }}
         whileInView={{ opacity: 1, y: 0 }}

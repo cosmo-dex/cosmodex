@@ -26,6 +26,13 @@ export default function PythonCoursePage() {
   const [activeMissionChapter, setActiveMissionChapter] = useState<Chapter | null>(null);
   const [activeMissionExercise, setActiveMissionExercise] = useState<Exercise | null>(null);
 
+  // Always scroll to top of page on initial mount unless a hash anchor is present
+  useEffect(() => {
+    if (typeof window !== "undefined" && !window.location.hash) {
+      window.scrollTo({ top: 0, left: 0, behavior: "instant" });
+    }
+  }, []);
+
   // Load user progress from localStorage on initial render
   useEffect(() => {
     try {
