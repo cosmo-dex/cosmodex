@@ -89,7 +89,7 @@ const SUGGESTED_COURSES: SuggestedCourse[] = [
     description: "Learn programming fundamentals like variables, control flow, and loops.",
     level: "BEGINNER",
     banner: <PythonBanner />,
-    href: "/learn/py-1/theory/in-the-beginning",
+    href: "/learn/python",
   },
   {
     id: "s-html",

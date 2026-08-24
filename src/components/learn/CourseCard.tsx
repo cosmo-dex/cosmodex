@@ -31,8 +31,13 @@ const SignalBarsIcon = () => (
 export default function CourseCard({ course }: CourseCardProps) {
   const [imgError, setImgError] = useState(false);
 
+  const targetHref =
+    course.id === "py-1" || course.title.toLowerCase() === "python"
+      ? "/learn/python"
+      : `/learn/${course.id}/theory/in-the-beginning`;
+
   return (
-    <Link href={`/learn/${course.id}/theory/in-the-beginning`} className="block">
+    <Link href={targetHref} className="block">
       <motion.div
         initial={{ opacity: 0, y: 15 }}
         whileInView={{ opacity: 1, y: 0 }}
