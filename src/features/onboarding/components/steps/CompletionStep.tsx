@@ -3,6 +3,7 @@ import { motion } from 'motion/react';
 import { Rocket } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { OnboardingData } from '../../types/onboarding';
+import { useAuth } from '@/context/AuthContext';
 
 interface CompletionStepProps {
   data: OnboardingData;
@@ -10,6 +11,7 @@ interface CompletionStepProps {
 
 export default function CompletionStep({ data }: CompletionStepProps) {
   const router = useRouter();
+  const { refreshSession } = useAuth();
   const [error, setError] = useState('');
   const hasCalledRegister = useRef(false);
   const isMounted = useRef(true);
@@ -53,6 +55,8 @@ export default function CompletionStep({ data }: CompletionStepProps) {
           await fetch('/api/auth/oauth-pending', { method: 'DELETE' });
         }
 
+        await refreshSession();
+
         setTimeout(() => {
           if (isMounted.current) {
             let destination = '/dashboard';
@@ -73,7 +77,7 @@ export default function CompletionStep({ data }: CompletionStepProps) {
     }
 
     registerUser();
-  }, [data, router]);
+  }, [data, router, refreshSession]);
 
   return (
     <div className="flex flex-col items-center justify-center text-center space-y-8 mt-24">

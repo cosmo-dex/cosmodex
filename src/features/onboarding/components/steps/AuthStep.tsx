@@ -4,6 +4,7 @@ import { OnboardingData } from '../../types/onboarding';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { signIn } from 'next-auth/react';
+import { useAuth } from '@/context/AuthContext';
 
 interface AuthStepProps {
   onNext: () => void;
@@ -12,6 +13,7 @@ interface AuthStepProps {
 
 export default function AuthStep({ onNext, updateData }: AuthStepProps) {
   const router = useRouter();
+  const { refreshSession } = useAuth();
   const [authMode, setAuthMode] = useState<'login' | 'signup'>(() => {
     if (typeof window !== 'undefined') {
       const params = new URLSearchParams(window.location.search);
@@ -57,6 +59,8 @@ export default function AuthStep({ onNext, updateData }: AuthStepProps) {
           setIsSubmitting(false);
           return;
         }
+
+        await refreshSession();
 
         let destination = '/dashboard';
         if (typeof window !== 'undefined') {

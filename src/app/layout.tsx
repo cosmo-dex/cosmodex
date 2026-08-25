@@ -3,6 +3,7 @@ import { displayFont, bodyFont, monoFont } from "@/fonts";
 import "./globals.css";
 import SmoothScroll from "@/components/landing/SmoothScroll";
 import Mascot from "@/features/mascot/Mascot";
+import Providers from "@/components/providers/Providers";
 
 export const metadata: Metadata = {
   title: "CosmoDeX — Start Your Coding Expedition",
@@ -39,11 +40,13 @@ export default function RootLayout({
         style={{ background: "#08040f", color: "#f0e6ff" }}
         suppressHydrationWarning
       >
-        <SmoothScroll />
-        {/* Noise overlay for texture */}
-        <div className="noise-overlay" aria-hidden="true" />
-        {children}
-        <Mascot />
+        <Providers>
+          <SmoothScroll />
+          {/* Noise overlay for texture */}
+          <div className="noise-overlay" aria-hidden="true" />
+          {children}
+          <Mascot />
+        </Providers>
       </body>
     </html>
   );
