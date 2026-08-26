@@ -8,7 +8,7 @@ export default function DevsSection() {
   return (
     <section
       id="our-devs"
-      className="section-padding"
+      className="section-padding !pb-8 sm:!pb-12"
       style={{
         position: "relative",
         zIndex: 3,

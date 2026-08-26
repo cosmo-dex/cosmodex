@@ -7,42 +7,42 @@ const faqs = [
   {
     question: "What is CosmoDex?",
     answer:
-      "CosmoDex is a coding learning platform that helps students and developers learn programming through interactive courses, coding practice, Coding Battles, and skill-based challenges.",
+      "CosmoDex is a gamified coding platform designed for students and developers to learn programming through interactive courses, coding practice, 1v1 Space Battles, and skill-based challenges.",
   },
   {
     question: "How does CosmoDex help students learn coding?",
     answer:
-      "CosmoDex helps students learn coding by combining structured programming courses with hands-on practice and challenges that reinforce technical concepts.",
+      "CosmoDex combines structured programming courses in Python, SQL, and CS fundamentals with hands-on practice, gamified level progression, and real-time multiplayer coding challenges.",
   },
   {
     question: "Is CosmoDex free to use?",
     answer:
-      "CosmoDex provides a free way to explore its core learning experience, while some features or courses may depend on the plan selected.",
+      "CosmoDex offers free access to core learning courses, coding practice, and battle matches, with optional Pro features like AI-powered automated code reviews.",
   },
   {
     question: "How does coding practice work on CosmoDex?",
     answer:
-      "Coding practice on CosmoDex gives learners opportunities to apply programming concepts through exercises and problem-solving challenges.",
+      "Coding practice gives learners hands-on opportunities to solve real programming exercises, terminal challenges, and quizzes with instant automated test validation.",
   },
   {
-    question: "What are Coding Battles on CosmoDex?",
+    question: "What are 1v1 Space Battles on CosmoDex?",
     answer:
-      "Coding Battles are competitive programming challenges where learners solve coding problems in a timed format to practice problem-solving and technical skills.",
+      "1v1 Space Battles are competitive real-time coding matches where two players compete head-to-head in a timed format to solve coding problems and MCQ challenges.",
   },
   {
-    question: "Does CosmoDex use AI for coding feedback?",
+    question: "How does progression and ranking work?",
     answer:
-      "Yes. CosmoDex Pro includes AI-powered code review that provides automated feedback on code and helps learners improve their programming skills.",
+      "Earn XP from solving lessons, winning battle matches, and maintaining daily streaks to level up and climb across 6 Cosmic League Ranks (Explorer to Celestial Master).",
   },
   {
-    question: "What is AI-powered code review on CosmoDex?",
+    question: "Does CosmoDex support AI-powered code reviews?",
     answer:
-      "AI-powered code review is a CosmoDex Pro feature that analyzes a learner’s code and provides automated programming feedback for improvement.",
+      "Yes! CosmoDex includes AI-powered code analysis that evaluates code style, performance, edge cases, and provides actionable recommendations to improve your programming skills.",
   },
   {
-    question: "Can CosmoDex help me improve my programming skills?",
+    question: "How is CosmoDex different from LeetCode or HackerRank?",
     answer:
-      "CosmoDex can help learners improve programming skills through courses, repeated coding practice, and challenges that encourage practical problem-solving.",
+      "Unlike traditional problem sets, CosmoDex is student-focused and combines gamified level progression (XP, streaks, ranks) with real-time 1v1 Space Coding Battles and tangible rewards.",
   },
 ] as const;
 
@@ -64,8 +64,18 @@ export function FAQSection() {
 
   return (
     <section
+      id="faq"
       aria-labelledby="faq-heading"
-      className="relative isolate overflow-hidden bg-[#080612] px-4 py-20 text-[#fffaff] sm:px-6 lg:px-8 lg:py-28"
+      className="relative isolate overflow-hidden section-padding text-[#fffaff] !pt-14 sm:!pt-20 lg:!pt-24"
+      style={{
+        position: "relative",
+        zIndex: 3,
+        background: "rgba(5,5,8,0.75)",
+        backdropFilter: "blur(8px)",
+        WebkitBackdropFilter: "blur(8px)",
+        transform: "translateZ(0)",
+        willChange: "transform",
+      }}
     >
       {/* FAQ structured data for search engines */}
       <script
@@ -78,102 +88,132 @@ export function FAQSection() {
         }}
       />
 
-      {/* Background grid and glow */}
+      {/* Subtle Background Glow */}
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute inset-0 -z-10 opacity-40"
+        className="pointer-events-none absolute inset-0 -z-10 opacity-30"
         style={{
           backgroundImage:
-            "linear-gradient(rgba(255,255,255,0.045) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.045) 1px, transparent 1px), radial-gradient(circle at 50% 0%, rgba(81,31,142,0.28), transparent 52%), radial-gradient(circle at 100% 70%, rgba(168,43,255,0.22), transparent 42%)",
-          backgroundSize: "48px 48px, 48px 48px, auto, auto",
+            "radial-gradient(circle at 50% 30%, rgba(155,48,255,0.08) 0%, transparent 60%)",
         }}
       />
 
-      <div className="mx-auto w-full max-w-3xl">
-        {/* Header */}
-        <header className="mb-10 text-center sm:mb-12">
-          <p className="mb-4 font-mono text-xs font-semibold uppercase tracking-[0.28em] text-[#ff3ca6]">
-            FAQ
-          </p>
-
+      <div className="mx-auto w-full max-w-4xl px-4 sm:px-6 lg:px-8">
+        {/* Header (Guapd Editorial Style - Clean Title) */}
+        <header className="mb-12 text-center sm:mb-14">
           <h2
             id="faq-heading"
-            className="text-balance text-3xl font-semibold tracking-tight text-[#fff8f0] sm:text-4xl lg:text-5xl"
+            className="text-balance text-3xl font-bold tracking-tight sm:text-4xl md:text-5xl lg:text-6xl"
+            style={{
+              fontFamily: "var(--font-display), sans-serif",
+              lineHeight: 1.15,
+            }}
           >
-            Frequently Asked Questions
+            FAQ <span className="italic font-serif font-normal text-[#c084fc]">Answered</span>
           </h2>
 
-          <p className="mx-auto mt-5 max-w-2xl text-pretty text-sm leading-6 text-[#aaa1bb] sm:text-base">
-            Everything you need to know about learning, competing, and growing
-            with CosmoDex.
+          <p
+            className="mx-auto mt-4 max-w-xl text-sm leading-relaxed sm:text-base"
+            style={{
+              color: "rgba(240,230,255,0.5)",
+              fontFamily: "var(--font-body), 'Fira Code', monospace",
+            }}
+          >
+            Everything you need to know about learning, competing, leveling up, and growing with CosmoDex.
           </p>
         </header>
 
-        {/* FAQ accordion */}
-        <div className="flex flex-col gap-3">
+        {/* FAQ Line Item List (Guapd Grid Layout: Number - Question/Answer - Toggle Icon) */}
+        <div className="flex flex-col border-b border-white/10">
           {faqs.map((faq, index) => {
             const isOpen = openIndex === index;
             const answerId = `faq-answer-${index}`;
             const questionId = `faq-question-${index}`;
+            const formattedIndex = String(index + 1).padStart(2, "0");
 
             return (
               <div
                 key={faq.question}
-                className={`overflow-hidden border transition-all duration-300 ${
+                onClick={() => setOpenIndex(isOpen ? null : index)}
+                className={`group border-t border-white/10 py-6 sm:py-7 px-3 sm:px-5 transition-all duration-200 cursor-pointer ${
                   isOpen
-                    ? "border-[#ff2b9d]/70 bg-[#24103d]/80 shadow-[0_0_28px_rgba(255,43,157,0.16)]"
-                    : "border-[#32175b]/80 bg-[#120d24]/90 hover:border-[#a82bff]/65"
+                    ? "bg-white/[0.035]"
+                    : "hover:bg-white/[0.02]"
                 }`}
                 style={{
-                  borderRadius: "0.9rem",
+                  borderRadius: "12px",
                 }}
               >
-                <h3 className="m-0 text-base font-normal">
-                  <button
-                    id={questionId}
-                    type="button"
-                    aria-expanded={isOpen}
-                    aria-controls={answerId}
-                    onClick={() =>
-                      setOpenIndex(isOpen ? null : index)
-                    }
-                    className="flex min-h-16 w-full items-center justify-between gap-5 px-5 py-4 text-left outline-none transition-colors focus-visible:ring-2 focus-visible:ring-[#ff3ca6] focus-visible:ring-inset sm:px-6"
+                <div className="grid grid-cols-[40px_1fr_24px] sm:grid-cols-[56px_1fr_28px] items-baseline gap-3 sm:gap-4">
+                  {/* Column 1: Index Counter (Serif Italic) */}
+                  <span
+                    className={`font-serif italic text-xl sm:text-2xl transition-colors duration-200 ${
+                      isOpen ? "text-[#c084fc]" : "text-white/25 group-hover:text-white/45"
+                    }`}
                   >
-                    <span className="text-sm font-medium leading-6 text-[#fff8f0] sm:text-base">
-                      {faq.question}
-                    </span>
+                    {formattedIndex}
+                  </span>
 
+                  {/* Column 2: Question & Slide-Down Answer */}
+                  <div className="flex flex-col">
+                    <h3 className="m-0 text-base sm:text-lg lg:text-xl font-bold tracking-tight">
+                      <button
+                        id={questionId}
+                        type="button"
+                        aria-expanded={isOpen}
+                        aria-controls={answerId}
+                        className="w-full text-left outline-none transition-colors"
+                        style={{
+                          fontFamily: "var(--font-display), sans-serif",
+                          color: isOpen ? "#ffffff" : "rgba(240,230,255,0.85)",
+                        }}
+                      >
+                        {faq.question}
+                      </button>
+                    </h3>
+
+                    {/* Expandable Answer */}
+                    <div
+                      id={answerId}
+                      role="region"
+                      aria-labelledby={questionId}
+                      className={`grid transition-[grid-template-rows,opacity,margin] duration-300 ease-out ${
+                        isOpen
+                          ? "grid-rows-[1fr] opacity-100 mt-3 sm:mt-4"
+                          : "grid-rows-[0fr] opacity-0 mt-0"
+                      }`}
+                    >
+                      <div className="min-h-0 overflow-hidden">
+                        <p
+                          className="text-xs sm:text-sm leading-relaxed"
+                          style={{
+                            color: "rgba(240,230,255,0.55)",
+                            fontFamily: "var(--font-body), 'Fira Code', monospace",
+                            margin: 0,
+                          }}
+                        >
+                          {faq.answer}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Column 3: Toggle Icon (+ / -) */}
+                  <div className="flex items-center justify-end self-center">
                     <span
                       aria-hidden="true"
-                      className={`flex size-8 shrink-0 items-center justify-center rounded-full border transition-all duration-300 ${
+                      className={`flex size-7 sm:size-8 items-center justify-center rounded-full transition-all duration-300 ${
                         isOpen
-                          ? "border-[#ff3ca6]/70 bg-[#ff3ca6] text-[#080612]"
-                          : "border-[#9e00f6]/60 text-[#ff3ca6]"
+                          ? "bg-[#9b30ff] text-white shadow-[0_0_12px_rgba(155,48,255,0.6)]"
+                          : "text-white/40 group-hover:text-white group-hover:bg-white/10"
                       }`}
                     >
                       {isOpen ? (
-                        <Minus size={16} strokeWidth={2.5} />
+                        <Minus size={15} strokeWidth={2.5} />
                       ) : (
-                        <Plus size={16} strokeWidth={2.5} />
+                        <Plus size={15} strokeWidth={2.5} />
                       )}
                     </span>
-                  </button>
-                </h3>
-
-                <div
-                  id={answerId}
-                  role="region"
-                  aria-labelledby={questionId}
-                  className={`grid transition-[grid-template-rows,opacity] duration-300 ease-out ${
-                    isOpen
-                      ? "grid-rows-[1fr] opacity-100"
-                      : "grid-rows-[0fr] opacity-0"
-                  }`}
-                >
-                  <div className="min-h-0 overflow-hidden">
-                    <p className="px-5 pb-5 text-sm leading-6 text-[#aaa1bb] sm:px-6 sm:pb-6">
-                      {faq.answer}
-                    </p>
                   </div>
                 </div>
               </div>

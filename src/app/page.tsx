@@ -5,6 +5,7 @@ import BattleArenaSection from "@/components/landing/BattleArenaSection";
 import LevelUpSection from "@/components/landing/LevelUpSection";
 import JoinClubSection from "@/components/landing/JoinClubSection";
 import DevsSection from "@/components/landing/DevsSection";
+import FAQSection from "@/components/faq/FAQSection";
 import Footer from "@/components/landing/Footer";
 import ScrollAnimation from "@/components/landing/ScrollAnimation";
 import SmoothScroll from "@/components/landing/SmoothScroll";
@@ -56,11 +57,13 @@ export default function Home() {
 
       {/*
        * ── SOLID SECTIONS ───────────────────────────────────────────────
-       * JoinClub, Devs, and Footer sit after the animation zone and use
-       * more opaque backgrounds for readability.
+       * JoinClub, Devs, FAQ, and Footer sit after the animation zone.
        */}
       <JoinClubSection />
       <DevsSection />
+
+      {/* ── FAQ SECTION (Last section before Footer) ── */}
+      <FAQSection />
 
       <div style={{ position: "relative", zIndex: 3, background: "#050508" }}>
         <Footer />
