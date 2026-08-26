@@ -221,14 +221,8 @@ export default function MatchmakingPanel({ socket, userId, username, onMatchFoun
       { id: "2", eloChange: "-15", time: "2m15s", isWin: false },
     ];
 
-  // Dynamic Mini Leaderboard calculations (Top 3 + One Above + Current User)
-  const top3 = leaderboard.length >= 3
-    ? leaderboard.slice(0, 3)
-    : [
-      { rank: 1, userId: "l1", username: "Vortex", elo: 1850 },
-      { rank: 2, userId: "l2", username: "Cypher", elo: 1720 },
-      { rank: 3, userId: "l3", username: "Nova", elo: 1640 },
-    ];
+  // Dynamic Mini Leaderboard calculations (Top 3 real entries + Current User rank)
+  const top3 = leaderboard.slice(0, 3);
 
   const userRankIndex = leaderboard.findIndex(
     (e) => e.userId === userId || (username && e.username.toLowerCase() === username.toLowerCase())
@@ -236,8 +230,9 @@ export default function MatchmakingPanel({ socket, userId, username, onMatchFoun
 
   const isUserInTop3 = userRankIndex !== -1 && userRankIndex < 3;
 
-  const userRank = userRankIndex !== -1 ? leaderboard[userRankIndex].rank : 15;
-
+  const userRank = userRankIndex !== -1
+    ? leaderboard[userRankIndex].rank
+    : (leaderboard.length > 0 ? leaderboard.length + 1 : 1);
 
   const currentUserEntry = {
     rank: userRank,
