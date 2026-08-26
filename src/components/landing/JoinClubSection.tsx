@@ -89,9 +89,9 @@ function PricingCard({
   plan,
   index,
 }: {
-    plan: PricingPlan;
+  plan: PricingPlan;
   index: number;
-  }) {
+}) {
   const cardRef = useRef<HTMLDivElement>(null);
   const isInView = useInView(cardRef, { once: true, margin: "-60px" });
   const [isHovered, setIsHovered] = useState(false);
@@ -132,7 +132,7 @@ function PricingCard({
           transform: "translateZ(0)",
           willChange: "backdrop-filter, transform",
           border: "1px solid rgba(255,255,255,0.09)",
-          padding: "36px 32px 32px",
+          padding: "20px 20px 20px",
           height: "100%",
           display: "flex",
           flexDirection: "column",
@@ -144,12 +144,12 @@ function PricingCard({
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-            marginBottom: "8px",
+            marginBottom: "4px",
           }}
         >
           <span
             style={{
-              fontSize: "16px",
+              fontSize: "15px",
               fontWeight: 700,
               color: isHovered ? "#ffffff" : "rgba(240,230,255,0.75)",
               fontFamily: "var(--font-display), sans-serif",
@@ -164,19 +164,19 @@ function PricingCard({
         {/* Price / Strikethrough & Free */}
         <div
           style={{
-            marginTop: "16px",
-            marginBottom: "4px",
+            marginTop: "8px",
+            marginBottom: "2px",
             display: "flex",
             alignItems: "baseline",
             justifyContent: "center",
-            gap: "10px",
+            gap: "8px",
           }}
         >
           {plan.originalPrice ? (
             <>
               <span
                 style={{
-                  fontSize: "clamp(22px, 2.2vw, 28px)",
+                  fontSize: "clamp(18px, 1.8vw, 22px)",
                   fontWeight: 600,
                   textDecoration: "line-through",
                   color: "rgba(240,230,255,0.38)",
@@ -187,7 +187,7 @@ function PricingCard({
               </span>
               <span
                 style={{
-                  fontSize: "clamp(36px, 3.8vw, 48px)",
+                  fontSize: "clamp(30px, 3.2vw, 40px)",
                   fontWeight: 800,
                   letterSpacing: "-0.04em",
                   color: isHovered ? "#ffffff" : "rgba(240,230,255,0.95)",
@@ -201,26 +201,26 @@ function PricingCard({
           ) : (
             <span
               style={{
-                  fontSize: "clamp(36px, 3.8vw, 48px)",
-                  fontWeight: 800,
-                  letterSpacing: "-0.04em",
-                  color: isHovered ? "#ffffff" : "rgba(240,230,255,0.95)",
-                  fontFamily: "var(--font-display), sans-serif",
-                  lineHeight: 1,
+                fontSize: "clamp(30px, 3.2vw, 40px)",
+                fontWeight: 800,
+                letterSpacing: "-0.04em",
+                color: isHovered ? "#ffffff" : "rgba(240,230,255,0.95)",
+                fontFamily: "var(--font-display), sans-serif",
+                lineHeight: 1,
               }}
             >
-                Free
+              Free
             </span>
           )}
         </div>
 
         <p
           style={{
-            fontSize: "12px",
+            fontSize: "11.5px",
             color: "rgba(240,230,255,0.38)",
             fontFamily: "var(--font-body), 'Fira Code', monospace",
-            marginBottom: "28px",
-            minHeight: "18px",
+            marginBottom: "16px",
+            minHeight: "16px",
             textAlign: "center",
           }}
         >
@@ -233,8 +233,10 @@ function PricingCard({
             listStyle: "none",
             display: "flex",
             flexDirection: "column",
-            gap: "12px",
+            gap: "8px",
             flex: 1,
+            padding: 0,
+            margin: 0,
           }}
         >
           {plan.features.map((feature, i) => (
@@ -243,19 +245,19 @@ function PricingCard({
               style={{
                 display: "flex",
                 alignItems: "flex-start",
-                gap: "10px",
-                fontSize: "14px",
+                gap: "8px",
+                fontSize: "13px",
                 color: "rgba(240,230,255,0.78)",
                 fontFamily: "var(--font-body), 'Fira Code', monospace",
-                lineHeight: 1.5,
+                lineHeight: 1.4,
               }}
             >
               <span
                 style={{
                   flexShrink: 0,
                   marginTop: "2px",
-                  width: "18px",
-                  height: "18px",
+                  width: "16px",
+                  height: "16px",
                   borderRadius: "50%",
                   background: `rgba(${plan.accentRgb}, ${isHovered ? "0.22" : "0.12"})`,
                   border: `1px solid rgba(${plan.accentRgb}, ${isHovered ? "0.5" : "0.3"})`,
@@ -266,7 +268,7 @@ function PricingCard({
                   transition: "all 0.3s ease",
                 }}
               >
-                <Check size={10} strokeWidth={3} />
+                <Check size={9} strokeWidth={3} />
               </span>
               {feature}
             </li>
@@ -277,7 +279,7 @@ function PricingCard({
         <div
           style={{
             height: "1px",
-            margin: "24px 0 20px",
+            margin: "16px 0 14px",
             background: `linear-gradient(90deg, transparent, rgba(${plan.accentRgb}, ${isHovered ? "0.45" : "0.2"}), transparent)`,
             transition: "background 0.3s ease",
           }}
@@ -291,9 +293,9 @@ function PricingCard({
             alignItems: "center",
             justifyContent: "center",
             gap: "8px",
-            padding: "13px 24px",
-            borderRadius: "12px",
-            fontSize: "15px",
+            padding: "10px 20px",
+            borderRadius: "10px",
+            fontSize: "14px",
             fontWeight: 700,
             fontFamily: "var(--font-body), 'Fira Code', monospace",
             letterSpacing: "-0.01em",
@@ -316,12 +318,12 @@ function PricingCard({
         {/* Description */}
         <p
           style={{
-            marginTop: "14px",
-            fontSize: "12px",
+            marginTop: "10px",
+            fontSize: "11.5px",
             color: "rgba(240,230,255,0.28)",
             fontFamily: "var(--font-body), 'Fira Code', monospace",
             textAlign: "center",
-            lineHeight: 1.55,
+            lineHeight: 1.45,
           }}
         >
           {plan.description}
@@ -344,6 +346,7 @@ export default function JoinClubSection() {
         position: "relative",
         zIndex: 3,
         overflow: "hidden",
+        padding: "64px 0 44px",
       }}
     >
       {/* Dark overlay */}
@@ -366,9 +369,9 @@ export default function JoinClubSection() {
           initial={{ opacity: 0, y: 32 }}
           animate={isInView ? { opacity: 1, y: 0 } : {}}
           transition={{ duration: 0.85, ease: [0.16, 1, 0.3, 1] }}
-          style={{ textAlign: "center", marginBottom: "64px" }}
+          style={{ textAlign: "center", marginBottom: "36px" }}
         >
-          <div className="badge" style={{ marginBottom: "22px" }}>
+          <div className="badge" style={{ marginBottom: "14px" }}>
             <svg width="11" height="11" viewBox="0 0 12 12" fill="none" aria-hidden="true">
               <path d="M6 1l1.5 3h3l-2.5 2 1 3L6 7.5 3 9l1-3L1.5 4h3L6 1z" fill="currentColor" />
             </svg>
@@ -377,11 +380,11 @@ export default function JoinClubSection() {
 
           <h2
             style={{
-              fontSize: "clamp(34px, 5.5vw, 64px)",
+              fontSize: "clamp(30px, 4.5vw, 52px)",
               fontWeight: 700,
               letterSpacing: "0.03em",
               lineHeight: 1.15,
-              marginBottom: "18px",
+              marginBottom: "12px",
               fontFamily: "var(--font-display), sans-serif",
             }}
           >
@@ -391,11 +394,11 @@ export default function JoinClubSection() {
 
           <p
             style={{
-              fontSize: "17px",
+              fontSize: "15px",
               color: "rgba(240,230,255,0.48)",
               maxWidth: "460px",
               margin: "0 auto",
-              lineHeight: 1.68,
+              lineHeight: 1.55,
               fontFamily: "var(--font-body), 'Fira Code', monospace",
             }}
           >
@@ -410,7 +413,7 @@ export default function JoinClubSection() {
         <div
           style={{
             display: "flex",
-            gap: "20px",
+            gap: "18px",
             alignItems: "stretch",
           }}
           className="pricing-grid"
@@ -431,8 +434,8 @@ export default function JoinClubSection() {
           transition={{ duration: 0.7, delay: 0.6 }}
           style={{
             textAlign: "center",
-            marginTop: "36px",
-            fontSize: "13px",
+            marginTop: "24px",
+            fontSize: "12.5px",
             color: "rgba(240,230,255,0.28)",
             fontFamily: "var(--font-body), 'Fira Code', monospace",
           }}

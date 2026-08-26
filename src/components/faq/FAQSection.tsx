@@ -64,8 +64,13 @@ export function FAQSection() {
 
   return (
     <section
+      id="faq"
       aria-labelledby="faq-heading"
       className="relative isolate overflow-hidden bg-[#080612] px-4 py-20 text-[#fffaff] sm:px-6 lg:px-8 lg:py-28"
+      style={{
+        position: "relative",
+        zIndex: 3,
+      }}
     >
       {/* FAQ structured data for search engines */}
       <script
