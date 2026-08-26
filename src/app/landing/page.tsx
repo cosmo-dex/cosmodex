@@ -9,6 +9,7 @@ import Footer from "@/components/landing/Footer";
 import ScrollAnimation from "@/components/landing/ScrollAnimation";
 import SmoothScroll from "@/components/landing/SmoothScroll";
 import ClickParticles from "@/components/landing/ClickParticles";
+import FAQSection from "@/components/faq/FAQSection";
 
 export const metadata = {
   title: "CosmoDeX — Start Your Coding Expedition",
@@ -27,20 +28,20 @@ export default function LandingPage() {
     >
       {/*
        * Layer order (z-index):
-       *   0   — #050508 body background
-       *   1   — ScrollAnimation canvas (fixed, 240-frame scroll animation)
-       *   2   — ScrollAnimation vignette overlay (fixed)
-       *   3   — All page sections (scroll normally, semi-transparent)
-       *   3   — RisingStars canvas (within JoinClub + Devs sections)
-       *   50  — Navbar pill
-       *   200 — Loading screen (inside ScrollAnimation)
-       *  9999 — ClickParticles canvas (fixed, pointer-events: none)
+       *   0    — #050508 body background
+       *   1    — ScrollAnimation canvas
+       *   2    — ScrollAnimation vignette overlay
+       *   3    — All page sections
+       *   3    — RisingStars canvas
+       *   50   — Navbar pill
+       *   200  — Loading screen
+       *   9999 — ClickParticles canvas
        */}
 
       {/* Scroll-driven 240-frame animation — fixed behind all content */}
       <ScrollAnimation />
 
-      {/* Lenis smooth scroll (expo ease-out, duration 1.4s) */}
+      {/* Lenis smooth scrolling */}
       <SmoothScroll />
 
       {/* Navigation */}
@@ -49,25 +50,46 @@ export default function LandingPage() {
       {/* Click particle burst effect */}
       <ClickParticles />
 
-      {/*
-       * ── ANIMATION ZONE ───────────────────────────────────────────────
-       * Sections with semi-transparent backgrounds so the scroll animation
-       * bleeds through underneath.
-       */}
+      {/* ─────────────────────────────────────────────────────────────
+          ANIMATION ZONE
+          Sections with semi-transparent backgrounds so the
+          scroll animation can bleed through underneath.
+         ───────────────────────────────────────────────────────────── */}
+
       <HeroSection />
+
       <CoursesSection />
+
       <BattleArenaSection />
+
       <LevelUpSection />
 
-      {/*
-       * ── SOLID SECTIONS ───────────────────────────────────────────────
-       * JoinClub, Devs, and Footer sit after the animation zone and use
-       * more opaque backgrounds for readability.
-       */}
+      {/* ─────────────────────────────────────────────────────────────
+          SOLID SECTIONS
+         ───────────────────────────────────────────────────────────── */}
+
       <JoinClubSection />
+
       <DevsSection />
 
-      <div style={{ position: "relative", zIndex: 3, background: "#050508" }}>
+      {/* ─────────────────────────────────────────────────────────────
+          FAQ
+          SEO-friendly FAQ section with interactive accordion.
+         ───────────────────────────────────────────────────────────── */}
+
+      <FAQSection />
+
+      {/* ─────────────────────────────────────────────────────────────
+          FOOTER
+         ───────────────────────────────────────────────────────────── */}
+
+      <div
+        style={{
+          position: "relative",
+          zIndex: 3,
+          background: "#050508",
+        }}
+      >
         <Footer />
       </div>
     </main>
