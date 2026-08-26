@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import Navbar from "@/components/navbar/Navbar";
@@ -10,7 +10,6 @@ import GalaxyPathMap from "@/components/learn/GalaxyPathMap";
 import ProgressSidebar from "@/components/learn/ProgressSidebar";
 import { Starfield } from "@/components/leaderboard/Starfield";
 import MissionModal from "@/components/learn/MissionModal";
-import SmoothScroll from "@/components/landing/SmoothScroll";
 import {
   MOCK_PYTHON_CHAPTERS,
   MOCK_USER_PROGRESS,
@@ -37,10 +36,13 @@ export default function PythonCoursePage() {
   } | null>(null);
 
   // Helper to isolate localStorage per logged-in user
-  const getUserStorageKey = (key: string) => {
-    const userIdentifier = userSession?.id || userSession?.username || "guest";
-    return `${key}_${userIdentifier}`;
-  };
+  const getUserStorageKey = useCallback(
+    (key: string) => {
+      const userIdentifier = userSession?.id || userSession?.username || "guest";
+      return `${key}_${userIdentifier}`;
+    },
+    [userSession]
+  );
 
   // Always scroll to top of page on navigation unless a specific station hash (ch-*) is present
   useEffect(() => {
@@ -92,6 +94,7 @@ export default function PythonCoursePage() {
           const data = await res.json();
           if (data?.user?.username) {
             setUserSession(data.user);
+             
             setUserProgress((prev) => ({
               ...prev,
               username: data.user.username,
@@ -153,6 +156,7 @@ export default function PythonCoursePage() {
           if (parsedProg.username === "rizi1" || parsedProg.username === "rizzi") {
             parsedProg.username = userSession?.username || "Explorer";
           }
+           
           setUserProgress((prev) => ({
             ...parsedProg,
             username: userSession?.username || parsedProg.username || "Explorer",
@@ -163,7 +167,7 @@ export default function PythonCoursePage() {
     } catch {
       // Ignore storage errors
     }
-  }, [userSession]);
+  }, [userSession, getUserStorageKey]);
 
   // 3. Synchronize dynamic user metrics (exercises, projects, badges, cheat sheets, XP, level)
   useEffect(() => {
@@ -189,6 +193,7 @@ export default function PythonCoursePage() {
 
     const currentLevel = userSession?.level ?? Math.max(1, Math.floor(currentTotalXp / 250) + 1);
 
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setUserProgress((prev) => ({
       ...prev,
       username: userSession?.username || prev.username || "Explorer",
