@@ -1,0 +1,35 @@
+# CosmoDex
+
+> CosmoDex is a gamified coding platform designed primarily for students and aspiring developers to learn programming, practice coding, complete challenges, compete in 1v1 coding battles, progress through an engaging coding journey, and earn achievements and rewards.
+
+## Core Brand Message
+- **Tagline**: Learn. Code. Battle. Level Up. Earn.
+- **Space Battle Concept**: Two players. One coding battle. Your code is your weapon.
+- **Positioning**: CosmoDex is where coding becomes an interactive, competitive experience for students.
+
+## Key Features & Product Capabilities
+- **Gamified Learning**: Earn XP, build 7-day daily streaks, level up across 6 Cosmic League Ranks (Explorer, Astronaut, Navigator, Star Coder, Galaxy Master, Celestial Master).
+- **1v1 Space Battle**: Real-time multiplayer coding arena where players solve coding problems and MCQ challenges head-to-head.
+- **Interactive Programming Courses**: Hands-on lessons in Python, SQL, data structures, and programming fundamentals.
+- **Coding Practice & Challenges**: Quizzes, terminal exercises, and problem-solving practice tailored for students and technical assessment prep.
+- **Rewards & Goodies**: XP progression rewards, badges, digital achievements, and physical goodies.
+
+## Target Audience
+- College & university students learning programming
+- Beginners practicing Python and SQL
+- Aspiring developers preparing for technical coding interviews
+- Learners seeking interactive, game-inspired coding platforms
+
+## Competitor Positioning & Alternatives
+CosmoDex serves as a student-focused, highly interactive alternative to platforms like LeetCode, HackerRank, CodeChef, GeeksforGeeks, Codédex, and Coddy by combining gamification, 1v1 battle competition, and structured learning loops.
+
+## Official Links & Resources
+- Home: https://cosmodex.tech/
+- Learn & Courses: https://cosmodex.tech/learn
+- 1v1 Space Battle Arena: https://cosmodex.tech/battle
+- Ranks & Leaderboard: https://cosmodex.tech/leaderboard
+- Coding Events: https://cosmodex.tech/events
+- Onboarding Expedition: https://cosmodex.tech/onboarding
+
+## Contact
+- Official Support & Inquiries: connect.cosmodex@gmail.com
