@@ -30,9 +30,14 @@ export default function Home() {
       <BattleArenaSection />
       <LevelUpSection />
 
+      {/*
+       * ── SOLID SECTIONS ───────────────────────────────────────────────
+       * JoinClub, Devs, FAQ, and Footer sit after the animation zone.
+       */}
       <JoinClubSection />
       <DevsSection />
 
+      {/* ── FAQ SECTION (Last section before Footer) ── */}
       <FAQSection />
 
       <div style={{ position: "relative", zIndex: 3, background: "#050508" }}>

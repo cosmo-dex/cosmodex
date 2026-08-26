@@ -341,7 +341,7 @@ export default function JoinClubSection() {
   return (
     <section
       id="join-club"
-      className="section-padding"
+      className="section-padding !pb-8 sm:!pb-12"
       style={{
         position: "relative",
         zIndex: 3,
