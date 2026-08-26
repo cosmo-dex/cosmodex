@@ -13,9 +13,9 @@ import {
   X,
   CalendarDays,
 } from "lucide-react";
-
 import { NotificationBell } from "../notification/notification-bell";
 import { getAvatarUrl } from "@/lib/avatar";
+import { useAuth } from "@/context/AuthContext";
 
 const navItems = [
   {
@@ -46,53 +46,11 @@ const navItems = [
   },
 ];
 
-interface UserSession {
-  id: string;
-  username: string;
-  email: string;
-  avatarId?: string | null;
-  xpTotal?: number;
-  level?: number;
-  role?: string;
-}
-
 export default function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
-  const [user, setUser] = useState<UserSession | null>(null);
+  const { user, logout } = useAuth();
 
-  /* ----------------------------------------
-     SESSION
-  ---------------------------------------- */
-  useEffect(() => {
-    async function checkSession() {
-      try {
-        const response = await fetch("/api/auth/session", {
-          credentials: "include",
-        });
-
-        if (!response.ok) {
-          setUser(null);
-          return;
-        }
-
-        const data = await response.json();
-
-        if (data?.user) {
-          setUser(data.user);
-        }
-      } catch (error) {
-        console.error("Session check failed:", error);
-        setUser(null);
-      }
-    }
-
-    checkSession();
-  }, []);
-
-  /* ----------------------------------------
-     MOBILE MENU
-  ---------------------------------------- */
   useEffect(() => {
     const handleResize = () => {
       if (window.innerWidth >= 768) {
@@ -107,22 +65,8 @@ export default function Navbar() {
     };
   }, []);
 
-  /* ----------------------------------------
-     LOGOUT
-  ---------------------------------------- */
   const handleLogout = async () => {
-    try {
-      const response = await fetch("/api/auth/logout", {
-        method: "POST",
-        credentials: "include",
-      });
-
-      if (response.ok) {
-        window.location.href = "/";
-      }
-    } catch (error) {
-      console.error("Logout failed:", error);
-    }
+    await logout();
   };
 
   const closeMenus = () => {
@@ -133,10 +77,6 @@ export default function Navbar() {
   return (
     <header className="fixed top-0 z-50 w-full border-b border-white/[0.08] bg-[#050508]/80 backdrop-blur-xl">
       <div className="flex h-16 w-full items-center justify-between gap-4 px-4 sm:px-8 lg:px-10">
-
-        {/* =====================================
-            LOGO
-        ===================================== */}
         <Link
           href="/"
           onClick={closeMenus}
@@ -156,9 +96,6 @@ export default function Navbar() {
           </span>
         </Link>
 
-        {/* =====================================
-            DESKTOP NAVIGATION
-        ===================================== */}
         <nav className="hidden items-center gap-1 md:flex">
           {navItems.map((item) => {
             const Icon = item.icon;
@@ -198,8 +135,7 @@ export default function Navbar() {
                     {item.isMegaMenu && (
                       <ChevronDown
                         size={13}
-                        className={`transition-transform duration-200 ${isOpen ? "rotate-180" : ""
-                          }`}
+                        className={`transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`}
                       />
                     )}
                   </button>
@@ -217,7 +153,6 @@ export default function Navbar() {
                   </Link>
                 )}
 
-                {/* Learn dropdown */}
                 {item.isMegaMenu && isOpen && (
                   <div
                     className="absolute left-0 top-full pt-2"
@@ -273,7 +208,6 @@ export default function Navbar() {
         </nav>
 
         <div className="flex items-center gap-2">
-
           {user && (
             <Link
               href="/profile"
@@ -298,28 +232,25 @@ export default function Navbar() {
             </Link>
           )}
 
-          {/* Auth */}
           {user ? (
             <button
               type="button"
               onClick={handleLogout}
-              className="hidden h-9 items-center rounded-md border border-white/10 bg-white/[0.03] px-4 text-sm font-bold text-white/90 transition hover:bg-white/[0.07] sm:inline-flex"
+              className="hidden h-9 items-center rounded-md border border-white/10 bg-white/[0.03] px-4 text-sm font-bold text-white/90 transition hover:bg-white/[0.07] cursor-pointer sm:inline-flex"
             >
               Log out
             </button>
           ) : (
             <Link
               href="/onboarding"
-              className="dashboard-btn-primary hidden h-9 items-center px-4 text-sm sm:inline-flex"
+              className="dashboard-btn-primary hidden h-9 items-center px-4 text-sm cursor-pointer sm:inline-flex"
             >
               Join Crew
             </Link>
           )}
 
-          {/* Notification (Positioned at the very end after Log out / Join Crew button) */}
           {user && <NotificationBell />}
 
-          {/* Mobile button */}
           <button
             type="button"
             onClick={() => setMobileOpen((value) => !value)}
@@ -332,9 +263,6 @@ export default function Navbar() {
         </div>
       </div>
 
-      {/* =====================================
-          MOBILE MENU
-      ===================================== */}
       {mobileOpen && (
         <div className="animate-fade-in border-t border-white/[0.08] bg-[#050508]/95 px-4 py-4 shadow-2xl backdrop-blur-xl md:hidden">
           <div className="space-y-1">
@@ -367,7 +295,7 @@ export default function Navbar() {
               <button
                 type="button"
                 onClick={handleLogout}
-                className="flex w-full items-center justify-center rounded-md border border-white/10 bg-white/[0.03] py-2.5 text-sm font-bold text-white/90 transition hover:bg-white/[0.07]"
+                className="flex w-full items-center justify-center rounded-md border border-white/10 bg-white/[0.03] py-2.5 text-sm font-bold text-white/90 transition hover:bg-white/[0.07] cursor-pointer"
               >
                 Log out
               </button>
