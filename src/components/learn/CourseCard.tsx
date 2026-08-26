@@ -32,12 +32,14 @@ export default function CourseCard({ course }: CourseCardProps) {
   const [imgError, setImgError] = useState(false);
 
   const targetHref =
-    course.id === "py-1" || course.title.toLowerCase() === "python"
+    course.id === "py-1" ||
+    course.id.startsWith("py-") ||
+    course.title.toLowerCase().includes("python")
       ? "/learn/python"
       : `/learn/${course.id}/theory/in-the-beginning`;
 
   return (
-    <Link href={targetHref} scroll={true} className="block">
+    <Link href={targetHref} scroll={false} className="block">
       <motion.div
         initial={{ opacity: 0, y: 15 }}
         whileInView={{ opacity: 1, y: 0 }}

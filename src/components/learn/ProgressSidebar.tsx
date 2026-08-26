@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 import { UserProgressData, Chapter, Exercise } from "./pythonData";
 import StationCard from "./StationCard";
+import { getAvatarUrl } from "@/lib/avatar";
 
 interface ProgressSidebarProps {
   selectedChapter: Chapter;
@@ -52,6 +53,8 @@ export default function ProgressSidebar({
       transition: { duration: 0.5, delay: i * 0.07, ease: [0.16, 1, 0.3, 1] as const },
     }),
   };
+
+  const avatarSrc = getAvatarUrl(userProgress.avatarUrl);
 
   return (
     <aside
@@ -85,11 +88,11 @@ export default function ProgressSidebar({
           <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#E873C3] to-[#8D37D6] p-0.5 shadow-[0_0_15px_rgba(232,115,195,0.4)] shrink-0">
             <div className="w-full h-full bg-[#0d0722] rounded-[14px] overflow-hidden flex items-center justify-center relative">
               <Image
-                src={userProgress.avatarUrl}
+                src={avatarSrc}
                 alt="Avatar"
                 width={48}
                 height={48}
-                className="object-cover"
+                className="object-cover w-full h-full"
               />
             </div>
           </div>
@@ -203,7 +206,7 @@ export default function ProgressSidebar({
           <h4 className="text-sm font-bold text-white tracking-wide font-mono uppercase">
             Course Badges
           </h4>
-          <span className="text-xs font-mono font-bold text-white/50">
+          <span className="text-xs font-mono font-bold text-cyan-400">
             {userProgress.badgesUnlocked} / {userProgress.totalBadges}
           </span>
         </div>
@@ -213,17 +216,34 @@ export default function ProgressSidebar({
 
         {/* Badges Grid */}
         <div className="grid grid-cols-4 gap-3">
-          {badgeIcons.map((IconComp, idx) => (
-            <div
-              key={idx}
-              className="aspect-square rounded-xl bg-[#140e2b]/80 border border-white/10 flex items-center justify-center relative group/badge hover:border-cyan-500/40 transition-colors"
-            >
-              <IconComp size={18} className="text-white/20 group-hover/badge:text-white/40 transition-colors" />
-              <div className="absolute inset-0 rounded-xl bg-black/40 flex items-center justify-center backdrop-blur-[1px]">
-                <Lock size={12} className="text-white/30" />
+          {badgeIcons.map((IconComp, idx) => {
+            const isUnlocked = idx < userProgress.badgesUnlocked;
+            return (
+              <div
+                key={idx}
+                className={`aspect-square rounded-xl flex items-center justify-center relative transition-all duration-300 ${
+                  isUnlocked
+                    ? "bg-gradient-to-br from-cyan-500/20 to-purple-500/20 border border-cyan-400/50 shadow-[0_0_12px_rgba(0,255,233,0.25)]"
+                    : "bg-[#140e2b]/80 border border-white/10"
+                }`}
+                title={isUnlocked ? `Badge ${idx + 1} Unlocked!` : `Locked Badge ${idx + 1}`}
+              >
+                <IconComp
+                  size={18}
+                  className={
+                    isUnlocked
+                      ? "text-cyan-300 drop-shadow-[0_0_8px_rgba(0,255,233,0.8)]"
+                      : "text-white/20"
+                  }
+                />
+                {!isUnlocked && (
+                  <div className="absolute inset-0 rounded-xl bg-black/40 flex items-center justify-center backdrop-blur-[1px]">
+                    <Lock size={12} className="text-white/30" />
+                  </div>
+                )}
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </motion.div>
 
@@ -240,7 +260,7 @@ export default function ProgressSidebar({
           <h4 className="text-sm font-bold text-white tracking-wide font-mono uppercase">
             Cheat Sheets
           </h4>
-          <span className="text-xs font-mono font-bold text-white/50">
+          <span className="text-xs font-mono font-bold text-pink-400">
             {userProgress.cheatSheetsUnlocked} / {userProgress.totalCheatSheets}
           </span>
         </div>
@@ -249,17 +269,39 @@ export default function ProgressSidebar({
         </p>
 
         <div className="flex flex-col gap-2.5">
-          <div className="flex items-center gap-3 p-3 rounded-xl bg-[#140e2b]/60 border border-white/5">
-            <FileText size={18} className="text-white/40 shrink-0" />
-            <span className="text-xs font-mono text-white/60">
-              Unlock after Ch. 4
+          <div
+            className={`flex items-center gap-3 p-3 rounded-xl border transition-all ${
+              userProgress.cheatSheetsUnlocked >= 1
+                ? "bg-cyan-500/10 border-cyan-500/40 text-cyan-300 shadow-[0_0_10px_rgba(0,255,233,0.15)]"
+                : "bg-[#140e2b]/60 border border-white/5 text-white/60"
+            }`}
+          >
+            <FileText
+              size={18}
+              className={userProgress.cheatSheetsUnlocked >= 1 ? "text-cyan-400" : "text-white/40"}
+            />
+            <span className="text-xs font-mono font-medium">
+              {userProgress.cheatSheetsUnlocked >= 1
+                ? "Python Basics Cheat Sheet (Unlocked!)"
+                : "Unlock after Ch. 4"}
             </span>
           </div>
 
-          <div className="flex items-center gap-3 p-3 rounded-xl bg-[#140e2b]/60 border border-white/5">
-            <FileText size={18} className="text-white/40 shrink-0" />
-            <span className="text-xs font-mono text-white/60">
-              Unlock after Ch. 8
+          <div
+            className={`flex items-center gap-3 p-3 rounded-xl border transition-all ${
+              userProgress.cheatSheetsUnlocked >= 2
+                ? "bg-purple-500/10 border-purple-500/40 text-purple-300 shadow-[0_0_10px_rgba(168,85,247,0.15)]"
+                : "bg-[#140e2b]/60 border border-white/5 text-white/60"
+            }`}
+          >
+            <FileText
+              size={18}
+              className={userProgress.cheatSheetsUnlocked >= 2 ? "text-purple-400" : "text-white/40"}
+            />
+            <span className="text-xs font-mono font-medium">
+              {userProgress.cheatSheetsUnlocked >= 2
+                ? "Advanced Python & Modules Cheat Sheet (Unlocked!)"
+                : "Unlock after Ch. 8"}
             </span>
           </div>
         </div>

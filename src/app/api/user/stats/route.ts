@@ -9,7 +9,7 @@ export async function GET(req: NextRequest) {
 
     if (!process.env.DATABASE_URL || !session?.userId) {
       return NextResponse.json({
-        username: 'rishi',
+        username: 'Explorer',
         level: 1,
         experienceLevel: 'Initiate',
         elo: 1000,
