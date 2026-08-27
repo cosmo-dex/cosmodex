@@ -11,7 +11,6 @@ const PROTECTED_USER_ROUTES = [
   '/profile',
   '/victory',
 ];
-
 const PROTECTED_API_PREFIXES = [
   '/api/user',
   '/api/battle',
