@@ -420,34 +420,37 @@ export default function Assistant({
                 </motion.div>
               ) : (
                 <div className="space-y-4">
-                  {messages.map((message, index) => (
-                    <motion.div
-                      key={index}
-                      initial={{
-                        opacity: 0,
-                        y: 10,
-                      }}
-                      animate={{
-                        opacity: 1,
-                        y: 0,
-                      }}
-                      className={`flex ${
-                        message.isUser
-                          ? "justify-end"
-                          : "justify-start"
-                      }`}
-                    >
-                      <div
-                        className={`max-w-[85%] rounded-2xl px-4 py-2.5 sm:py-3 font-mono text-xs sm:text-sm leading-relaxed ${
+                  {messages.map((message, index) => {
+                    if (!message.text && !message.isUser) return null;
+                    return (
+                      <motion.div
+                        key={index}
+                        initial={{
+                          opacity: 0,
+                          y: 10,
+                        }}
+                        animate={{
+                          opacity: 1,
+                          y: 0,
+                        }}
+                        className={`flex ${
                           message.isUser
-                            ? "bg-gradient-to-r from-fuchsia-600 to-violet-700 text-white shadow-[0_0_20px_rgba(217,95,209,0.25)]"
-                            : "bg-white/[0.07] border border-white/10 text-white backdrop-blur-md"
+                            ? "justify-end"
+                            : "justify-start"
                         }`}
                       >
-                        {message.text}
-                      </div>
-                    </motion.div>
-                  ))}
+                        <div
+                          className={`max-w-[85%] rounded-2xl px-4 py-2.5 sm:py-3 font-mono text-xs sm:text-sm leading-relaxed whitespace-pre-wrap ${
+                            message.isUser
+                              ? "bg-gradient-to-r from-fuchsia-600 to-violet-700 text-white shadow-[0_0_20px_rgba(217,95,209,0.25)]"
+                            : "bg-white/[0.07] border border-white/10 text-white backdrop-blur-md"
+                          }`}
+                        >
+                          {message.text}
+                        </div>
+                      </motion.div>
+                    );
+                  })}
 
                   {isTyping && (
                     <motion.div

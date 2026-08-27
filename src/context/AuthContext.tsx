@@ -39,22 +39,10 @@ const AUTH_EVENT_KEY = "cosmodex_auth_sync";
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const router = useRouter();
-  const [user, setUserState] = useState<UserSession | null>(() => {
-    if (typeof window !== "undefined") {
-      try {
-        const cached = localStorage.getItem(AUTH_STORAGE_KEY);
-        if (cached) {
-          return JSON.parse(cached);
-        }
-      } catch {
-        return null;
-      }
-    }
-    return null;
-  });
-
+  const [user, setUserState] = useState<UserSession | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const pendingSessionCheckRef = useRef<Promise<UserSession | null> | null>(null);
+
 
   const setUser = useCallback(
     (action: React.SetStateAction<UserSession | null>) => {
@@ -147,7 +135,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   );
 
   useEffect(() => {
-    checkSession();
+    let active = true;
+    const init = async () => {
+      try {
+        const cached = localStorage.getItem(AUTH_STORAGE_KEY);
+        if (cached && active) {
+          setUserState(JSON.parse(cached));
+        }
+      } catch {
+        // Ignore parse errors
+      }
+      await checkSession();
+    };
+    init();
+    return () => {
+      active = false;
+    };
   }, [checkSession]);
 
   useEffect(() => {
