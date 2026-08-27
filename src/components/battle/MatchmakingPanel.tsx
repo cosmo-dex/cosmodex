@@ -216,10 +216,7 @@ export default function MatchmakingPanel({ socket, userId, username, onMatchFoun
 
   const matchHistory = (stats?.recentMatches && stats.recentMatches.length > 0)
     ? stats.recentMatches.slice(0, 2)
-    : [
-      { id: "1", eloChange: "+25", time: "3m30s", isWin: true },
-      { id: "2", eloChange: "-15", time: "2m15s", isWin: false },
-    ];
+    : [];
 
   // Dynamic Mini Leaderboard calculations (Top 3 real entries + Current User rank)
   const top3 = leaderboard.slice(0, 3);
@@ -308,39 +305,45 @@ export default function MatchmakingPanel({ socket, userId, username, onMatchFoun
 
                 <div className="space-y-1.5">
                   {/* Top 3 Ranks */}
-                  {top3.map((entry, i) => {
-                    const isThisUser = (userRankIndex === i) || (Boolean(userId && entry.userId === userId)) || Boolean(username && entry.username && entry.username.toLowerCase() === username.toLowerCase());
-                    return (
-                      <div
-                        key={entry.userId || i}
-                        className={`flex items-center justify-between px-2.5 py-1.5 rounded-xl border text-xs transition-all ${isThisUser
-                          ? "bg-gradient-to-r from-[#9E00F6]/20 via-[#D95FD1]/15 to-[#00FFE9]/10 border-[#D95FD1]/40 shadow-[0_0_12px_rgba(217,95,209,0.25)]"
-                          : "bg-white/5 border-white/5 hover:bg-white/10 hover:border-white/15"
-                          }`}
-                      >
-                        <div className="flex items-center gap-2 min-w-0">
-                          <span className={`w-5 h-5 rounded-full flex items-center justify-center font-bold text-[10px] shrink-0 ${i === 0 ? "bg-amber-400/20 text-amber-300 border border-amber-400/30" :
-                            i === 1 ? "bg-slate-300/20 text-slate-200 border border-slate-300/30" :
-                              "bg-amber-700/20 text-amber-500 border border-amber-700/30"
-                            }`}>
-                            {i === 0 ? "🥇" : i === 1 ? "🥈" : "🥉"}
-                          </span>
-                          <span className={`font-semibold truncate text-xs flex items-center gap-1 ${isThisUser ? "text-white font-bold" : "text-white/90"}`}>
-                            {entry.username}
-                            {isThisUser && (
-                              <span className="text-[8px] font-extrabold uppercase px-1 py-0.2 rounded bg-[#FFA249]/30 text-[#FFA249] border border-[#FFA249]/40">YOU</span>
-                            )}
+                  {top3.length > 0 ? (
+                    top3.map((entry, i) => {
+                      const isThisUser = (userRankIndex === i) || (Boolean(userId && entry.userId === userId)) || Boolean(username && entry.username && entry.username.toLowerCase() === username.toLowerCase());
+                      return (
+                        <div
+                          key={entry.userId || i}
+                          className={`flex items-center justify-between px-2.5 py-1.5 rounded-xl border text-xs transition-all ${isThisUser
+                            ? "bg-gradient-to-r from-[#9E00F6]/20 via-[#D95FD1]/15 to-[#00FFE9]/10 border-[#D95FD1]/40 shadow-[0_0_12px_rgba(217,95,209,0.25)]"
+                            : "bg-white/5 border-white/5 hover:bg-white/10 hover:border-white/15"
+                            }`}
+                        >
+                          <div className="flex items-center gap-2 min-w-0">
+                            <span className={`w-5 h-5 rounded-full flex items-center justify-center font-bold text-[10px] shrink-0 ${i === 0 ? "bg-amber-400/20 text-amber-300 border border-amber-400/30" :
+                              i === 1 ? "bg-slate-300/20 text-slate-200 border border-slate-300/30" :
+                                "bg-amber-700/20 text-amber-500 border border-amber-700/30"
+                              }`}>
+                              {i === 0 ? "🥇" : i === 1 ? "🥈" : "🥉"}
+                            </span>
+                            <span className={`font-semibold truncate text-xs flex items-center gap-1 ${isThisUser ? "text-white font-bold" : "text-white/90"}`}>
+                              {entry.username}
+                              {isThisUser && (
+                                <span className="text-[8px] font-extrabold uppercase px-1 py-0.2 rounded bg-[#FFA249]/30 text-[#FFA249] border border-[#FFA249]/40">YOU</span>
+                              )}
+                            </span>
+                          </div>
+                          <span className={`font-mono font-bold text-[11px] shrink-0 ${isThisUser ? "text-amber-300 font-extrabold" : "text-amber-400"}`}>
+                            {entry.elo} ELO
                           </span>
                         </div>
-                        <span className={`font-mono font-bold text-[11px] shrink-0 ${isThisUser ? "text-amber-300 font-extrabold" : "text-amber-400"}`}>
-                          {entry.elo} ELO
-                        </span>
-                      </div>
-                    );
-                  })}
+                      );
+                    })
+                  ) : (
+                    <div className="bg-white/5 px-2.5 py-2 rounded-xl text-center text-white/40 text-[10px] font-mono">
+                      No leaderboard entries yet
+                    </div>
+                  )}
 
                   {/* If user is NOT in Top 3, show dots + 4th item for current user */}
-                  {!isUserInTop3 && (
+                  {!isUserInTop3 && top3.length > 0 && (
                     <>
                       <div className="py-0.5 text-center text-white/30 text-[9px] font-mono tracking-widest select-none">
                         • • •
@@ -372,25 +375,36 @@ export default function MatchmakingPanel({ socket, userId, username, onMatchFoun
                 </div>
 
                 <div className="space-y-2 text-xs">
-                  {matchHistory.map((m, i) => (
-                    <div key={i} className="flex items-center justify-between bg-white/5 px-3 py-2 rounded-xl border border-white/5 hover:bg-white/10 hover:border-white/20 hover:shadow-[0_0_12px_rgba(255,255,255,0.08)] hover:-translate-y-0.5 transition-all duration-200 cursor-pointer group">
-                      <div className="flex items-center gap-2">
-                        {m.isWin ? (
-                          <span className="flex items-center gap-1 text-emerald-400 font-bold text-xs group-hover:text-emerald-300 transition-colors">
-                            <CheckCircle2 size={14} className="fill-emerald-400 text-[#0d0f1d]" /> Win
-                          </span>
-                        ) : (
-                          <span className="flex items-center gap-1 text-rose-400 font-bold text-xs group-hover:text-rose-300 transition-colors">
-                            <XCircle size={14} className="fill-rose-400 text-[#0d0f1d]" /> Loss
-                          </span>
-                        )}
-                        <span className="font-mono text-white/90 text-xs font-semibold">{m.eloChange ? String(m.eloChange).replace(/\s*elo/gi, '') : ''}</span>
+                  {matchHistory.length > 0 ? (
+                    matchHistory.map((m, i) => (
+                      <div key={i} className="flex items-center justify-between bg-white/5 px-3 py-2 rounded-xl border border-white/5 hover:bg-white/10 hover:border-white/20 hover:shadow-[0_0_12px_rgba(255,255,255,0.08)] hover:-translate-y-0.5 transition-all duration-200 cursor-pointer group">
+                        <div className="flex items-center gap-2">
+                          {m.isWin ? (
+                            <span className="flex items-center gap-1 text-emerald-400 font-bold text-xs group-hover:text-emerald-300 transition-colors">
+                              <CheckCircle2 size={14} className="fill-emerald-400 text-[#0d0f1d]" /> Win
+                            </span>
+                          ) : m.isDraw ? (
+                            <span className="flex items-center gap-1 text-amber-400 font-bold text-xs group-hover:text-amber-300 transition-colors">
+                              Draw
+                            </span>
+                          ) : (
+                            <span className="flex items-center gap-1 text-rose-400 font-bold text-xs group-hover:text-rose-300 transition-colors">
+                              <XCircle size={14} className="fill-rose-400 text-[#0d0f1d]" /> Loss
+                            </span>
+                          )}
+                          <span className="font-mono text-white/90 text-xs font-semibold">{m.eloChange ? String(m.eloChange).replace(/\s*elo/gi, '') : ''}</span>
+                        </div>
+                        <span className="text-white/40 group-hover:text-white/70 transition-colors font-mono text-[11px] flex items-center gap-1">
+                          <Clock size={12} /> {m.time}
+                        </span>
                       </div>
-                      <span className="text-white/40 group-hover:text-white/70 transition-colors font-mono text-[11px] flex items-center gap-1">
-                        <Clock size={12} /> {m.time}
-                      </span>
+                    ))
+                  ) : (
+                    <div className="bg-white/5 p-3 rounded-xl border border-white/5 text-center text-white/50 text-[11px]">
+                      <Swords size={16} className="mx-auto mb-1.5 text-white/30" />
+                      <span>No match records yet. Queue up to log your first 1v1 duel!</span>
                     </div>
-                  ))}
+                  )}
                 </div>
               </div>
             </div>
