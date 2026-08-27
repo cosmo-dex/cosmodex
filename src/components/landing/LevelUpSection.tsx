@@ -1,11 +1,20 @@
 "use client";
 
-import { useRef } from "react";
+import { useRef, useSyncExternalStore } from "react";
 import { motion, useInView } from "framer-motion";
 import Link from "next/link";
 import Image from "next/image";
 import { Swords, BookOpen, Flame, Zap, ArrowRight, Sparkles } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
+
+const emptySubscribe = () => () => {};
+function useMounted() {
+  return useSyncExternalStore(
+    emptySubscribe,
+    () => true,
+    () => false
+  );
+}
 
 const MILESTONES = [
   { level: 1, label: "Explorer", xp: 0, color: "#a8b2d1", rgb: "168,178,209", icon: "/images/ranks/explorer.webp" },
@@ -55,6 +64,7 @@ export default function LevelUpSection() {
   const ref = useRef<HTMLDivElement>(null);
   const isInView = useInView(ref, { once: true, margin: "-80px" });
   const { user } = useAuth();
+  const mounted = useMounted();
 
   return (
     <section
@@ -123,7 +133,7 @@ export default function LevelUpSection() {
         </motion.div>
 
         {/* ── 1ST BLOCK: Start Onboarding CTA (Only shown when not logged in) ── */}
-        {!user && (
+        {mounted && !user && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={isInView ? { opacity: 1, y: 0 } : {}}
