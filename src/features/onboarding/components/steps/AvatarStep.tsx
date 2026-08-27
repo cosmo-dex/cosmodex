@@ -25,7 +25,7 @@ export default function AvatarStep({ data, onNext, onBack, updateData }: AvatarS
       </button>
 
       <div className="text-center mb-10 mt-2">
-        <h2 className="text-2xl font-display font-bold mb-2">Select Hologram</h2>
+        <h1 className="text-2xl font-display font-bold mb-2">Select Hologram</h1>
         <p className="text-cosmo-text-muted text-sm">Choose your visual representation.</p>
       </div>
 

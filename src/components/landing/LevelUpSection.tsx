@@ -184,7 +184,7 @@ export default function LevelUpSection() {
             </div>
 
             <Link
-              href="/login"
+              href="/onboarding?mode=login"
               style={{
                 display: "inline-flex",
                 alignItems: "center",

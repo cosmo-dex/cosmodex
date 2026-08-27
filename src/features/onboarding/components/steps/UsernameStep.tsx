@@ -66,7 +66,7 @@ export default function UsernameStep({ data, onNext, onBack, updateData }: Usern
       </button>
 
       <div className="text-center mb-10 mt-2">
-        <h2 className="text-2xl font-display font-bold mb-2">Assign Callsign</h2>
+        <h1 className="text-2xl font-display font-bold mb-2">Assign Callsign</h1>
         <p className="text-cosmo-text-muted text-sm">Choose a unique identifier for the universe.</p>
       </div>
 

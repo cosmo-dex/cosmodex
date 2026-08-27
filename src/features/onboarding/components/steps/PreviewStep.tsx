@@ -22,7 +22,7 @@ export default function PreviewStep({ data, onNext, onBack }: PreviewStepProps) 
       </div>
 
       <div className="text-center mb-8">
-         <h2 className="text-3xl font-display font-bold mb-2">Profile Activated</h2>
+         <h1 className="text-3xl font-display font-bold mb-2">Profile Activated</h1>
          <p className="text-cosmo-text-muted">This is how cosmoverse will see you.</p>
       </div>
 

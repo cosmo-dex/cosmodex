@@ -116,9 +116,9 @@ export default function AuthStep({ onNext, updateData }: AuthStepProps) {
         transition={{ duration: 0.3 }}
       >
         <div className="text-center mb-8">
-          <h2 className="text-2xl font-display font-bold mb-2 text-white">
+          <h1 className="text-2xl font-display font-bold mb-2 text-white">
             {isLogin ? 'Welcome back' : 'Identity Access'}
-          </h2>
+          </h1>
           <p className="text-cosmo-text-muted text-sm">
             {isLogin ? 'Log in to resume your journey' : 'Authenticate your credentials'}
           </p>

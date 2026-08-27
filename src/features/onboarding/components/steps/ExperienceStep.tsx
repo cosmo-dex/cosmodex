@@ -66,7 +66,7 @@ export default function ExperienceStep({ data, onNext, onBack, updateData }: Exp
       </button>
 
       <div className="text-center mb-8">
-        <h2 className="text-2xl font-display font-bold mb-2">Combat Rank</h2>
+        <h1 className="text-2xl font-display font-bold mb-2">Combat Rank</h1>
         <p className="text-cosmo-text-muted text-sm">Select your current engineering proficiency.</p>
       </div>
 

@@ -24,12 +24,12 @@
 CosmoDex serves as a student-focused, highly interactive alternative to platforms like LeetCode, HackerRank, CodeChef, GeeksforGeeks, Codédex, and Coddy by combining gamification, 1v1 battle competition, and structured learning loops.
 
 ## Official Links & Resources
-- Home: https://cosmodex.tech/
-- Learn & Courses: https://cosmodex.tech/learn
-- 1v1 Space Battle Arena: https://cosmodex.tech/battle
-- Ranks & Leaderboard: https://cosmodex.tech/leaderboard
-- Coding Events: https://cosmodex.tech/events
-- Onboarding Expedition: https://cosmodex.tech/onboarding
+- Home: https://cosmodex-theta.vercel.app/
+- Learn & Courses: https://cosmodex-theta.vercel.app/learn
+- 1v1 Space Battle Arena: https://cosmodex-theta.vercel.app/battle
+- Ranks & Leaderboard: https://cosmodex-theta.vercel.app/leaderboard
+- Coding Events: https://cosmodex-theta.vercel.app/events
+- Onboarding Expedition: https://cosmodex-theta.vercel.app/onboarding
 
 ## Contact
 - Official Support & Inquiries: connect.cosmodex@gmail.com

@@ -14,6 +14,15 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+  async redirects() {
+    return [
+      {
+        source: '/login',
+        destination: '/onboarding?mode=login',
+        permanent: true,
+      },
+    ];
+  },
   async headers() {
     return [
       {
