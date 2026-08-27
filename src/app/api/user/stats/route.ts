@@ -14,17 +14,19 @@ export async function GET(req: NextRequest) {
         experienceLevel: 'Initiate',
         elo: 1000,
         mcqElo: 1000,
-        wins: 12,
-        losses: 3,
-        draws: 1,
-        streak: 5,
-        bestStreak: 8,
-        arenaXp: 1250,
-        totalSolved: 15,
-        badgeCount: 3,
+        wins: 0,
+        losses: 0,
+        draws: 0,
+        streak: 0,
+        bestStreak: 0,
+        arenaXp: 0,
+        totalSolved: 0,
+        badgeCount: 0,
         badges: [],
         activities: [],
         enrollments: [],
+        recentMatches: [],
+        avgTime: "—",
       });
     }
 
@@ -194,13 +196,13 @@ export async function GET(req: NextRequest) {
       .map((m) => (m.ended_at && m.started_at ? Math.max(1, Math.round((new Date(m.ended_at).getTime() - new Date(m.started_at).getTime()) / 1000)) : null))
       .filter((d): d is number => d !== null);
 
-    const avgSecsTotal = completedDurations.length > 0
-      ? Math.round(completedDurations.reduce((acc, curr) => acc + curr, 0) / completedDurations.length)
-      : 255;
-
-    const avgMins = Math.floor(avgSecsTotal / 60);
-    const avgSecsRem = avgSecsTotal % 60;
-    const avgTime = `${avgMins}m${avgSecsRem < 10 ? '0' : ''}${avgSecsRem}s`;
+    let avgTime = "—";
+    if (completedDurations.length > 0) {
+      const avgSecsTotal = Math.round(completedDurations.reduce((acc, curr) => acc + curr, 0) / completedDurations.length);
+      const avgMins = Math.floor(avgSecsTotal / 60);
+      const avgSecsRem = avgSecsTotal % 60;
+      avgTime = `${avgMins}m${avgSecsRem < 10 ? '0' : ''}${avgSecsRem}s`;
+    }
 
     return NextResponse.json({
       username: user?.username ?? '',

@@ -157,11 +157,11 @@ export default function PythonCoursePage() {
             parsedProg.username = userSession?.username || "Explorer";
           }
            
-          setUserProgress((prev) => ({
+          setUserProgress({
             ...parsedProg,
             username: userSession?.username || parsedProg.username || "Explorer",
             avatarUrl: userSession?.avatarId || parsedProg.avatarUrl || "/images/avatars/nebula.webp",
-          }));
+          });
         }
       }
     } catch {
@@ -249,7 +249,7 @@ export default function PythonCoursePage() {
     } catch {
       // Ignore storage errors
     }
-  }, [chapters, userProgress, userSession]);
+  }, [chapters, userProgress, userSession, getUserStorageKey]);
 
   const handleLaunchMission = (chapter: Chapter, exercise?: Exercise) => {
     const targetExercise = exercise || chapter.exercises.find((ex) => ex.isUnlocked) || chapter.exercises[0];
