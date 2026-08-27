@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
 import {
   ChevronDown,
   BookOpen,
@@ -16,6 +16,15 @@ import {
 import { NotificationBell } from "../notification/notification-bell";
 import { getAvatarUrl } from "@/lib/avatar";
 import { useAuth } from "@/context/AuthContext";
+
+const emptySubscribe = () => () => {};
+function useMounted() {
+  return useSyncExternalStore(
+    emptySubscribe,
+    () => true,
+    () => false
+  );
+}
 
 const navItems = [
   {
@@ -49,6 +58,7 @@ const navItems = [
 export default function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
+  const mounted = useMounted();
   const { user, logout } = useAuth();
 
   useEffect(() => {
@@ -207,60 +217,65 @@ export default function Navbar() {
           })}
         </nav>
 
-        <div className="flex items-center gap-2">
-          {user && (
-            <Link
-              href="/profile"
-              className="flex items-center gap-2 pl-1 group cursor-pointer"
-              title="View Profile"
-            >
-              <span className="hidden max-w-[120px] truncate text-sm font-bold text-white/80 group-hover:text-[#E873C3] transition-colors lg:inline">
-                {user.username}
-              </span>
+        {(() => {
+          const currentUser = mounted ? user : null;
+          return (
+            <div className="flex items-center gap-2">
+              {currentUser && (
+                <Link
+                  href="/profile"
+                  className="flex items-center gap-2 pl-1 group cursor-pointer"
+                  title="View Profile"
+                >
+                  <span className="hidden max-w-[120px] truncate text-sm font-bold text-white/80 group-hover:text-[#E873C3] transition-colors lg:inline">
+                    {currentUser.username}
+                  </span>
 
-              <div className="flex h-8 w-8 items-center justify-center overflow-hidden rounded-full border border-[#E873C3]/70 bg-[#15151c] shadow-[0_0_12px_rgba(232,115,195,0.25)] group-hover:border-[#E873C3] group-hover:shadow-[0_0_18px_rgba(232,115,195,0.5)] transition-all">
-                <Image
-                  src={getAvatarUrl(user.avatarId)}
-                  alt="User avatar"
-                  width={32}
-                  height={32}
-                  sizes="32px"
-                  priority
-                  className="h-full w-full object-cover"
-                />
-              </div>
-            </Link>
-          )}
+                  <div className="flex h-8 w-8 items-center justify-center overflow-hidden rounded-full border border-[#E873C3]/70 bg-[#15151c] shadow-[0_0_12px_rgba(232,115,195,0.25)] group-hover:border-[#E873C3] group-hover:shadow-[0_0_18px_rgba(232,115,195,0.5)] transition-all">
+                    <Image
+                      src={getAvatarUrl(currentUser.avatarId)}
+                      alt="User avatar"
+                      width={32}
+                      height={32}
+                      sizes="32px"
+                      priority
+                      className="h-full w-full object-cover"
+                    />
+                  </div>
+                </Link>
+              )}
 
-          {user ? (
-            <button
-              type="button"
-              onClick={handleLogout}
-              className="hidden h-9 items-center rounded-md border border-white/10 bg-white/[0.03] px-4 text-sm font-bold text-white/90 transition hover:bg-white/[0.07] cursor-pointer sm:inline-flex"
-            >
-              Log out
-            </button>
-          ) : (
-            <Link
-              href="/onboarding"
-              className="dashboard-btn-primary hidden h-9 items-center px-4 text-sm cursor-pointer sm:inline-flex"
-            >
-              Join Crew
-            </Link>
-          )}
+              {currentUser ? (
+                <button
+                  type="button"
+                  onClick={handleLogout}
+                  className="hidden h-9 items-center rounded-md border border-white/10 bg-white/[0.03] px-4 text-sm font-bold text-white/90 transition hover:bg-white/[0.07] cursor-pointer sm:inline-flex"
+                >
+                  Log out
+                </button>
+              ) : (
+                <Link
+                  href="/onboarding"
+                  className="dashboard-btn-primary hidden h-9 items-center px-4 text-sm cursor-pointer sm:inline-flex"
+                >
+                  Join Crew
+                </Link>
+              )}
 
-          {user && <NotificationBell />}
+              {currentUser && <NotificationBell />}
 
-          <button
-            type="button"
-            onClick={() => setMobileOpen((value) => !value)}
-            aria-label={mobileOpen ? "Close menu" : "Open menu"}
-            aria-expanded={mobileOpen}
-            className="btn-icon flex h-9 w-9 items-center justify-center rounded-md md:hidden"
-          >
-            {mobileOpen ? <X size={18} /> : <Menu size={18} />}
-          </button>
-        </div>
+              <button
+                type="button"
+                onClick={() => setMobileOpen((value) => !value)}
+                aria-label={mobileOpen ? "Close menu" : "Open menu"}
+                aria-expanded={mobileOpen}
+                className="btn-icon flex h-9 w-9 items-center justify-center rounded-md md:hidden"
+              >
+                {mobileOpen ? <X size={18} /> : <Menu size={18} />}
+              </button>
+            </div>
+          );
+        })()}
       </div>
 
       {mobileOpen && (
@@ -291,7 +306,7 @@ export default function Navbar() {
           </div>
 
           <div className="mt-3 border-t border-white/[0.08] pt-3">
-            {user ? (
+            {mounted && user ? (
               <button
                 type="button"
                 onClick={handleLogout}

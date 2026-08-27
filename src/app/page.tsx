@@ -1,4 +1,5 @@
 import Navbar from "@/components/navbar/Navbar";
+import HeroSection from "@/components/landing/HeroSection";
 import CoursesSection from "@/components/landing/CoursesSection";
 import BattleArenaSection from "@/components/landing/BattleArenaSection";
 import LevelUpSection from "@/components/landing/LevelUpSection";
@@ -26,6 +27,7 @@ export default function Home() {
       <Navbar />
       <ClickParticles />
 
+      <HeroSection />
       <CoursesSection />
       <BattleArenaSection />
       <LevelUpSection />

@@ -124,42 +124,110 @@ export default function Mascot() {
 
     const question = inputValue.trim();
 
-    // Add user message
+    // 1. Add user message AND empty bot message placeholder
     setMessages((prev) => [
       ...prev,
-      {
-        text: question,
-        isUser: true,
-      },
+      { text: question, isUser: true },
+      { text: "", isUser: false },
     ]);
 
     setInputValue("");
     setIsTyping(true);
 
     try {
-      // Temporary simulated response
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-
-      const reply =
-        "👋 Hi! I'm Cosmo. How can I help you with your cosmic coding journey today?";
-
-      setMessages((prev) => [
-        ...prev,
-        {
-          text: reply,
-          isUser: false,
+      const apiUrl = process.env.NEXT_PUBLIC_CHATBOT_API_URL || "http://localhost:5000";
+      const response = await fetch(`${apiUrl}/chat`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
         },
-      ]);
+        body: JSON.stringify({ message: question }),
+      });
+
+      if (!response.ok || !response.body) {
+        throw new Error(`Server returned ${response.status}`);
+      }
+
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let assistantText = "";
+      let buffer = "";
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split("\n");
+        buffer = lines.pop() || "";
+
+        for (const line of lines) {
+          const trimmed = line.trim();
+          if (!trimmed.startsWith("data: ")) continue;
+          const dataStr = trimmed.slice(6).trim();
+          if (!dataStr) continue;
+          if (dataStr === "[DONE]") break;
+
+          try {
+            const parsed = JSON.parse(dataStr);
+
+            // Log which model/provider responded
+            if (parsed.provider || parsed.model) {
+              console.log(
+                `%c🤖 [Cosmo AI] Responding Provider: %c${parsed.provider || "Unknown"} %c| Model: %c${parsed.model || "Default"}`,
+                "color: #c084fc; font-weight: bold;",
+                "color: #38bdf8; font-weight: bold;",
+                "color: #94a3b8;",
+                "color: #4ade80; font-weight: bold;"
+              );
+            }
+
+            if (parsed.token) {
+              assistantText += parsed.token;
+              setIsTyping(false);
+
+              setMessages((prev) => {
+                const updated = [...prev];
+                if (updated.length > 0 && !updated[updated.length - 1].isUser) {
+                  updated[updated.length - 1] = {
+                    text: assistantText,
+                    isUser: false,
+                  };
+                }
+                return updated;
+              });
+            }
+          } catch {
+            // Incomplete JSON chunk, will parse on next tick
+          }
+        }
+      }
+
+      if (!assistantText) {
+        setMessages((prev) => {
+          const updated = [...prev];
+          if (updated.length > 0 && !updated[updated.length - 1].isUser) {
+            updated[updated.length - 1] = {
+              text: "🌌 Cosmo was unable to transmit a response. Please try asking again.",
+              isUser: false,
+            };
+          }
+          return updated;
+        });
+      }
     } catch (error) {
       console.error("Assistant Error:", error);
 
-      setMessages((prev) => [
-        ...prev,
-        {
-          text: "Something went wrong. Please try again.",
-          isUser: false,
-        },
-      ]);
+      setMessages((prev) => {
+        const updated = [...prev];
+        if (updated.length > 0 && !updated[updated.length - 1].isUser) {
+          updated[updated.length - 1] = {
+            text: "⚠️ Cosmo is currently out of orbit (Backend unreachable). Please make sure the backend is running.",
+            isUser: false,
+          };
+        }
+        return updated;
+      });
     } finally {
       setIsTyping(false);
     }
@@ -190,7 +258,7 @@ export default function Mascot() {
           pointerEvents: chatOpen ? "none" : "auto",
         }}
         transition={{ duration: 0.2 }}
-        className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-[9999] w-[110px] h-[146px] sm:w-[130px] sm:h-[173px] select-none touch-none cursor-grab active:cursor-grabbing"
+        className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-40 w-[110px] h-[146px] sm:w-[130px] sm:h-[173px] select-none touch-none cursor-grab active:cursor-grabbing"
       >
         {/* Dark Theme Chat Bubble */}
         <div

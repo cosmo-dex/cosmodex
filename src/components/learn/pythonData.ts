@@ -9,6 +9,14 @@ export interface Exercise {
   isBonus?: boolean;
   instruction?: string;
   initialCode?: string;
+  hints?: string[];
+  difficulty?: "Basic" | "Easy" | "Medium" | "Hard";
+  accuracy?: string;
+  submissionsCount?: string;
+  constraints?: string[];
+  expectedComplexity?: { time: string; space: string };
+  companyTags?: string[];
+  exampleBoxes?: { input: string; output: string; explanation?: string }[];
 }
 
 export type PlanetType =
@@ -56,20 +64,31 @@ export interface UserProgressData {
   totalCheatSheets: number;
 }
 
+export const MOCK_PYTHON_CHAPTERS: Chapter[] = PYTHON_COURSE_CHAPTERS as Chapter[];
+
+const TOTAL_PYTHON_EXERCISES = MOCK_PYTHON_CHAPTERS.reduce(
+  (acc, ch) => acc + (ch.exercises ? ch.exercises.length : 0),
+  0
+) || 43;
+
+const TOTAL_PYTHON_XP = MOCK_PYTHON_CHAPTERS.reduce(
+  (acc, ch) => acc + (ch.xpValue || 0),
+  0
+) || 685;
+
 export const MOCK_USER_PROGRESS: UserProgressData = {
-  username: "rizi1",
+  username: "Explorer",
   level: 1,
-  avatarUrl: "/images/mascot.png",
+  avatarUrl: "/images/avatars/nebula.webp",
   exercisesCompleted: 0,
-  totalExercises: 43,
+  totalExercises: TOTAL_PYTHON_EXERCISES,
   projectsCompleted: 0,
   totalProjects: 2,
   xpEarned: 0,
-  totalXp: 685,
+  totalXp: TOTAL_PYTHON_XP,
   badgesUnlocked: 0,
   totalBadges: 8,
   cheatSheetsUnlocked: 0,
   totalCheatSheets: 2,
 };
 
-export const MOCK_PYTHON_CHAPTERS: Chapter[] = PYTHON_COURSE_CHAPTERS as Chapter[];

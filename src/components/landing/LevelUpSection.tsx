@@ -1,10 +1,20 @@
 "use client";
 
-import { useRef } from "react";
+import { useRef, useSyncExternalStore } from "react";
 import { motion, useInView } from "framer-motion";
 import Link from "next/link";
 import Image from "next/image";
 import { Swords, BookOpen, Flame, Zap, ArrowRight, Sparkles } from "lucide-react";
+import { useAuth } from "@/context/AuthContext";
+
+const emptySubscribe = () => () => {};
+function useMounted() {
+  return useSyncExternalStore(
+    emptySubscribe,
+    () => true,
+    () => false
+  );
+}
 
 const MILESTONES = [
   { level: 1, label: "Explorer", xp: 0, color: "#a8b2d1", rgb: "168,178,209", icon: "/images/ranks/explorer.webp" },
@@ -53,6 +63,8 @@ const PROGRESSION_RULES = [
 export default function LevelUpSection() {
   const ref = useRef<HTMLDivElement>(null);
   const isInView = useInView(ref, { once: true, margin: "-80px" });
+  const { user } = useAuth();
+  const mounted = useMounted();
 
   return (
     <section
@@ -120,92 +132,94 @@ export default function LevelUpSection() {
           </p>
         </motion.div>
 
-        {/* ── 1ST BLOCK: Start Onboarding CTA ── */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={isInView ? { opacity: 1, y: 0 } : {}}
-          transition={{ duration: 0.7, delay: 0.1 }}
-          style={{ marginBottom: "48px" }}
-        >
-          <div
-            style={{
-              padding: "32px",
-              borderRadius: "24px",
-              background: "linear-gradient(135deg, rgba(155,48,255,0.12) 0%, rgba(18,12,32,0.85) 50%, rgba(8,5,16,0.95) 100%)",
-              border: "1.5px solid rgba(155,48,255,0.35)",
-              boxShadow: "0 16px 48px rgba(155,48,255,0.25), inset 0 1.5px 1px rgba(255,255,255,0.2)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              flexWrap: "wrap",
-              gap: "24px",
-              transform: "translateZ(0)",
-            }}
+        {/* ── 1ST BLOCK: Start Onboarding CTA (Only shown when not logged in) ── */}
+        {mounted && !user && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={isInView ? { opacity: 1, y: 0 } : {}}
+            transition={{ duration: 0.7, delay: 0.1 }}
+            style={{ marginBottom: "48px" }}
           >
-            <div>
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "8px",
-                  fontSize: "12px",
-                  fontWeight: 700,
-                  color: "#c084fc",
-                  letterSpacing: "0.08em",
-                  textTransform: "uppercase",
-                  fontFamily: "var(--font-mono), 'Fira Code', monospace",
-                  marginBottom: "8px",
-                }}
-              >
-                <Sparkles size={14} /> Start Your Cosmic Journey
-              </div>
-              <h3
-                style={{
-                  fontSize: "22px",
-                  fontWeight: 700,
-                  color: "#ffffff",
-                  fontFamily: "var(--font-body), sans-serif",
-                  margin: "0 0 6px 0",
-                }}
-              >
-                Ready to Level Up and Unlock Cosmic Leagues?
-              </h3>
-              <p
-                style={{
-                  fontSize: "13.5px",
-                  color: "rgba(240,230,255,0.6)",
-                  fontFamily: "var(--font-body), 'Fira Code', monospace",
-                  margin: 0,
-                  maxWidth: "560px",
-                }}
-              >
-                Join thousands of developers earning XP through interactive coding lessons, 1v1 battle matches, and daily streaks.
-              </p>
-            </div>
-
-            <Link
-              href="/onboarding?mode=login"
+            <div
               style={{
-                display: "inline-flex",
+                padding: "32px",
+                borderRadius: "24px",
+                background: "linear-gradient(135deg, rgba(155,48,255,0.12) 0%, rgba(18,12,32,0.85) 50%, rgba(8,5,16,0.95) 100%)",
+                border: "1.5px solid rgba(155,48,255,0.35)",
+                boxShadow: "0 16px 48px rgba(155,48,255,0.25), inset 0 1.5px 1px rgba(255,255,255,0.2)",
+                display: "flex",
                 alignItems: "center",
-                gap: "10px",
-                padding: "14px 28px",
-                borderRadius: "14px",
-                background: "linear-gradient(135deg, #9b30ff 0%, #ff2d78 100%)",
-                color: "#ffffff",
-                fontSize: "14.5px",
-                fontWeight: 700,
-                fontFamily: "var(--font-body), sans-serif",
-                boxShadow: "0 8px 24px rgba(155,48,255,0.45)",
-                transition: "transform 0.25s ease, box-shadow 0.25s ease",
-                textDecoration: "none",
-                flexShrink: 0,
+                justifyContent: "space-between",
+                flexWrap: "wrap",
+                gap: "24px",
+                transform: "translateZ(0)",
               }}
             >
-              Start Onboarding <ArrowRight size={18} />
-            </Link>
-          </div>
-        </motion.div>
+              <div>
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "8px",
+                    fontSize: "12px",
+                    fontWeight: 700,
+                    color: "#c084fc",
+                    letterSpacing: "0.08em",
+                    textTransform: "uppercase",
+                    fontFamily: "var(--font-mono), 'Fira Code', monospace",
+                    marginBottom: "8px",
+                  }}
+                >
+                  <Sparkles size={14} /> Start Your Cosmic Journey
+                </div>
+                <h3
+                  style={{
+                    fontSize: "22px",
+                    fontWeight: 700,
+                    color: "#ffffff",
+                    fontFamily: "var(--font-body), sans-serif",
+                    margin: "0 0 6px 0",
+                  }}
+                >
+                  Ready to Level Up and Unlock Cosmic Leagues?
+                </h3>
+                <p
+                  style={{
+                    fontSize: "13.5px",
+                    color: "rgba(240,230,255,0.6)",
+                    fontFamily: "var(--font-body), 'Fira Code', monospace",
+                    margin: 0,
+                    maxWidth: "560px",
+                  }}
+                >
+                  Join thousands of developers earning XP through interactive coding lessons, 1v1 battle matches, and daily streaks.
+                </p>
+              </div>
+
+              <Link
+                href="/onboarding"
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "10px",
+                  padding: "14px 28px",
+                  borderRadius: "14px",
+                  background: "linear-gradient(135deg, #9b30ff 0%, #ff2d78 100%)",
+                  color: "#ffffff",
+                  fontSize: "14.5px",
+                  fontWeight: 700,
+                  fontFamily: "var(--font-body), sans-serif",
+                  boxShadow: "0 8px 24px rgba(155,48,255,0.45)",
+                  transition: "transform 0.25s ease, box-shadow 0.25s ease",
+                  textDecoration: "none",
+                  flexShrink: 0,
+                }}
+              >
+                Start Onboarding <ArrowRight size={18} />
+              </Link>
+            </div>
+          </motion.div>
+        )}
 
         {/* ── 2ND BLOCK: 6 Horizontal Sleek Rank Items Track ── */}
         <motion.div

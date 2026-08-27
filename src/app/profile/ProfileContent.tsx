@@ -195,13 +195,13 @@ export default function ProfileContent({
   interests: initialInterests,
   xpTotal = 0,
   level = 1,
-  streak,
-  badgeCount,
+  streak = 0,
+  badgeCount = 0,
   starPoints = 0,
   bio: initialBio = 'Full-Stack Cosmo Coder 🌌 Grinding Python, React & AI algorithms on CosmoDeX.',
   avatarUrl: initialAvatarUrl = '/images/avatars/nebula.webp',
-  arenaWins = 12,
-  arenaLosses = 3,
+  arenaWins = 0,
+  arenaLosses = 0,
 }: ProfileContentProps) {
   const [activeTab, setActiveTab] = useState<'overview' | 'practice' | 'battles'>('overview');
   const [badgeFilter, setBadgeFilter] = useState<'all' | 'earned' | 'locked'>('all');

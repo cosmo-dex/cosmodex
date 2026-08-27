@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import Navbar from "@/components/navbar/Navbar";
 import { motion } from "framer-motion";
 import { Star, Rocket } from "lucide-react";
@@ -9,7 +10,6 @@ import GalaxyPathMap from "@/components/learn/GalaxyPathMap";
 import ProgressSidebar from "@/components/learn/ProgressSidebar";
 import { Starfield } from "@/components/leaderboard/Starfield";
 import MissionModal from "@/components/learn/MissionModal";
-import SmoothScroll from "@/components/landing/SmoothScroll";
 import {
   MOCK_PYTHON_CHAPTERS,
   MOCK_USER_PROGRESS,
@@ -19,6 +19,7 @@ import {
 } from "@/components/learn/pythonData";
 
 export default function PythonCoursePage() {
+  const pathname = usePathname();
   const [chapters, setChapters] = useState<Chapter[]>(MOCK_PYTHON_CHAPTERS);
   const [userProgress, setUserProgress] = useState<UserProgressData>(MOCK_USER_PROGRESS);
   const [selectedChapter, setSelectedChapter] = useState<Chapter>(MOCK_PYTHON_CHAPTERS[0]);
@@ -26,11 +27,98 @@ export default function PythonCoursePage() {
   const [activeMissionChapter, setActiveMissionChapter] = useState<Chapter | null>(null);
   const [activeMissionExercise, setActiveMissionExercise] = useState<Exercise | null>(null);
 
-  // Load user progress from localStorage on initial render
+  const [userSession, setUserSession] = useState<{
+    id?: string;
+    username?: string;
+    avatarId?: string;
+    level?: number;
+    xpTotal?: number;
+  } | null>(null);
+
+  // Helper to isolate localStorage per logged-in user
+  const getUserStorageKey = useCallback(
+    (key: string) => {
+      const userIdentifier = userSession?.id || userSession?.username || "guest";
+      return `${key}_${userIdentifier}`;
+    },
+    [userSession]
+  );
+
+  // Always scroll to top of page on navigation unless a specific station hash (ch-*) is present
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    if ("scrollRestoration" in window.history) {
+      window.history.scrollRestoration = "manual";
+    }
+
+    const currentHash = window.location.hash.replace("#", "").toLowerCase();
+    const isSpecificStationHash = currentHash.startsWith("ch-") || currentHash.startsWith("station-");
+
+    // Clean up generic #python hash if present from /learn page navigation
+    if (currentHash === "python") {
+      window.history.replaceState(null, "", window.location.pathname);
+    }
+
+    if (!isSpecificStationHash) {
+      const resetToTop = () => {
+        window.scrollTo(0, 0);
+        if (window.__lenis) {
+          window.__lenis.scrollTo(0, { immediate: true });
+        }
+      };
+
+      resetToTop();
+      const raf1 = requestAnimationFrame(resetToTop);
+      const raf2 = requestAnimationFrame(() => requestAnimationFrame(resetToTop));
+      const t1 = setTimeout(resetToTop, 50);
+      const t2 = setTimeout(resetToTop, 150);
+      const t3 = setTimeout(resetToTop, 400);
+
+      return () => {
+        cancelAnimationFrame(raf1);
+        cancelAnimationFrame(raf2);
+        clearTimeout(t1);
+        clearTimeout(t2);
+        clearTimeout(t3);
+      };
+    }
+  }, [pathname]);
+
+  // 1. Fetch authenticated session user details dynamically
+  useEffect(() => {
+    async function fetchUserSession() {
+      try {
+        const res = await fetch("/api/auth/session", { credentials: "include" });
+        if (res.ok) {
+          const data = await res.json();
+          if (data?.user?.username) {
+            setUserSession(data.user);
+             
+            setUserProgress((prev) => ({
+              ...prev,
+              username: data.user.username,
+              avatarUrl: data.user.avatarId || data.user.avatar_url || prev.avatarUrl,
+              level: data.user.level || prev.level,
+            }));
+          }
+        }
+      } catch {
+        // Ignore network errors
+      }
+    }
+    fetchUserSession();
+  }, []);
+
+  // 2. Load user-specific progress from localStorage when session resolves or on mount
   useEffect(() => {
     try {
-      const savedChapters = localStorage.getItem("cosmodex_python_chapters");
-      const savedProgress = localStorage.getItem("cosmodex_python_progress");
+      const chaptersKey = getUserStorageKey("cosmodex_python_chapters");
+      const progressKey = getUserStorageKey("cosmodex_python_progress");
+
+      const savedChapters = localStorage.getItem(chaptersKey) || localStorage.getItem("cosmodex_python_chapters");
+      const savedProgress = localStorage.getItem(progressKey) || localStorage.getItem("cosmodex_python_progress");
+
       if (savedChapters) {
         const parsed = JSON.parse(savedChapters);
         if (Array.isArray(parsed) && parsed.length > 0) {
@@ -61,23 +149,77 @@ export default function PythonCoursePage() {
           setSelectedChapter(mergedChapters[0]);
         }
       }
+
       if (savedProgress) {
         const parsedProg = JSON.parse(savedProgress);
         if (parsedProg) {
-          setUserProgress(parsedProg);
+          if (parsedProg.username === "rizi1" || parsedProg.username === "rizzi") {
+            parsedProg.username = userSession?.username || "Explorer";
+          }
+           
+          setUserProgress({
+            ...parsedProg,
+            username: userSession?.username || parsedProg.username || "Explorer",
+            avatarUrl: userSession?.avatarId || parsedProg.avatarUrl || "/images/avatars/nebula.webp",
+          });
         }
       }
     } catch {
       // Ignore storage errors
     }
-  }, []);
+  }, [userSession, getUserStorageKey]);
 
-  // Scroll to station if hash exists in URL (e.g. /learn/python#ch-2)
+  // 3. Synchronize dynamic user metrics (exercises, projects, badges, cheat sheets, XP, level)
   useEffect(() => {
-    const hash = window.location.hash.replace("#", "");
-    if (hash && chapters.length > 0) {
+    const totalEx = chapters.reduce((acc, ch) => acc + (ch.exercises ? ch.exercises.length : 0), 0);
+    const completedEx = chapters.reduce(
+      (acc, ch) => acc + (ch.exercises ? ch.exercises.filter((e) => e.isCompleted).length : 0),
+      0
+    );
+
+    const totalProjectsCount = chapters.filter((ch) => ch.isMilestone).length || 2;
+    const completedProjectsCount = chapters.filter((ch) => ch.isMilestone && ch.isCompleted).length;
+
+    const completedChaptersCount = chapters.filter((ch) => ch.isCompleted).length;
+    const totalBadgesCount = chapters.length;
+
+    const ch4Done = chapters[3]?.isCompleted ?? false;
+    const ch8Done = chapters[7]?.isCompleted ?? false;
+    const cheatSheetsCount = (ch4Done ? 1 : 0) + (ch8Done ? 1 : 0);
+
+    const totalXpSum = chapters.reduce((acc, ch) => acc + (ch.xpValue || 0), 0) || 685;
+    const courseEarnedXp = completedEx * 55 + completedChaptersCount * 50;
+    const currentTotalXp = (userSession?.xpTotal ?? 0) + courseEarnedXp;
+
+    const currentLevel = userSession?.level ?? Math.max(1, Math.floor(currentTotalXp / 250) + 1);
+
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setUserProgress((prev) => ({
+      ...prev,
+      username: userSession?.username || prev.username || "Explorer",
+      avatarUrl: userSession?.avatarId || prev.avatarUrl || "/images/avatars/nebula.webp",
+      level: currentLevel,
+      totalExercises: totalEx || prev.totalExercises,
+      exercisesCompleted: completedEx,
+      totalProjects: totalProjectsCount,
+      projectsCompleted: completedProjectsCount,
+      totalXp: totalXpSum,
+      xpEarned: courseEarnedXp,
+      totalBadges: totalBadgesCount,
+      badgesUnlocked: completedChaptersCount,
+      totalCheatSheets: 2,
+      cheatSheetsUnlocked: cheatSheetsCount,
+    }));
+  }, [chapters, userSession]);
+
+  // Scroll to station ONLY if a specific station hash exists in URL (e.g. /learn/python#ch-2)
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const hash = window.location.hash.replace("#", "").toLowerCase();
+
+    if (hash && (hash.startsWith("ch-") || hash.startsWith("station-")) && chapters.length > 0) {
       const matched = chapters.find(
-        (c) => c.id === hash || c.theoryLessonId === hash
+        (c) => c.id.toLowerCase() === hash || c.theoryLessonId?.toLowerCase() === hash
       );
       if (matched) {
         // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -92,15 +234,22 @@ export default function PythonCoursePage() {
     }
   }, [chapters]);
 
-  // Save chapters and progress to localStorage on change
+  // Save isolated user chapters and progress to localStorage on change
   useEffect(() => {
     try {
+      const chaptersKey = getUserStorageKey("cosmodex_python_chapters");
+      const progressKey = getUserStorageKey("cosmodex_python_progress");
+
+      localStorage.setItem(chaptersKey, JSON.stringify(chapters));
+      localStorage.setItem(progressKey, JSON.stringify(userProgress));
+
+      // Update generic fallback key
       localStorage.setItem("cosmodex_python_chapters", JSON.stringify(chapters));
       localStorage.setItem("cosmodex_python_progress", JSON.stringify(userProgress));
     } catch {
       // Ignore storage errors
     }
-  }, [chapters, userProgress]);
+  }, [chapters, userProgress, userSession, getUserStorageKey]);
 
   const handleLaunchMission = (chapter: Chapter, exercise?: Exercise) => {
     const targetExercise = exercise || chapter.exercises.find((ex) => ex.isUnlocked) || chapter.exercises[0];
@@ -108,6 +257,20 @@ export default function PythonCoursePage() {
     setActiveMissionChapter(chapter);
     setActiveMissionExercise(targetExercise);
     setIsMissionOpen(true);
+  };
+
+  const handleCloseMission = () => {
+    setIsMissionOpen(false);
+    if (activeMissionChapter) {
+      setTimeout(() => {
+        const el =
+          document.getElementById(activeMissionChapter.id) ||
+          document.getElementById(`station-${activeMissionChapter.id}`);
+        if (el) {
+          el.scrollIntoView({ behavior: "smooth", block: "center" });
+        }
+      }, 150);
+    }
   };
 
   const handleCompleteExercise = (chapterId: string, exerciseId: string) => {
@@ -193,7 +356,6 @@ export default function PythonCoursePage() {
 
   return (
     <main className="min-h-screen bg-[#05040d] relative text-white">
-      <SmoothScroll />
       <Navbar />
 
       {/* Background Space Effects with Canvas Starfield */}
@@ -297,7 +459,7 @@ export default function PythonCoursePage() {
         isOpen={isMissionOpen}
         chapter={activeMissionChapter}
         exercise={activeMissionExercise}
-        onClose={() => setIsMissionOpen(false)}
+        onClose={handleCloseMission}
         onCompleteExercise={handleCompleteExercise}
         onNextMission={handleNextMission}
       />
