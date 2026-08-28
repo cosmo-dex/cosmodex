@@ -47,7 +47,7 @@ export default function InterestsStep({ data, onNext, onBack, updateData }: Inte
       </button>
 
       <div className="text-center mb-8">
-        <h2 className="text-2xl font-display font-bold mb-2">Systems Calibration</h2>
+        <h1 className="text-2xl font-display font-bold mb-2">Systems Calibration</h1>
         <p className="text-cosmo-text-muted text-sm">Select at least one sector of interest.</p>
       </div>
 

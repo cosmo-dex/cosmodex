@@ -92,9 +92,9 @@ export default function CompletionStep({ data }: CompletionStepProps) {
           animate={{ scale: [1, 1.5, 1], opacity: [0.5, 0.8, 0.5] }}
           transition={{ duration: 2, repeat: Infinity }}
         />
-        <h2 className="text-4xl sm:text-5xl font-display font-bold tracking-tight text-white drop-shadow-lg relative z-10">
+        <h1 className="text-4xl sm:text-5xl font-display font-bold tracking-tight text-white drop-shadow-lg relative z-10">
           Welcome Aboard,<br /> <span className="text-gradient-1">{data.username}</span>
-        </h2>
+        </h1>
         <p className="text-cosmo-text-muted text-lg relative z-10">
           {error ? (
             <span className="text-rose-400 font-mono text-base">{error}</span>
