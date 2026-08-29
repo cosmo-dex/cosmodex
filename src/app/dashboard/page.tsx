@@ -43,11 +43,27 @@ export default async function DashboardPage() {
     languageCode: string;
     iconUrl: string | null;
     currentModuleTitle: string | null;
+    totalModules: number;
+    completedModules: number;
   }> = [];
 
   if (userId) {
     try {
-      const [dbUser, arenaStats, userBadges, recentProgress, userEnrollments] = await Promise.all([
+      // First fetch enrollments to get language IDs
+      const userEnrollments = await prisma.enrollments.findMany({
+        where: { user_id: userId, is_active: true },
+        include: {
+          languages: { select: { id: true, name: true, code: true, icon_url: true } },
+          modules: { select: { title: true } },
+        },
+        orderBy: { enrolled_at: 'desc' },
+        take: 5,
+      });
+
+      const languageIds = userEnrollments.map(e => e.languages.id);
+
+      // Then fetch other data in parallel
+      const [dbUser, arenaStats, userBadges, recentProgress, languageModules, userModuleCompletions] = await Promise.all([
         prisma.users.findUnique({
           where: { id: userId },
           select: { avatar_url: true, username: true, experience_level: true, level: true, xp_total: true },
@@ -77,14 +93,23 @@ export default async function DashboardPage() {
           orderBy: { completed_at: 'desc' },
           take: 8,
         }),
-        prisma.enrollments.findMany({
-          where: { user_id: userId, is_active: true },
-          include: {
-            languages: { select: { id: true, name: true, code: true, icon_url: true } },
-            modules: { select: { title: true } },
+        // Fetch total modules per language for enrolled languages
+        prisma.modules.findMany({
+          where: {
+            language_id: { in: languageIds },
+            is_published: true,
           },
-          orderBy: { enrolled_at: 'desc' },
-          take: 5,
+          select: { language_id: true, id: true },
+        }),
+        // Fetch user's completed modules for enrolled languages
+        prisma.module_completions.findMany({
+          where: {
+            user_id: userId,
+            modules: {
+              language_id: { in: languageIds },
+            },
+          },
+          select: { module_id: true, modules: { select: { language_id: true } } },
         }),
       ]);
 
@@ -128,12 +153,28 @@ export default async function DashboardPage() {
       activityList.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
       activities = activityList.slice(0, 8);
 
+      // Process module data
+      const languageModuleCounts = new Map<string, number>();
+      for (const m of languageModules) {
+        languageModuleCounts.set(m.language_id, (languageModuleCounts.get(m.language_id) ?? 0) + 1);
+      }
+
+      const userCompletedByLanguage = new Map<string, number>();
+      for (const mc of userModuleCompletions) {
+        const langId = mc.modules?.language_id;
+        if (langId) {
+          userCompletedByLanguage.set(langId, (userCompletedByLanguage.get(langId) ?? 0) + 1);
+        }
+      }
+
       enrollments = userEnrollments.map((e) => ({
         id: e.id,
         languageName: e.languages.name,
         languageCode: e.languages.code,
         iconUrl: e.languages.icon_url ?? null,
         currentModuleTitle: e.modules?.title ?? null,
+        totalModules: languageModuleCounts.get(e.language_id) ?? 0,
+        completedModules: userCompletedByLanguage.get(e.language_id) ?? 0,
       }));
     } catch (e) {
       console.error('[dashboard] Failed to fetch user stats:', e);

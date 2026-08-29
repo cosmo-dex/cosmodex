@@ -10,6 +10,8 @@ export interface DashboardEnrollment {
   languageCode: string;
   iconUrl: string | null;
   currentModuleTitle: string | null;
+  totalModules?: number;
+  completedModules?: number;
   progressPct?: number;
   href?: string;
 }
@@ -65,7 +67,10 @@ export default function GetStartedCard({ enrollments = [] }: GetStartedCardProps
   const selected = enrollments[selectedIdx] ?? enrollments[0];
   const style = getLanguageStyle(selected.languageCode);
   const Icon = style.icon;
-  const progress = selected.progressPct ?? 35;
+  // Calculate dynamic progress based on completed vs total modules
+  const totalModules = selected.totalModules ?? 0;
+  const completedModules = selected.completedModules ?? 0;
+  const progress = totalModules > 0 ? Math.round((completedModules / totalModules) * 100) : (selected.progressPct ?? 0);
   const targetHref = selected.href || (selected.languageCode.toLowerCase().includes('python') ? '/learn/python' : '/learn');
 
   return (
