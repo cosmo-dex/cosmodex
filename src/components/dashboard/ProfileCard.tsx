@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { Star, Flame, Shield, Award } from "lucide-react";
+import { Flame, Shield, Award, Zap } from "lucide-react";
 import { getAvatarUrl, getAvatarCls } from "@/lib/avatar";
 
 interface ProfileCardProps {
@@ -37,7 +37,7 @@ export default function ProfileCard({
 
   const stats = [
     {
-      icon: Star,
+      icon: Zap,
       label: "TOTAL XP",
       value: xpTotal.toLocaleString(),
       color: "text-[#FFD700]",
@@ -99,8 +99,9 @@ export default function ProfileCard({
         <div className="flex justify-between items-end">
           <div>
             <p className="text-[10px] uppercase tracking-wider text-white/50 font-semibold mb-1">Current Progress</p>
-            <p className="text-sm font-medium text-white/80">
-              <span className="text-white font-bold">{xpTotal.toLocaleString()}</span> / {xpNeeded.toLocaleString()} ✦
+            <p className="text-sm font-medium text-white/80 flex items-center gap-1">
+              <span className="text-white font-bold">{xpTotal.toLocaleString()}</span> / {xpNeeded.toLocaleString()}
+              <Zap size={14} className="text-yellow-400 shrink-0" />
             </p>
           </div>
           <p className="text-sm font-medium text-white/60 mb-0.5">to Level {level + 1}</p>

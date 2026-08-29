@@ -14,11 +14,19 @@ export interface SessionPayload {
   exp?: number;
 }
 
-const SECRET_KEY =
-  process.env.SESSION_SECRET ||
-  process.env.NEXTAUTH_SECRET ||
-  process.env.AUTH_SECRET ||
-  'cosmodex-super-secret-key-change-in-production-min-32-chars';
+const SECRET_KEY = (() => {
+  const key =
+    process.env.SESSION_SECRET ||
+    process.env.NEXTAUTH_SECRET ||
+    process.env.AUTH_SECRET;
+  if (!key) {
+    if (process.env.NODE_ENV === 'production') {
+      throw new Error('SESSION_SECRET, NEXTAUTH_SECRET, or AUTH_SECRET must be set in production');
+    }
+    return 'cosmodex-dev-only-fallback-key-not-for-production!!';
+  }
+  return key;
+})();
 
 const textEncoder = new TextEncoder();
 const textDecoder = new TextDecoder();

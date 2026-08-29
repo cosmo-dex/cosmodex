@@ -6,7 +6,7 @@ interface WelcomeBannerProps {
   username?: string;
 }
 
-export default function WelcomeBanner({ username = 'priyanshu' }: WelcomeBannerProps) {
+export default function WelcomeBanner({ username = 'Explorer' }: WelcomeBannerProps) {
   return (
     <div className="flex items-center gap-4 sm:gap-6 relative z-20 w-full">
       {/* Back Button */}

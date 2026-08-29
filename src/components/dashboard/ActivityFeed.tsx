@@ -69,7 +69,10 @@ export default function ActivityFeed({ activities = [] }: ActivityFeedProps) {
                 <div className="flex-1 min-w-0">
                   <p className="text-[14px] font-medium text-white/90 leading-snug">{item.label}</p>
                   {item.xp && item.xp > 0 && (
-                    <p className="text-[11px] text-[#FFD700]/70 font-semibold mt-0.5">+{item.xp} XP</p>
+                    <p className="text-[11px] text-[#FFD700]/70 font-semibold mt-0.5 flex items-center gap-1">
+                      <Zap size={10} className="text-yellow-400 shrink-0" />
+                      +{item.xp} XP
+                    </p>
                   )}
                   <p className="text-[12px] text-white/40 mt-1">{formatRelativeTime(item.timestamp)}</p>
                 </div>

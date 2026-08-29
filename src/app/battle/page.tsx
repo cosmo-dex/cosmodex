@@ -74,9 +74,7 @@ export default function BattlePage() {
     };
   }, []);
 
-  const handleDevBypassLobby = () => {
-    setUser({ userId: 'dev-user-1', username: 'rishi' });
-  };
+
 
   // ── ACTIVE MATCH: full-screen takeover (no navbar / hero) ──────────────────
   if (matchInfo && user) {
@@ -194,12 +192,7 @@ export default function BattlePage() {
                   >
                     Sign In
                   </a>
-                  <button
-                    onClick={handleDevBypassLobby}
-                    className="w-full py-2.5 text-xs font-semibold rounded-xl bg-white/10 hover:bg-white/20 text-white/90 border border-white/20 transition-all cursor-pointer"
-                  >
-                    🔓 Bypass Sign-In (Enter Lobby)
-                  </button>
+
                 </div>
               </div>
             </div>
