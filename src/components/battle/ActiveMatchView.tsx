@@ -2,7 +2,7 @@
 'use client';
 
 import { useEffect, useState, useRef } from 'react';
-import { Socket } from 'socket.io-client';
+import { ArenaSocket } from '@/lib/arenaWsClient';
 import Editor, { type Monaco } from '@monaco-editor/react';
 import { motion } from 'motion/react';
 import { CheckCircle2 } from 'lucide-react';
@@ -122,7 +122,7 @@ interface MatchInfo {
 }
 
 interface Props {
-  socket: Socket | null;
+  socket: ArenaSocket | null;
   matchInfo: MatchInfo;
   userId: string;
   username: string;
@@ -576,7 +576,7 @@ export default function ActiveMatchView({ socket, matchInfo, userId, username, o
 
                 <div className="flex-1 bg-white/[0.05] border border-white/10 p-3 rounded-2xl backdrop-blur-md shadow-inner text-center">
                   <div className="text-2xl md:text-3xl font-black text-cyan-400">
-                    {typeof myPlayerMcq?.totalTimeTaken === 'number' ? `${myPlayerMcq.totalTimeTaken}s` : '—'}
+                    {typeof myPlayerMcq?.totalTimeTaken === 'number' ? `${Number(myPlayerMcq.totalTimeTaken).toFixed(2)}s` : '—'}
                   </div>
                   <div className="text-[10px] text-text-muted mt-1 uppercase tracking-widest font-bold">
                     Total Time

@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element */
 "use client";
 
 import React, { useEffect, useRef, useState, useSyncExternalStore } from 'react';
@@ -5,28 +6,35 @@ import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Rocket, X } from 'lucide-react';
 import RisingStars from '@/component/RisingStar';
+import { getAvatarUrl } from '@/lib/avatar';
 
 interface MatchmakingCinematicProps {
   username: string;
+  userAvatar?: string | null;
   userElo?: number;
   phase: 'SEARCHING' | 'MATCH_FOUND';
   opponent: { username: string; elo: number; avatar?: string } | null;
+  isReady?: boolean;
+  opponentReady?: boolean;
   onEnterBattle: () => void;
   onCancel: () => void;
 }
 
 export default function MatchmakingCinematic({
   username,
+  userAvatar,
   userElo = 1000,
   phase,
   opponent,
+  isReady = false,
+  opponentReady = false,
   onEnterBattle,
   onCancel,
 }: MatchmakingCinematicProps) {
   const [fusionPulse, setFusionPulse] = useState(false);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const mounted = useSyncExternalStore(
-    () => () => {},
+    () => () => { },
     () => true,
     () => false
   );
@@ -504,26 +512,25 @@ export default function MatchmakingCinematic({
                   }}
                 />
 
-                {/* Player Avatar inside Portal */}
                 <motion.div
                   initial={{ opacity: 0, scale: 0.8 }}
                   animate={{
-                    opacity: [0.7, 1, 0.7],
-                    scale: [1, 1.03, 1],
-                    y: [-3, 3, -3]
+                    opacity: [0.8, 1, 0.8],
+                    scale: [1, 1.05, 1],
+                    rotate: [0, 3, -3, 0]
                   }}
                   transition={{
                     opacity: { duration: 3, repeat: Infinity, ease: 'easeInOut' },
                     scale: { duration: 4, repeat: Infinity, ease: 'easeInOut' },
-                    y: { duration: 5, repeat: Infinity, ease: 'easeInOut' }
+                    rotate: { duration: 5, repeat: Infinity, ease: 'easeInOut' }
                   }}
                   style={{
-                    fontSize: '6.5rem',
-                    filter: 'drop-shadow(0 0 25px rgba(168,85,247,0.7))',
+                    fontSize: '5rem',
+                    filter: 'drop-shadow(0 0 25px rgba(217,95,209,0.8))',
                     zIndex: 2
                   }}
                 >
-                  🥷
+                  ⚔️
                 </motion.div>
               </motion.div>
             )}
@@ -543,14 +550,28 @@ export default function MatchmakingCinematic({
             <motion.div
               animate={{ y: [-4, 4, -4] }}
               transition={{ duration: 5, repeat: Infinity, ease: 'easeInOut' }}
-              className="circular-frame"
+              className="w-28 h-28 sm:w-36 sm:h-36 rounded-full bg-gradient-to-tr from-[#9E00F6] via-[#D95FD1] to-[#00FFE9] p-[3px] shadow-[0_0_30px_rgba(158,0,246,0.6)] overflow-hidden relative flex items-center justify-center pointer-events-auto"
             >
-              <div style={{ fontSize: '5rem', filter: 'drop-shadow(0 0 15px rgba(168,85,247,0.5))' }}>🥷</div>
+              <img
+                src={getAvatarUrl(userAvatar)}
+                alt={username}
+                className="w-full h-full rounded-full object-cover border border-white/20"
+                onError={(e) => {
+                  (e.target as HTMLImageElement).src = '/images/avatars/nebula.webp';
+                }}
+              />
+              {isReady && (
+                <div className="absolute inset-0 bg-emerald-950/60 backdrop-blur-[2px] rounded-full border-2 border-emerald-400 flex items-center justify-center">
+                  <span className="bg-emerald-500 text-black font-extrabold text-[10px] uppercase px-2 py-0.5 rounded-full shadow-[0_0_12px_rgba(52,211,153,0.9)]">READY</span>
+                </div>
+              )}
             </motion.div>
 
-            <div style={{ marginTop: '24px', textAlign: 'center' }}>
-              <div style={{ fontSize: '1.6rem', fontWeight: 'bold', color: 'white', fontFamily: 'Hitchcut, sans-serif', letterSpacing: '2px' }}>{username}</div>
-              <div style={{ color: 'var(--text-secondary)', fontSize: '1.1rem', marginTop: '6px', letterSpacing: '1px' }}>ELO <span style={{ color: 'var(--primary-purple)', fontWeight: 'bold' }}>{userElo}</span></div>
+            <div style={{ marginTop: '20px', textAlign: 'center' }}>
+              <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: 'white', letterSpacing: '1px' }}>{username}</div>
+              <div style={{ color: 'rgba(255,255,255,0.6)', fontSize: '1rem', marginTop: '4px', letterSpacing: '1px' }}>
+                ELO <span style={{ color: '#D95FD1', fontWeight: 'bold' }}>{userElo}</span>
+              </div>
             </div>
           </motion.div>
 
@@ -564,14 +585,28 @@ export default function MatchmakingCinematic({
             <motion.div
               animate={{ y: [-4, 4, -4] }}
               transition={{ duration: 5, repeat: Infinity, ease: 'easeInOut', delay: 0.5 }}
-              className="circular-frame"
+              className="w-28 h-28 sm:w-36 sm:h-36 rounded-full bg-gradient-to-tr from-[#FFA249] via-[#E873C3] to-[#8D37D6] p-[3px] shadow-[0_0_30px_rgba(232,115,195,0.6)] overflow-hidden relative flex items-center justify-center pointer-events-auto"
             >
-              <div style={{ fontSize: '5rem', filter: 'drop-shadow(0 0 15px rgba(236,72,153,0.5))' }}>{opponent?.avatar || '🧙'}</div>
+              <img
+                src={getAvatarUrl(opponent?.avatar)}
+                alt={opponent?.username || 'Opponent'}
+                className="w-full h-full rounded-full object-cover border border-white/20"
+                onError={(e) => {
+                  (e.target as HTMLImageElement).src = '/images/avatars/nebula.webp';
+                }}
+              />
+              {opponentReady && (
+                <div className="absolute inset-0 bg-emerald-950/60 backdrop-blur-[2px] rounded-full border-2 border-emerald-400 flex items-center justify-center">
+                  <span className="bg-emerald-500 text-black font-extrabold text-[10px] uppercase px-2 py-0.5 rounded-full shadow-[0_0_12px_rgba(52,211,153,0.9)]">READY</span>
+                </div>
+              )}
             </motion.div>
 
-            <div style={{ marginTop: '24px', textAlign: 'center' }}>
-              <div style={{ fontSize: '1.6rem', fontWeight: 'bold', color: 'white', fontFamily: 'Hitchcut, sans-serif', letterSpacing: '2px' }}>{opponent?.username || 'Opponent'}</div>
-              <div style={{ color: 'var(--text-secondary)', fontSize: '1.1rem', marginTop: '6px', letterSpacing: '1px' }}>ELO <span style={{ color: 'var(--primary-pink)', fontWeight: 'bold' }}>{opponent?.elo || 1000}</span></div>
+            <div style={{ marginTop: '20px', textAlign: 'center' }}>
+              <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: 'white', letterSpacing: '1px' }}>{opponent?.username || 'Opponent'}</div>
+              <div style={{ color: 'rgba(255,255,255,0.6)', fontSize: '1rem', marginTop: '4px', letterSpacing: '1px' }}>
+                ELO <span style={{ color: '#00FFE9', fontWeight: 'bold' }}>{opponent?.elo || 1000}</span>
+              </div>
             </div>
           </motion.div>
 
@@ -584,11 +619,22 @@ export default function MatchmakingCinematic({
               initial={{ opacity: 0, y: 30, scale: 0.95 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
               transition={{ delay: 1.2, type: 'spring', damping: 15, stiffness: 100 }}
-              className="btn-primary"
-              style={{ position: 'absolute', bottom: '22%', pointerEvents: 'auto' }}
+              disabled={isReady}
+              className={`px-8 py-3.5 rounded-2xl font-bold tracking-widest text-sm uppercase transition-all duration-300 shadow-2xl border ${isReady
+                  ? 'bg-emerald-500/20 border-emerald-400/60 text-emerald-300 animate-pulse shadow-[0_0_20px_rgba(52,211,153,0.4)] cursor-wait'
+                  : 'cosmo-btn-primary text-white border-white/20 hover:scale-105 cursor-pointer shadow-[0_0_25px_rgba(217,95,209,0.5)]'
+                }`}
+              style={{ position: 'absolute', bottom: '18%', pointerEvents: 'auto' }}
               onClick={onEnterBattle}
             >
-              ENTER BATTLE
+              {isReady ? (
+                <span className="flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
+                  READY — WAITING FOR OPPONENT...
+                </span>
+              ) : (
+                'ENTER BATTLE'
+              )}
             </motion.button>
           )}
         </AnimatePresence>
