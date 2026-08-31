@@ -111,6 +111,7 @@ export default function Footer() {
             title="Community"
             links={[
               { label: "Join the Crew", href: "/onboarding" },
+              { label: "Blog & News", href: "/blog" },
               { label: "Discord", href: "https://discord.gg", external: true },
               { label: "Forum", href: "/events" },
               { label: "Support", href: "/onboarding?mode=login" },
