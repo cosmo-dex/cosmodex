@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef } from "react";
-import { createArenaSocket, ArenaSocket } from "./arenaWsClient";
+import { io, Socket } from "socket.io-client";
 
 interface QueueData {
   size: number;
@@ -67,8 +67,8 @@ interface SocketError {
 }
 
 export function useArenaSocket(token: string | null) {
-  const socketRef = useRef<ArenaSocket | null>(null);
-  const [socket, setSocket] = useState<ArenaSocket | null>(null);
+  const socketRef = useRef<Socket | null>(null);
+  const [socket, setSocket] = useState<Socket | null>(null);
   const [queueState, setQueueState] = useState<{ status: string; size: number } | null>(null);
   const [matchData, setMatchData] = useState<MatchFoundData | null>(null);
   const [gameState, setGameState] = useState<GameStateData | null>(null);
@@ -83,8 +83,8 @@ export function useArenaSocket(token: string | null) {
   useEffect(() => {
     if (!token) return;
 
-    const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:3001";
-    const newSocket = createArenaSocket(BACKEND_URL, { auth: { token } });
+    const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:3000";
+    const newSocket = io(BACKEND_URL, { auth: { token } });
     socketRef.current = newSocket;
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setSocket(newSocket);

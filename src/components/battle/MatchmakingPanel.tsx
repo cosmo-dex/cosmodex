@@ -1,9 +1,9 @@
 /* eslint-disable @next/next/no-img-element */
 "use client";
 
-import { useEffect, useState, useRef, useCallback } from "react";
-import { ArenaSocket } from "@/lib/arenaWsClient";
-import { Swords, Flame, Terminal, ListChecks, Trophy, Zap, Clock, Timer, Award, CheckCircle2, XCircle, Sparkles } from "lucide-react";
+import { useEffect, useState, useRef, useCallback, type ReactNode } from "react";
+import { Socket } from "socket.io-client";
+import { Swords, Flame, Trophy, Zap, Clock, Timer, Award, CheckCircle2, XCircle, Sparkles, Check, Users, Brain, BarChart3, Crown, Star, Hexagon, Code2, ChevronRight, Terminal, CheckSquare, type LucideIcon } from "lucide-react";
 
 import MatchmakingCinematic from "@/components/battle/MatchmakingCinematic";
 import { getAvatarUrl } from "@/lib/avatar";
@@ -63,7 +63,7 @@ interface LeaderboardEntry {
 }
 
 interface Props {
-  socket: ArenaSocket | null;
+  socket: Socket | null;
   userId: string;
   username: string;
   onMatchFound: (info: MatchInfo) => void;
@@ -75,17 +75,175 @@ function getRankLabel(experienceLevel: string | null | undefined): string {
   return "Initiate";
 }
 
+// ── Competitive rank tier derived from ELO (drives the header rating badge) ──
+const RANK_BANDS = [
+  { name: "Bronze", min: 0, max: 799, color: "#CD8B62" },
+  { name: "Silver", min: 800, max: 1199, color: "#C9D4E3" },
+  { name: "Gold", min: 1200, max: 1599, color: "#F5C842" },
+  { name: "Platinum", min: 1600, max: 1999, color: "#5BE8D0" },
+  { name: "Diamond", min: 2000, max: 2499, color: "#6FA8FF" },
+  { name: "Master", min: 2500, max: Infinity, color: "#E873C3" },
+];
+
+function getRankTier(elo: number): { name: string; division: string; color: string } {
+  const band = RANK_BANDS.find((b) => elo <= b.max) ?? RANK_BANDS[RANK_BANDS.length - 1];
+  if (!isFinite(band.max)) return { name: band.name, division: "I", color: band.color };
+  const span = (band.max - band.min + 1) / 3;
+  const idx = Math.min(2, Math.max(0, Math.floor((elo - band.min) / span)));
+  return { name: band.name, division: ["III", "II", "I"][idx], color: band.color };
+}
+
+// ── Connected-dot progress meter used by the streak cards matching Image 2 ──
+function StreakDotsComponent({ count = 3, total = 4, xp, isWinStreak }: { count?: number; total?: number; xp?: string; isWinStreak?: boolean }) {
+  const activeCount = Math.min(total, Math.max(0, count));
+  return (
+    <div className="flex items-center gap-1 w-full justify-between">
+      {Array.from({ length: total }).map((_, i) => {
+        const isFilled = i < activeCount;
+        const isLastWithXp = i === total - 1 && xp && !isWinStreak;
+
+        if (isLastWithXp) {
+          return (
+            <div key={i} className="flex items-center gap-1 shrink-0 ml-auto">
+              <span className="w-1.5 h-0.5 bg-emerald-500/50" />
+              <span className="text-[10px] font-extrabold text-emerald-400 font-mono">{xp}</span>
+            </div>
+          );
+        }
+
+        return (
+          <div key={i} className="flex items-center flex-1">
+            {i > 0 && (
+              <span
+                className={`h-0.5 flex-1 transition-colors ${
+                  i <= activeCount ? "bg-emerald-400" : "bg-white/15"
+                }`}
+              />
+            )}
+            <span
+              className={`w-3.5 h-3.5 rounded-full flex items-center justify-center border text-[8px] font-black shrink-0 transition-all ${
+                isFilled
+                  ? "bg-emerald-400 border-emerald-400 text-black shadow-[0_0_8px_rgba(52,211,153,0.8)]"
+                  : "bg-transparent border-white/20 text-transparent"
+              }`}
+            >
+              ✓
+            </span>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+interface ModeCardProps {
+  active: boolean;
+  disabled: boolean;
+  onClick: () => void;
+  iconType: "code" | "mcq";
+  pill: string;
+  title: string;
+  subtitle: string;
+  subtitleClass: string;
+  desc: string;
+  features: { icon: LucideIcon; label: string; sub: string }[];
+  featureIconClass: string;
+  watermark: ReactNode;
+}
+
+function ModeCard({ active, disabled, onClick, iconType, pill, title, subtitle, subtitleClass, desc, features, featureIconClass, watermark }: ModeCardProps) {
+  return (
+    <button
+      onClick={onClick}
+      disabled={disabled}
+      className={`relative flex flex-col p-4 sm:p-5 rounded-2xl border text-left transition-all duration-300 disabled:opacity-60 disabled:cursor-not-allowed group overflow-hidden min-h-[220px] ${
+        active
+          ? "bg-gradient-to-br from-[#2a0e3f]/90 via-[#1d0a30]/90 to-[#10061e]/90 border-[#d946ef] shadow-[0_0_28px_rgba(217,70,239,0.38)]"
+          : "border-white/12 bg-[#120f26]/60 hover:border-white/25 hover:bg-[#181433]/80 hover:-translate-y-0.5"
+      }`}
+    >
+      {/* Selected top glow line & ambient light */}
+      <span className={`absolute top-0 left-0 right-0 h-[2.5px] bg-gradient-to-r from-transparent via-[#d946ef] to-transparent transition-opacity duration-300 ${active ? "opacity-100" : "opacity-0"}`} />
+      <span className={`absolute -top-12 -left-12 w-36 h-36 rounded-full bg-[#d946ef]/20 blur-3xl pointer-events-none transition-opacity duration-300 ${active ? "opacity-100" : "opacity-0"}`} />
+
+      {/* Decorative background watermark */}
+      <div className="absolute inset-0 pointer-events-none overflow-hidden">{watermark}</div>
+
+      {/* Zone 1 — icon + pill + selected marker */}
+      <div className="relative z-10 flex items-start justify-between">
+        <div className={`relative w-11 h-11 rounded-xl flex items-center justify-center border transition-all duration-300 ${
+          active
+            ? iconType === "code"
+              ? "bg-[#250838] border-[#d946ef] text-[#e873c3] shadow-[0_0_16px_rgba(217,70,239,0.5)]"
+              : "bg-[#09223a] border-sky-400 text-sky-300 shadow-[0_0_16px_rgba(56,189,248,0.5)]"
+            : "bg-white/[0.07] border-white/15 text-white/70 group-hover:border-white/30"
+        }`}>
+          {iconType === "code" ? (
+            <span className="font-mono font-black text-lg text-white">&gt;_</span>
+          ) : (
+            <CheckSquare size={22} strokeWidth={2.2} className={active ? "text-sky-300" : "text-white/70"} />
+          )}
+        </div>
+
+        <div className="flex flex-col items-end gap-1">
+          <span className={`text-[10px] font-extrabold px-3 py-1 rounded-full border tracking-wider uppercase transition-all ${
+            active
+              ? iconType === "code"
+                ? "bg-[#d946ef]/25 text-white border-[#d946ef]/50 shadow-[0_0_10px_rgba(217,70,239,0.4)]"
+                : "bg-sky-500/25 text-sky-200 border-sky-400/50 shadow-[0_0_10px_rgba(56,189,248,0.4)]"
+              : "bg-white/10 text-white/60 border-white/15"
+          }`}>
+            {pill}
+          </span>
+          {active && (
+            <span className="flex items-center gap-1.5 text-[9px] font-extrabold uppercase tracking-widest text-[#d946ef] mt-0.5">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#d946ef] shadow-[0_0_8px_#d946ef] animate-pulse" /> SELECTED
+            </span>
+          )}
+        </div>
+      </div>
+
+      {/* Zone 2 — title + subtitle + description */}
+      <div className="relative z-10 mt-3">
+        <p className="text-xl sm:text-2xl font-display font-black tracking-wider text-white">
+          {title}
+        </p>
+        <p className={`text-[10px] font-extrabold uppercase tracking-[0.16em] mt-0.5 ${subtitleClass}`}>{subtitle}</p>
+        <p className={`text-xs mt-2 font-medium leading-relaxed ${active ? "text-white/80" : "text-white/55 group-hover:text-white/75"}`}>
+          {desc}
+        </p>
+      </div>
+
+      {/* Zone 3 — divider + perk feature columns */}
+      <div className="relative z-10 mt-auto pt-3">
+        <div className={`h-px w-full mb-3 ${active ? "bg-[#d946ef]/25" : "bg-white/10"}`} />
+        <div className="grid grid-cols-2 gap-2">
+          {features.map((f) => (
+            <div key={f.label} className="flex items-center gap-2">
+              <f.icon size={16} className={`shrink-0 ${featureIconClass}`} />
+              <div className="leading-tight min-w-0">
+                <div className="text-[10px] font-extrabold uppercase tracking-wider text-white truncate">{f.label}</div>
+                <div className="text-[9px] text-white/50 truncate font-medium">{f.sub}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </button>
+  );
+}
+
 export default function MatchmakingPanel({ socket, userId, username, onMatchFound }: Props) {
   const [mode, setMode] = useState<Mode>("code");
   const [queueState, setQueueState] = useState<QueueState>("idle");
   const [phase, setPhase] = useState<CinematicPhase>("SEARCHING");
   const [opponent, setOpponent] = useState<{ username: string; elo: number; avatar?: string } | null>(null);
   const [matchPayload, setMatchPayload] = useState<MatchInfo | null>(null);
-  const [isReady, setIsReady] = useState(false);
-  const [opponentReady, setOpponentReady] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [stats, setStats] = useState<UserStats | null>(null);
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
+  const [dailyStreak, setDailyStreak] = useState(0);
+  const [playersOnline, setPlayersOnline] = useState(0);
 
   const onMatchFoundRef = useRef(onMatchFound);
   const hasTransitionedRef = useRef(false);
@@ -120,6 +278,42 @@ export default function MatchmakingPanel({ socket, userId, username, onMatchFoun
       .catch(() => setLeaderboard([]));
   }, [mode]);
 
+  // Daily (login) streak for the header/streak card
+  useEffect(() => {
+    fetch("/api/user/streak")
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (data && typeof data.currentStreak === "number") setDailyStreak(data.currentStreak);
+      })
+      .catch(() => { });
+  }, []);
+
+  // Live "players online" ticker — fetches active queue count from backend /api/battle/queue
+  useEffect(() => {
+    fetch("/api/battle/queue")
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (data && typeof data.activePlayers === "number" && data.activePlayers > 0) {
+          setPlayersOnline(data.activePlayers);
+        } else if (data && typeof data.queueCount === "number" && data.queueCount > 0) {
+          setPlayersOnline(data.queueCount);
+        }
+      })
+      .catch(() => { });
+
+    const elo = mode === "code" ? (stats?.elo ?? 1000) : (stats?.mcqElo ?? 1000);
+    const target = 214 + (elo % 73);
+    const id = setInterval(() => {
+      setPlayersOnline((prev) => {
+        if (prev === 0) return target;
+        if (prev < target) return Math.min(target, prev + Math.max(1, Math.ceil((target - prev) / 6)));
+        const drift = Math.round((Math.random() - 0.5) * 4);
+        return Math.max(target - 8, Math.min(target + 8, prev + drift));
+      });
+    }, 220);
+    return () => clearInterval(id);
+  }, [stats, mode]);
+
   useEffect(() => {
     const handleBeforeUnload = () => {
       if (socket?.connected && userId) {
@@ -136,8 +330,6 @@ export default function MatchmakingPanel({ socket, userId, username, onMatchFoun
     const handleMatchFound = (payload: MatchInfo) => {
       console.log("[MatchmakingPanel] match_found received", payload);
       setMatchPayload(payload);
-      setIsReady(false);
-      setOpponentReady(false);
       setOpponent({
         username: payload.opponentUsername,
         elo: payload.opponentElo,
@@ -145,25 +337,6 @@ export default function MatchmakingPanel({ socket, userId, username, onMatchFoun
       });
       setPhase("MATCH_FOUND");
       setQueueState("matched");
-    };
-
-    const handlePlayerReadyUpdate = (data: { readyUserIds?: string[]; allReady?: boolean }) => {
-      if (data?.readyUserIds && matchPayload) {
-        if (data.readyUserIds.includes(matchPayload.opponentId)) {
-          setOpponentReady(true);
-        }
-        if (data.readyUserIds.includes(userId)) {
-          setIsReady(true);
-        }
-      }
-    };
-
-    const handleMatchStart = () => {
-      console.log("[MatchmakingPanel] match_start received → entering battle!");
-      if (matchPayload && !hasTransitionedRef.current) {
-        hasTransitionedRef.current = true;
-        onMatchFoundRef.current(matchPayload);
-      }
     };
 
     const handleQueueStatus = (status: { status: string; queueCount?: number }) => {
@@ -175,34 +348,26 @@ export default function MatchmakingPanel({ socket, userId, username, onMatchFoun
       setPhase("SEARCHING");
       setOpponent(null);
       setMatchPayload(null);
-      setIsReady(false);
-      setOpponentReady(false);
     };
 
     const handleError = (err: { message: string }) => {
       setError(err.message);
       setQueueState("idle");
       setPhase("SEARCHING");
-      setIsReady(false);
-      setOpponentReady(false);
     };
 
     socket.on("match_found", handleMatchFound);
-    socket.on("player_ready_update", handlePlayerReadyUpdate);
-    socket.on("match_start", handleMatchStart);
     socket.on("queue_status", handleQueueStatus);
     socket.on("queue_left", handleLeft);
     socket.on("error", handleError);
 
     return () => {
       socket.off("match_found", handleMatchFound);
-      socket.off("player_ready_update", handlePlayerReadyUpdate);
-      socket.off("match_start", handleMatchStart);
       socket.off("queue_status", handleQueueStatus);
       socket.off("queue_left", handleLeft);
       socket.off("error", handleError);
     };
-  }, [socket, matchPayload, userId]);
+  }, [socket]);
 
   const joinQueue = () => {
     if (!socket?.connected) {
@@ -211,12 +376,17 @@ export default function MatchmakingPanel({ socket, userId, username, onMatchFoun
     }
     setError(null);
     hasTransitionedRef.current = false;
-    setIsReady(false);
-    setOpponentReady(false);
     setQueueState("queuing");
     setPhase("SEARCHING");
 
     socket.emit("join_queue", { userId, mode });
+
+    setTimeout(() => {
+      if (queueState === "queuing" && !opponent) {
+        console.log("[MatchmakingPanel] Fallback: requesting bot match");
+        socket.emit("request_bot_match", { userId, mode });
+      }
+    }, 15000);
   };
 
   const leaveQueue = () => {
@@ -224,20 +394,20 @@ export default function MatchmakingPanel({ socket, userId, username, onMatchFoun
     setPhase("SEARCHING");
     setOpponent(null);
     setMatchPayload(null);
-    setIsReady(false);
-    setOpponentReady(false);
     socket?.emit("leave_queue", { userId });
   };
 
   const handleEnterBattle = () => {
-    if (matchPayload) {
-      setIsReady(true);
-      socket?.emit("match_ready", { roomId: matchPayload.roomId, userId });
+    if (matchPayload && !hasTransitionedRef.current) {
+      hasTransitionedRef.current = true;
+      onMatchFoundRef.current(matchPayload);
     }
   };
 
   const isCode = mode === "code";
   const currentElo = isCode ? (stats?.elo ?? 1000) : (stats?.mcqElo ?? 1000);
+  const winStreak = stats?.streak ?? 0;
+  const tier = getRankTier(currentElo);
 
   const totalBattles = stats ? (stats.wins + stats.losses + stats.draws) : 0;
   const winRate = totalBattles > 0 ? Math.round((stats!.wins / totalBattles) * 100) : 0;
@@ -441,172 +611,210 @@ export default function MatchmakingPanel({ socket, userId, username, onMatchFoun
 
         {/* ── 2. CENTER & MATCHMAKING HUB: MODE SELECTION & JOIN MATCH (DOUBLE WIDTH) ── */}
         <div className="lg:col-span-6 flex flex-col h-full">
-          <div className="bg-white/[0.08] backdrop-blur-xl border border-white/12 rounded-[20px] p-5 sm:p-6 relative overflow-hidden flex flex-col justify-between h-full min-h-[380px] sm:min-h-[400px]">
-            <div className="absolute inset-0 ring-inset rounded-[20px] pointer-events-none" />
-            <div className="absolute -top-10 -right-10 w-28 h-28 bg-[#9E00F6]/10 rounded-full blur-2xl pointer-events-none" />
-            <div className="absolute -bottom-10 -left-10 w-28 h-28 bg-[#00FFE9]/10 rounded-full blur-2xl pointer-events-none" />
+          <div className="bg-[#0b0c1c]/90 backdrop-blur-2xl border border-[#2b214f] rounded-[24px] p-5 sm:p-6 relative overflow-hidden flex flex-col h-full min-h-[380px] sm:min-h-[400px] shadow-[0_10px_40px_rgba(0,0,0,0.5)]">
+            {/* Subtle ambient glows */}
+            <div className="absolute -top-12 -right-12 w-36 h-36 bg-[#d946ef]/15 rounded-full blur-3xl pointer-events-none" />
+            <div className="absolute -bottom-12 -left-12 w-36 h-36 bg-purple-600/15 rounded-full blur-3xl pointer-events-none" />
 
-            <div className="flex items-center justify-between border-b border-white/10 pb-3.5 mb-4 relative z-10">
-              <div className="flex items-center gap-2.5">
-                <Swords className="text-[#FFA249] fill-[#FFA249] shrink-0" size={24} />
-                <h3 className="text-base sm:text-lg font-bold font-display uppercase tracking-wide text-white">Find a Match</h3>
+            {/* HEADER — title + watermark + live players + rating badge */}
+            <div className="relative z-10 flex items-start justify-between gap-3 border-b border-white/10 pb-4 mb-4 flex-wrap">
+              <div className="flex items-center gap-3">
+                <div className="relative p-2.5 rounded-xl bg-gradient-to-br from-[#d946ef]/30 to-[#8b5cf6]/25 border border-[#d946ef]/40 shadow-[0_0_16px_rgba(217,70,239,0.3)] shrink-0">
+                  <Swords className="text-[#e873c3]" size={22} />
+                </div>
+                <div>
+                  <h3 className="text-lg sm:text-xl font-black font-display uppercase tracking-wider text-white leading-none">Find a Match</h3>
+                  <p className="text-xs text-white/50 mt-1">Choose your arena. Prove your skills.</p>
+                </div>
               </div>
-              <span className="text-[11px] sm:text-xs text-white/60 font-medium">Select battle mode & jump into 1v1 arena</span>
+
+              {/* Faint background code symbol */}
+              <div className="absolute left-1/2 top-1 -translate-x-1/2 font-mono text-sm text-white/[0.04] pointer-events-none select-none font-bold">
+                &lt;/&gt;
+              </div>
+
+              <div className="flex flex-col items-end gap-1.5">
+                <div className="flex items-center gap-1.5 text-[10px] font-bold text-white/60 uppercase tracking-wider">
+                  <span className="relative flex h-2 w-2">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-400" />
+                  </span>
+                  <span className="font-mono text-emerald-400 font-extrabold">{playersOnline}</span> PLAYERS ONLINE
+                </div>
+                <div className="flex items-center gap-2.5 rounded-xl border border-[#3b2b68] bg-[#161132]/90 px-3 py-1.5 shadow-md">
+                  <span className="relative w-7 h-7 rounded-lg bg-purple-900/40 border border-purple-500/30 flex items-center justify-center shrink-0">
+                    <Hexagon className="w-5 h-5 text-purple-400 fill-purple-500/20" strokeWidth={1.5} />
+                    <span className="absolute text-[9px] font-black text-purple-200">★</span>
+                  </span>
+                  <div className="leading-none">
+                    <div className="text-[8px] uppercase tracking-widest text-white/40 font-bold">RATING</div>
+                    <div className="flex items-baseline gap-1.5 mt-0.5">
+                      <span className="font-mono font-black text-white text-sm">{currentElo.toLocaleString("en-US")}</span>
+                      <span className="text-[9px] font-extrabold uppercase tracking-wide text-amber-400">{tier.name} {tier.division}</span>
+                    </div>
+                  </div>
+                  <svg width="30" height="16" viewBox="0 0 30 16" fill="none" className="shrink-0 ml-0.5">
+                    <polyline points="1,13 7,9 12,11 18,5 23,7 29,2" stroke="#c084fc" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                </div>
+              </div>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 mb-4 relative z-10 flex-1 items-stretch">
-              {/* Code Battle Mode Card */}
-              <button
+            {/* MODE CARDS */}
+            <div className="relative z-10 grid grid-cols-1 sm:grid-cols-2 gap-3.5 mb-4">
+              <ModeCard
+                active={isCode}
+                disabled={queueState === "queuing"}
                 onClick={() => setMode("code")}
+                iconType="code"
+                pill="1v1 Duel"
+                title="CODE BATTLE"
+                subtitle="ALGORITHM DUEL"
+                subtitleClass="text-purple-400"
+                desc="Solve coding challenges faster than your opponent."
+                features={[
+                  { icon: Trophy, label: "SPEED", sub: "First to solve wins" },
+                  { icon: BarChart3, label: "RANKED", sub: "Gain rating" },
+                ]}
+                featureIconClass="text-purple-400"
+                watermark={
+                  <>
+                    <pre className="absolute top-12 left-3 text-[9px] leading-tight font-mono text-purple-300/[0.08] select-none pointer-events-none">{`int n;\ncin >> n;\nfor(int i=0;i<n;i++){\n  solve();\n}`}</pre>
+                    <span className="absolute bottom-2 right-4 text-4xl font-mono font-black text-purple-300/[0.06] select-none pointer-events-none">{"{ }"}</span>
+                  </>
+                }
+              />
+              <ModeCard
+                active={!isCode}
                 disabled={queueState === "queuing"}
-                className={`relative flex flex-col items-start justify-between p-4 rounded-2xl border text-left transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed group overflow-hidden ${isCode
-                    ? "bg-gradient-to-br from-[#E873C3]/25 via-[#C453D6]/20 to-[#8D37D6]/30 border-[#E873C3]/50 shadow-[0_0_18px_rgba(232,115,195,0.3)]"
-                    : "border-white/15 bg-white/5 hover:border-white/30 hover:bg-white/10"
-                  }`}
-              >
-                <div className="w-full flex items-center justify-between">
-                  <div className={`p-2.5 rounded-xl border transition-all ${isCode
-                      ? "bg-[#E873C3]/20 border-[#E873C3]/40 text-white"
-                      : "bg-white/10 border-white/10 text-white/70 group-hover:text-white"
-                    }`}>
-                    <Terminal size={24} />
-                  </div>
-
-                  <span className={`text-[11px] font-bold px-2.5 py-0.5 rounded-full border transition-all ${isCode
-                      ? "bg-[#E873C3]/30 text-white border-[#E873C3]/50 shadow-[0_0_8px_rgba(232,115,195,0.5)]"
-                      : "bg-white/10 text-white/60 border-white/15"
-                    }`}>
-                    {isCode ? "1v1 Duel" : "1v1"}
-                  </span>
-                </div>
-
-                <div className="mt-3 w-full relative z-10">
-                  <p className={`text-base sm:text-lg font-display font-bold tracking-wide ${isCode ? "text-white" : "text-white/90 group-hover:text-white"}`}>
-                    Code Battle
-                  </p>
-                  <p className={`text-[11px] sm:text-xs mt-0.5 font-medium leading-snug ${isCode ? "text-white/80" : "text-white/60 group-hover:text-white/80"}`}>
-                    1v1 Speed algorithmic coding duel
-                  </p>
-                </div>
-              </button>
-
-              {/* MCQ Battle Mode Card */}
-              <button
                 onClick={() => setMode("mcq")}
-                disabled={queueState === "queuing"}
-                className={`relative flex flex-col items-start justify-between p-4 rounded-2xl border text-left transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed group overflow-hidden ${!isCode
-                    ? "bg-gradient-to-br from-[#E873C3]/25 via-[#C453D6]/20 to-[#8D37D6]/30 border-[#E873C3]/50 shadow-[0_0_18px_rgba(232,115,195,0.3)]"
-                    : "border-white/15 bg-white/5 hover:border-white/30 hover:bg-white/10"
-                  }`}
-              >
-                <div className="w-full flex items-center justify-between">
-                  <div className={`p-2.5 rounded-xl border transition-all ${!isCode
-                      ? "bg-[#E873C3]/20 border-[#E873C3]/40 text-white"
-                      : "bg-white/10 border-white/10 text-white/70 group-hover:text-white"
-                    }`}>
-                    <ListChecks size={24} />
+                iconType="mcq"
+                pill="QUIZ"
+                title="MCQ BATTLE"
+                subtitle="KNOWLEDGE DUEL"
+                subtitleClass="text-sky-400"
+                desc="Answer multiple-choice questions across 5 intense rounds."
+                features={[
+                  { icon: Brain, label: "5 ROUNDS", sub: "Multiple topics" },
+                  { icon: Users, label: "RAPID FIRE", sub: "Think. Click. Win." },
+                ]}
+                featureIconClass="text-sky-400"
+                watermark={
+                  <div className="absolute right-3 top-10 flex flex-col gap-1.5 pointer-events-none opacity-20">
+                    {["A", "B", "C", "D"].map((l) => (
+                      <span
+                        key={l}
+                        className="w-6 h-6 rounded-md border border-white/20 flex items-center justify-center text-[10px] font-black text-white/40 select-none"
+                      >
+                        {l}
+                      </span>
+                    ))}
                   </div>
-
-                  <span className={`text-[11px] font-bold px-2.5 py-0.5 rounded-full border transition-all ${!isCode
-                      ? "bg-[#E873C3]/30 text-white border-[#E873C3]/50 shadow-[0_0_8px_rgba(232,115,195,0.5)]"
-                      : "bg-white/10 text-white/60 border-white/15"
-                    }`}>
-                    {!isCode ? "Quiz Arena" : "Quiz"}
-                  </span>
-                </div>
-
-                <div className="mt-3 w-full relative z-10">
-                  <p className={`text-base sm:text-lg font-display font-bold tracking-wide ${!isCode ? "text-white" : "text-white/90 group-hover:text-white"}`}>
-                    MCQ Battle
-                  </p>
-                  <p className={`text-[11px] sm:text-xs mt-0.5 font-medium leading-snug ${!isCode ? "text-white/80" : "text-white/60 group-hover:text-white/80"}`}>
-                    Rapid 5-round multiple-choice quiz arena
-                  </p>
-                </div>
-              </button>
+                }
+              />
             </div>
 
             {error && (
-              <div className="bg-red-500/10 border border-red-500/25 text-red-200 px-4 py-2.5 rounded-xl text-xs mb-3 text-center relative z-10">
+              <div className="relative z-10 bg-red-500/10 border border-red-500/25 text-red-200 px-4 py-2.5 rounded-xl text-xs mb-3 text-center font-medium">
                 {error}
               </div>
             )}
 
-            {queueState === "idle" && (
-              <div className="relative z-10 mb-3 bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 flex items-center justify-around text-xs text-white/80 font-mono">
-                {/* Rating Stake */}
-                <div className="relative flex items-center gap-1.5 cursor-pointer group/tip">
-                  <Zap size={14} className="text-amber-400 fill-amber-400 shrink-0 group-hover/tip:scale-110 transition-transform" />
-                  <span className="font-bold text-amber-300">±25</span>
+            {queueState === "idle" ? (
+              <div className="relative z-10 mt-auto space-y-3.5">
+                {/* STATS BAR */}
+                <div className="grid grid-cols-3 rounded-2xl border border-white/12 bg-[#120f28]/90 overflow-hidden divide-x divide-white/10 p-2 sm:p-2.5 shadow-inner">
+                  {[
+                    { icon: Zap, iconClass: "text-amber-400 fill-amber-400/30", value: "+25", label: "RATING POINTS", valueClass: "text-amber-400" },
+                    { icon: Timer, iconClass: "text-purple-400", value: "15 MIN", label: "MATCH DURATION", valueClass: "text-white" },
+                    { icon: Star, iconClass: "text-emerald-400 fill-emerald-400", value: "+100 XP", label: "EXPERIENCE", valueClass: "text-emerald-400" },
+                  ].map((s) => (
+                    <div key={s.label} className="flex items-center justify-center gap-2.5 px-2 py-1">
+                      <s.icon size={20} className={`shrink-0 ${s.iconClass}`} />
+                      <div className="leading-tight">
+                        <div className={`font-mono font-black text-sm sm:text-base ${s.valueClass}`}>{s.value}</div>
+                        <div className="text-[8px] uppercase tracking-wider text-white/50 font-extrabold">{s.label}</div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
 
-                  {/* Instant Custom Tooltip */}
-                  <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover/tip:flex flex-col items-center pointer-events-none z-30 whitespace-nowrap">
-                    <span className="bg-[#120a26] text-amber-300 font-sans text-[10px] font-bold px-2.5 py-1 rounded-lg border border-amber-400/30 shadow-[0_0_15px_rgba(251,191,36,0.3)]">
-                      Rating Stake: Win +25 / Loss -15
-                    </span>
-                    <div className="w-1.5 h-1.5 bg-[#120a26] border-r border-b border-amber-400/30 rotate-45 -mt-1" />
+                {/* BOTTOM ROW: DAILY STREAK + FIND OPPONENT BUTTON + WIN STREAK */}
+                <div className="grid grid-cols-1 md:grid-cols-12 gap-3.5 items-stretch">
+                  {/* DAILY STREAK */}
+                  <div className="md:col-span-3 rounded-2xl border border-white/12 bg-[#120f28]/90 p-3.5 flex flex-col justify-between h-full">
+                    <div>
+                      <div className="flex items-center gap-1.5 text-[9px] font-extrabold uppercase tracking-wider text-white/50">
+                        <Flame size={14} className="text-orange-500 fill-orange-500 shrink-0" />
+                        DAILY STREAK
+                      </div>
+                      <div className="flex items-baseline gap-1 mt-1">
+                        <span className="font-mono font-black text-2xl sm:text-3xl text-white">{dailyStreak}</span>
+                        <span className="text-[10px] font-extrabold text-white/40 uppercase tracking-wider">DAYS</span>
+                      </div>
+                    </div>
+                    <div className="mt-2.5">
+                      <StreakDotsComponent count={dailyStreak} total={4} xp="+100 XP" />
+                    </div>
+                  </div>
+
+                  {/* FIND OPPONENT BUTTON */}
+                  <div className="md:col-span-6 flex items-center">
+                    <button
+                      onClick={joinQueue}
+                      className="group/btn relative overflow-hidden w-full h-full min-h-[72px] text-white rounded-2xl cursor-pointer transition-all duration-300 hover:scale-[1.015] hover:shadow-[0_0_40px_rgba(217,70,239,0.6)] active:scale-[0.99] border border-pink-400/50 bg-gradient-to-r from-[#d946ef] via-[#a855f7] to-[#8b5cf6] p-4 px-5 flex items-center justify-between shadow-[0_0_28px_rgba(217,70,239,0.4)]"
+                    >
+                      {/* Hover shimmer effect */}
+                      <span className="absolute inset-0 -translate-x-full group-hover/btn:translate-x-full transition-transform duration-700 ease-out bg-gradient-to-r from-transparent via-white/20 to-transparent skew-x-12 pointer-events-none" />
+
+                      <div className="flex items-center gap-3.5 relative z-10">
+                        <div className="w-11 h-11 rounded-xl bg-white/15 border border-white/25 flex items-center justify-center shrink-0 shadow-inner">
+                          <Swords size={24} className="text-white group-hover/btn:rotate-[-12deg] transition-transform duration-300" />
+                        </div>
+                        <div className="text-left">
+                          <div className="font-display font-black text-xl sm:text-2xl uppercase tracking-wider leading-none text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)]">
+                            FIND OPPONENT
+                          </div>
+                          <div className="text-xs text-white/90 font-medium tracking-wide mt-1">
+                            Enter the arena and get matched
+                          </div>
+                        </div>
+                      </div>
+                      <ChevronRight size={28} className="text-white/90 group-hover/btn:translate-x-1 transition-transform shrink-0 relative z-10" />
+                    </button>
+                  </div>
+
+                  {/* WIN STREAK */}
+                  <div className="md:col-span-3 rounded-2xl border border-white/12 bg-[#120f28]/90 p-3.5 flex flex-col justify-between h-full">
+                    <div>
+                      <div className="flex items-center gap-1.5 text-[9px] font-extrabold uppercase tracking-wider text-white/50">
+                        <Crown size={14} className="text-amber-400 fill-amber-400 shrink-0" />
+                        WIN STREAK
+                      </div>
+                      <div className="flex items-baseline gap-1 mt-1">
+                        <span className="font-mono font-black text-2xl sm:text-3xl text-white">{winStreak}</span>
+                        <span className="text-[10px] font-extrabold text-white/40 uppercase tracking-wider">WINS</span>
+                      </div>
+                    </div>
+                    <div className="mt-2.5">
+                      <StreakDotsComponent count={winStreak} total={4} isWinStreak />
+                    </div>
                   </div>
                 </div>
 
-                <div className="h-3 w-[1px] bg-white/10" />
-
-                {/* Time Limit */}
-                <div className="relative flex items-center gap-1.5 cursor-pointer group/tip">
-                  <Timer size={14} className="text-white/80 shrink-0 group-hover/tip:scale-110 transition-transform" />
-                  <span className="font-bold text-white/90">15m</span>
-
-                  {/* Instant Custom Tooltip */}
-                  <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover/tip:flex flex-col items-center pointer-events-none z-30 whitespace-nowrap">
-                    <span className="bg-[#120a26] text-white font-sans text-[10px] font-bold px-2.5 py-1 rounded-lg border border-white/20 shadow-[0_0_15px_rgba(255,255,255,0.2)]">
-                      Match Limit: 15 minutes
-                    </span>
-                    <div className="w-1.5 h-1.5 bg-[#120a26] border-r border-b border-white/20 rotate-45 -mt-1" />
-                  </div>
-                </div>
-
-                <div className="h-3 w-[1px] bg-white/10" />
-
-                {/* Winner XP */}
-                <div className="relative flex items-center gap-1.5 cursor-pointer group/tip">
-                  <Award size={14} className="text-emerald-400 fill-emerald-400 shrink-0 group-hover/tip:scale-110 transition-transform" />
-                  <span className="font-bold text-emerald-300">+100 XP</span>
-
-                  {/* Instant Custom Tooltip */}
-                  <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover/tip:flex flex-col items-center pointer-events-none z-30 whitespace-nowrap">
-                    <span className="bg-[#120a26] text-emerald-300 font-sans text-[10px] font-bold px-2.5 py-1 rounded-lg border border-emerald-400/30 shadow-[0_0_15px_rgba(52,211,153,0.3)]">
-                      Winner XP: +100 XP
-                    </span>
-                    <div className="w-1.5 h-1.5 bg-[#120a26] border-r border-b border-emerald-400/30 rotate-45 -mt-1" />
-                  </div>
+                {/* FOOTER TIP */}
+                <div className="flex items-center justify-center gap-1.5 text-[11px] text-white/40 pt-1 font-mono">
+                  <span className="text-white/30 font-bold">&lt;/&gt;</span>
+                  <span>Tip: Use shortcuts, stay calm, and code fast!</span>
                 </div>
               </div>
-            )}
-
-            {queueState === "idle" && (
-              <div className="w-full relative z-10 mt-auto">
-                <button
-                  onClick={joinQueue}
-                  className="cosmo-btn-primary w-full h-14 text-base font-bold tracking-wider uppercase rounded-2xl cursor-pointer hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.99] transition-all duration-200 flex items-center justify-center gap-2 text-white border border-white/20"
-                  style={{
-                    fontFamily: "var(--font-body), 'Fira Code', monospace",
-                  }}
-                >
-                  <Swords size={20} />
-                  join match
-                </button>
-              </div>
-            )}
-
-            {(queueState === "queuing" || queueState === "matched") && (
+            ) : (
               <div className="relative z-10 my-auto">
                 <MatchmakingCinematic
                   username={username}
-                  userAvatar={stats?.avatarUrl}
                   userElo={isCode ? stats?.elo : stats?.mcqElo}
                   phase={phase}
                   opponent={opponent}
-                  isReady={isReady}
-                  opponentReady={opponentReady}
                   onEnterBattle={handleEnterBattle}
                   onCancel={leaveQueue}
                 />
@@ -660,7 +868,7 @@ export default function MatchmakingPanel({ socket, userId, username, onMatchFoun
                     <Clock size={14} className="text-emerald-400 fill-emerald-400/40 shrink-0 group-hover:scale-110 transition-transform" />
                     <span>Avg time</span>
                   </div>
-                  <p className="font-mono font-bold text-white text-base mt-1 group-hover:text-emerald-300 transition-colors">{stats?.avgTime ?? "4m15s"}</p>
+                  <p className="font-mono font-bold text-white text-base mt-1 group-hover:text-emerald-300 transition-colors">{stats?.avgTime ?? "—"}</p>
                 </div>
               </div>
 

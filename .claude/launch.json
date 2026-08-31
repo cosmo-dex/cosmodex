@@ -1,0 +1,16 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "cosmodex-running",
+      "url": "http://localhost:3000"
+    },
+    {
+      "name": "cosmodex-dev",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": ["dev"],
+      "port": 3000,
+      "autoPort": true
+    }
+  ]
+}

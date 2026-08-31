@@ -6,7 +6,7 @@ import Navbar from '@/components/navbar/Navbar';
 import BattleArenaHero from '@/components/battle/BattleArenaHero';
 import MatchmakingPanel from '@/components/battle/MatchmakingPanel';
 import ActiveMatchView from '@/components/battle/ActiveMatchView';
-import { createArenaSocket, ArenaSocket } from '@/lib/arenaWsClient';
+import { io, Socket } from 'socket.io-client';
 import RisingStars from '@/component/RisingStar';
 
 interface UserSession {
@@ -28,7 +28,7 @@ export default function BattlePage() {
   const [user, setUser] = useState<UserSession | null>(null);
   const [loading, setLoading] = useState(true);
   const [matchInfo, setMatchInfo] = useState<MatchInfo | null>(null);
-  const [socket, setSocket] = useState<ArenaSocket | null>(null);
+  const [socket, setSocket] = useState<Socket | null>(null);
   const matchInfoRef = useRef<MatchInfo | null>(null);
 
   // Keep ref in sync so socket callbacks always see latest value
@@ -37,7 +37,7 @@ export default function BattlePage() {
   }, [matchInfo]);
 
   useEffect(() => {
-    let activeSocket: ArenaSocket | null = null;
+    let activeSocket: Socket | null = null;
 
     fetch('/api/battle/token')
       .then((res) => {
@@ -48,15 +48,19 @@ export default function BattlePage() {
         if (data.token && data.userId) {
           setUser({ userId: data.userId, username: data.username });
 
-          activeSocket = createArenaSocket(ARENA_URL, {
+          activeSocket = io(ARENA_URL, {
             auth: { token: data.token },
+            transports: ['polling', 'websocket'],
             reconnection: true,
             reconnectionAttempts: 10,
             reconnectionDelay: 1000,
           });
 
           activeSocket.on('match_found', (payload: MatchInfo) => {
-            console.log('[BattlePage] match_found received:', payload);
+            if (!matchInfoRef.current) {
+              console.log('[BattlePage] match_found → entering arena', payload);
+              setMatchInfo(payload);
+            }
           });
 
           setSocket(activeSocket);
