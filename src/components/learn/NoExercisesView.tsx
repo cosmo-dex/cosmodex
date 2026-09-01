@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import Navbar from "@/components/navbar/Navbar";
-import RisingStars from "@/component/RisingStar";
+import RisingStars from "@/components/RisingStar";
 import { Sparkles, Terminal } from "lucide-react";
 
 interface NoExercisesViewProps {

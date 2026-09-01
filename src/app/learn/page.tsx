@@ -11,7 +11,7 @@ import {
   ChevronLeft,
   ChevronRight,
 } from "lucide-react";
-import RisingStars from "@/component/RisingStar";
+import RisingStars from "@/components/RisingStar";
 
 // ── 1. SVG Pixel Art Banners ──
 const PythonPixelBanner = () => (

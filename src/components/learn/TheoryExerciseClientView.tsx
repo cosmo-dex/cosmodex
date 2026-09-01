@@ -5,7 +5,7 @@ import { motion } from "framer-motion";
 import Navbar from "@/components/navbar/Navbar";
 import TheoryHeader from "@/components/learn/TheoryHeader";
 import TheoryFooter from "@/components/learn/TheoryFooter";
-import RisingStars from "@/component/RisingStar";
+import RisingStars from "@/components/RisingStar";
 import { TheoryExercise } from "@/data/theoryExercisesData";
 
 interface TheoryExerciseClientViewProps {
