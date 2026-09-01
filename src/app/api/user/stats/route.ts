@@ -204,11 +204,14 @@ export async function GET(req: NextRequest) {
       avgTime = `${avgMins}m${avgSecsRem < 10 ? '0' : ''}${avgSecsRem}s`;
     }
 
+    const totalXp = arenaStats?.total_xp ?? 0;
+    const computedLevel = Math.max(user?.level ?? 1, Math.floor(totalXp / 1000) + 1);
+
     return NextResponse.json({
       username: user?.username ?? '',
       avatarUrl: user?.avatar_url ?? null,
-      level: user?.level ?? 1,
-      experienceLevel: user?.experience_level ?? 'Beginner',
+      level: computedLevel,
+      experienceLevel: user?.experience_level ?? (computedLevel >= 10 ? 'Advanced' : computedLevel >= 5 ? 'Intermediate' : 'Beginner'),
       elo: battleStats?.elo_rating ?? 1000,
       mcqElo: battleStats?.mcq_elo_rating ?? 1000,
       wins,
