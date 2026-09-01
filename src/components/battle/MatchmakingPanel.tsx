@@ -3,7 +3,27 @@
 
 import { useEffect, useState, useRef, useCallback } from "react";
 import { ArenaSocket } from "@/lib/arenaWsClient";
-import { Swords, Flame, Terminal, ListChecks, Trophy, Zap, Clock, Timer, Award, CheckCircle2, XCircle, Sparkles } from "lucide-react";
+import {
+  Swords,
+  Flame,
+  Terminal,
+  ListChecks,
+  Trophy,
+  Zap,
+  Clock,
+  Timer,
+  Award,
+  CheckCircle2,
+  XCircle,
+  Sparkles,
+  TrendingUp,
+  BarChart3,
+  Users,
+  Brain,
+  ChevronRight,
+  Shield,
+  Crown,
+} from "lucide-react";
 
 import MatchmakingCinematic from "@/components/battle/MatchmakingCinematic";
 import { getAvatarUrl } from "@/lib/avatar";
@@ -69,10 +89,13 @@ interface Props {
   onMatchFound: (info: MatchInfo) => void;
 }
 
-function getRankLabel(experienceLevel: string | null | undefined): string {
-  if (experienceLevel === "Advanced") return "Commander";
-  if (experienceLevel === "Intermediate") return "Explorer";
-  return "Initiate";
+function getRankLabel(experienceLevel: string | null | undefined, elo: number = 1000): string {
+  if (elo >= 1500) return "GOLD III";
+  if (elo >= 1300) return "GOLD II";
+  if (elo >= 1100) return "GOLD I";
+  if (experienceLevel === "Advanced") return "COMMANDER";
+  if (experienceLevel === "Intermediate") return "EXPLORER";
+  return "INITIATE";
 }
 
 export default function MatchmakingPanel({ socket, userId, username, onMatchFound }: Props) {
@@ -298,7 +321,7 @@ export default function MatchmakingPanel({ socket, userId, username, onMatchFoun
                         Lv.{stats?.level ?? 1}
                       </span>
                       <span className="text-[#00FFE9] font-bold text-[9px] sm:text-[10px] px-1.5 py-0.5 rounded-full bg-[#00FFE9]/10 border border-[#00FFE9]/20 capitalize">
-                        {stats ? getRankLabel(stats.experienceLevel) : "Initiate"}
+                        {stats ? getRankLabel(stats.experienceLevel, currentElo) : "Initiate"}
                       </span>
                     </div>
                   </div>
@@ -439,92 +462,268 @@ export default function MatchmakingPanel({ socket, userId, username, onMatchFoun
           </div>
         </div>
 
-        {/* ── 2. CENTER & MATCHMAKING HUB: MODE SELECTION & JOIN MATCH (DOUBLE WIDTH) ── */}
+        {/* ── 2. CENTER & MATCHMAKING HUB: HIGH-FIDELITY MATCH CARDS & ARENA CONTAINER (IMAGE 2 DESIGN) ── */}
         <div className="lg:col-span-6 flex flex-col h-full">
-          <div className="bg-white/[0.08] backdrop-blur-xl border border-white/12 rounded-[20px] p-5 sm:p-6 relative overflow-hidden flex flex-col justify-between h-full min-h-[380px] sm:min-h-[400px]">
-            <div className="absolute inset-0 ring-inset rounded-[20px] pointer-events-none" />
-            <div className="absolute -top-10 -right-10 w-28 h-28 bg-[#9E00F6]/10 rounded-full blur-2xl pointer-events-none" />
-            <div className="absolute -bottom-10 -left-10 w-28 h-28 bg-[#00FFE9]/10 rounded-full blur-2xl pointer-events-none" />
+          <div className="bg-[#0b0813]/90 backdrop-blur-2xl border border-[#231a34] rounded-[24px] sm:rounded-[28px] p-5 sm:p-7 relative overflow-hidden flex flex-col justify-between h-full min-h-[380px] sm:min-h-[400px] shadow-[0_20px_60px_rgba(0,0,0,0.7),0_0_50px_rgba(158,0,246,0.12)]">
+            
+            {/* Ambient Radial Lights */}
+            <div className="absolute -top-24 -left-24 w-72 h-72 bg-[#d946ef]/15 rounded-full blur-3xl pointer-events-none" />
+            <div className="absolute -bottom-24 -right-24 w-72 h-72 bg-[#38bdf8]/10 rounded-full blur-3xl pointer-events-none" />
 
-            <div className="flex items-center justify-between border-b border-white/10 pb-3.5 mb-4 relative z-10">
-              <div className="flex items-center gap-2.5">
-                <Swords className="text-[#FFA249] fill-[#FFA249] shrink-0" size={24} />
-                <h3 className="text-base sm:text-lg font-bold font-display uppercase tracking-wide text-white">Find a Match</h3>
+            {/* Top Header Bar */}
+            <div className="flex flex-wrap items-center justify-between border-b border-white/10 pb-4 mb-5 gap-3 relative z-10">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#d946ef]/20 to-[#8b5cf6]/20 border border-[#d946ef]/40 flex items-center justify-center shadow-[0_0_15px_rgba(217,70,239,0.3)] shrink-0">
+                  <Swords className="text-[#d946ef]" size={22} />
+                </div>
+                <div>
+                  <h3 className="text-xl sm:text-2xl font-black font-display uppercase tracking-wider text-white flex items-center gap-2">
+                    FIND A MATCH
+                  </h3>
+                  <p className="text-xs sm:text-sm text-white/60 font-medium">
+                    Choose your arena. Prove your skills.
+                  </p>
+                </div>
               </div>
-              <span className="text-[11px] sm:text-xs text-white/60 font-medium">Select battle mode & jump into 1v1 arena</span>
+
+              {/* Status Badges */}
+              <div className="flex items-center gap-2.5 sm:gap-3 flex-wrap">
+                <div className="bg-[#0f1d18]/90 border border-emerald-500/30 px-3 py-1.5 rounded-full flex items-center gap-2 text-[11px] font-mono font-bold text-emerald-400 shadow-[0_0_12px_rgba(16,185,129,0.2)]">
+                  <span className="relative flex h-2 w-2">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                  </span>
+                  <span>248 PLAYERS ONLINE</span>
+                </div>
+
+                <div className="bg-[#161026]/90 border border-[#d946ef]/30 rounded-xl px-3.5 py-1.5 flex items-center gap-2.5 shadow-[0_0_15px_rgba(217,70,239,0.15)]">
+                  <div className="w-7 h-7 rounded-lg bg-[#d946ef]/20 border border-[#d946ef]/40 flex items-center justify-center text-[#d946ef] shrink-0">
+                    <Shield size={16} />
+                  </div>
+                  <div>
+                    <span className="text-[9px] text-white/50 font-bold uppercase tracking-widest block leading-none mb-0.5">RATING</span>
+                    <div className="flex items-center gap-1.5">
+                      <span className="font-mono font-extrabold text-xs sm:text-sm text-white">{currentElo}</span>
+                      <span className="font-mono font-bold text-[10px] text-[#e873c3] tracking-wide uppercase">{getRankLabel(stats?.experienceLevel, currentElo)}</span>
+                    </div>
+                  </div>
+                  <TrendingUp size={16} className="text-purple-400 ml-1 shrink-0" />
+                </div>
+              </div>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 mb-4 relative z-10 flex-1 items-stretch">
-              {/* Code Battle Mode Card */}
+            {/* Two Cards Section */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5 mb-5 relative z-10 flex-1 items-stretch">
+              
+              {/* CODE BATTLE CARD */}
               <button
+                type="button"
                 onClick={() => setMode("code")}
                 disabled={queueState === "queuing"}
-                className={`relative flex flex-col items-start justify-between p-4 rounded-2xl border text-left transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed group overflow-hidden ${isCode
-                    ? "bg-gradient-to-br from-[#E873C3]/25 via-[#C453D6]/20 to-[#8D37D6]/30 border-[#E873C3]/50 shadow-[0_0_18px_rgba(232,115,195,0.3)]"
-                    : "border-white/15 bg-white/5 hover:border-white/30 hover:bg-white/10"
-                  }`}
+                className={`relative flex flex-col justify-between p-5 rounded-2xl text-left transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed group overflow-hidden ${
+                  isCode
+                    ? "bg-gradient-to-br from-[#1c0e2e] via-[#150a24] to-[#0f071a] border-2 border-[#d946ef] shadow-[0_0_30px_rgba(217,70,239,0.35),inset_0_0_20px_rgba(217,70,239,0.15)]"
+                    : "bg-[#110c1c]/80 border border-white/10 hover:border-white/25 hover:bg-[#161024]/90 shadow-lg"
+                }`}
               >
-                <div className="w-full flex items-center justify-between">
-                  <div className={`p-2.5 rounded-xl border transition-all ${isCode
-                      ? "bg-[#E873C3]/20 border-[#E873C3]/40 text-white"
-                      : "bg-white/10 border-white/10 text-white/70 group-hover:text-white"
-                    }`}>
-                    <Terminal size={24} />
+                {/* Code Background Watermark */}
+                <svg className="absolute right-0 top-0 h-full w-1/2 opacity-[0.08] pointer-events-none text-white select-none overflow-hidden" viewBox="0 0 200 200" fill="none">
+                  <text x="10" y="30" fontSize="10" fontFamily="monospace" fill="currentColor">int n;</text>
+                  <text x="10" y="48" fontSize="10" fontFamily="monospace" fill="currentColor">cin &gt;&gt; n;</text>
+                  <text x="10" y="66" fontSize="10" fontFamily="monospace" fill="currentColor">for(int i=0;i&lt;n;i++) &#123;</text>
+                  <text x="30" y="84" fontSize="10" fontFamily="monospace" fill="currentColor">solve();</text>
+                  <text x="10" y="102" fontSize="10" fontFamily="monospace" fill="currentColor">&#125;</text>
+                  <text x="100" y="150" fontSize="68" fontFamily="monospace" fontWeight="bold" fill="currentColor">&#123; &#125;</text>
+                </svg>
+
+                {isCode && <div className="absolute -top-12 -left-12 w-32 h-32 bg-[#d946ef]/20 rounded-full blur-xl pointer-events-none" />}
+
+                {/* Card Top Row */}
+                <div className="w-full flex items-center justify-between mb-4 relative z-10">
+                  <div className={`w-11 h-11 rounded-xl border flex items-center justify-center font-mono font-bold text-lg transition-all ${
+                    isCode
+                      ? "bg-[#d946ef]/20 border-[#d946ef]/50 text-white shadow-[0_0_15px_rgba(217,70,239,0.4)]"
+                      : "bg-white/5 border-white/10 text-white/60 group-hover:text-white group-hover:border-white/20"
+                  }`}>
+                    <Terminal size={22} />
                   </div>
 
-                  <span className={`text-[11px] font-bold px-2.5 py-0.5 rounded-full border transition-all ${isCode
-                      ? "bg-[#E873C3]/30 text-white border-[#E873C3]/50 shadow-[0_0_8px_rgba(232,115,195,0.5)]"
-                      : "bg-white/10 text-white/60 border-white/15"
+                  <div className="flex items-center gap-2">
+                    <span className={`text-[10px] font-extrabold px-3 py-1 rounded-full border tracking-wider uppercase transition-all ${
+                      isCode
+                        ? "bg-[#d946ef]/25 text-[#f472b6] border-[#d946ef]/50"
+                        : "bg-white/5 text-white/50 border-white/10"
                     }`}>
-                    {isCode ? "1v1 Duel" : "1v1"}
-                  </span>
+                      1V1 DUEL
+                    </span>
+
+                    {isCode && (
+                      <span className="bg-[#d946ef]/30 text-white border border-[#d946ef]/60 px-2.5 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider flex items-center gap-1.5 shadow-[0_0_10px_rgba(217,70,239,0.5)]">
+                        <span className="w-1.5 h-1.5 rounded-full bg-[#d946ef] animate-pulse" />
+                        SELECTED
+                      </span>
+                    )}
+                  </div>
                 </div>
 
-                <div className="mt-3 w-full relative z-10">
-                  <p className={`text-base sm:text-lg font-display font-bold tracking-wide ${isCode ? "text-white" : "text-white/90 group-hover:text-white"}`}>
-                    Code Battle
+                {/* Card Body */}
+                <div className="relative z-10 mb-4">
+                  <h4 className="text-lg sm:text-xl font-display font-extrabold text-white tracking-wide uppercase">
+                    CODE BATTLE
+                  </h4>
+                  <span className="text-[10px] font-bold tracking-widest text-[#c084fc] uppercase block mt-0.5">
+                    ALGORITHM DUEL
+                  </span>
+                  <p className="text-xs sm:text-sm text-white/70 font-medium leading-relaxed mt-2">
+                    Solve coding challenges faster than your opponent.
                   </p>
-                  <p className={`text-[11px] sm:text-xs mt-0.5 font-medium leading-snug ${isCode ? "text-white/80" : "text-white/60 group-hover:text-white/80"}`}>
-                    1v1 Speed algorithmic coding duel
-                  </p>
+                </div>
+
+                {/* Card Bottom Features */}
+                <div className="grid grid-cols-2 gap-2 w-full relative z-10 pt-3 border-t border-white/5">
+                  <div className="bg-white/5 border border-white/5 rounded-xl p-2 flex items-center gap-2 hover:bg-white/10 transition-colors">
+                    <Trophy size={14} className="text-amber-400 shrink-0" />
+                    <div className="min-w-0">
+                      <span className="text-[9px] font-bold text-white uppercase block leading-none">SPEED</span>
+                      <span className="text-[9px] text-white/50 truncate block mt-0.5">First to solve wins</span>
+                    </div>
+                  </div>
+
+                  <div className="bg-white/5 border border-white/5 rounded-xl p-2 flex items-center gap-2 hover:bg-white/10 transition-colors">
+                    <BarChart3 size={14} className="text-purple-400 shrink-0" />
+                    <div className="min-w-0">
+                      <span className="text-[9px] font-bold text-white uppercase block leading-none">RANKED</span>
+                      <span className="text-[9px] text-white/50 truncate block mt-0.5">Gain rating</span>
+                    </div>
+                  </div>
                 </div>
               </button>
 
-              {/* MCQ Battle Mode Card */}
+
+              {/* MCQ BATTLE CARD */}
               <button
+                type="button"
                 onClick={() => setMode("mcq")}
                 disabled={queueState === "queuing"}
-                className={`relative flex flex-col items-start justify-between p-4 rounded-2xl border text-left transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed group overflow-hidden ${!isCode
-                    ? "bg-gradient-to-br from-[#E873C3]/25 via-[#C453D6]/20 to-[#8D37D6]/30 border-[#E873C3]/50 shadow-[0_0_18px_rgba(232,115,195,0.3)]"
-                    : "border-white/15 bg-white/5 hover:border-white/30 hover:bg-white/10"
-                  }`}
+                className={`relative flex flex-col justify-between p-5 rounded-2xl text-left transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed group overflow-hidden ${
+                  !isCode
+                    ? "bg-gradient-to-br from-[#1c0e2e] via-[#150a24] to-[#0f071a] border-2 border-[#d946ef] shadow-[0_0_30px_rgba(217,70,239,0.35),inset_0_0_20px_rgba(217,70,239,0.15)]"
+                    : "bg-[#110c1c]/80 border border-white/10 hover:border-white/25 hover:bg-[#161024]/90 shadow-lg"
+                }`}
               >
-                <div className="w-full flex items-center justify-between">
-                  <div className={`p-2.5 rounded-xl border transition-all ${!isCode
-                      ? "bg-[#E873C3]/20 border-[#E873C3]/40 text-white"
-                      : "bg-white/10 border-white/10 text-white/70 group-hover:text-white"
-                    }`}>
-                    <ListChecks size={24} />
+                {/* MCQ Background Watermark */}
+                <svg className="absolute right-1 bottom-1 w-36 h-36 opacity-[0.08] pointer-events-none text-white select-none" viewBox="0 0 100 100" fill="none">
+                  <rect x="55" y="10" width="28" height="28" rx="8" stroke="currentColor" strokeWidth="2" fill="currentColor" fillOpacity="0.1"/>
+                  <text x="63" y="29" fontSize="13" fontWeight="bold" fill="currentColor">A</text>
+                  
+                  <rect x="68" y="42" width="28" height="28" rx="8" stroke="currentColor" strokeWidth="2" fill="currentColor" fillOpacity="0.1"/>
+                  <text x="76" y="61" fontSize="13" fontWeight="bold" fill="currentColor">B</text>
+
+                  <rect x="25" y="35" width="28" height="28" rx="8" stroke="currentColor" strokeWidth="2" fill="currentColor" fillOpacity="0.1"/>
+                  <text x="33" y="54" fontSize="13" fontWeight="bold" fill="currentColor">C</text>
+
+                  <rect x="38" y="68" width="28" height="28" rx="8" stroke="currentColor" strokeWidth="2" fill="currentColor" fillOpacity="0.1"/>
+                  <text x="46" y="87" fontSize="13" fontWeight="bold" fill="currentColor">D</text>
+                </svg>
+
+                {!isCode && <div className="absolute -top-12 -left-12 w-32 h-32 bg-[#d946ef]/20 rounded-full blur-xl pointer-events-none" />}
+
+                {/* Card Top Row */}
+                <div className="w-full flex items-center justify-between mb-4 relative z-10">
+                  <div className={`w-11 h-11 rounded-xl border flex items-center justify-center font-mono font-bold text-lg transition-all ${
+                    !isCode
+                      ? "bg-[#d946ef]/20 border-[#d946ef]/50 text-white shadow-[0_0_15px_rgba(217,70,239,0.4)]"
+                      : "bg-white/5 border-white/10 text-white/60 group-hover:text-white group-hover:border-white/20"
+                  }`}>
+                    <ListChecks size={22} />
                   </div>
 
-                  <span className={`text-[11px] font-bold px-2.5 py-0.5 rounded-full border transition-all ${!isCode
-                      ? "bg-[#E873C3]/30 text-white border-[#E873C3]/50 shadow-[0_0_8px_rgba(232,115,195,0.5)]"
-                      : "bg-white/10 text-white/60 border-white/15"
+                  <div className="flex items-center gap-2">
+                    <span className={`text-[10px] font-extrabold px-3 py-1 rounded-full border tracking-wider uppercase transition-all ${
+                      !isCode
+                        ? "bg-sky-500/25 text-sky-300 border-sky-500/50"
+                        : "bg-white/5 text-white/50 border-white/10"
                     }`}>
-                    {!isCode ? "Quiz Arena" : "Quiz"}
-                  </span>
+                      QUIZ
+                    </span>
+
+                    {!isCode && (
+                      <span className="bg-[#d946ef]/30 text-white border border-[#d946ef]/60 px-2.5 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider flex items-center gap-1.5 shadow-[0_0_10px_rgba(217,70,239,0.5)]">
+                        <span className="w-1.5 h-1.5 rounded-full bg-[#d946ef] animate-pulse" />
+                        SELECTED
+                      </span>
+                    )}
+                  </div>
                 </div>
 
-                <div className="mt-3 w-full relative z-10">
-                  <p className={`text-base sm:text-lg font-display font-bold tracking-wide ${!isCode ? "text-white" : "text-white/90 group-hover:text-white"}`}>
-                    MCQ Battle
-                  </p>
-                  <p className={`text-[11px] sm:text-xs mt-0.5 font-medium leading-snug ${!isCode ? "text-white/80" : "text-white/60 group-hover:text-white/80"}`}>
-                    Rapid 5-round multiple-choice quiz arena
+                {/* Card Body */}
+                <div className="relative z-10 mb-4">
+                  <h4 className="text-lg sm:text-xl font-display font-extrabold text-white tracking-wide uppercase">
+                    MCQ BATTLE
+                  </h4>
+                  <span className="text-[10px] font-bold tracking-widest text-sky-400 uppercase block mt-0.5">
+                    KNOWLEDGE DUEL
+                  </span>
+                  <p className="text-xs sm:text-sm text-white/70 font-medium leading-relaxed mt-2">
+                    Answer multiple-choice questions across 5 intense rounds.
                   </p>
                 </div>
+
+                {/* Card Bottom Features */}
+                <div className="grid grid-cols-2 gap-2 w-full relative z-10 pt-3 border-t border-white/5">
+                  <div className="bg-white/5 border border-white/5 rounded-xl p-2 flex items-center gap-2 hover:bg-white/10 transition-colors">
+                    <Brain size={14} className="text-sky-400 shrink-0" />
+                    <div className="min-w-0">
+                      <span className="text-[9px] font-bold text-white uppercase block leading-none">5 ROUNDS</span>
+                      <span className="text-[9px] text-white/50 truncate block mt-0.5">Multiple topics</span>
+                    </div>
+                  </div>
+
+                  <div className="bg-white/5 border border-white/5 rounded-xl p-2 flex items-center gap-2 hover:bg-white/10 transition-colors">
+                    <Users size={14} className="text-emerald-400 shrink-0" />
+                    <div className="min-w-0">
+                      <span className="text-[9px] font-bold text-white uppercase block leading-none">RAPID FIRE</span>
+                      <span className="text-[9px] text-white/50 truncate block mt-0.5">Think. Click. Win.</span>
+                    </div>
+                  </div>
+                </div>
               </button>
+
             </div>
+
+
+            {/* Middle Stats Bar */}
+            {queueState === "idle" && (
+              <div className="relative z-10 mb-5 bg-[#120d22]/90 border border-white/10 rounded-2xl py-3 px-4 flex items-center justify-around text-xs font-mono shadow-inner">
+                <div className="flex items-center gap-2 cursor-pointer group/tip">
+                  <Zap size={16} className="text-amber-400 fill-amber-400 shrink-0 group-hover/tip:scale-110 transition-transform" />
+                  <div className="flex flex-col sm:flex-row sm:items-center gap-0.5 sm:gap-1.5">
+                    <span className="font-mono font-black text-amber-300 text-sm sm:text-base">+25</span>
+                    <span className="text-[9px] sm:text-[10px] text-white/50 uppercase tracking-widest font-sans font-bold">RATING POINTS</span>
+                  </div>
+                </div>
+
+                <div className="h-5 w-[1px] bg-white/10" />
+
+                <div className="flex items-center gap-2 cursor-pointer group/tip">
+                  <Timer size={16} className="text-sky-400 shrink-0 group-hover/tip:scale-110 transition-transform" />
+                  <div className="flex flex-col sm:flex-row sm:items-center gap-0.5 sm:gap-1.5">
+                    <span className="font-mono font-black text-white text-sm sm:text-base">15 MIN</span>
+                    <span className="text-[9px] sm:text-[10px] text-white/50 uppercase tracking-widest font-sans font-bold">MATCH DURATION</span>
+                  </div>
+                </div>
+
+                <div className="h-5 w-[1px] bg-white/10" />
+
+                <div className="flex items-center gap-2 cursor-pointer group/tip">
+                  <Award size={16} className="text-emerald-400 fill-emerald-400/30 shrink-0 group-hover/tip:scale-110 transition-transform" />
+                  <div className="flex flex-col sm:flex-row sm:items-center gap-0.5 sm:gap-1.5">
+                    <span className="font-mono font-black text-emerald-300 text-sm sm:text-base">+100 XP</span>
+                    <span className="text-[9px] sm:text-[10px] text-white/50 uppercase tracking-widest font-sans font-bold">EXPERIENCE</span>
+                  </div>
+                </div>
+              </div>
+            )}
 
             {error && (
               <div className="bg-red-500/10 border border-red-500/25 text-red-200 px-4 py-2.5 rounded-xl text-xs mb-3 text-center relative z-10">
@@ -532,71 +731,81 @@ export default function MatchmakingPanel({ socket, userId, username, onMatchFoun
               </div>
             )}
 
+            {/* Bottom Row (Daily Streak + Find Opponent Button + Win Streak) */}
             {queueState === "idle" && (
-              <div className="relative z-10 mb-3 bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 flex items-center justify-around text-xs text-white/80 font-mono">
-                {/* Rating Stake */}
-                <div className="relative flex items-center gap-1.5 cursor-pointer group/tip">
-                  <Zap size={14} className="text-amber-400 fill-amber-400 shrink-0 group-hover/tip:scale-110 transition-transform" />
-                  <span className="font-bold text-amber-300">±25</span>
-
-                  {/* Instant Custom Tooltip */}
-                  <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover/tip:flex flex-col items-center pointer-events-none z-30 whitespace-nowrap">
-                    <span className="bg-[#120a26] text-amber-300 font-sans text-[10px] font-bold px-2.5 py-1 rounded-lg border border-amber-400/30 shadow-[0_0_15px_rgba(251,191,36,0.3)]">
-                      Rating Stake: Win +25 / Loss -15
-                    </span>
-                    <div className="w-1.5 h-1.5 bg-[#120a26] border-r border-b border-amber-400/30 rotate-45 -mt-1" />
+              <div className="grid grid-cols-1 md:grid-cols-12 gap-3.5 items-center relative z-10">
+                
+                {/* Daily Streak Box */}
+                <div className="md:col-span-3 bg-white/5 border border-white/10 rounded-2xl p-3 flex flex-col justify-between h-full hover:bg-white/[0.08] transition-colors">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-1.5">
+                      <Flame size={15} className="text-orange-500 fill-orange-500 shrink-0" />
+                      <span className="text-[9px] font-bold text-white/60 uppercase tracking-wider font-sans truncate">DAILY STREAK</span>
+                    </div>
+                    <span className="text-xs font-mono font-black text-white shrink-0">{stats?.streak ?? 7} DAYS</span>
+                  </div>
+                  
+                  <div className="flex items-center gap-1 mt-2">
+                    <span className="w-3.5 h-3.5 rounded-full bg-emerald-500/30 border border-emerald-400 flex items-center justify-center text-[8px] text-emerald-300 font-bold">✓</span>
+                    <div className="h-[2px] w-2 bg-emerald-400/50" />
+                    <span className="w-3.5 h-3.5 rounded-full bg-emerald-500/30 border border-emerald-400 flex items-center justify-center text-[8px] text-emerald-300 font-bold">✓</span>
+                    <div className="h-[2px] w-2 bg-emerald-400/50" />
+                    <span className="w-3.5 h-3.5 rounded-full bg-emerald-500/30 border border-emerald-400 flex items-center justify-center text-[8px] text-emerald-300 font-bold">✓</span>
+                    <span className="text-[9px] font-mono font-bold text-emerald-400 ml-auto">+100 XP</span>
                   </div>
                 </div>
 
-                <div className="h-3 w-[1px] bg-white/10" />
+                {/* Big Action Button */}
+                <div className="md:col-span-6">
+                  <button
+                    type="button"
+                    onClick={joinQueue}
+                    className="group w-full py-3.5 px-5 rounded-2xl bg-gradient-to-r from-[#e873c3] via-[#c453d6] to-[#8d37d6] hover:from-[#f472b6] hover:via-[#d946ef] hover:to-[#a855f7] border border-white/25 shadow-[0_0_30px_rgba(217,70,239,0.5)] hover:shadow-[0_0_45px_rgba(217,70,239,0.75)] hover:scale-[1.02] active:scale-[0.99] transition-all duration-200 cursor-pointer flex items-center justify-between text-white"
+                  >
+                    <div className="w-9 h-9 rounded-xl bg-white/20 flex items-center justify-center shrink-0 border border-white/30">
+                      <Swords size={20} className="text-white" />
+                    </div>
 
-                {/* Time Limit */}
-                <div className="relative flex items-center gap-1.5 cursor-pointer group/tip">
-                  <Timer size={14} className="text-white/80 shrink-0 group-hover/tip:scale-110 transition-transform" />
-                  <span className="font-bold text-white/90">15m</span>
+                    <div className="text-center px-2">
+                      <span className="text-base sm:text-lg font-black font-display tracking-wider uppercase block leading-none">
+                        FIND OPPONENT
+                      </span>
+                      <span className="text-[10px] text-white/80 font-medium normal-case tracking-normal block mt-1">
+                        Enter the arena and get matched
+                      </span>
+                    </div>
 
-                  {/* Instant Custom Tooltip */}
-                  <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover/tip:flex flex-col items-center pointer-events-none z-30 whitespace-nowrap">
-                    <span className="bg-[#120a26] text-white font-sans text-[10px] font-bold px-2.5 py-1 rounded-lg border border-white/20 shadow-[0_0_15px_rgba(255,255,255,0.2)]">
-                      Match Limit: 15 minutes
-                    </span>
-                    <div className="w-1.5 h-1.5 bg-[#120a26] border-r border-b border-white/20 rotate-45 -mt-1" />
+                    <div className="w-9 h-9 rounded-xl bg-white/10 flex items-center justify-center shrink-0 group-hover:translate-x-1 transition-transform">
+                      <ChevronRight size={20} className="text-white" />
+                    </div>
+                  </button>
+                </div>
+
+                {/* Win Streak Box */}
+                <div className="md:col-span-3 bg-white/5 border border-white/10 rounded-2xl p-3 flex flex-col justify-between h-full hover:bg-white/[0.08] transition-colors">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-1.5">
+                      <Crown size={15} className="text-amber-400 fill-amber-400 shrink-0" />
+                      <span className="text-[9px] font-bold text-white/60 uppercase tracking-wider font-sans truncate">WIN STREAK</span>
+                    </div>
+                    <span className="text-xs font-mono font-black text-amber-300 shrink-0">{stats?.wins ?? 3} WINS</span>
+                  </div>
+
+                  <div className="flex items-center gap-1.5 mt-2">
+                    <span className="w-3.5 h-3.5 rounded-full bg-amber-400/30 border border-amber-400 flex items-center justify-center text-[8px] text-amber-300 font-bold">✓</span>
+                    <div className="h-[2px] w-2 bg-amber-400/50" />
+                    <span className="w-3.5 h-3.5 rounded-full bg-amber-400/30 border border-amber-400 flex items-center justify-center text-[8px] text-amber-300 font-bold">✓</span>
+                    <div className="h-[2px] w-2 bg-amber-400/50" />
+                    <span className="w-3.5 h-3.5 rounded-full bg-amber-400/30 border border-amber-400 flex items-center justify-center text-[8px] text-amber-300 font-bold">✓</span>
+                    <div className="h-[2px] w-2 bg-white/20" />
+                    <span className="w-3.5 h-3.5 rounded-full bg-white/5 border border-white/20" />
                   </div>
                 </div>
 
-                <div className="h-3 w-[1px] bg-white/10" />
-
-                {/* Winner XP */}
-                <div className="relative flex items-center gap-1.5 cursor-pointer group/tip">
-                  <Award size={14} className="text-emerald-400 fill-emerald-400 shrink-0 group-hover/tip:scale-110 transition-transform" />
-                  <span className="font-bold text-emerald-300">+100 XP</span>
-
-                  {/* Instant Custom Tooltip */}
-                  <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover/tip:flex flex-col items-center pointer-events-none z-30 whitespace-nowrap">
-                    <span className="bg-[#120a26] text-emerald-300 font-sans text-[10px] font-bold px-2.5 py-1 rounded-lg border border-emerald-400/30 shadow-[0_0_15px_rgba(52,211,153,0.3)]">
-                      Winner XP: +100 XP
-                    </span>
-                    <div className="w-1.5 h-1.5 bg-[#120a26] border-r border-b border-emerald-400/30 rotate-45 -mt-1" />
-                  </div>
-                </div>
               </div>
             )}
 
-            {queueState === "idle" && (
-              <div className="w-full relative z-10 mt-auto">
-                <button
-                  onClick={joinQueue}
-                  className="cosmo-btn-primary w-full h-14 text-base font-bold tracking-wider uppercase rounded-2xl cursor-pointer hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.99] transition-all duration-200 flex items-center justify-center gap-2 text-white border border-white/20"
-                  style={{
-                    fontFamily: "var(--font-body), 'Fira Code', monospace",
-                  }}
-                >
-                  <Swords size={20} />
-                  join match
-                </button>
-              </div>
-            )}
-
+            {/* Cinematic Queue Overlay */}
             {(queueState === "queuing" || queueState === "matched") && (
               <div className="relative z-10 my-auto">
                 <MatchmakingCinematic
@@ -612,6 +821,12 @@ export default function MatchmakingPanel({ socket, userId, username, onMatchFoun
                 />
               </div>
             )}
+
+            {/* Footer Tip */}
+            <div className="text-center text-[11px] text-white/40 font-mono mt-4 relative z-10">
+              &lt;/&gt; Tip: Use shortcuts, stay calm, and code fast!
+            </div>
+
           </div>
         </div>
 
