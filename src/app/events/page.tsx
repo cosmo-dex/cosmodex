@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Navbar from '@/components/navbar/Navbar';
 import { motion, AnimatePresence } from 'framer-motion';
-import RisingStars from '@/component/RisingStar';
+import RisingStars from '@/components/RisingStar';
 import {
   CalendarDays, Trophy, Users, Clock, Search,
   Zap, Hammer, BookOpen, Star, ChevronRight, ChevronDown, Check,
@@ -24,7 +24,6 @@ interface EventCard {
   registration_open: boolean | null;
   max_participants: number | null;
   prize_pool: string | null;
-  prizes_json: unknown;
   tags_json: string[] | null;
   starts_at: string | null;
   ends_at: string | null;

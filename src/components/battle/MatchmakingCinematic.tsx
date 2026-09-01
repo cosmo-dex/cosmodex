@@ -5,7 +5,7 @@ import React, { useEffect, useRef, useState, useSyncExternalStore } from 'react'
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Rocket, X } from 'lucide-react';
-import RisingStars from '@/component/RisingStar';
+import RisingStars from '@/components/RisingStar';
 import { getAvatarUrl } from '@/lib/avatar';
 
 interface MatchmakingCinematicProps {

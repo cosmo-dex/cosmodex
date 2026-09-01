@@ -10,7 +10,7 @@ import {
   Zap, Star, Hammer, BookOpen, CheckCircle, AlertCircle,
   UserCheck, Wrench, ArrowLeft, ExternalLink,
   Flame, Award, ShieldCheck, Copy, Check, Send, Sparkles,
-  UsersRound, Globe, Medal, CheckCircle2
+  UsersRound, Globe, Medal, CheckCircle2, Lock, Eye, EyeOff, ShieldAlert, KeyRound
 } from 'lucide-react';
 import CosmoDexRegistrationModal, { CosmoDexRegistrationDetails, CosmoDexRegistrationFieldsConfig } from '@/components/events/CosmoDexRegistrationModal';
 
@@ -76,6 +76,8 @@ interface EventDetail {
       total_questions?: number;
     };
   };
+  is_private?: boolean;
+  secret_id?: string;
   _count: { event_registrations: number };
 }
 
@@ -152,6 +154,66 @@ export default function EventDetailPage() {
   const [userEmail, setUserEmail] = useState('');
   const [userName, setUserName] = useState('');
   const [copiedCode, setCopiedCode] = useState(false);
+  const [unlockToken, setUnlockToken] = useState<string>(() => {
+    if (typeof window !== 'undefined' && eventId) {
+      // Check by current eventId param (slug or UUID)
+      return sessionStorage.getItem(`event_unlock_${eventId}`) || '';
+    }
+    return '';
+  });
+  const [isUnlocked, setIsUnlocked] = useState<boolean>(() => {
+    if (typeof window !== 'undefined' && eventId) {
+      return Boolean(sessionStorage.getItem(`event_unlock_${eventId}`));
+    }
+    return false;
+  });
+  const [secretIdInput, setSecretIdInput] = useState<string>('');
+  const [secretPassInput, setSecretPassInput] = useState<string>('');
+  const [showSecretPass, setShowSecretPass] = useState<boolean>(false);
+  const [unlockLoading, setUnlockLoading] = useState<boolean>(false);
+  const [unlockError, setUnlockError] = useState<string>('');
+  const [showUnlockModal, setShowUnlockModal] = useState<boolean>(false);
+
+  const handleUnlockEvent = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    if (!secretPassInput.trim()) {
+      setUnlockError("Please enter the secret password");
+      return;
+    }
+    setUnlockLoading(true);
+    setUnlockError("");
+    try {
+      const res = await fetch(`/api/events/${eventId}/unlock`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          secret_id: secretIdInput.trim() || event?.secret_id || "",
+          secret_password: secretPassInput.trim(),
+        }),
+      });
+      const data = await res.json();
+      if (res.ok && data.unlocked) {
+        setIsUnlocked(true);
+        if (data.unlock_token) {
+          setUnlockToken(data.unlock_token);
+          // Store under both the URL param key (slug/UUID) and the canonical UUID key
+          // so retrieval works regardless of how the user navigated to the page
+          sessionStorage.setItem(`event_unlock_${eventId}`, data.unlock_token);
+          if (data.event_id && data.event_id !== eventId) {
+            sessionStorage.setItem(`event_unlock_${data.event_id}`, data.unlock_token);
+          }
+        }
+        setShowUnlockModal(false);
+        setRegMsg("🔓 Event unlocked successfully! You can now register.");
+      } else {
+        setUnlockError(data.error || "Invalid Secret Access ID or Password");
+      }
+    } catch {
+      setUnlockError("Network error while unlocking event");
+    } finally {
+      setUnlockLoading(false);
+    }
+  };
 
   const handleCopyTeamCode = (code: string) => {
     navigator.clipboard.writeText(code);
@@ -214,6 +276,9 @@ export default function EventDetailPage() {
           team_name: payload.teamName,
           team_code: payload.teamCode,
           details: payload.details,
+          unlock_token: unlockToken || undefined,
+          secret_id: secretIdInput || event?.secret_id || undefined,
+          secret_password: secretPassInput || undefined,
         }),
       });
       const data = await res.json();
@@ -377,6 +442,46 @@ export default function EventDetailPage() {
               <span>Enter Contest Arena Now</span>
               <Send size={16} />
             </Link>
+          </div>
+        </div>
+      )}
+
+      
+      {/* 🔒 PRIVATE EVENT LOCKED ACCESS BANNER */}
+      {event.is_private && !isRegistered && !isUnlocked && (
+        <div className="max-w-6xl mx-auto px-6 sm:px-10 mt-6">
+          <div
+            className="relative overflow-hidden rounded-2xl p-6 border flex flex-col md:flex-row items-center justify-between gap-6"
+            style={{
+              background: 'linear-gradient(135deg, rgba(245,166,35,0.12), rgba(141,55,214,0.12))',
+              borderColor: 'rgba(245,166,35,0.4)',
+              boxShadow: '0 0 35px rgba(245,166,35,0.2)',
+            }}
+          >
+            <div className="flex items-center gap-4">
+              <div className="w-14 h-14 rounded-2xl bg-amber-500/20 border border-amber-500/40 flex items-center justify-center shrink-0">
+                <Lock size={28} className="text-amber-400 animate-pulse" />
+              </div>
+              <div>
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-amber-500/20 text-amber-300 border border-amber-500/40">
+                    Restricted Access
+                  </span>
+                  <h3 className="font-black text-xl text-white">Private Event Portal Locked</h3>
+                </div>
+                <p className="text-sm text-white/80">
+                  This event is private and requires a Secret Access ID & Password to unlock registration and full access.
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={() => setShowUnlockModal(true)}
+              className="px-6 py-3 rounded-xl font-black text-sm text-white flex items-center gap-2 shrink-0 transition-all shadow-lg hover:scale-105 cursor-pointer"
+              style={{ background: 'linear-gradient(135deg,#F5A623,#8D37D6)', boxShadow: '0 4px 20px rgba(245,166,35,0.4)' }}
+            >
+              <KeyRound size={16} />
+              <span>Unlock Event With Passcode</span>
+            </button>
           </div>
         </div>
       )}
@@ -936,6 +1041,107 @@ export default function EventDetailPage() {
           </div>
         </div>
       </div>
+
+
+      {/* 🔒 Secret ID & Password Unlock Modal */}
+      <AnimatePresence>
+        {showUnlockModal && (
+          <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              className="bg-[#0b0717] border border-amber-500/30 rounded-3xl p-6 sm:p-8 max-w-md w-full flex flex-col gap-5 shadow-2xl relative overflow-hidden"
+            >
+              {/* Background ambient glow */}
+              <div className="absolute top-0 right-0 w-40 h-40 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
+              <div className="absolute bottom-0 left-0 w-40 h-40 bg-purple-600/10 rounded-full blur-3xl pointer-events-none" />
+
+              <div className="flex items-center justify-between relative z-10 border-b border-white/[0.08] pb-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-amber-400 shadow-[0_0_15px_rgba(245,166,35,0.3)]">
+                    <Lock size={20} />
+                  </div>
+                  <div>
+                    <h3 className="font-black text-lg text-white">Unlock Private Event</h3>
+                    <p className="text-xs text-white/50">{event.title}</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => { setShowUnlockModal(false); setUnlockError(''); }}
+                  className="text-white/40 hover:text-white p-1 rounded-lg hover:bg-white/10 transition-colors"
+                >
+                  ✕
+                </button>
+              </div>
+
+              <form onSubmit={handleUnlockEvent} className="flex flex-col gap-4 relative z-10">
+                <p className="text-xs text-white/70 leading-relaxed">
+                  This is a restricted event. Please enter the <strong>Secret Access ID</strong> and <strong>Secret Password</strong> provided by your host to unlock the portal and register.
+                </p>
+
+                {unlockError && (
+                  <div className="p-3 bg-red-500/15 border border-red-500/30 rounded-xl text-xs text-red-300 flex items-center gap-2">
+                    <ShieldAlert size={15} className="shrink-0 text-red-400" />
+                    <span>{unlockError}</span>
+                  </div>
+                )}
+
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-xs font-bold text-white/70">Secret Access ID</label>
+                  <input
+                    type="text"
+                    value={secretIdInput || event?.secret_id || ""}
+                    onChange={e => setSecretIdInput(e.target.value.toUpperCase())}
+                    placeholder="e.g. PVT-X89ABC"
+                    className="w-full px-4 py-2.5 bg-white/[0.04] border border-white/15 rounded-xl text-sm font-mono text-amber-300 font-bold focus:outline-none focus:border-amber-400 transition-colors"
+                    required
+                  />
+                </div>
+
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-xs font-bold text-white/70">Secret Password</label>
+                  <div className="relative">
+                    <input
+                      type={showSecretPass ? 'text' : 'password'}
+                      value={secretPassInput}
+                      onChange={e => setSecretPassInput(e.target.value)}
+                      placeholder="Enter secret passcode"
+                      className="w-full px-4 py-2.5 pr-10 bg-white/[0.04] border border-white/15 rounded-xl text-sm font-mono text-purple-300 focus:outline-none focus:border-purple-400 transition-colors"
+                      required
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowSecretPass(v => !v)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-white/40 hover:text-white"
+                    >
+                      {showSecretPass ? <EyeOff size={15} /> : <Eye size={15} />}
+                    </button>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-end gap-3 pt-3 border-t border-white/[0.08] mt-1">
+                  <button
+                    type="button"
+                    onClick={() => { setShowUnlockModal(false); setUnlockError(''); }}
+                    className="px-4 py-2 rounded-xl text-xs font-bold text-white/60 hover:text-white bg-white/[0.04] hover:bg-white/[0.08] transition-all"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={unlockLoading}
+                    className="px-6 py-2.5 rounded-xl text-xs font-black text-white flex items-center gap-2 transition-all shadow-lg hover:scale-105 disabled:opacity-50"
+                    style={{ background: 'linear-gradient(135deg,#F5A623,#8D37D6)', boxShadow: '0 4px 20px rgba(245,166,35,0.4)' }}
+                  >
+                    {unlockLoading ? 'Verifying...' : '⚡ Verify & Unlock'}
+                  </button>
+                </div>
+              </form>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
 
       {/* CosmoDex Candidate Pass Registration Modal */}
       <AnimatePresence>

@@ -7,7 +7,7 @@ import BattleArenaHero from '@/components/battle/BattleArenaHero';
 import MatchmakingPanel from '@/components/battle/MatchmakingPanel';
 import ActiveMatchView from '@/components/battle/ActiveMatchView';
 import { createArenaSocket, ArenaSocket } from '@/lib/arenaWsClient';
-import RisingStars from '@/component/RisingStar';
+import RisingStars from '@/components/RisingStar';
 
 interface UserSession {
   userId: string;
