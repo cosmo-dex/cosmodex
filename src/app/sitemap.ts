@@ -11,6 +11,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { path: '/battle', priority: 0.9, changefreq: 'weekly' as const },
     { path: '/leaderboard', priority: 0.8, changefreq: 'weekly' as const },
     { path: '/events', priority: 0.8, changefreq: 'weekly' as const },
+    { path: '/blog', priority: 0.9, changefreq: 'daily' as const },
     { path: '/onboarding', priority: 0.8, changefreq: 'monthly' as const },
     { path: '/llms.txt', priority: 0.7, changefreq: 'weekly' as const },
     { path: '/llms-full.txt', priority: 0.7, changefreq: 'weekly' as const },
