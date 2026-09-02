@@ -7,17 +7,15 @@ import { motion, AnimatePresence } from "framer-motion";
 import Navbar from "@/components/navbar/Navbar";
 import Footer from "@/components/landing/Footer";
 import RisingStars from "@/component/RisingStar";
-import { BLOG_POSTS, BlogPost } from "@/data/blogData";
+import { BLOG_POSTS } from "@/data/blogData";
 import { getAvatarUrl } from "@/lib/avatar";
 import {
   Search,
-  Sparkles,
   Clock,
   ArrowRight,
   BookOpen,
   X,
   Compass,
-  Zap,
 } from "lucide-react";
 
 const CATEGORIES = ["All", "Engineering", "Tutorials", "Product", "News"];
@@ -124,7 +122,7 @@ export default function BlogPage() {
                     className="object-cover group-hover:scale-105 transition-transform duration-300 pointer-events-none"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-[#090e1a] via-transparent to-transparent opacity-60" />
-                  
+
                   <span className="absolute top-3 left-3 px-3 py-1 rounded-full bg-[#131d31] border border-[#22314e] text-[11px] font-sans font-bold tracking-wider text-[#38bdf8] uppercase">
                     {featuredPost.category}
                   </span>
@@ -189,8 +187,8 @@ export default function BlogPage() {
                 {searchQuery
                   ? `Search Results (${filteredPosts.length})`
                   : selectedCategory !== "All"
-                  ? `${selectedCategory} Articles (${filteredPosts.length})`
-                  : "All Articles"}
+                    ? `${selectedCategory} Articles (${filteredPosts.length})`
+                    : "All Articles"}
               </span>
             </h3>
 
@@ -226,11 +224,10 @@ export default function BlogPage() {
                 <button
                   key={cat}
                   onClick={() => setSelectedCategory(cat)}
-                  className={`px-3.5 py-1.5 rounded-full text-xs font-sans font-bold tracking-wider uppercase transition-colors cursor-pointer ${
-                    isActive
-                      ? "bg-[#38bdf8] text-[#090e1a] shadow-md shadow-cyan-500/20"
-                      : "bg-[#090e1a] text-[#94a3b8] hover:bg-[#131d31] hover:text-white border border-[#1b263b]"
-                  }`}
+                  className={`px-3.5 py-1.5 rounded-full text-xs font-sans font-bold tracking-wider uppercase transition-colors cursor-pointer ${isActive
+                    ? "bg-[#38bdf8] text-[#090e1a] shadow-md shadow-cyan-500/20"
+                    : "bg-[#090e1a] text-[#94a3b8] hover:bg-[#131d31] hover:text-white border border-[#1b263b]"
+                    }`}
                 >
                   {cat}
                 </button>
@@ -249,7 +246,7 @@ export default function BlogPage() {
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               <AnimatePresence mode="popLayout">
-                {gridPosts.map((post, idx) => (
+                {gridPosts.map((post) => (
                   <motion.div
                     key={post.id}
                     layout

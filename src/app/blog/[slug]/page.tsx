@@ -185,7 +185,7 @@ export default async function BlogPostDetailPage({ params }: Props) {
       name: "CosmoDex",
       logo: {
         "@type": "ImageObject",
-        url: "https://cosmodex-theta.vercel.app/logo.png",
+        url: "https://cosmodex.in/images/logo.png",
       },
     },
   };

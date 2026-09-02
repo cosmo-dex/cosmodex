@@ -6,15 +6,20 @@ import prisma from './prisma';
 export const authOptions: NextAuthOptions = {
   providers: [
     GoogleProvider({
-      clientId: process.env.AUTH_GOOGLE_ID!,
-      clientSecret: process.env.AUTH_GOOGLE_SECRET!,
+      clientId: (process.env.AUTH_GOOGLE_ID || process.env.GOOGLE_CLIENT_ID || process.env.GOOGLE_ID)!,
+      clientSecret: (process.env.AUTH_GOOGLE_SECRET || process.env.GOOGLE_CLIENT_SECRET || process.env.GOOGLE_SECRET)!,
     }),
     GitHubProvider({
-      clientId: process.env.AUTH_GITHUB_ID!,
-      clientSecret: process.env.AUTH_GITHUB_SECRET!,
+      clientId: (process.env.AUTH_GITHUB_ID || process.env.GITHUB_ID || process.env.GITHUB_CLIENT_ID)!,
+      clientSecret: (process.env.AUTH_GITHUB_SECRET || process.env.GITHUB_SECRET || process.env.GITHUB_CLIENT_SECRET)!,
+      authorization: {
+        params: {
+          scope: 'read:user user:email',
+        },
+      },
       async profile(profile, tokens) {
         let email = profile.email;
-        if (!email && tokens.access_token) {
+        if (!email && tokens?.access_token) {
           try {
             const emailRes = await fetch('https://api.github.com/user/emails', {
               headers: {
@@ -24,12 +29,14 @@ export const authOptions: NextAuthOptions = {
             });
             if (emailRes.ok) {
               const emails = await emailRes.json();
-              const primaryEmail =
-                emails.find((e: { primary: boolean; verified: boolean; email: string }) => e.primary && e.verified) ??
-                emails.find((e: { primary: boolean; email: string }) => e.primary) ??
-                emails[0];
-              if (primaryEmail) {
-                email = primaryEmail.email;
+              if (Array.isArray(emails)) {
+                const primaryEmail =
+                  emails.find((e: { primary: boolean; verified: boolean; email: string }) => e.primary && e.verified) ??
+                  emails.find((e: { primary: boolean; email: string }) => e.primary) ??
+                  emails[0];
+                if (primaryEmail?.email) {
+                  email = primaryEmail.email;
+                }
               }
             }
           } catch (err) {
@@ -50,27 +57,31 @@ export const authOptions: NextAuthOptions = {
 
   callbacks: {
     async signIn({ user, account, profile }) {
-      const emailVal = profile?.email || user?.email;
-      if (account && emailVal) {
-        const email = emailVal.trim().toLowerCase();
-        const existingUser = await prisma.users.findUnique({
-          where: { email },
-          select: { id: true, auth_provider: true },
-        });
+      try {
+        const emailVal = profile?.email || user?.email;
+        if (account && emailVal) {
+          const email = emailVal.trim().toLowerCase();
+          const existingUser = await prisma.users.findUnique({
+            where: { email },
+            select: { id: true, auth_provider: true },
+          });
 
-        if (existingUser) {
-          const provider = account.provider.toLowerCase();
-          const existingProvider = existingUser.auth_provider?.toLowerCase();
-          if (existingProvider && existingProvider !== provider) {
-            const prettyProvider =
-              existingProvider === 'email'
-                ? 'email/password'
-                : existingProvider === 'github'
-                  ? 'GitHub'
-                  : 'Google';
-            return `/onboarding?error=This email is already registered using ${prettyProvider}. Please sign in using that method.`;
+          if (existingUser) {
+            const provider = account.provider.toLowerCase();
+            const existingProvider = existingUser.auth_provider?.toLowerCase();
+            if (existingProvider && existingProvider !== provider) {
+              const prettyProvider =
+                existingProvider === 'email'
+                  ? 'email/password'
+                  : existingProvider === 'github'
+                    ? 'GitHub'
+                    : 'Google';
+              return `/onboarding?error=This email is already registered using ${prettyProvider}. Please sign in using that method.`;
+            }
           }
         }
+      } catch (err) {
+        console.error('Error during signIn callback check:', err);
       }
       return true;
     },
