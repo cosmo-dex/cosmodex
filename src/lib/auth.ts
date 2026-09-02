@@ -12,44 +12,6 @@ export const authOptions: NextAuthOptions = {
     GitHubProvider({
       clientId: (process.env.AUTH_GITHUB_ID || process.env.GITHUB_ID || process.env.GITHUB_CLIENT_ID)!,
       clientSecret: (process.env.AUTH_GITHUB_SECRET || process.env.GITHUB_SECRET || process.env.GITHUB_CLIENT_SECRET)!,
-      authorization: {
-        params: {
-          scope: 'read:user user:email',
-        },
-      },
-      async profile(profile, tokens) {
-        let email = profile.email;
-        if (!email && tokens?.access_token) {
-          try {
-            const emailRes = await fetch('https://api.github.com/user/emails', {
-              headers: {
-                Authorization: `Bearer ${tokens.access_token}`,
-                'User-Agent': 'cosmodex-auth',
-              },
-            });
-            if (emailRes.ok) {
-              const emails = await emailRes.json();
-              if (Array.isArray(emails)) {
-                const primaryEmail =
-                  emails.find((e: { primary: boolean; verified: boolean; email: string }) => e.primary && e.verified) ??
-                  emails.find((e: { primary: boolean; email: string }) => e.primary) ??
-                  emails[0];
-                if (primaryEmail?.email) {
-                  email = primaryEmail.email;
-                }
-              }
-            }
-          } catch (err) {
-            console.error('Failed to fetch GitHub email:', err);
-          }
-        }
-        return {
-          id: profile.id.toString(),
-          name: profile.name ?? profile.login,
-          email: email ?? null,
-          image: profile.avatar_url,
-        };
-      },
     }),
   ],
 
