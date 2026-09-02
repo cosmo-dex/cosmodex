@@ -12,6 +12,7 @@ export const authOptions: NextAuthOptions = {
     GitHubProvider({
       clientId: (process.env.AUTH_GITHUB_ID || process.env.GITHUB_ID || process.env.GITHUB_CLIENT_ID)!,
       clientSecret: (process.env.AUTH_GITHUB_SECRET || process.env.GITHUB_SECRET || process.env.GITHUB_CLIENT_SECRET)!,
+      issuer: 'https://github.com/login/oauth',
     }),
   ],
 
