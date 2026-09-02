@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef } from "react";
 import { Crown, Medal } from "lucide-react";
 import { TIER_STYLES, type Player } from "@/data/leaderboard";
 import { cn } from "@/lib/utils";
@@ -61,9 +61,14 @@ const GLASS_STYLES = {
 
 function EyeTrackingAvatar({ sizeClass, place }: { sizeClass: string; place: 1 | 2 | 3 }) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const [pupil, setPupil] = useState({ x: 0, y: 0 });
+  const leftPupilRef = useRef<HTMLDivElement>(null);
+  const rightPupilRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    let animId: number;
+    let targetX = 0;
+    let targetY = 0;
+
     const handleMouseMove = (e: MouseEvent) => {
       if (!containerRef.current) return;
       const rect = containerRef.current.getBoundingClientRect();
@@ -75,32 +80,42 @@ function EyeTrackingAvatar({ sizeClass, place }: { sizeClass: string; place: 1 |
       const angle = Math.atan2(deltaY, deltaX);
 
       const maxRadius = place === 1 ? 5 : 4;
-      const pupilX = Math.cos(angle) * maxRadius;
-      const pupilY = Math.sin(angle) * maxRadius;
-
-      setPupil({ x: pupilX, y: pupilY });
+      targetX = Math.cos(angle) * maxRadius;
+      targetY = Math.sin(angle) * maxRadius;
     };
 
-    window.addEventListener("mousemove", handleMouseMove);
-    return () => window.removeEventListener("mousemove", handleMouseMove);
+    const updatePupils = () => {
+      const transformStr = `translate3d(${targetX.toFixed(1)}px, ${targetY.toFixed(1)}px, 0)`;
+      if (leftPupilRef.current) leftPupilRef.current.style.transform = transformStr;
+      if (rightPupilRef.current) rightPupilRef.current.style.transform = transformStr;
+      animId = requestAnimationFrame(updatePupils);
+    };
+
+    window.addEventListener("mousemove", handleMouseMove, { passive: true });
+    animId = requestAnimationFrame(updatePupils);
+
+    return () => {
+      cancelAnimationFrame(animId);
+      window.removeEventListener("mousemove", handleMouseMove);
+    };
   }, [place]);
 
   if (place === 1) {
     return (
-      <div ref={containerRef} className={cn("relative overflow-hidden rounded-[14px] bg-[#00a8ff] flex flex-col items-center justify-center border-2 border-amber-400/80 shadow-[0_0_20px_rgba(0,168,255,0.6)] select-none", sizeClass)}>
+      <div ref={containerRef} className={cn("relative overflow-hidden rounded-[14px] bg-[#00a8ff] flex flex-col items-center justify-center border-2 border-amber-400/80 shadow-[0_0_20px_rgba(0,168,255,0.6)] select-none [will-change:transform]", sizeClass)}>
         <div className="flex items-center gap-2 mt-1.5 md:mt-2">
           {/* Left Eye */}
           <div className="relative size-5 md:size-6.5 rounded-full bg-white flex items-center justify-center shadow-inner">
             <div
-              className="size-2.5 rounded-full bg-[#111] transition-transform duration-75 ease-out"
-              style={{ transform: `translate(${pupil.x}px, ${pupil.y}px)` }}
+              ref={leftPupilRef}
+              className="size-2.5 rounded-full bg-[#111] transition-transform duration-75 ease-out [will-change:transform]"
             />
           </div>
           {/* Right Eye */}
           <div className="relative size-5 md:size-6.5 rounded-full bg-white flex items-center justify-center shadow-inner">
             <div
-              className="size-2.5 rounded-full bg-[#111] transition-transform duration-75 ease-out"
-              style={{ transform: `translate(${pupil.x}px, ${pupil.y}px)` }}
+              ref={rightPupilRef}
+              className="size-2.5 rounded-full bg-[#111] transition-transform duration-75 ease-out [will-change:transform]"
             />
           </div>
         </div>
@@ -115,15 +130,15 @@ function EyeTrackingAvatar({ sizeClass, place }: { sizeClass: string; place: 1 |
 
   if (place === 2) {
     return (
-      <div ref={containerRef} className={cn("relative overflow-hidden rounded-[12px] bg-[#ffb703] flex flex-col items-center justify-center border-2 border-cyan-400/80 shadow-[0_0_18px_rgba(255,183,3,0.5)] select-none", sizeClass)}>
+      <div ref={containerRef} className={cn("relative overflow-hidden rounded-[12px] bg-[#ffb703] flex flex-col items-center justify-center border-2 border-cyan-400/80 shadow-[0_0_18px_rgba(255,183,3,0.5)] select-none [will-change:transform]", sizeClass)}>
         <div className="w-10 h-4.5 rounded-md bg-[#111] flex items-center justify-around px-1 mt-1 shadow-inner overflow-hidden">
           <div
-            className="w-2 h-2.5 rounded-sm bg-[#00f5d4] transition-transform duration-75 ease-out shadow-[0_0_8px_#00f5d4]"
-            style={{ transform: `translate(${pupil.x}px, ${pupil.y}px)` }}
+            ref={leftPupilRef}
+            className="w-2 h-2.5 rounded-sm bg-[#00f5d4] transition-transform duration-75 ease-out shadow-[0_0_8px_#00f5d4] [will-change:transform]"
           />
           <div
-            className="w-2 h-2.5 rounded-sm bg-[#00f5d4] transition-transform duration-75 ease-out shadow-[0_0_8px_#00f5d4]"
-            style={{ transform: `translate(${pupil.x}px, ${pupil.y}px)` }}
+            ref={rightPupilRef}
+            className="w-2 h-2.5 rounded-sm bg-[#00f5d4] transition-transform duration-75 ease-out shadow-[0_0_8px_#00f5d4] [will-change:transform]"
           />
         </div>
         <div className="w-3.5 h-1.5 bg-[#111] rounded-b-md mt-1 flex justify-center overflow-hidden">
@@ -134,10 +149,10 @@ function EyeTrackingAvatar({ sizeClass, place }: { sizeClass: string; place: 1 |
   }
 
   return (
-    <div ref={containerRef} className={cn("relative overflow-hidden rounded-[12px] bg-[#ff9f1c] flex flex-col items-center justify-center border-2 border-orange-400/80 shadow-[0_0_18px_rgba(255,159,28,0.5)] select-none", sizeClass)}>
+    <div ref={containerRef} className={cn("relative overflow-hidden rounded-[12px] bg-[#ff9f1c] flex flex-col items-center justify-center border-2 border-orange-400/80 shadow-[0_0_18px_rgba(255,159,28,0.5)] select-none [will-change:transform]", sizeClass)}>
       <div
-        className="flex items-center gap-2 mt-1 transition-transform duration-75 ease-out"
-        style={{ transform: `translate(${pupil.x}px, ${pupil.y}px)` }}
+        ref={leftPupilRef}
+        className="flex items-center gap-2 mt-1 transition-transform duration-75 ease-out [will-change:transform]"
       >
         <span className="text-xs md:text-sm font-black text-[#111]">✕</span>
         <span className="text-xs md:text-sm font-black text-[#111]">✕</span>
@@ -177,7 +192,7 @@ function PodiumCard({ player, place }: { player: Player; place: 1 | 2 | 3 }) {
       {/* Enhanced Glassmorphism Card */}
       <div
         className={cn(
-          "group relative mt-4 flex w-full flex-col items-center justify-between overflow-hidden rounded-2xl md:rounded-b-none px-4 py-4 md:py-5 transition-all duration-500 hover:-translate-y-1.5",
+          "group relative mt-4 flex w-full flex-col items-center justify-between overflow-hidden rounded-2xl md:rounded-b-none px-4 py-4 md:py-5 transition-all duration-300 hover:-translate-y-1.5 [will-change:transform]",
           glass.cardBg,
           c.height,
         )}
@@ -186,7 +201,7 @@ function PodiumCard({ player, place }: { player: Player; place: 1 | 2 | 3 }) {
         <div className={cn("absolute inset-x-0 top-0 h-[1.5px] bg-gradient-to-r", glass.topLine)} />
 
         {/* Diagonal sheen sweep on hover */}
-        <div className="pointer-events-none absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/10 to-transparent transition-transform duration-1000 group-hover:translate-x-full" />
+        <div className="pointer-events-none absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/10 to-transparent transition-transform duration-700 group-hover:translate-x-full" />
 
         {/* Ambient center spotlight glow behind rank label */}
         <div className={cn("pointer-events-none absolute top-2 size-32 md:size-36 rounded-full blur-2xl", glass.glowColor)} />

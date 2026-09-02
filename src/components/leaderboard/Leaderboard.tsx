@@ -114,12 +114,44 @@ export default function Leaderboard() {
   const top3 = players.slice(0, 3);
   const rest = players.slice(3);
 
-  // Only block whole page on initial load when no data exists yet
+  // Cosmic Glassmorphic Loading Screen
   if (loading && entries.length === 0) {
     return (
-      <main className="starfield relative flex min-h-screen items-center justify-center overflow-hidden">
+      <main className="starfield relative flex min-h-screen items-center justify-center overflow-hidden px-4">
         <Starfield />
-        <div className="relative text-text-secondary">Loading leaderboard...</div>
+        
+        {/* Ambient Cosmic Glow */}
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-[radial-gradient(circle,rgba(232,115,195,0.2)_0%,transparent_70%)] pointer-events-none blur-3xl" />
+
+        {/* Faint Background Podium Skeleton */}
+        <div className="absolute inset-0 pointer-events-none opacity-25 flex items-center justify-center max-w-4xl mx-auto px-4">
+          <div className="w-full flex items-end justify-center gap-4 h-64">
+            <div className="w-1/3 h-48 bg-white/5 rounded-t-2xl animate-pulse" />
+            <div className="w-1/3 h-60 bg-white/10 rounded-t-2xl animate-pulse" />
+            <div className="w-1/3 h-40 bg-white/5 rounded-t-2xl animate-pulse" />
+          </div>
+        </div>
+
+        {/* Premium Glassmorphic Loading Card */}
+        <div className="relative z-10 bg-[#0c061a]/85 backdrop-blur-2xl border border-white/20 rounded-3xl p-8 sm:p-10 max-w-md w-full flex flex-col items-center justify-center text-center shadow-[0_25px_70px_rgba(0,0,0,0.95),0_0_50px_rgba(232,115,195,0.25)] animate-in fade-in zoom-in-95 duration-300">
+          
+          {/* Dual Orbit Spinner & Icon */}
+          <div className="relative w-20 h-20 flex items-center justify-center mb-6">
+            <div className="absolute inset-0 rounded-full border-2 border-transparent border-t-[#E873C3] border-r-[#8D37D6] animate-spin" />
+            <div className="absolute inset-2 rounded-full border-2 border-transparent border-b-[#00f5d4] border-l-[#38bdf8] animate-spin [animation-duration:1.2s] [animation-direction:reverse]" />
+            
+            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#E873C3] to-[#8D37D6] flex items-center justify-center text-white shadow-[0_0_25px_rgba(232,115,195,0.6)] animate-pulse">
+              <Trophy size={24} />
+            </div>
+          </div>
+
+          <h2 className="text-xl sm:text-2xl font-black bg-gradient-to-r from-white via-purple-100 to-[#E873C3] bg-clip-text text-transparent tracking-wide">
+            Calculating Galactic Ranks
+          </h2>
+          <p className="text-xs sm:text-sm text-white/60 mt-2 leading-relaxed">
+            Fetching latest XP totals, 1v1 battle records, and cosmic league standings...
+          </p>
+        </div>
       </main>
     );
   }

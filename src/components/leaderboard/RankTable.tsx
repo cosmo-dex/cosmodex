@@ -5,7 +5,7 @@ import { cn } from "@/lib/utils";
 
 export function RankTable({ players }: { players: Player[] }) {
   return (
-    <div className="card-surface mx-auto w-full max-w-4xl rounded-card p-2 md:p-4">
+    <div className="card-surface mx-auto w-full max-w-4xl rounded-card p-2 md:p-4 shadow-2xl">
       <div className="grid grid-cols-[2.5rem_1fr_auto] items-center gap-3 px-3 py-3 text-[11px] uppercase tracking-[0.16em] text-text-muted md:grid-cols-[3rem_1fr_7rem_6rem_7rem]">
         <span>#</span>
         <span>Name / User ID</span>
@@ -20,15 +20,10 @@ export function RankTable({ players }: { players: Player[] }) {
           return (
             <motion.li
               key={p.id}
-              initial={{ opacity: 0, y: 10 }}
+              initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.25, delay: i * 0.03 }}
-              whileHover={{
-                scale: 1.015,
-                y: -2,
-                boxShadow: "0 10px 30px -5px rgba(124, 58, 237, 0.28), inset 0 1px 1px rgba(255, 255, 255, 0.2)",
-              }}
-              className="group relative z-0 grid grid-cols-[2.5rem_1fr_auto] items-center gap-3 rounded-btn border border-border-subtle bg-bg-surface px-3 py-3 transition-all duration-200 hover:z-10 hover:border-border-accent hover:bg-white/[0.07] md:grid-cols-[3rem_1fr_7rem_6rem_7rem]"
+              transition={{ duration: 0.2, delay: Math.min(i * 0.015, 0.2), ease: "easeOut" }}
+              className="group relative z-0 grid grid-cols-[2.5rem_1fr_auto] items-center gap-3 rounded-btn border border-border-subtle bg-bg-surface px-3 py-3 transition-all duration-200 ease-out hover:z-10 hover:-translate-y-0.5 hover:scale-[1.01] hover:border-border-accent hover:bg-white/[0.07] hover:shadow-[0_10px_30px_-5px_rgba(124,58,237,0.28)] md:grid-cols-[3rem_1fr_7rem_6rem_7rem] [will-change:transform]"
             >
               <span className="font-display text-sm font-semibold text-text-secondary transition-colors group-hover:text-text-accent">#{i + 4}</span>
 

@@ -1,13 +1,13 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import Navbar from "@/components/navbar/Navbar";
 import Footer from "@/components/landing/Footer";
 import RisingStars from "@/component/RisingStar";
-import { BLOG_POSTS } from "@/data/blogData";
+import { BLOG_POSTS, BlogPost } from "@/data/blogData";
 import { getAvatarUrl } from "@/lib/avatar";
 import {
   Search,
@@ -21,32 +21,44 @@ import {
 const CATEGORIES = ["All", "Engineering", "Tutorials", "Product", "News"];
 
 export default function BlogPage() {
+  const [posts, setPosts] = useState<BlogPost[]>(BLOG_POSTS);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("All");
 
+  useEffect(() => {
+    fetch("/api/blogs")
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (data?.blogs && Array.isArray(data.blogs) && data.blogs.length > 0) {
+          setPosts(data.blogs);
+        }
+      })
+      .catch((err) => console.error("Failed to load dynamic blogs:", err));
+  }, []);
+
   const filteredPosts = useMemo(() => {
-    return BLOG_POSTS.filter((post) => {
+    return posts.filter((post) => {
       const matchesCategory =
         selectedCategory === "All" || post.category === selectedCategory;
       const matchesSearch =
         post.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
         post.excerpt.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        post.tags.some((t) => t.toLowerCase().includes(searchQuery.toLowerCase()));
+        (post.tags && post.tags.some((t) => t.toLowerCase().includes(searchQuery.toLowerCase())));
 
       return matchesCategory && matchesSearch;
     });
-  }, [searchQuery, selectedCategory]);
+  }, [posts, searchQuery, selectedCategory]);
 
   const featuredPost = useMemo(() => {
-    return BLOG_POSTS.find((p) => p.featured) || BLOG_POSTS[0];
-  }, []);
+    return posts.find((p) => p.featured) || posts[0] || BLOG_POSTS[0];
+  }, [posts]);
 
   const gridPosts = useMemo(() => {
     if (searchQuery || selectedCategory !== "All") {
       return filteredPosts;
     }
-    return BLOG_POSTS.filter((p) => p.id !== featuredPost.id);
-  }, [filteredPosts, searchQuery, selectedCategory, featuredPost]);
+    return posts.filter((p) => p.id !== featuredPost?.id);
+  }, [posts, filteredPosts, searchQuery, selectedCategory, featuredPost]);
 
   return (
     <main className="min-h-screen bg-[#05030a] text-white relative overflow-x-hidden font-sans">

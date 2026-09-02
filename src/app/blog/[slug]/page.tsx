@@ -5,7 +5,7 @@ import { notFound } from "next/navigation";
 import Navbar from "@/components/navbar/Navbar";
 import Footer from "@/components/landing/Footer";
 import RisingStars from "@/component/RisingStar";
-import { BLOG_POSTS } from "@/data/blogData";
+import { getBlogBySlug, getAllBlogs } from "@/lib/blogs";
 import { getAvatarUrl } from "@/lib/avatar";
 import {
   ArrowLeft,
@@ -58,24 +58,29 @@ function renderMarkdown(content: string) {
     }
     if (trimmed.startsWith("### ")) {
       return (
-        <h3 key={idx} className="text-lg sm:text-xl font-bold font-sans text-white mt-6 mb-2">
+        <h3 key={idx} className="text-lg sm:text-xl font-bold font-sans text-[#E873C3] mt-6 mb-2">
           {renderFormattedText(trimmed.replace("### ", ""))}
         </h3>
       );
     }
     if (trimmed.startsWith("```")) {
-      const codeContent = trimmed.replace(/```[a-z]*/g, "").trim();
+      const code = trimmed.replace(/^```[a-z]*\n?/, "").replace(/\n?```$/, "");
       return (
-        <pre key={idx} className="p-5 rounded-2xl bg-[#0b1220] border border-white/10 font-mono text-xs sm:text-sm overflow-x-auto text-[#38bdf8] shadow-inner my-6">
-          <code>{codeContent}</code>
+        <pre key={idx} className="bg-[#0b061a] border border-white/10 rounded-xl p-4 overflow-x-auto text-sm font-mono text-[#e2e8f0] my-4">
+          <code>{code}</code>
         </pre>
       );
     }
+    if (trimmed.startsWith("> ")) {
+      return (
+        <blockquote key={idx} className="border-l-4 border-[#38bdf8] bg-white/[0.02] p-4 rounded-r-xl italic text-[#e2e8f0] my-4">
+          {renderFormattedText(trimmed.replace("> ", ""))}
+        </blockquote>
+      );
+    }
 
-    const lines = trimmed.split("\n");
-    const hasListItems = lines.some((l) => /^\d+\.\s/.test(l.trim()) || /^[*-]\s/.test(l.trim()));
-
-    if (hasListItems) {
+    if (trimmed.includes("\n")) {
+      const lines = trimmed.split("\n");
       return (
         <div key={idx} className="space-y-2 my-4">
           {lines.map((line, i) => {
@@ -122,7 +127,7 @@ function renderMarkdown(content: string) {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const resolvedParams = await params;
-  const post = BLOG_POSTS.find((p) => p.slug === resolvedParams.slug);
+  const post = await getBlogBySlug(resolvedParams.slug);
 
   if (!post) {
     return {
@@ -151,30 +156,39 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 }
 
 export async function generateStaticParams() {
-  return BLOG_POSTS.map((post) => ({
+  const blogs = await getAllBlogs();
+  return blogs.map((post) => ({
     slug: post.slug,
   }));
 }
 
 export default async function BlogPostDetailPage({ params }: Props) {
   const resolvedParams = await params;
-  const post = BLOG_POSTS.find((p) => p.slug === resolvedParams.slug);
+  const post = await getBlogBySlug(resolvedParams.slug);
 
   if (!post) {
     notFound();
   }
 
-  const relatedPosts = BLOG_POSTS.filter(
+  const allBlogs = await getAllBlogs();
+  const relatedPosts = allBlogs.filter(
     (p) => p.slug !== post.slug && p.category === post.category
   ).slice(0, 2);
+
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://cosmodex.in";
 
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "BlogPosting",
+    mainEntityOfPage: {
+      "@type": "WebPage",
+      "@id": `${appUrl}/blog/${post.slug}`,
+    },
     headline: post.title,
     description: post.excerpt,
-    image: post.coverImage,
+    image: [post.coverImage],
     datePublished: post.publishedAt,
+    dateModified: post.publishedAt,
     author: {
       "@type": "Person",
       name: post.author.name,
@@ -185,7 +199,7 @@ export default async function BlogPostDetailPage({ params }: Props) {
       name: "CosmoDex",
       logo: {
         "@type": "ImageObject",
-        url: "https://cosmodex.in/images/logo.png",
+        url: `${appUrl}/images/logo.png`,
       },
     },
   };

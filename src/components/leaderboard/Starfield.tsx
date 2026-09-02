@@ -10,7 +10,6 @@ interface Star {
   driftAmp: number;
   driftFreq: number;
   driftOffset: number;
-  opacity: number;
   baseOpacity: number;
   twinkleSpeed: number;
   twinkleOffset: number;
@@ -19,7 +18,6 @@ interface Star {
 }
 
 const STAR_PALETTE = [
-  "255, 255, 255",   // pure white
   "255, 255, 255",   // pure white
   "255, 255, 255",   // pure white
   "220, 235, 255",   // soft blue-white
@@ -35,7 +33,7 @@ export function Starfield() {
     const canvas = canvasRef.current;
     if (!canvas) return;
 
-    const ctx = canvas.getContext("2d");
+    const ctx = canvas.getContext("2d", { alpha: true });
     if (!ctx) return;
 
     let animId: number;
@@ -48,8 +46,8 @@ export function Starfield() {
     let targetMouseY = 0;
 
     const handleMouseMove = (e: MouseEvent) => {
-      targetMouseX = (e.clientX / window.innerWidth - 0.5) * 25;
-      targetMouseY = (e.clientY / window.innerHeight - 0.5) * 25;
+      targetMouseX = (e.clientX / window.innerWidth - 0.5) * 20;
+      targetMouseY = (e.clientY / window.innerHeight - 0.5) * 20;
     };
 
     window.addEventListener("mousemove", handleMouseMove, { passive: true });
@@ -57,21 +55,20 @@ export function Starfield() {
     let stars: Star[] = [];
 
     const initStars = (w: number, h: number) => {
-      const count = Math.floor(Math.max(90, (w * h) / 6500));
+      const count = Math.min(100, Math.floor(Math.max(60, (w * h) / 9000)));
       stars = Array.from({ length: count }, () => {
-        const depth = Math.random() * 0.8 + 0.2; // 0.2 to 1.0 depth
+        const depth = Math.random() * 0.8 + 0.2;
         const rgb = STAR_PALETTE[Math.floor(Math.random() * STAR_PALETTE.length)];
         return {
           x: Math.random() * w,
           y: Math.random() * h,
-          size: (Math.random() * 1.5 + 0.6) * depth,
-          speedY: (Math.random() * 0.4 + 0.15) * depth,
-          driftAmp: Math.random() * 10 + 2,
-          driftFreq: Math.random() * 0.006 + 0.002,
+          size: (Math.random() * 1.4 + 0.5) * depth,
+          speedY: (Math.random() * 0.35 + 0.1) * depth,
+          driftAmp: Math.random() * 8 + 2,
+          driftFreq: Math.random() * 0.005 + 0.002,
           driftOffset: Math.random() * Math.PI * 2,
-          opacity: 0,
           baseOpacity: Math.random() * 0.4 + 0.4,
-          twinkleSpeed: Math.random() * 0.025 + 0.008,
+          twinkleSpeed: Math.random() * 0.02 + 0.006,
           twinkleOffset: Math.random() * Math.PI * 2,
           color: rgb,
           depth,
@@ -104,20 +101,21 @@ export function Starfield() {
       mouseX += (targetMouseX - mouseX) * 0.05;
       mouseY += (targetMouseY - mouseY) * 0.05;
 
-      for (const s of stars) {
+      for (let i = 0; i < stars.length; i++) {
+        const s = stars[i];
         // Move star UPWARDS
         s.y -= s.speedY;
 
         // Wrap seamlessly around top boundary to bottom
-        if (s.y < -15) {
-          s.y = height + 15;
+        if (s.y < -10) {
+          s.y = height + 10;
           s.x = Math.random() * width;
         }
 
         // Horizontal wave drift
         const drift = Math.sin(frame * s.driftFreq + s.driftOffset) * s.driftAmp;
 
-        // Twinkle luminance factor
+        // Twinkle factor
         const twinkle = 0.6 + 0.4 * Math.sin(frame * s.twinkleSpeed + s.twinkleOffset);
         const currentOpacity = Math.min(1, s.baseOpacity * twinkle);
 
@@ -125,27 +123,11 @@ export function Starfield() {
         const drawX = s.x + drift + mouseX * s.depth;
         const drawY = s.y + mouseY * s.depth;
 
-        // Draw clean round star dot
+        // Draw star core dot
+        ctx.fillStyle = `rgba(${s.color}, ${currentOpacity.toFixed(2)})`;
         ctx.beginPath();
         ctx.arc(drawX, drawY, s.size, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(${s.color}, ${currentOpacity.toFixed(3)})`;
         ctx.fill();
-
-        // Subtle soft glow ONLY for slightly larger stars
-        if (s.size > 1.2) {
-          const glowRadius = s.size * 2.5;
-          const gradient = ctx.createRadialGradient(
-            drawX, drawY, 0,
-            drawX, drawY, glowRadius
-          );
-          gradient.addColorStop(0, `rgba(${s.color}, ${(currentOpacity * 0.4).toFixed(3)})`);
-          gradient.addColorStop(1, `rgba(${s.color}, 0)`);
-
-          ctx.beginPath();
-          ctx.arc(drawX, drawY, glowRadius, 0, Math.PI * 2);
-          ctx.fillStyle = gradient;
-          ctx.fill();
-        }
       }
 
       animId = requestAnimationFrame(render);
@@ -164,10 +146,8 @@ export function Starfield() {
     <canvas
       ref={canvasRef}
       aria-hidden="true"
-      className="pointer-events-none absolute inset-0 size-full overflow-hidden"
-      style={{ zIndex: 0 }}
+      className="pointer-events-none absolute inset-0 size-full overflow-hidden [will-change:transform]"
+      style={{ zIndex: 0, transform: "translate3d(0,0,0)" }}
     />
   );
 }
-
-
