@@ -5,7 +5,7 @@ import SmoothScroll from "@/components/landing/SmoothScroll";
 import Mascot from "@/features/mascot/Mascot";
 import Providers from "@/components/providers/Providers";
 
-const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://cosmodex-theta.vercel.app";
+const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://www.cosmodex.in";
 
 export const metadata: Metadata = {
   metadataBase: new URL(appUrl),
