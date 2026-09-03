@@ -45,9 +45,13 @@ export const metadata: Metadata = {
     canonical: appUrl,
   },
   icons: {
-    icon: "/images/logo.png",
-    shortcut: "/images/logo.png",
-    apple: "/images/logo.png",
+    icon: [
+      { url: "/favicon-48x48.png", sizes: "48x48", type: "image/png" },
+      { url: "/icon-96.png", sizes: "96x96", type: "image/png" },
+      { url: "/icon-192.png", sizes: "192x192", type: "image/png" },
+    ],
+    shortcut: "/favicon-48x48.png",
+    apple: "/icon-192.png",
   },
   openGraph: {
     title: "CosmoDex — Gamified Coding Platform for Students",
@@ -188,9 +192,11 @@ export default function RootLayout({
     <html lang="en" className="dark" suppressHydrationWarning>
       <head>
         <meta name="theme-color" content="#050508" />
-        <link rel="icon" href="/images/logo.png" type="image/png" />
-        <link rel="shortcut icon" href="/images/logo.png" type="image/png" />
-        <link rel="apple-touch-icon" href="/images/logo.png" />
+        <link rel="icon" href="/favicon-48x48.png" sizes="48x48" type="image/png" />
+        <link rel="icon" href="/icon-96.png" sizes="96x96" type="image/png" />
+        <link rel="icon" href="/icon-192.png" sizes="192x192" type="image/png" />
+        <link rel="shortcut icon" href="/favicon-48x48.png" type="image/png" />
+        <link rel="apple-touch-icon" href="/icon-192.png" />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLdData) }}
