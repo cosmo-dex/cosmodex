@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Script from "next/script";
 import { displayFont, bodyFont, monoFont } from "@/fonts";
 import "./globals.css";
 import SmoothScroll from "@/components/landing/SmoothScroll";
@@ -31,6 +32,7 @@ export const metadata: Metadata = {
     "codédex alternative",
     "interactive programming practice",
   ],
+  applicationName: "CosmoDex",
   authors: [{ name: "CosmoDex Team", url: appUrl }],
   creator: "CosmoDex",
   publisher: "CosmoDex",
@@ -57,10 +59,10 @@ export const metadata: Metadata = {
     type: "website",
     images: [
       {
-        url: `${appUrl}/images/logo.png`,
-        width: 800,
-        height: 800,
-        alt: "CosmoDex — Gamified Coding Platform",
+        url: `${appUrl}/opengraph-image`,
+        width: 1200,
+        height: 630,
+        alt: "CosmoDex — Gamified Coding Platform for Students",
       },
     ],
   },
@@ -69,7 +71,7 @@ export const metadata: Metadata = {
     title: "CosmoDex — Gamified Coding Platform for Students",
     description:
       "Learn programming, practice Python & SQL, and compete in real-time 1v1 Space Coding Battles.",
-    images: [`${appUrl}/images/logo.png`],
+    images: [`${appUrl}/opengraph-image`],
   },
   robots: {
     index: true,
@@ -82,6 +84,9 @@ export const metadata: Metadata = {
       "max-snippet": -1,
     },
   },
+  verification: {
+    google: process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION,
+  },
 };
 
 const jsonLdData = {
@@ -91,9 +96,15 @@ const jsonLdData = {
       "@type": "Organization",
       "@id": `${appUrl}/#organization`,
       name: "CosmoDex",
+      alternateName: ["CosmoDeX", "Cosmo Dex"],
       url: appUrl,
       logo: `${appUrl}/images/logo.png`,
       email: "connect.cosmodex@gmail.com",
+      sameAs: [
+        "https://github.com/cosmo-dex",
+        "https://x.com/cosmodex",
+        "https://www.linkedin.com/company/cosmodex"
+      ],
       description:
         "CosmoDex is a gamified coding platform designed for students and aspiring developers to learn programming, practice coding, and compete in 1v1 battles.",
     },
@@ -102,6 +113,7 @@ const jsonLdData = {
       "@id": `${appUrl}/#website`,
       url: appUrl,
       name: "CosmoDex",
+      alternateName: ["CosmoDeX", "Cosmo Dex"],
       publisher: {
         "@id": `${appUrl}/#organization`,
       },
@@ -183,12 +195,46 @@ export default function RootLayout({
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLdData) }}
         />
+        {/* Google Tag Manager (head) */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+})(window,document,'script','dataLayer','GTM-MTZR6TH8');`,
+          }}
+        />
       </head>
       <body
         className={`${displayFont.variable} ${bodyFont.variable} ${monoFont.variable} antialiased`}
         style={{ background: "#08040f", color: "#f0e6ff" }}
         suppressHydrationWarning
       >
+        {/* Google Tag Manager (noscript) */}
+        <noscript>
+          <iframe
+            src="https://www.googletagmanager.com/ns.html?id=GTM-MTZR6TH8"
+            height="0"
+            width="0"
+            style={{ display: "none", visibility: "hidden" }}
+          />
+        </noscript>
+
+        {/* Google tag (gtag.js) - Added just after head end */}
+        <Script
+          src="https://www.googletagmanager.com/gtag/js?id=G-LN4YNMPR0D"
+          strategy="afterInteractive"
+        />
+        <Script id="google-analytics" strategy="afterInteractive">
+          {`
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+            gtag('config', 'G-LN4YNMPR0D');
+          `}
+        </Script>
+
         <Providers>
           <SmoothScroll />
           {/* Noise overlay for texture */}

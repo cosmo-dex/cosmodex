@@ -130,12 +130,18 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     };
   }
 
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://www.cosmodex.in";
+
   return {
     title: `${post.title} | CosmoDex Blog`,
     description: post.excerpt,
+    alternates: {
+      canonical: `${appUrl}/blog/${post.slug}`,
+    },
     openGraph: {
       title: post.title,
       description: post.excerpt,
+      url: `${appUrl}/blog/${post.slug}`,
       type: "article",
       publishedTime: post.publishedAt,
       authors: [post.author.name],

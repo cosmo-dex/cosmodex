@@ -1,7 +1,16 @@
+import type { Metadata } from 'next';
 import { cookies } from 'next/headers';
 import prisma from '@/lib/prisma';
 import ProfileContent from './ProfileContent';
 import { verifySession, SESSION_COOKIE } from '@/lib/session';
+
+export const metadata: Metadata = {
+  title: "Profile | CosmoDex",
+  robots: {
+    index: false,
+    follow: false,
+  },
+};
 
 export default async function ProfilePage() {
   const cookieStore = await cookies();
