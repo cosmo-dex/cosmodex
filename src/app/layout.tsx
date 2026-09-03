@@ -32,6 +32,7 @@ export const metadata: Metadata = {
     "codédex alternative",
     "interactive programming practice",
   ],
+  applicationName: "CosmoDex",
   authors: [{ name: "CosmoDex Team", url: appUrl }],
   creator: "CosmoDex",
   publisher: "CosmoDex",
@@ -58,10 +59,10 @@ export const metadata: Metadata = {
     type: "website",
     images: [
       {
-        url: `${appUrl}/images/logo.png`,
-        width: 800,
-        height: 800,
-        alt: "CosmoDex — Gamified Coding Platform",
+        url: `${appUrl}/opengraph-image`,
+        width: 1200,
+        height: 630,
+        alt: "CosmoDex — Gamified Coding Platform for Students",
       },
     ],
   },
@@ -70,7 +71,7 @@ export const metadata: Metadata = {
     title: "CosmoDex — Gamified Coding Platform for Students",
     description:
       "Learn programming, practice Python & SQL, and compete in real-time 1v1 Space Coding Battles.",
-    images: [`${appUrl}/images/logo.png`],
+    images: [`${appUrl}/opengraph-image`],
   },
   robots: {
     index: true,
@@ -83,6 +84,9 @@ export const metadata: Metadata = {
       "max-snippet": -1,
     },
   },
+  verification: {
+    google: process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION,
+  },
 };
 
 const jsonLdData = {
@@ -92,9 +96,15 @@ const jsonLdData = {
       "@type": "Organization",
       "@id": `${appUrl}/#organization`,
       name: "CosmoDex",
+      alternateName: ["CosmoDeX", "Cosmo Dex"],
       url: appUrl,
       logo: `${appUrl}/images/logo.png`,
       email: "connect.cosmodex@gmail.com",
+      sameAs: [
+        "https://github.com/cosmo-dex",
+        "https://x.com/cosmodex",
+        "https://www.linkedin.com/company/cosmodex"
+      ],
       description:
         "CosmoDex is a gamified coding platform designed for students and aspiring developers to learn programming, practice coding, and compete in 1v1 battles.",
     },
@@ -103,6 +113,7 @@ const jsonLdData = {
       "@id": `${appUrl}/#website`,
       url: appUrl,
       name: "CosmoDex",
+      alternateName: ["CosmoDeX", "Cosmo Dex"],
       publisher: {
         "@id": `${appUrl}/#organization`,
       },

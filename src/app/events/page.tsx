@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import Image from 'next/image';
 import Navbar from '@/components/navbar/Navbar';
 import { motion, AnimatePresence } from 'framer-motion';
 import RisingStars from '@/components/RisingStar';
@@ -203,8 +204,13 @@ function EventCardComponent({ event }: { event: EventCard }) {
       {/* Banner */}
       <div className={`relative h-44 bg-gradient-to-br ${typeMeta.gradient} flex items-center justify-center overflow-hidden`}>
         {event.banner_url ? (
-          /* eslint-disable-next-line @next/next/no-img-element */
-          <img src={event.banner_url} alt={event.title} className="absolute inset-0 w-full h-full object-cover opacity-40 group-hover:opacity-60 group-hover:scale-105 transition-all duration-500" />
+          <Image
+            src={event.banner_url}
+            alt={event.title}
+            fill
+            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+            className="object-cover opacity-40 group-hover:opacity-60 group-hover:scale-105 transition-all duration-500"
+          />
         ) : (
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.08)_0%,transparent_70%)]" />
         )}

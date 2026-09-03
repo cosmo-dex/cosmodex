@@ -6,41 +6,63 @@ Allow: /learn
 Allow: /battle
 Allow: /leaderboard
 Allow: /events
-Allow: /onboarding
 Allow: /llms.txt
 Allow: /llms-full.txt
 Disallow: /api/
 Disallow: /dashboard/
 Disallow: /profile/
+Disallow: /onboarding/
+Disallow: /victory/
 Disallow: /battle/room/
+Disallow: /battle/coding/
 
-# AI Search Engine Crawlers (Allowed)
+# AI Search Engine Crawlers & LLM Agents (Allowed)
 User-agent: GPTBot
 Allow: /
-Allow: /blog
 Disallow: /api/
 Disallow: /dashboard/
 Disallow: /profile/
+Disallow: /onboarding/
+Disallow: /victory/
 
 User-agent: ChatGPT-User
 Allow: /
-Allow: /blog
 Disallow: /api/
 Disallow: /dashboard/
 Disallow: /profile/
+Disallow: /onboarding/
+Disallow: /victory/
 
 User-agent: ClaudeBot
 Allow: /
-Allow: /blog
 Disallow: /api/
 Disallow: /dashboard/
 Disallow: /profile/
+Disallow: /onboarding/
+Disallow: /victory/
 
 User-agent: PerplexityBot
 Allow: /
-Allow: /blog
 Disallow: /api/
 Disallow: /dashboard/
 Disallow: /profile/
+Disallow: /onboarding/
+Disallow: /victory/
+
+User-agent: Google-Extended
+Allow: /
+Disallow: /api/
+Disallow: /dashboard/
+Disallow: /profile/
+Disallow: /onboarding/
+Disallow: /victory/
+
+User-agent: CCBot
+Allow: /
+Disallow: /api/
+Disallow: /dashboard/
+Disallow: /profile/
+Disallow: /onboarding/
+Disallow: /victory/
 
 Sitemap: https://www.cosmodex.in/sitemap.xml
