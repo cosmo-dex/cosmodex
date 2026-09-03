@@ -1,7 +1,7 @@
 import { MetadataRoute } from 'next';
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://cosmodex-theta.vercel.app';
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://www.cosmodex.in';
   const currentDate = new Date();
 
   // Primary public routes and special AI / documentation discovery routes

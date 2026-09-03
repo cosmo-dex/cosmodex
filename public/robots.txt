@@ -1,6 +1,7 @@
-# Robots.txt for CosmoDex (https://cosmodex.in)
+# Robots.txt for CosmoDex (https://www.cosmodex.in)
 User-agent: *
 Allow: /
+Allow: /blog
 Allow: /learn
 Allow: /battle
 Allow: /leaderboard
@@ -16,26 +17,30 @@ Disallow: /battle/room/
 # AI Search Engine Crawlers (Allowed)
 User-agent: GPTBot
 Allow: /
+Allow: /blog
 Disallow: /api/
 Disallow: /dashboard/
 Disallow: /profile/
 
 User-agent: ChatGPT-User
 Allow: /
+Allow: /blog
 Disallow: /api/
 Disallow: /dashboard/
 Disallow: /profile/
 
 User-agent: ClaudeBot
 Allow: /
+Allow: /blog
 Disallow: /api/
 Disallow: /dashboard/
 Disallow: /profile/
 
 User-agent: PerplexityBot
 Allow: /
+Allow: /blog
 Disallow: /api/
 Disallow: /dashboard/
 Disallow: /profile/
 
-Sitemap: https://cosmodex.in/sitemap.xml
+Sitemap: https://www.cosmodex.in/sitemap.xml
