@@ -10,6 +10,7 @@ import { cn } from '@/lib/utils';
 import DashboardBackground from '@/components/dashboard/DashboardBackground';
 import { Starfield } from '../leaderboard/Starfield';
 import { getAvatarUrl } from '@/lib/avatar';
+import AnimatedEloCard, { EloUpdateData } from './AnimatedEloCard';
 
 const STARTERS: Record<string, string> = {
   python: "# Write your solution here\n",
@@ -168,7 +169,11 @@ export default function ActiveMatchView({ socket, matchInfo, userId, username, o
   const [mcqTimer, setMcqTimer] = useState(30);
   const [matchElapsedSeconds, setMatchElapsedSeconds] = useState(0);
 
-  const [matchResult, setMatchResult] = useState<{ winnerId: string | null; reason: string } | null>(null);
+  const [matchResult, setMatchResult] = useState<{
+    winnerId: string | null;
+    reason: string;
+    eloUpdates?: Record<string, EloUpdateData>;
+  } | null>(null);
   const draftRestoredRef = useRef(false);
 
   useEffect(() => {
@@ -233,14 +238,22 @@ export default function ActiveMatchView({ socket, matchInfo, userId, username, o
         setMcqTimer(typeof state.roundTimeRemaining === 'number' ? state.roundTimeRemaining : 30);
       });
 
-      socket.on('mcq_match_ended', (data: { winnerId: string | null; reason: string; finalMarks?: Record<string, number>; finalScores?: Record<string, number>; totalTimes?: Record<string, number> }) => {
+      socket.on('mcq_match_ended', (data: {
+        winnerId: string | null;
+        reason: string;
+        eloUpdates?: Record<string, EloUpdateData>;
+        finalMarks?: Record<string, number>;
+        finalScores?: Record<string, number>;
+        totalTimes?: Record<string, number>;
+      }) => {
         setMatchResult(data);
 
         setMcqState((latest) => {
           try {
             const myPlayer = latest?.players?.[userId];
             const isWinner = data.winnerId === userId;
-            const pointsEarned = isWinner ? 100 : 0;
+            const pointsEarned = myPlayer?.points ?? (isWinner ? 100 : 0);
+            const myEloUpdate = data.eloUpdates?.[userId];
             localStorage.setItem('cosmodex_match_result', JSON.stringify({
               points: pointsEarned,
               livesLeft: 0,
@@ -248,7 +261,9 @@ export default function ActiveMatchView({ socket, matchInfo, userId, username, o
               timeTaken: myPlayer?.totalTimeTaken ?? 0,
               opponentName: matchInfo.opponentUsername,
               myName: username,
-              eloDelta: null,
+              eloDelta: myEloUpdate?.delta ?? null,
+              oldElo: myEloUpdate?.oldElo ?? null,
+              newElo: myEloUpdate?.newElo ?? null,
               matchId: matchInfo.roomId,
               isWinner: isWinner,
             }));
@@ -298,11 +313,16 @@ export default function ActiveMatchView({ socket, matchInfo, userId, username, o
         setWaitTimer(data?.time || 15);
       });
 
-      socket.on('match_ended', (data: { winnerId: string | null; reason: string }) => {
+      socket.on('match_ended', (data: {
+        winnerId: string | null;
+        reason: string;
+        eloUpdates?: Record<string, EloUpdateData>;
+      }) => {
         setMatchResult(data);
 
         setCodeState((latest) => {
           const myPlayer = latest?.players?.[userId];
+          const myEloUpdate = data.eloUpdates?.[userId];
           try {
             localStorage.setItem('cosmodex_match_result', JSON.stringify({
               points: myPlayer?.points ?? 0,
@@ -310,7 +330,9 @@ export default function ActiveMatchView({ socket, matchInfo, userId, username, o
               submissions: myPlayer?.submissionsCount ?? 0,
               opponentName: matchInfo.opponentUsername,
               myName: username,
-              eloDelta: null,
+              eloDelta: myEloUpdate?.delta ?? null,
+              oldElo: myEloUpdate?.oldElo ?? null,
+              newElo: myEloUpdate?.newElo ?? null,
               matchId: latest?.roomId ?? null,
               isWinner: data.winnerId === userId,
             }));
@@ -553,15 +575,22 @@ export default function ActiveMatchView({ socket, matchInfo, userId, username, o
                   : `${matchInfo.opponentUsername} won this battle. Keep practicing!`}
           </p>
 
-          <div className="flex gap-3 w-full justify-center mb-6">
-            <div className="flex-1 bg-white/[0.05] border border-white/10 p-3 rounded-2xl backdrop-blur-md shadow-inner text-center">
-              <div className="text-2xl md:text-3xl font-black text-amber-400">
-                {isMcq ? (won ? "+100" : "0") : (myPlayerCode?.points || 0)}
+          <div className="flex flex-col gap-3 w-full mb-6">
+            <AnimatedEloCard
+              eloUpdate={matchResult.eloUpdates?.[userId]}
+              won={won}
+              draw={draw}
+            />
+
+            <div className="flex gap-3 w-full justify-center">
+              <div className="flex-1 bg-white/[0.05] border border-white/10 p-3 rounded-2xl backdrop-blur-md shadow-inner text-center">
+                <div className="text-xl md:text-2xl font-black text-amber-400">
+                  {isMcq ? (myPlayerMcq?.points ?? (won ? 100 : 0)) : (myPlayerCode?.points || 0)}
+                </div>
+                <div className="text-[10px] text-text-muted mt-1 uppercase tracking-widest font-bold">
+                  Points
+                </div>
               </div>
-              <div className="text-[10px] text-text-muted mt-1 uppercase tracking-widest font-bold">
-                Match Points
-              </div>
-            </div>
 
             {isMcq && (
               <>
@@ -584,6 +613,7 @@ export default function ActiveMatchView({ socket, matchInfo, userId, username, o
                 </div>
               </>
             )}
+            </div>
           </div>
 
           <button

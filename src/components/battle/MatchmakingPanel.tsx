@@ -21,6 +21,22 @@ interface MatchInfo {
   mode: Mode;
 }
 
+interface ModeStats {
+  elo: number;
+  wins: number;
+  losses: number;
+  draws: number;
+  streak: number;
+  avgTime?: string;
+  recentMatches: Array<{
+    id: string;
+    isWin: boolean;
+    isDraw?: boolean;
+    eloChange: string;
+    time: string;
+  }>;
+}
+
 interface UserStats {
   username: string;
   avatarUrl?: string | null;
@@ -51,6 +67,8 @@ interface UserStats {
     eloChange: string;
     time: string;
   }>;
+  codeStats?: ModeStats;
+  mcqStats?: ModeStats;
 }
 
 interface LeaderboardEntry {
@@ -76,7 +94,7 @@ function getRankLabel(experienceLevel: string | null | undefined): string {
 }
 
 export default function MatchmakingPanel({ socket, userId, username, onMatchFound }: Props) {
-  const [mode, setMode] = useState<Mode>("code");
+  const [mode, setMode] = useState<Mode>("mcq");
   const [queueState, setQueueState] = useState<QueueState>("idle");
   const [phase, setPhase] = useState<CinematicPhase>("SEARCHING");
   const [opponent, setOpponent] = useState<{ username: string; elo: number; avatar?: string } | null>(null);
@@ -86,6 +104,7 @@ export default function MatchmakingPanel({ socket, userId, username, onMatchFoun
   const [error, setError] = useState<string | null>(null);
   const [stats, setStats] = useState<UserStats | null>(null);
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
+  const [queueCounts, setQueueCounts] = useState<{ code: number; mcq: number; total: number }>({ code: 0, mcq: 0, total: 0 });
 
   const onMatchFoundRef = useRef(onMatchFound);
   const hasTransitionedRef = useRef(false);
@@ -112,13 +131,28 @@ export default function MatchmakingPanel({ socket, userId, username, onMatchFoun
     return () => clearInterval(interval);
   }, [fetchStats]);
 
-  // Fetch real leaderboard entries
   useEffect(() => {
-    fetch(`/api/battle/leaderboard?mode=${mode}`)
-      .then((res) => (res.ok ? res.json() : []))
-      .then((data) => setLeaderboard(data))
-      .catch(() => setLeaderboard([]));
+    const fetchLeaderboard = () => {
+      fetch(`/api/battle/leaderboard?mode=${mode}`)
+        .then((res) => (res.ok ? res.json() : []))
+        .then((data) => setLeaderboard(data))
+        .catch(() => setLeaderboard([]));
+    };
+    fetchLeaderboard();
+    const interval = setInterval(fetchLeaderboard, 5000);
+    return () => clearInterval(interval);
   }, [mode]);
+
+  useEffect(() => {
+    if (!socket?.connected) return;
+    socket.emit("queue_status", {});
+    const interval = setInterval(() => {
+      if (socket?.connected) {
+        socket.emit("queue_status", {});
+      }
+    }, 4000);
+    return () => clearInterval(interval);
+  }, [socket, socket?.connected]);
 
   useEffect(() => {
     const handleBeforeUnload = () => {
@@ -166,8 +200,24 @@ export default function MatchmakingPanel({ socket, userId, username, onMatchFoun
       }
     };
 
-    const handleQueueStatus = (status: { status: string; queueCount?: number }) => {
+    const handleQueueStatus = (status: { status?: string; codeQueueLength?: number; mcqQueueLength?: number; totalInQueue?: number }) => {
       if (status.status === "queuing") setQueueState("queuing");
+      if (typeof status.codeQueueLength === "number" || typeof status.mcqQueueLength === "number") {
+        setQueueCounts({
+          code: status.codeQueueLength ?? 0,
+          mcq: status.mcqQueueLength ?? 0,
+          total: status.totalInQueue ?? 0,
+        });
+      }
+    };
+
+    const handleQueueJoined = (data: { mode?: Mode; size?: number }) => {
+      if (data?.mode && typeof data?.size === "number") {
+        setQueueCounts((prev) => ({
+          ...prev,
+          [data.mode === "mcq" ? "mcq" : "code"]: data.size ?? 1,
+        }));
+      }
     };
 
     const handleLeft = () => {
@@ -191,6 +241,7 @@ export default function MatchmakingPanel({ socket, userId, username, onMatchFoun
     socket.on("player_ready_update", handlePlayerReadyUpdate);
     socket.on("match_start", handleMatchStart);
     socket.on("queue_status", handleQueueStatus);
+    socket.on("queue_joined", handleQueueJoined);
     socket.on("queue_left", handleLeft);
     socket.on("error", handleError);
 
@@ -199,10 +250,12 @@ export default function MatchmakingPanel({ socket, userId, username, onMatchFoun
       socket.off("player_ready_update", handlePlayerReadyUpdate);
       socket.off("match_start", handleMatchStart);
       socket.off("queue_status", handleQueueStatus);
+      socket.off("queue_joined", handleQueueJoined);
       socket.off("queue_left", handleLeft);
       socket.off("error", handleError);
     };
   }, [socket, matchPayload, userId]);
+
 
   const joinQueue = () => {
     if (!socket?.connected) {
@@ -237,14 +290,21 @@ export default function MatchmakingPanel({ socket, userId, username, onMatchFoun
   };
 
   const isCode = mode === "code";
-  const currentElo = isCode ? (stats?.elo ?? 1000) : (stats?.mcqElo ?? 1000);
+  const activeModeStats = isCode ? stats?.codeStats : stats?.mcqStats;
+  const currentElo = activeModeStats?.elo ?? (isCode ? (stats?.elo ?? 1000) : (stats?.mcqElo ?? 1000));
 
-  const totalBattles = stats ? (stats.wins + stats.losses + stats.draws) : 0;
-  const winRate = totalBattles > 0 ? Math.round((stats!.wins / totalBattles) * 100) : 0;
+  const totalBattles = activeModeStats
+    ? (activeModeStats.wins + activeModeStats.losses + activeModeStats.draws)
+    : (stats ? (stats.wins + stats.losses + stats.draws) : 0);
 
-  const matchHistory = (stats?.recentMatches && stats.recentMatches.length > 0)
-    ? stats.recentMatches.slice(0, 2)
-    : [];
+  const modeWins = activeModeStats?.wins ?? stats?.wins ?? 0;
+  const modeStreak = activeModeStats?.streak ?? stats?.streak ?? 0;
+  const modeAvgTime = activeModeStats?.avgTime ?? stats?.avgTime ?? "—";
+  const winRate = totalBattles > 0 ? Math.round((modeWins / totalBattles) * 100) : 0;
+
+  const matchHistory = (activeModeStats?.recentMatches && activeModeStats.recentMatches.length > 0)
+    ? activeModeStats.recentMatches.slice(0, 3)
+    : (stats?.recentMatches && stats.recentMatches.length > 0 ? stats.recentMatches.slice(0, 3) : []);
 
   // Dynamic Mini Leaderboard calculations (Top 3 real entries + Current User rank)
   const top3 = leaderboard.slice(0, 3);
@@ -420,7 +480,9 @@ export default function MatchmakingPanel({ socket, userId, username, onMatchFoun
                               <XCircle size={14} className="fill-rose-400 text-[#0d0f1d]" /> Loss
                             </span>
                           )}
-                          <span className="font-mono text-white/90 text-xs font-semibold">{m.eloChange ? String(m.eloChange).replace(/\s*elo/gi, '') : ''}</span>
+                          <span className={`font-mono text-xs font-semibold ${m.isWin ? 'text-emerald-400' : (m.isDraw ? 'text-amber-400' : 'text-rose-400')}`}>
+                            {m.eloChange ? `${m.eloChange} ELO` : ''}
+                          </span>
                         </div>
                         <span className="text-white/40 group-hover:text-white/70 transition-colors font-mono text-[11px] flex items-center gap-1">
                           <Clock size={12} /> {m.time}
@@ -455,42 +517,6 @@ export default function MatchmakingPanel({ socket, userId, username, onMatchFoun
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 mb-4 relative z-10 flex-1 items-stretch">
-              {/* Code Battle Mode Card */}
-              <button
-                onClick={() => setMode("code")}
-                disabled={queueState === "queuing"}
-                className={`relative flex flex-col items-start justify-between p-4 rounded-2xl border text-left transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed group overflow-hidden ${isCode
-                    ? "bg-gradient-to-br from-[#E873C3]/25 via-[#C453D6]/20 to-[#8D37D6]/30 border-[#E873C3]/50 shadow-[0_0_18px_rgba(232,115,195,0.3)]"
-                    : "border-white/15 bg-white/5 hover:border-white/30 hover:bg-white/10"
-                  }`}
-              >
-                <div className="w-full flex items-center justify-between">
-                  <div className={`p-2.5 rounded-xl border transition-all ${isCode
-                      ? "bg-[#E873C3]/20 border-[#E873C3]/40 text-white"
-                      : "bg-white/10 border-white/10 text-white/70 group-hover:text-white"
-                    }`}>
-                    <Terminal size={24} />
-                  </div>
-
-                  <span className={`text-[11px] font-bold px-2.5 py-0.5 rounded-full border transition-all ${isCode
-                      ? "bg-[#E873C3]/30 text-white border-[#E873C3]/50 shadow-[0_0_8px_rgba(232,115,195,0.5)]"
-                      : "bg-white/10 text-white/60 border-white/15"
-                    }`}>
-                    {isCode ? "1v1 Duel" : "1v1"}
-                  </span>
-                </div>
-
-                <div className="mt-3 w-full relative z-10">
-                  <p className={`text-base sm:text-lg font-display font-bold tracking-wide ${isCode ? "text-white" : "text-white/90 group-hover:text-white"}`}>
-                    Code Battle
-                  </p>
-                  <p className={`text-[11px] sm:text-xs mt-0.5 font-medium leading-snug ${isCode ? "text-white/80" : "text-white/60 group-hover:text-white/80"}`}>
-                    1v1 Speed algorithmic coding duel
-                  </p>
-                </div>
-              </button>
-
-              {/* MCQ Battle Mode Card */}
               <button
                 onClick={() => setMode("mcq")}
                 disabled={queueState === "queuing"}
@@ -522,6 +548,48 @@ export default function MatchmakingPanel({ socket, userId, username, onMatchFoun
                   <p className={`text-[11px] sm:text-xs mt-0.5 font-medium leading-snug ${!isCode ? "text-white/80" : "text-white/60 group-hover:text-white/80"}`}>
                     Rapid 5-round multiple-choice quiz arena
                   </p>
+                  <div className="flex items-center gap-1.5 mt-2 text-[10px] font-mono text-cyan-300">
+                    <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse" />
+                    <span>{queueCounts.mcq > 0 ? `${queueCounts.mcq} in queue` : 'Queue open'}</span>
+                  </div>
+                </div>
+              </button>
+
+              <button
+                onClick={() => setMode("code")}
+                disabled={queueState === "queuing"}
+                className={`relative flex flex-col items-start justify-between p-4 rounded-2xl border text-left transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed group overflow-hidden ${isCode
+                    ? "bg-gradient-to-br from-[#E873C3]/25 via-[#C453D6]/20 to-[#8D37D6]/30 border-[#E873C3]/50 shadow-[0_0_18px_rgba(232,115,195,0.3)]"
+                    : "border-white/15 bg-white/5 hover:border-white/30 hover:bg-white/10"
+                  }`}
+              >
+                <div className="w-full flex items-center justify-between">
+                  <div className={`p-2.5 rounded-xl border transition-all ${isCode
+                      ? "bg-[#E873C3]/20 border-[#E873C3]/40 text-white"
+                      : "bg-white/10 border-white/10 text-white/70 group-hover:text-white"
+                    }`}>
+                    <Terminal size={24} />
+                  </div>
+
+                  <span className={`text-[11px] font-bold px-2.5 py-0.5 rounded-full border transition-all ${isCode
+                      ? "bg-[#E873C3]/30 text-white border-[#E873C3]/50 shadow-[0_0_8px_rgba(232,115,195,0.5)]"
+                      : "bg-white/10 text-white/60 border-white/15"
+                    }`}>
+                    {isCode ? "1v1 Duel" : "1v1"}
+                  </span>
+                </div>
+
+                <div className="mt-3 w-full relative z-10">
+                  <p className={`text-base sm:text-lg font-display font-bold tracking-wide ${isCode ? "text-white" : "text-white/90 group-hover:text-white"}`}>
+                    Code Battle
+                  </p>
+                  <p className={`text-[11px] sm:text-xs mt-0.5 font-medium leading-snug ${isCode ? "text-white/80" : "text-white/60 group-hover:text-white/80"}`}>
+                    1v1 Speed algorithmic coding duel
+                  </p>
+                  <div className="flex items-center gap-1.5 mt-2 text-[10px] font-mono text-emerald-300">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                    <span>{queueCounts.code > 0 ? `${queueCounts.code} in queue` : 'Queue open'}</span>
+                  </div>
                 </div>
               </button>
             </div>
@@ -534,15 +602,13 @@ export default function MatchmakingPanel({ socket, userId, username, onMatchFoun
 
             {queueState === "idle" && (
               <div className="relative z-10 mb-3 bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 flex items-center justify-around text-xs text-white/80 font-mono">
-                {/* Rating Stake */}
                 <div className="relative flex items-center gap-1.5 cursor-pointer group/tip">
                   <Zap size={14} className="text-amber-400 fill-amber-400 shrink-0 group-hover/tip:scale-110 transition-transform" />
-                  <span className="font-bold text-amber-300">±25</span>
+                  <span className="font-bold text-amber-300">±ELO</span>
 
-                  {/* Instant Custom Tooltip */}
                   <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover/tip:flex flex-col items-center pointer-events-none z-30 whitespace-nowrap">
                     <span className="bg-[#120a26] text-amber-300 font-sans text-[10px] font-bold px-2.5 py-1 rounded-lg border border-amber-400/30 shadow-[0_0_15px_rgba(251,191,36,0.3)]">
-                      Rating Stake: Win +25 / Loss -15
+                      Rating Stake: Dynamic ELO (K=32)
                     </span>
                     <div className="w-1.5 h-1.5 bg-[#120a26] border-r border-b border-amber-400/30 rotate-45 -mt-1" />
                   </div>
@@ -550,15 +616,13 @@ export default function MatchmakingPanel({ socket, userId, username, onMatchFoun
 
                 <div className="h-3 w-[1px] bg-white/10" />
 
-                {/* Time Limit */}
                 <div className="relative flex items-center gap-1.5 cursor-pointer group/tip">
                   <Timer size={14} className="text-white/80 shrink-0 group-hover/tip:scale-110 transition-transform" />
-                  <span className="font-bold text-white/90">15m</span>
+                  <span className="font-bold text-white/90">{isCode ? "15m" : "5 Rds"}</span>
 
-                  {/* Instant Custom Tooltip */}
                   <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover/tip:flex flex-col items-center pointer-events-none z-30 whitespace-nowrap">
                     <span className="bg-[#120a26] text-white font-sans text-[10px] font-bold px-2.5 py-1 rounded-lg border border-white/20 shadow-[0_0_15px_rgba(255,255,255,0.2)]">
-                      Match Limit: 15 minutes
+                      {isCode ? "Match Limit: 15 minutes" : "Match Limit: 5 rapid rounds"}
                     </span>
                     <div className="w-1.5 h-1.5 bg-[#120a26] border-r border-b border-white/20 rotate-45 -mt-1" />
                   </div>
@@ -566,15 +630,13 @@ export default function MatchmakingPanel({ socket, userId, username, onMatchFoun
 
                 <div className="h-3 w-[1px] bg-white/10" />
 
-                {/* Winner XP */}
                 <div className="relative flex items-center gap-1.5 cursor-pointer group/tip">
                   <Award size={14} className="text-emerald-400 fill-emerald-400 shrink-0 group-hover/tip:scale-110 transition-transform" />
-                  <span className="font-bold text-emerald-300">+100 XP</span>
+                  <span className="font-bold text-emerald-300">+ELO</span>
 
-                  {/* Instant Custom Tooltip */}
                   <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover/tip:flex flex-col items-center pointer-events-none z-30 whitespace-nowrap">
                     <span className="bg-[#120a26] text-emerald-300 font-sans text-[10px] font-bold px-2.5 py-1 rounded-lg border border-emerald-400/30 shadow-[0_0_15px_rgba(52,211,153,0.3)]">
-                      Winner XP: +100 XP
+                      Victory Reward: Dynamic ELO Rating Gain
                     </span>
                     <div className="w-1.5 h-1.5 bg-[#120a26] border-r border-b border-emerald-400/30 rotate-45 -mt-1" />
                   </div>
@@ -602,7 +664,7 @@ export default function MatchmakingPanel({ socket, userId, username, onMatchFoun
                 <MatchmakingCinematic
                   username={username}
                   userAvatar={stats?.avatarUrl}
-                  userElo={isCode ? stats?.elo : stats?.mcqElo}
+                  userElo={currentElo}
                   phase={phase}
                   opponent={opponent}
                   isReady={isReady}
@@ -624,6 +686,9 @@ export default function MatchmakingPanel({ socket, userId, username, onMatchFoun
               <div className="flex items-center justify-between border-b border-white/10 pb-3 mb-4">
                 <h4 className="text-xs font-display font-bold text-white uppercase tracking-wider flex items-center gap-2">
                   <Award size={15} className="text-[#D95FD1] fill-[#D95FD1]" /> Battle Stats
+                  <span className="text-[10px] font-mono text-cyan-300 bg-cyan-500/10 px-2 py-0.5 rounded-full border border-cyan-500/20 uppercase font-bold">
+                    {isCode ? "Code" : "MCQ"}
+                  </span>
                 </h4>
                 <span className="text-[10px] font-mono text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">LIVE</span>
               </div>
@@ -651,7 +716,7 @@ export default function MatchmakingPanel({ socket, userId, username, onMatchFoun
                     <span>Streak</span>
                   </div>
                   <p className="font-mono font-bold text-orange-400 text-base mt-1 group-hover:text-orange-300 transition-colors">
-                    {stats?.streak ?? 0}
+                    {modeStreak}
                   </p>
                 </div>
 
@@ -660,9 +725,12 @@ export default function MatchmakingPanel({ socket, userId, username, onMatchFoun
                     <Clock size={14} className="text-emerald-400 fill-emerald-400/40 shrink-0 group-hover:scale-110 transition-transform" />
                     <span>Avg time</span>
                   </div>
-                  <p className="font-mono font-bold text-white text-base mt-1 group-hover:text-emerald-300 transition-colors">{stats?.avgTime ?? "4m15s"}</p>
+                  <p className="font-mono font-bold text-white text-base mt-1 group-hover:text-emerald-300 transition-colors">
+                    {modeAvgTime && modeAvgTime !== "—" ? modeAvgTime : "—"}
+                  </p>
                 </div>
               </div>
+
 
               {/* Arena Pro Tips Section */}
               <div className="bg-white/[0.04] rounded-2xl p-3.5 sm:p-4 hover:bg-white/[0.07] transition-all duration-200">
