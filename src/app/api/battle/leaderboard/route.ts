@@ -11,7 +11,7 @@ interface LeaderboardEntry {
 }
 
 const memoryCache = new Map<string, { timestamp: number; data: LeaderboardEntry[] }>();
-const CACHE_TTL_MS = 10_000;
+const CACHE_TTL_MS = 1000;
 
 export async function GET(req: NextRequest) {
   const mode = req.nextUrl.searchParams.get('mode') === 'mcq' ? 'mcq' : 'code';
@@ -21,7 +21,7 @@ export async function GET(req: NextRequest) {
   if (cached && now - cached.timestamp < CACHE_TTL_MS) {
     return NextResponse.json(cached.data, {
       headers: {
-        'Cache-Control': 'public, s-maxage=10, stale-while-revalidate=60',
+        'Cache-Control': 'no-store, max-age=0',
         'X-Cache': 'HIT',
       },
     });
@@ -31,9 +31,10 @@ export async function GET(req: NextRequest) {
     try {
       const prisma = (await import('@/lib/prisma')).default;
       const stats = await prisma.battle_user_stats.findMany({
-        orderBy: {
-          [mode === 'mcq' ? 'mcq_elo_rating' : 'elo_rating']: 'desc',
-        },
+        orderBy: [
+          { [mode === 'mcq' ? 'mcq_elo_rating' : 'elo_rating']: 'desc' },
+          { wins: 'desc' },
+        ],
         take: 50,
         select: {
           user_id: true,
@@ -65,32 +66,51 @@ export async function GET(req: NextRequest) {
 
         return NextResponse.json(entries, {
           headers: {
-            'Cache-Control': 'public, s-maxage=10, stale-while-revalidate=60',
+            'Cache-Control': 'no-store, max-age=0',
             'X-Cache': 'MISS',
           },
         });
       }
+
+      const realUsers = await prisma.users.findMany({
+        where: { is_active: true },
+        take: 20,
+        orderBy: { xp_total: 'desc' },
+        select: {
+          id: true,
+          username: true,
+        },
+      });
+
+      if (realUsers && realUsers.length > 0) {
+        const entries: LeaderboardEntry[] = realUsers.map((u, idx) => ({
+          rank: idx + 1,
+          userId: u.id,
+          username: u.username || 'Explorer',
+          elo: 1000,
+          wins: 0,
+          losses: 0,
+          draws: 0,
+        }));
+
+        memoryCache.set(mode, { timestamp: now, data: entries });
+
+        return NextResponse.json(entries, {
+          headers: {
+            'Cache-Control': 'public, s-maxage=10, stale-while-revalidate=60',
+            'X-Cache': 'USERS',
+          },
+        });
+      }
     } catch (err) {
-      console.warn('[battle/leaderboard] DB query failed, using fallback:', err);
+      console.warn('[battle/leaderboard] DB query failed:', err);
     }
   }
 
-  const fallbackStats = Array.from({ length: 20 }, (_, i) => ({
-    rank: i + 1,
-    userId: `user-${i + 1}`,
-    username: `Player${i + 1}`,
-    elo: mode === 'mcq' ? 2200 - i * 20 : 2000 - i * 25,
-    wins: 40 - i,
-    losses: i,
-    draws: i % 3,
-  }));
-
-  memoryCache.set(mode, { timestamp: now, data: fallbackStats });
-
-  return NextResponse.json(fallbackStats, {
+  return NextResponse.json([], {
     headers: {
-      'Cache-Control': 'public, s-maxage=10, stale-while-revalidate=60',
-      'X-Cache': 'FALLBACK',
+      'Cache-Control': 'no-store',
+      'X-Cache': 'EMPTY',
     },
   });
 }
