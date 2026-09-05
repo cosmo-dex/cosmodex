@@ -5,7 +5,7 @@ import { notFound } from "next/navigation";
 import Navbar from "@/components/navbar/Navbar";
 import Footer from "@/components/landing/Footer";
 import RisingStars from "@/component/RisingStar";
-import { BLOG_POSTS } from "@/data/blogData";
+import { getBlogBySlug, getAllBlogs, getValidImageUrl } from "@/lib/blogs";
 import { getAvatarUrl } from "@/lib/avatar";
 import {
   ArrowLeft,
@@ -120,9 +120,12 @@ function renderMarkdown(content: string) {
   });
 }
 
+export const dynamicParams = true;
+export const revalidate = 0;
+
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const resolvedParams = await params;
-  const post = BLOG_POSTS.find((p) => p.slug === resolvedParams.slug);
+  const post = await getBlogBySlug(resolvedParams.slug);
 
   if (!post) {
     return {
@@ -157,20 +160,22 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 }
 
 export async function generateStaticParams() {
-  return BLOG_POSTS.map((post) => ({
+  const blogs = await getAllBlogs();
+  return blogs.map((post) => ({
     slug: post.slug,
   }));
 }
 
 export default async function BlogPostDetailPage({ params }: Props) {
   const resolvedParams = await params;
-  const post = BLOG_POSTS.find((p) => p.slug === resolvedParams.slug);
+  const post = await getBlogBySlug(resolvedParams.slug);
 
   if (!post) {
     notFound();
   }
 
-  const relatedPosts = BLOG_POSTS.filter(
+  const allBlogs = await getAllBlogs();
+  const relatedPosts = allBlogs.filter(
     (p) => p.slug !== post.slug && p.category === post.category
   ).slice(0, 2);
 
@@ -294,7 +299,7 @@ export default async function BlogPostDetailPage({ params }: Props) {
           {/* Cover Image Banner */}
           <div className="relative h-72 sm:h-96 w-full rounded-3xl overflow-hidden bg-gray-900 border border-white/10 shadow-2xl">
             <Image
-              src={post.coverImage}
+              src={getValidImageUrl(post.coverImage)}
               alt={post.title}
               fill
               sizes="(max-width: 1024px) 100vw, 896px"
