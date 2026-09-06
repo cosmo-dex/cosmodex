@@ -1,12 +1,14 @@
 "use client";
 
 import React, { useEffect, useRef, useState } from "react";
-import { motion } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useMascotStore } from "@/hooks/useMascotStore";
+import { useAuth } from "@/context/AuthContext";
 
 import Assistant from "./Assistant";
+import MascotGreetingPopup from "./MascotGreetingPopup";
 
 import mascotBody from "./Mascot - Without Eyes.png";
 import mascotPupil from "./Mascot - Pupil.png";
@@ -17,8 +19,9 @@ export default function Mascot() {
   const containerRef = useRef<HTMLDivElement>(null);
 
   const pathname = usePathname();
-
-  const { message } = useMascotStore();
+  const { user, isAuthenticated } = useAuth();
+  const { message, setMessage } = useMascotStore();
+  const [isGreetingDismissed, setIsGreetingDismissed] = useState(false);
 
   const [dragConstraints, setDragConstraints] = useState<{
     left: number;
@@ -234,6 +237,8 @@ export default function Mascot() {
   };
 
   if (
+    !isAuthenticated ||
+    !user ||
     !pathname ||
     pathname === '/onboarding' ||
     pathname.startsWith('/onboarding/') ||
@@ -244,7 +249,6 @@ export default function Mascot() {
 
   return (
     <>
-      {/* Floating Mascot Button */}
       <motion.div
         ref={containerRef}
         drag
@@ -260,14 +264,19 @@ export default function Mascot() {
         transition={{ duration: 0.2 }}
         className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-40 w-[110px] h-[146px] sm:w-[130px] sm:h-[173px] select-none touch-none cursor-grab active:cursor-grabbing"
       >
-        {/* Dark Theme Chat Bubble */}
-        <div
-          className={`absolute -top-[52px] right-0 sm:-right-2 w-[190px] sm:w-[220px] px-3.5 py-2 rounded-2xl font-medium tracking-wide pointer-events-none transition-all duration-500 ease-out text-xs
-            bg-[#160E2B]/95 text-cyan-400 border border-cyan-400/30 shadow-[0_4px_15px_rgba(0,255,255,0.15)]
-            ${message ? "opacity-100 translate-y-0" : "opacity-0 translate-y-2.5"}`}
-        >
-          {message}
-        </div>
+        <AnimatePresence>
+          {!chatOpen && (Boolean(message) || !isGreetingDismissed) && (
+            <MascotGreetingPopup
+              name={user.username || ""}
+              customMessage={message}
+              onOpenChat={() => setChatOpen(true)}
+              onDismiss={() => {
+                if (message) setMessage(null);
+                setIsGreetingDismissed(true);
+              }}
+            />
+          )}
+        </AnimatePresence>
 
         <motion.div
           className="relative w-full h-full cursor-grab active:cursor-grabbing"
