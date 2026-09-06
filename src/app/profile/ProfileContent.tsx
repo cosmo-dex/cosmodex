@@ -9,6 +9,7 @@ import {
   Shield,
   Award,
   Flame,
+  Zap,
   Plus,
   X,
   Globe,
@@ -19,7 +20,6 @@ import {
   Loader2,
   Swords,
   Trophy,
-  Lock,
   Code2,
   Brain,
 } from 'lucide-react';
@@ -41,71 +41,6 @@ const ONBOARDING_SKILLS = [
   'Open Source',
 ];
 
-export interface ShowcaseBadge {
-  id: string;
-  name: string;
-  description: string;
-  category: 'earned' | 'locked';
-  icon: string;
-  rarity: 'Common' | 'Rare' | 'Epic' | 'Legendary';
-  earnedAt?: string | null;
-}
-
-const ALL_SHOWCASE_BADGES: ShowcaseBadge[] = [
-  {
-    id: 'b1',
-    name: 'Cosmo Initiate',
-    description: 'Joined CosmoDeX and started your coding odyssey.',
-    category: 'earned',
-    icon: '🌌',
-    rarity: 'Common',
-    earnedAt: '2026-08-01',
-  },
-  {
-    id: 'b2',
-    name: 'Python Pioneer',
-    description: 'Mastered the Python Basics chapter & variables.',
-    category: 'earned',
-    icon: '⚡',
-    rarity: 'Rare',
-    earnedAt: '2026-08-10',
-  },
-  {
-    id: 'b3',
-    name: '7-Day Flame',
-    description: 'Maintained a 7-day active daily grind streak.',
-    category: 'earned',
-    icon: '🔥',
-    rarity: 'Epic',
-    earnedAt: '2026-08-14',
-  },
-  {
-    id: 'b4',
-    name: 'CLI Navigator',
-    description: 'Completed Command Line Basics theory & terminal exercises.',
-    category: 'earned',
-    icon: '🖥️',
-    rarity: 'Rare',
-    earnedAt: '2026-08-15',
-  },
-  {
-    id: 'b5',
-    name: 'Battle Arena Champion',
-    description: 'Win 25 Code & MCQ Battles in the Battle Arena.',
-    category: 'locked',
-    icon: '⚔️',
-    rarity: 'Legendary',
-  },
-  {
-    id: 'b6',
-    name: 'Grandmaster Coder',
-    description: 'Reach Level 10 and accumulate 1,000+ Star Points.',
-    category: 'locked',
-    icon: '👑',
-    rarity: 'Legendary',
-  },
-];
-
 interface Badge {
   id: string;
   name: string;
@@ -125,8 +60,6 @@ interface ProfileContentProps {
   streak: number;
   badgeCount: number;
   badges?: Badge[];
-  starPoints?: number;
-  rankThreshold?: number;
   bio?: string;
   avatarUrl?: string;
   arenaWins?: number;
@@ -136,57 +69,10 @@ interface ProfileContentProps {
   mcqElo?: number;
 }
 
-function getProfileRankInfo(xpTotal: number, level: number) {
-  const currentXP = Math.max(xpTotal, (level - 1) * 500);
-
-  if (currentXP >= 20000 || level >= 20) {
-    const prev = 20000;
-    const target = 50000;
-    const pct = Math.min(100, Math.max(5, ((currentXP - prev) / (target - prev)) * 100));
-    return {
-      rankLabel: 'Star Coder',
-      nextRankLabel: 'Cosmic Legend',
-      currentXP,
-      targetXP: target,
-      pct,
-    };
-  }
-
-  if (currentXP >= 7500 || level >= 10) {
-    const prev = 7500;
-    const target = 20000;
-    const pct = Math.min(100, Math.max(5, ((currentXP - prev) / (target - prev)) * 100));
-    return {
-      rankLabel: 'Astronaut',
-      nextRankLabel: 'Star Coder',
-      currentXP,
-      targetXP: target,
-      pct,
-    };
-  }
-
-  if (currentXP >= 2500 || level >= 5) {
-    const prev = 2500;
-    const target = 7500;
-    const pct = Math.min(100, Math.max(5, ((currentXP - prev) / (target - prev)) * 100));
-    return {
-      rankLabel: 'Navigator',
-      nextRankLabel: 'Astronaut',
-      currentXP,
-      targetXP: target,
-      pct,
-    };
-  }
-
-  const target = 2500;
-  const pct = Math.min(100, Math.max(5, (currentXP / target) * 100));
-  return {
-    rankLabel: 'Explorer',
-    nextRankLabel: 'Navigator',
-    currentXP,
-    targetXP: target,
-    pct,
-  };
+function getRankLabel(experienceLevel: string | null | undefined): string {
+  if (experienceLevel === 'Advanced') return 'Commander';
+  if (experienceLevel === 'Intermediate') return 'Explorer';
+  return 'Initiate';
 }
 
 function formatJoinDate(iso: string | null): string {
@@ -201,29 +87,30 @@ export default function ProfileContent({
   interests: initialInterests,
   xpTotal = 0,
   level = 1,
+  experienceLevel = 'Beginner',
   streak = 0,
   badgeCount = 0,
-  starPoints = 0,
-  bio: initialBio = 'Full-Stack Cosmo Coder 🌌 Grinding Python, React & AI algorithms on CosmoDeX.',
+  bio: initialBio = '',
   avatarUrl: initialAvatarUrl = '/images/avatars/nebula.webp',
+  badges = [],
   arenaWins = 0,
   arenaLosses = 0,
   arenaDraws = 0,
   codeElo = 1000,
   mcqElo = 1000,
 }: ProfileContentProps) {
-  const [activeTab, setActiveTab] = useState<'overview' | 'practice' | 'battles'>('overview');
-  const [badgeFilter, setBadgeFilter] = useState<'all' | 'earned' | 'locked'>('all');
-  const [selectedBadgeModal, setSelectedBadgeModal] = useState<ShowcaseBadge | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [isAddingSkill, setIsAddingSkill] = useState(false);
   const [isPending, startTransition] = useTransition();
   const [saveError, setSaveError] = useState<string | null>(null);
 
   const [profile, setProfile] = useState(() => {
+    let savedBio = '';
     let savedSocials: Record<string, string> = {};
     if (typeof window !== 'undefined') {
       try {
+        const storedBio = localStorage.getItem('cosmodex_user_bio');
+        if (storedBio) savedBio = storedBio;
         const stored = localStorage.getItem('cosmodex_user_socials');
         if (stored) {
           const parsed = JSON.parse(stored);
@@ -238,14 +125,14 @@ export default function ProfileContent({
     return {
       name: initialUsername,
       username: initialUsername,
-      bio: initialBio,
+      bio: savedBio || initialBio || '',
       avatarUrl: initialAvatarUrl,
       skills: initialInterests,
       socials: {
-        github: 'github.com/explorer',
-        twitter: 'x.com/cosmodex',
+        github: '',
+        twitter: '',
         linkedin: '',
-        discord: 'discord.gg/cosmodex',
+        discord: '',
         portfolio: '',
         ...savedSocials,
       },
@@ -309,6 +196,14 @@ export default function ProfileContent({
           return;
         }
 
+        if (typeof window !== 'undefined') {
+          try {
+            localStorage.setItem('cosmodex_user_bio', editData.bio);
+          } catch {
+            // ignore
+          }
+        }
+
         setProfile({
           ...editData,
           name: editData.username,
@@ -370,15 +265,11 @@ export default function ProfileContent({
     });
   };
 
-  const rankInfo = getProfileRankInfo(xpTotal || starPoints, level);
+  const rankLabel = getRankLabel(experienceLevel);
+  const xpNeeded = level * 1000;
+  const xpPct = Math.min(100, Math.max(5, (xpTotal / xpNeeded) * 100));
   const totalBattles = arenaWins + arenaLosses + arenaDraws;
   const winRate = totalBattles > 0 ? Math.round((arenaWins / totalBattles) * 100) : 0;
-
-  const filteredBadges = ALL_SHOWCASE_BADGES.filter((b) => {
-    if (badgeFilter === 'earned') return b.category === 'earned';
-    if (badgeFilter === 'locked') return b.category === 'locked';
-    return true;
-  });
 
   return (
     <div className="relative min-h-screen bg-[#080312] text-white">
@@ -482,9 +373,15 @@ export default function ProfileContent({
                 <p className="text-white/60 text-base mt-1 font-mono">@{profile.username}</p>
 
                 {/* Personal Bio */}
-                <p className="text-slate-300 text-sm mt-3.5 leading-relaxed font-sans max-w-2xl">
-                  {profile.bio}
-                </p>
+                {profile.bio ? (
+                  <p className="text-slate-300 text-sm mt-3.5 leading-relaxed font-sans max-w-2xl">
+                    {profile.bio}
+                  </p>
+                ) : (
+                  <p className="text-slate-500 text-sm mt-3.5 italic font-sans max-w-2xl">
+                    No bio added yet. Click &quot;Edit profile&quot; to write about your journey.
+                  </p>
+                )}
 
                 <div className="flex items-center gap-2 text-white/50 text-sm mt-4 font-medium">
                   <Calendar size={16} /> Joined {formatJoinDate(createdAt)}
@@ -493,13 +390,13 @@ export default function ProfileContent({
                 {/* ── Stats Grid Integrated inside Main Left Card ── */}
                 <div className="mt-6 pt-6 border-t border-white/10 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3.5">
                   <div className="flex items-center gap-3 p-3 rounded-2xl border border-white/10 bg-white/[0.03]">
-                    <div className="text-[#FFD700] drop-shadow-[0_0_8px_rgba(255,215,0,0.6)] text-2xl">
-                      ✦
+                    <div className="text-[#FFD700] drop-shadow-[0_0_8px_rgba(255,215,0,0.6)]">
+                      <Zap size={20} fill="currentColor" />
                     </div>
                     <div>
-                      <p className="font-bold text-white text-lg leading-none">{rankInfo.currentXP.toLocaleString()}</p>
+                      <p className="font-bold text-white text-lg leading-none">{xpTotal.toLocaleString()}</p>
                       <p className="text-[10px] font-mono uppercase tracking-wider text-white/50 mt-1">
-                        Star Points
+                        Total XP
                       </p>
                     </div>
                   </div>
@@ -522,7 +419,7 @@ export default function ProfileContent({
                     </div>
                     <div>
                       <p className="font-bold text-white text-sm leading-none mt-0.5">
-                        {rankInfo.rankLabel}
+                        {rankLabel}
                       </p>
                       <p className="text-[10px] font-mono uppercase tracking-wider text-white/50 mt-1">
                         Rank
@@ -555,7 +452,7 @@ export default function ProfileContent({
                   </div>
                 </div>
 
-                {/* Progress Bar towards Next Rank */}
+                {/* Progress Bar towards Next Level */}
                 <div className="mt-4 pt-4 border-t border-white/5">
                   <div className="flex justify-between items-end mb-2">
                     <div>
@@ -563,311 +460,167 @@ export default function ProfileContent({
                         Current Progress
                       </p>
                       <p className="text-sm font-medium text-white/80">
-                        <span className="text-white font-bold">{rankInfo.currentXP.toLocaleString()}</span> / {rankInfo.targetXP.toLocaleString()} ✦
+                        <span className="text-white font-bold">{xpTotal.toLocaleString()}</span> / {xpNeeded.toLocaleString()} XP
                       </p>
                     </div>
-                    <p className="text-xs font-mono text-slate-400">to {rankInfo.nextRankLabel} Rank</p>
+                    <p className="text-xs font-mono text-slate-400">to Level {level + 1}</p>
                   </div>
                   <div className="h-2 w-full bg-black/40 rounded-full overflow-hidden border border-white/5 relative">
                     <motion.div
                       className="absolute top-0 left-0 h-full bg-gradient-to-r from-[#FFD700] via-[#F59E0B] to-[#E873C3] rounded-full shadow-[0_0_10px_rgba(255,215,0,0.5)]"
                       initial={{ width: 0 }}
-                      animate={{ width: `${rankInfo.pct}%` }}
+                      animate={{ width: `${xpPct}%` }}
                       transition={{ ease: 'easeOut', duration: 1.5, delay: 0.2 }}
                     />
                   </div>
                 </div>
 
-                {/* Navigation Tabs */}
-                <div className="flex items-center gap-8 mt-10 border-b border-white/10 text-base font-semibold tracking-wide">
-                  <button
-                    onClick={() => setActiveTab('overview')}
-                    className={`pb-4 px-1 -mb-[1px] transition-colors cursor-pointer relative ${activeTab === 'overview' ? 'text-white' : 'text-white/40 hover:text-white/80'
-                      }`}
-                  >
-                    Overview
-                    {activeTab === 'overview' && (
-                      <motion.div
-                        layoutId="activeProfileNavTab"
-                        transition={{ type: "spring", stiffness: 400, damping: 30 }}
-                        className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-[#E873C3] to-[#8D37D6] shadow-[0_0_12px_rgba(232,115,195,0.8)]"
-                      />
-                    )}
-                  </button>
-                  <button
-                    onClick={() => setActiveTab('practice')}
-                    className={`pb-4 px-1 -mb-[1px] transition-colors cursor-pointer relative ${activeTab === 'practice' ? 'text-white' : 'text-white/40 hover:text-white/80'
-                      }`}
-                  >
-                    Practice & Lessons
-                    {activeTab === 'practice' && (
-                      <motion.div
-                        layoutId="activeProfileNavTab"
-                        transition={{ type: "spring", stiffness: 400, damping: 30 }}
-                        className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-[#E873C3] to-[#8D37D6] shadow-[0_0_12px_rgba(232,115,195,0.8)]"
-                      />
-                    )}
-                  </button>
-                  <button
-                    onClick={() => setActiveTab('battles')}
-                    className={`pb-4 px-1 -mb-[1px] transition-colors cursor-pointer relative ${activeTab === 'battles' ? 'text-white' : 'text-white/40 hover:text-white/80'
-                      }`}
-                  >
-                    Battle Stats
-                    {activeTab === 'battles' && (
-                      <motion.div
-                        layoutId="activeProfileNavTab"
-                        transition={{ type: "spring", stiffness: 400, damping: 30 }}
-                        className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-[#E873C3] to-[#8D37D6] shadow-[0_0_12px_rgba(232,115,195,0.8)]"
-                      />
-                    )}
-                  </button>
-                </div>
-
-                {/* Tab Content */}
-                <div className="mt-8">
-                  {activeTab === 'overview' && (
-                    <div className="space-y-8">
-                      {/* Recent Activity Timeline */}
-                      <div>
-                        <h2 className="text-xl font-bold font-display text-white mb-4 tracking-wide">
-                          Recent Activity Log
-                        </h2>
-                        <div className="space-y-3">
-                          <div className="flex items-center justify-between p-4 rounded-xl border border-white/10 bg-white/[0.03] hover:border-[#E873C3]/40 transition-all">
-                            <div className="flex items-center gap-3">
-                              <div className="p-2 rounded-lg bg-[#E873C3]/15 text-[#E873C3]">
-                                <Award size={18} />
-                              </div>
-                              <div>
-                                <p className="text-sm font-bold text-white">Completed Exercise: Command Line Basics</p>
-                                <p className="text-xs text-slate-400 font-mono">Python Course • 10 XP Earned</p>
-                              </div>
-                            </div>
-                            <span className="text-xs font-mono text-slate-500">2 hours ago</span>
-                          </div>
-
-                          <div className="flex items-center justify-between p-4 rounded-xl border border-white/10 bg-white/[0.03] hover:border-[#00FFE9]/40 transition-all">
-                            <div className="flex items-center gap-3">
-                              <div className="p-2 rounded-lg bg-[#00FFE9]/15 text-[#00FFE9]">
-                                <Swords size={18} />
-                              </div>
-                              <div>
-                                <p className="text-sm font-bold text-white">Won MCQ Battle vs @CyberWizard</p>
-                                <p className="text-xs text-slate-400 font-mono">Battle Arena • +25 XP Earned • {winRate}% Win Rate ({arenaWins}W - {arenaLosses}L)</p>
-                              </div>
-                            </div>
-                            <span className="text-xs font-mono text-slate-500">Yesterday</span>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
-                  {activeTab === 'practice' && (
-                    <div className="space-y-6">
-                      <h2 className="text-xl font-bold font-display text-white tracking-wide">
-                        Course Progress & Practice
+                {/* ── Battle Arena Combat Section ── */}
+                <div className="mt-8 pt-8 border-t border-white/10 space-y-6">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div>
+                      <h2 className="text-xl font-bold font-display text-white tracking-wide flex items-center gap-2.5">
+                        <Swords size={20} className="text-[#E873C3]" />
+                        Battle Arena Combat Record
                       </h2>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div className="p-5 rounded-2xl border border-white/10 bg-white/[0.03] space-y-3">
-                          <div className="flex items-center justify-between">
-                            <span className="text-sm font-bold text-white">Python Fundamentals</span>
-                            <span className="text-xs font-mono font-bold text-[#00FFE9]">2/6 Completed</span>
-                          </div>
-                          <div className="h-2 w-full bg-black/40 rounded-full overflow-hidden border border-white/5">
-                            <div className="h-full bg-gradient-to-r from-[#00FFE9] to-[#E873C3] w-1/3" />
-                          </div>
-                          <p className="text-xs text-slate-400">Next lesson: Variables & Data Types</p>
-                        </div>
-
-                        <div className="p-5 rounded-2xl border border-white/10 bg-white/[0.03] space-y-3">
-                          <div className="flex items-center justify-between">
-                            <span className="text-sm font-bold text-white">Web Development 101</span>
-                            <span className="text-xs font-mono text-slate-400">Coming Soon</span>
-                          </div>
-                          <div className="h-2 w-full bg-black/40 rounded-full overflow-hidden border border-white/5">
-                            <div className="h-full bg-white/10 w-0" />
-                          </div>
-                          <p className="text-xs text-slate-400">HTML & CSS Foundations</p>
-                        </div>
-                      </div>
+                      <p className="text-xs text-slate-400 mt-1">
+                        Authentic competitive ratings and performance from live 1v1 arenas.
+                      </p>
                     </div>
-                  )}
-
-                  {activeTab === 'battles' && (
-                    <div className="space-y-6">
-                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                        <div>
-                          <h2 className="text-xl font-bold font-display text-white tracking-wide flex items-center gap-2.5">
-                            <Swords size={20} className="text-[#E873C3]" />
-                            Battle Arena Combat Profile
-                          </h2>
-                          <p className="text-xs text-slate-400 mt-1">
-                            Competitive ratings and match performance from live 1v1 arenas.
-                          </p>
-                        </div>
-                        <div className="flex items-center gap-2.5">
-                          <Link
-                            href="/battle"
-                            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-[#D95FD1] to-[#8D37D6] hover:brightness-110 text-white text-xs font-bold shadow-[0_0_15px_rgba(217,95,209,0.35)] transition-all cursor-pointer"
-                          >
-                            <Swords size={14} />
-                            <span>Fight Now</span>
-                          </Link>
-                          <Link
-                            href="/leaderboard"
-                            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-slate-200 hover:text-white text-xs font-bold transition-all cursor-pointer"
-                          >
-                            <Trophy size={14} className="text-amber-400" />
-                            <span>Leaderboard</span>
-                          </Link>
-                        </div>
-                      </div>
-
-                      {/* Dual ELO Rating Cards */}
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        {/* Code Battle ELO Card */}
-                        <div className="p-5 rounded-2xl border border-purple-500/25 bg-gradient-to-br from-purple-950/30 via-white/[0.02] to-transparent relative overflow-hidden group hover:border-purple-500/40 transition-all">
-                          <div className="absolute top-0 right-0 w-32 h-32 bg-purple-600/10 rounded-full blur-2xl pointer-events-none" />
-                          <div className="flex items-center justify-between mb-3">
-                            <span className="flex items-center gap-2 text-xs font-mono font-bold uppercase tracking-wider text-purple-300">
-                              <Code2 size={16} className="text-purple-400" />
-                              Code Battle Rating
-                            </span>
-                            <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-purple-500/15 border border-purple-500/30 text-purple-300 font-bold">
-                              1v1 Duel
-                            </span>
-                          </div>
-                          <div className="flex items-baseline gap-2 mt-1">
-                            <span className="text-3xl sm:text-4xl font-black font-display text-white tracking-tight">
-                              {codeElo.toLocaleString()}
-                            </span>
-                            <span className="text-sm font-mono font-bold text-purple-400">ELO</span>
-                          </div>
-                          <p className="text-xs text-slate-400 mt-2">
-                            Real-time algorithmic coding challenges & test suite validation.
-                          </p>
-                        </div>
-
-                        {/* MCQ Battle ELO Card */}
-                        <div className="p-5 rounded-2xl border border-cyan-500/25 bg-gradient-to-br from-cyan-950/30 via-white/[0.02] to-transparent relative overflow-hidden group hover:border-cyan-500/40 transition-all">
-                          <div className="absolute top-0 right-0 w-32 h-32 bg-cyan-600/10 rounded-full blur-2xl pointer-events-none" />
-                          <div className="flex items-center justify-between mb-3">
-                            <span className="flex items-center gap-2 text-xs font-mono font-bold uppercase tracking-wider text-cyan-300">
-                              <Brain size={16} className="text-cyan-400" />
-                              MCQ Battle Rating
-                            </span>
-                            <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-cyan-500/15 border border-cyan-500/30 text-cyan-300 font-bold">
-                              Speed Trivia
-                            </span>
-                          </div>
-                          <div className="flex items-baseline gap-2 mt-1">
-                            <span className="text-3xl sm:text-4xl font-black font-display text-white tracking-tight">
-                              {mcqElo.toLocaleString()}
-                            </span>
-                            <span className="text-sm font-mono font-bold text-cyan-400">ELO</span>
-                          </div>
-                          <p className="text-xs text-slate-400 mt-2">
-                            High-velocity computer science theory, logic, and syntax duels.
-                          </p>
-                        </div>
-                      </div>
-
-                      {/* Combat Statistics Grid */}
-                      <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 text-center">
-                        <div className="p-4 rounded-xl border border-white/10 bg-white/[0.03]">
-                          <p className="text-2xl font-bold text-white font-mono">{arenaWins}</p>
-                          <p className="text-[11px] font-mono uppercase text-emerald-400 font-bold mt-1">Victories</p>
-                        </div>
-                        <div className="p-4 rounded-xl border border-white/10 bg-white/[0.03]">
-                          <p className="text-2xl font-bold text-white font-mono">{arenaLosses}</p>
-                          <p className="text-[11px] font-mono uppercase text-rose-400 font-bold mt-1">Defeats</p>
-                        </div>
-                        <div className="p-4 rounded-xl border border-white/10 bg-white/[0.03]">
-                          <p className="text-2xl font-bold text-white font-mono">{arenaDraws}</p>
-                          <p className="text-[11px] font-mono uppercase text-amber-400 font-bold mt-1">Draws</p>
-                        </div>
-                        <div className="p-4 rounded-xl border border-white/10 bg-white/[0.03]">
-                          <p className="text-2xl font-bold text-white font-mono">{totalBattles}</p>
-                          <p className="text-[11px] font-mono uppercase text-slate-300 font-bold mt-1">Total Duels</p>
-                        </div>
-                        <div className="p-4 rounded-xl border border-white/10 bg-white/[0.03] col-span-2 sm:col-span-1">
-                          <p className="text-2xl font-bold text-[#00FFE9] font-mono">{winRate}%</p>
-                          <p className="text-[11px] font-mono uppercase text-[#00FFE9] font-bold mt-1">Win Rate</p>
-                        </div>
-                      </div>
+                    <div className="flex items-center gap-2.5">
+                      <Link
+                        href="/battle"
+                        className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-[#D95FD1] to-[#8D37D6] hover:brightness-110 text-white text-xs font-bold shadow-[0_0_15px_rgba(217,95,209,0.35)] transition-all cursor-pointer"
+                      >
+                        <Swords size={14} />
+                        <span>Fight Now</span>
+                      </Link>
+                      <Link
+                        href="/leaderboard"
+                        className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-slate-200 hover:text-white text-xs font-bold transition-all cursor-pointer"
+                      >
+                        <Trophy size={14} className="text-amber-400" />
+                        <span>Leaderboard</span>
+                      </Link>
                     </div>
-                  )}
+                  </div>
+
+                  {/* Dual ELO Rating Cards */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {/* Code Battle ELO Card */}
+                    <div className="p-5 rounded-2xl border border-purple-500/25 bg-gradient-to-br from-purple-950/30 via-white/[0.02] to-transparent relative overflow-hidden group hover:border-purple-500/40 transition-all">
+                      <div className="absolute top-0 right-0 w-32 h-32 bg-purple-600/10 rounded-full blur-2xl pointer-events-none" />
+                      <div className="flex items-center justify-between mb-3">
+                        <span className="flex items-center gap-2 text-xs font-mono font-bold uppercase tracking-wider text-purple-300">
+                          <Code2 size={16} className="text-purple-400" />
+                          Code Battle Rating
+                        </span>
+                        <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-purple-500/15 border border-purple-500/30 text-purple-300 font-bold">
+                          1v1 Duel
+                        </span>
+                      </div>
+                      <div className="flex items-baseline gap-2 mt-1">
+                        <span className="text-3xl sm:text-4xl font-black font-display text-white tracking-tight">
+                          {codeElo.toLocaleString()}
+                        </span>
+                        <span className="text-sm font-mono font-bold text-purple-400">ELO</span>
+                      </div>
+                      <p className="text-xs text-slate-400 mt-2">
+                        Real-time algorithmic coding challenges & test suite validation.
+                      </p>
+                    </div>
+
+                    {/* MCQ Battle ELO Card */}
+                    <div className="p-5 rounded-2xl border border-cyan-500/25 bg-gradient-to-br from-cyan-950/30 via-white/[0.02] to-transparent relative overflow-hidden group hover:border-cyan-500/40 transition-all">
+                      <div className="absolute top-0 right-0 w-32 h-32 bg-cyan-600/10 rounded-full blur-2xl pointer-events-none" />
+                      <div className="flex items-center justify-between mb-3">
+                        <span className="flex items-center gap-2 text-xs font-mono font-bold uppercase tracking-wider text-cyan-300">
+                          <Brain size={16} className="text-cyan-400" />
+                          MCQ Battle Rating
+                        </span>
+                        <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-cyan-500/15 border border-cyan-500/30 text-cyan-300 font-bold">
+                          Speed Trivia
+                        </span>
+                      </div>
+                      <div className="flex items-baseline gap-2 mt-1">
+                        <span className="text-3xl sm:text-4xl font-black font-display text-white tracking-tight">
+                          {mcqElo.toLocaleString()}
+                        </span>
+                        <span className="text-sm font-mono font-bold text-cyan-400">ELO</span>
+                      </div>
+                      <p className="text-xs text-slate-400 mt-2">
+                        High-velocity computer science theory, logic, and syntax duels.
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Combat Statistics Grid */}
+                  <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 text-center">
+                    <div className="p-4 rounded-xl border border-white/10 bg-white/[0.03]">
+                      <p className="text-2xl font-bold text-white font-mono">{arenaWins}</p>
+                      <p className="text-[11px] font-mono uppercase text-emerald-400 font-bold mt-1">Victories</p>
+                    </div>
+                    <div className="p-4 rounded-xl border border-white/10 bg-white/[0.03]">
+                      <p className="text-2xl font-bold text-white font-mono">{arenaLosses}</p>
+                      <p className="text-[11px] font-mono uppercase text-rose-400 font-bold mt-1">Defeats</p>
+                    </div>
+                    <div className="p-4 rounded-xl border border-white/10 bg-white/[0.03]">
+                      <p className="text-2xl font-bold text-white font-mono">{arenaDraws}</p>
+                      <p className="text-[11px] font-mono uppercase text-amber-400 font-bold mt-1">Draws</p>
+                    </div>
+                    <div className="p-4 rounded-xl border border-white/10 bg-white/[0.03]">
+                      <p className="text-2xl font-bold text-white font-mono">{totalBattles}</p>
+                      <p className="text-[11px] font-mono uppercase text-slate-300 font-bold mt-1">Total Duels</p>
+                    </div>
+                    <div className="p-4 rounded-xl border border-white/10 bg-white/[0.03] col-span-2 sm:col-span-1">
+                      <p className="text-2xl font-bold text-[#00FFE9] font-mono">{winRate}%</p>
+                      <p className="text-[11px] font-mono uppercase text-[#00FFE9] font-bold mt-1">Win Rate</p>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
 
             {/* Right Column (Sidebar Badges, Skills, Socials) */}
             <div className="w-full lg:w-[320px] xl:w-[350px] flex flex-col gap-6 mt-8 lg:mt-0 px-4 sm:px-0">
-              {/* Interactive Badge Showcase (Moved to Top of Sidebar) */}
+              {/* Badges & Achievements */}
               <div className="cosmo-glass-panel p-6 border border-white/10 rounded-3xl space-y-4">
                 <div className="flex items-center justify-between">
                   <h3 className="font-bold font-display text-white text-lg tracking-wide">
                     Badges & Achievements
                   </h3>
-                  <Trophy size={18} className="text-[#FFD700]" />
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-xs font-mono font-bold text-amber-300">{badges.length}</span>
+                    <Trophy size={16} className="text-[#FFD700]" />
+                  </div>
                 </div>
 
-                {/* Badge Filter Tabs with Smooth Sliding Pill */}
-                <div className="flex items-center gap-1.5 p-1 bg-white/[0.04] rounded-xl border border-white/10 relative">
-                  {(['all', 'earned', 'locked'] as const).map((tab) => (
-                    <button
-                      key={tab}
-                      onClick={() => setBadgeFilter(tab)}
-                      className={`flex-1 py-1 text-xs font-mono font-bold uppercase rounded-lg transition-all cursor-pointer relative z-10 ${badgeFilter === tab
-                        ? 'text-white'
-                        : 'text-slate-400 hover:text-white'
-                        }`}
-                    >
-                      {badgeFilter === tab && (
-                        <motion.div
-                          layoutId="activeBadgeTab"
-                          transition={{ type: "spring", stiffness: 450, damping: 30 }}
-                          className="absolute inset-0 bg-gradient-to-r from-[#E873C3]/30 to-[#8D37D6]/40 border border-[#E873C3]/60 rounded-lg shadow-[0_0_12px_rgba(232,115,195,0.4)] z-[-1]"
-                        />
-                      )}
-                      {tab}
-                    </button>
-                  ))}
-                </div>
-
-                {/* Badges Grid with Smooth Motion */}
-                <div className="grid grid-cols-2 gap-2.5">
-                  {filteredBadges.map((badge) => (
-                    <motion.div
-                      key={badge.id}
-                      layout
-                      whileHover={{ scale: 1.05, y: -2 }}
-                      whileTap={{ scale: 0.96 }}
-                      onClick={() => setSelectedBadgeModal(badge)}
-                      className={`p-3 rounded-xl border transition-all cursor-pointer flex flex-col items-center text-center space-y-1.5 ${badge.category === 'earned'
-                        ? 'bg-white/[0.04] border-white/15 hover:border-[#E873C3]/60 hover:bg-[#E873C3]/10 shadow-sm'
-                        : 'bg-white/[0.01] border-white/5 opacity-50 hover:opacity-80'
-                        }`}
-                    >
-                      <span className="text-2xl">{badge.icon}</span>
-                      <span className="text-xs font-bold text-white truncate w-full">
-                        {badge.name}
-                      </span>
-                      <span
-                        className={`text-[9px] font-mono font-bold px-1.5 py-0.5 rounded ${badge.rarity === 'Legendary'
-                          ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40'
-                          : badge.rarity === 'Epic'
-                            ? 'bg-purple-500/20 text-purple-300 border border-purple-500/40'
-                            : 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/40'
-                          }`}
+                {badges.length === 0 ? (
+                  <div className="p-6 rounded-2xl border border-white/5 bg-white/[0.02] text-center space-y-2">
+                    <div className="w-10 h-10 mx-auto rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-amber-400/60">
+                      <Trophy size={18} className="text-amber-400/60" />
+                    </div>
+                    <p className="text-xs font-semibold text-white/80">No Badges Unlocked Yet</p>
+                    <p className="text-[11px] text-slate-400 max-w-xs mx-auto">
+                      Compete in the Battle Arena and solve missions to unlock badges.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-2 gap-2.5">
+                    {badges.map((b) => (
+                      <div
+                        key={b.id}
+                        className="p-3 rounded-xl border border-white/15 bg-white/[0.04] flex flex-col items-center text-center space-y-1.5 hover:border-[#E873C3]/50 transition-all"
                       >
-                        {badge.rarity}
-                      </span>
-                    </motion.div>
-                  ))}
-                </div>
+                        <span className="text-2xl">🏆</span>
+                        <span className="text-xs font-bold text-white truncate w-full">{b.name}</span>
+                        {b.description && (
+                          <span className="text-[10px] text-slate-400 line-clamp-2">{b.description}</span>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
 
               {/* Skills Card */}
@@ -996,62 +749,7 @@ export default function ProfileContent({
         <Footer />
       </div>
 
-      {/* Badge Detail Modal */}
-      <AnimatePresence>
-        {selectedBadgeModal && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setSelectedBadgeModal(null)}
-              className="absolute inset-0 bg-black/70 backdrop-blur-sm"
-            />
-            <motion.div
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.9, opacity: 0 }}
-              className="cosmo-glass-panel border border-white/20 p-6 rounded-3xl w-full max-w-sm relative z-10 text-center space-y-4 shadow-2xl bg-[#0d1527]"
-            >
-              <button
-                onClick={() => setSelectedBadgeModal(null)}
-                className="absolute top-4 right-4 text-slate-400 hover:text-white cursor-pointer"
-              >
-                <X size={20} />
-              </button>
 
-              <div className="w-20 h-20 mx-auto rounded-full bg-gradient-to-br from-[#E873C3]/20 to-[#8D37D6]/20 border border-[#E873C3]/40 flex items-center justify-center text-4xl shadow-[0_0_20px_rgba(232,115,195,0.4)]">
-                {selectedBadgeModal.icon}
-              </div>
-
-              <div>
-                <h3 className="text-xl font-bold text-white font-display">
-                  {selectedBadgeModal.name}
-                </h3>
-                <p className="text-xs font-mono text-[#00FFE9] mt-1">
-                  Rarity: {selectedBadgeModal.rarity}
-                </p>
-              </div>
-
-              <p className="text-sm text-slate-300 leading-relaxed font-sans">
-                {selectedBadgeModal.description}
-              </p>
-
-              <div className="pt-3 border-t border-white/10">
-                {selectedBadgeModal.category === 'earned' ? (
-                  <span className="text-xs font-mono text-emerald-400 flex items-center justify-center gap-1.5 font-bold">
-                    <CheckCircle2 size={14} /> Earned on {selectedBadgeModal.earnedAt}
-                  </span>
-                ) : (
-                  <span className="text-xs font-mono text-slate-500 flex items-center justify-center gap-1.5">
-                    <Lock size={14} /> Locked Achievement
-                  </span>
-                )}
-              </div>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
 
       {/* Edit Profile Modal */}
       <AnimatePresence>
@@ -1120,20 +818,6 @@ export default function ProfileContent({
                           </button>
                         );
                       })}
-                    </div>
-
-                    {/* Custom Avatar Image URL Input */}
-                    <div className="mt-3.5 pt-3.5 border-t border-white/10">
-                      <label className="block text-[11px] font-mono text-slate-400 mb-1.5">
-                        Or paste Custom Image URL
-                      </label>
-                      <input
-                        type="url"
-                        placeholder="https://example.com/avatar.png"
-                        value={editData.avatarUrl ?? ''}
-                        onChange={(e) => setEditData({ ...editData, avatarUrl: e.target.value })}
-                        className="w-full bg-black/40 border border-white/10 rounded-xl px-3.5 py-2 text-white focus:outline-none focus:border-[#E873C3] transition-colors text-xs font-mono"
-                      />
                     </div>
                   </div>
 

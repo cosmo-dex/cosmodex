@@ -25,6 +25,7 @@ export default async function ProfilePage() {
   let interests: string[] = [];
   let xpTotal = 0;
   let level = 1;
+  let experienceLevel = 'Beginner';
   let streak = 0;
   let badgeCount = 0;
   let badges: Array<{ id: string; name: string; description: string | null; earnedAt: string | null }> = [];
@@ -44,6 +45,7 @@ export default async function ProfilePage() {
     interests = parsed.interests || [];
     xpTotal = parsed.xpTotal ?? xpTotal;
     level = parsed.level ?? level;
+    experienceLevel = parsed.experienceLevel || experienceLevel;
     avatarUrl = parsed.avatarId || avatarUrl;
   }
 
@@ -87,6 +89,7 @@ export default async function ProfilePage() {
         interests = dbUser.interests ?? [];
         xpTotal = dbUser.xp_total ?? 0;
         level = dbUser.level ?? 1;
+        experienceLevel = dbUser.experience_level || experienceLevel;
         createdAt = dbUser.created_at?.toISOString() ?? createdAt;
       }
 
@@ -117,10 +120,11 @@ export default async function ProfilePage() {
       interests={interests}
       xpTotal={xpTotal}
       level={level}
+      experienceLevel={experienceLevel}
       streak={streak}
       badgeCount={badgeCount}
       badges={badges}
-      bio="Full-Stack Cosmo Coder 🌌 Grinding Python, React & AI algorithms on CosmoDeX."
+      bio=""
       avatarUrl={avatarUrl}
       arenaWins={arenaWins}
       arenaLosses={arenaLosses}
