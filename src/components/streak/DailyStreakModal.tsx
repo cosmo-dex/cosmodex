@@ -1,13 +1,15 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { usePathname } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { Flame, Sparkles, X, Trophy, ArrowRight, Star } from "lucide-react";
+import { Flame, Sparkles, X, Trophy, ArrowRight } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 
 const DAYS_OF_WEEK = ["M", "T", "W", "T", "F", "S", "S"];
 
 export default function DailyStreakModal() {
+  const pathname = usePathname();
   const { user, isAuthenticated } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
   const [streakCount, setStreakCount] = useState(1);
@@ -19,6 +21,7 @@ export default function DailyStreakModal() {
   })();
 
   useEffect(() => {
+    if (pathname !== "/dashboard") return;
     if (!isAuthenticated || !user?.userId) return;
 
     const todayStr = new Date().toISOString().split("T")[0];
@@ -46,7 +49,7 @@ export default function DailyStreakModal() {
       .catch((err) => {
         console.warn("[DailyStreakModal] Streak check error:", err);
       });
-  }, [isAuthenticated, user?.userId]);
+  }, [pathname, isAuthenticated, user?.userId]);
 
   const handleClose = () => {
     setIsOpen(false);
@@ -56,11 +59,15 @@ export default function DailyStreakModal() {
     }
   };
 
+  // Do not render anything if not on dashboard
+  if (pathname !== "/dashboard") {
+    return null;
+  }
+
   return (
     <AnimatePresence>
       {isOpen && (
         <div className="fixed inset-0 z-[10000] flex items-center justify-center p-4">
-
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -68,7 +75,6 @@ export default function DailyStreakModal() {
             onClick={handleClose}
             className="fixed inset-0 bg-[#050508]/85 backdrop-blur-xl transition-all"
           />
-
 
           <motion.div
             initial={{ opacity: 0, scale: 0.82, y: 28 }}
@@ -80,10 +86,8 @@ export default function DailyStreakModal() {
               boxShadow: "0 0 60px rgba(155,48,255,0.25), inset 0 1.5px 1px rgba(255,255,255,0.15)",
             }}
           >
-
             <div className="pointer-events-none absolute -top-24 left-1/2 -translate-x-1/2 w-72 h-72 rounded-full bg-gradient-to-b from-[#ff2d78]/25 via-[#9b30ff]/20 to-transparent blur-3xl" />
             <div className="pointer-events-none absolute -bottom-24 right-0 w-60 h-60 rounded-full bg-[#00FFE9]/10 blur-3xl" />
-
 
             <button
               onClick={handleClose}
@@ -93,15 +97,12 @@ export default function DailyStreakModal() {
               <X size={18} />
             </button>
 
-
             <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#9b30ff]/15 border border-[#9b30ff]/40 text-[#c084fc] font-mono text-[11px] font-bold uppercase tracking-wider mb-4 shadow-[0_0_15px_rgba(155,48,255,0.3)]">
               <Sparkles size={12} className="text-[#FFA249]" />
-              <span>Daily Streak Extended</span>
+              <span>Daily Habit Active</span>
             </div>
 
-
             <div className="relative mx-auto mb-5 flex items-center justify-center w-28 h-28">
-
               <motion.div
                 animate={{
                   scale: [1, 1.2, 1],
@@ -138,7 +139,6 @@ export default function DailyStreakModal() {
                   <Flame size={54} className="text-amber-400 fill-orange-500 filter drop-shadow-[0_0_18px_rgba(255,122,0,0.9)]" />
                 </motion.div>
 
-
                 <motion.div
                   initial={{ scale: 0, rotate: -20 }}
                   animate={{ scale: 1, rotate: 0 }}
@@ -152,20 +152,20 @@ export default function DailyStreakModal() {
 
             <h2 className="text-3xl font-display font-extrabold text-white tracking-tight mb-1.5">
               <span className="bg-gradient-to-r from-[#FFA249] via-[#E873C3] to-[#00FFE9] bg-clip-text text-transparent">
-                {streakCount} Day{streakCount > 1 ? "s" : ""}
+                +1 Day
               </span>{" "}
               Streak! 🔥
             </h2>
 
             <p className="text-white/70 text-xs sm:text-sm font-medium mb-5 max-w-xs mx-auto leading-relaxed font-sans">
-              You kept the cosmic flame alive today. Daily practice unlocks cosmic leagues and XP boosts!
+              You kept your daily habit alive today! Check in tomorrow to keep your streak burning.
             </p>
 
             <div className="mb-5 p-4 rounded-2xl bg-gradient-to-b from-white/[0.06] to-white/[0.02] border border-white/12 backdrop-blur-xl shadow-[inset_0_1px_1px_rgba(255,255,255,0.1)]">
               <div className="flex items-center justify-between mb-3 px-1">
                 <span className="text-[11px] font-mono text-white/60 uppercase tracking-wider font-bold flex items-center gap-1.5">
                   <Flame size={12} className="text-orange-400 fill-orange-400" />
-                  Streak Track
+                  Daily Track
                 </span>
                 <span className="text-[11px] font-mono text-amber-300 font-extrabold bg-amber-500/15 px-2 py-0.5 rounded-full border border-amber-500/30 shadow-[0_0_10px_rgba(251,191,36,0.25)]">
                   {streakCount} {streakCount === 1 ? "Day" : "Days"} Active 🔥
@@ -221,10 +221,10 @@ export default function DailyStreakModal() {
 
             <div className="grid grid-cols-2 gap-2.5 mb-5">
               <div className="p-3 rounded-2xl bg-white/[0.04] border border-white/10 flex flex-col items-center justify-center">
-                <span className="text-[10px] font-mono text-white/50 uppercase tracking-wider font-semibold">Today&apos;s Bonus</span>
+                <span className="text-[10px] font-mono text-white/50 uppercase tracking-wider font-semibold">Today&apos;s Habit</span>
                 <span className="text-sm sm:text-base font-bold text-amber-400 font-mono mt-0.5 flex items-center gap-1">
-                  <Star size={13} className="fill-amber-400 text-amber-400" />
-                  +50 ✦ <span className="text-[11px] text-white/60">XP</span>
+                  <Flame size={13} className="fill-amber-400 text-amber-400" />
+                  +1 Day
                 </span>
               </div>
 
@@ -253,3 +253,4 @@ export default function DailyStreakModal() {
     </AnimatePresence>
   );
 }
+

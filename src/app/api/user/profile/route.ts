@@ -61,24 +61,40 @@ export async function PATCH(req: NextRequest) {
 
     // Build update payload (only update fields that are provided)
     const updateData: Record<string, unknown> = {};
-    if (username !== undefined) updateData.username = username.trim();
+
     if (interests !== undefined) updateData.interests = interests;
     const targetAvatar = avatarUrl !== undefined ? avatarUrl : avatar_url;
     if (targetAvatar !== undefined) updateData.avatar_url = targetAvatar;
 
-    if (Object.keys(updateData).length === 0) {
-      return NextResponse.json({ error: 'No fields to update' }, { status: 400 });
-    }
+    if (username !== undefined) {
+      const trimmed = username.trim();
+      if (!trimmed) {
+        return NextResponse.json({ error: 'Username cannot be empty.' }, { status: 400 });
+      }
+      if (trimmed.length < 3 || trimmed.length > 30) {
+        return NextResponse.json({ error: 'Username must be between 3 and 30 characters.' }, { status: 400 });
+      }
+      if (!/^[a-zA-Z0-9_]+$/.test(trimmed)) {
+        return NextResponse.json({ error: 'Username can only contain letters, numbers, and underscores.' }, { status: 400 });
+      }
 
-    // Check username uniqueness if changing
-    if (username && username.trim() !== sessionData.username) {
       const conflict = await prisma.users.findFirst({
-        where: { username: { equals: username.trim(), mode: 'insensitive' }, NOT: { id: userId } },
+        where: {
+          username: { equals: trimmed, mode: 'insensitive' },
+          NOT: { id: userId },
+        },
         select: { id: true },
       });
+
       if (conflict) {
-        return NextResponse.json({ error: 'This username is already taken.' }, { status: 409 });
+        return NextResponse.json({ error: 'This name is already taken. Please choose another.' }, { status: 409 });
       }
+
+      updateData.username = trimmed;
+    }
+
+    if (Object.keys(updateData).length === 0) {
+      return NextResponse.json({ error: 'No fields to update' }, { status: 400 });
     }
 
     const updatedUser = await prisma.users.update({

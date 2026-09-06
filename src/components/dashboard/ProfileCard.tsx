@@ -1,10 +1,10 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useEffect, useTransition } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Flame, Shield, Award, Zap, Edit2, Camera, X, Loader2 } from "lucide-react";
+import { Flame, Shield, Award, Zap, Edit2, Camera, X, Loader2, CheckCircle, XCircle } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { getAvatarUrl, getAvatarCls, AVATARS, type AvatarOption } from "@/lib/avatar";
 
@@ -41,23 +41,81 @@ export default function ProfileCard({
   const displayUsername = userOverride?.username ?? username;
   const displayAvatarId = userOverride?.avatarId ?? avatarId;
 
-  // Modal State
   const [isEditing, setIsEditing] = useState(false);
   const [editUsername, setEditUsername] = useState(displayUsername);
   const [editAvatar, setEditAvatar] = useState(displayAvatarId || '/images/avatars/nebula.webp');
   const [saveError, setSaveError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
+  const trimmed = editUsername.trim();
+  const formatError = !trimmed
+    ? 'Username cannot be empty.'
+    : trimmed.length < 3 || trimmed.length > 30
+      ? 'Username must be 3–30 characters.'
+      : !/^[a-zA-Z0-9_]+$/.test(trimmed)
+        ? 'Only letters, numbers, and underscores.'
+        : null;
+  const isSelf = trimmed.toLowerCase() === displayUsername.toLowerCase();
+
+  const [asyncAvailability, setAsyncAvailability] = useState<{
+    checking: boolean;
+    taken: boolean | null;
+    error: string | null;
+  }>({ checking: false, taken: null, error: null });
+
+  useEffect(() => {
+    if (!isEditing || formatError || isSelf) return;
+
+    const controller = new AbortController();
+    const timer = setTimeout(async () => {
+      setAsyncAvailability({ checking: true, taken: null, error: null });
+      try {
+        const res = await fetch(`/api/auth/check-username?username=${encodeURIComponent(trimmed)}`, {
+          signal: controller.signal,
+        });
+        const data = await res.json();
+        if (data.available) {
+          setAsyncAvailability({ checking: false, taken: false, error: null });
+        } else {
+          setAsyncAvailability({
+            checking: false,
+            taken: true,
+            error: data.reason || 'This name is already taken.',
+          });
+        }
+      } catch (err) {
+        if (err instanceof Error && err.name !== 'AbortError') {
+          setAsyncAvailability({ checking: false, taken: null, error: null });
+        }
+      }
+    }, 400);
+
+    return () => {
+      clearTimeout(timer);
+      controller.abort();
+    };
+  }, [trimmed, isEditing, formatError, isSelf]);
+
+  const isNameTaken = !isSelf && asyncAvailability.taken === true;
+  const isChecking = !formatError && !isSelf && asyncAvailability.checking;
+  const isAvailable = !formatError && !isSelf && asyncAvailability.taken === false;
+  const usernameError = formatError || (isNameTaken ? asyncAvailability.error || 'This name is already taken.' : null);
 
   const handleOpenEdit = () => {
     setEditUsername(displayUsername);
     setEditAvatar(displayAvatarId || '/images/avatars/nebula.webp');
     setSaveError(null);
+    setAsyncAvailability({ checking: false, taken: null, error: null });
     setIsEditing(true);
   };
 
   const handleSaveProfile = () => {
-    if (!editUsername.trim()) {
-      setSaveError("Username cannot be empty.");
+    if (formatError) {
+      setSaveError(formatError);
+      return;
+    }
+
+    if (isNameTaken) {
+      setSaveError(asyncAvailability.error || "This name is already taken.");
       return;
     }
 
@@ -283,8 +341,8 @@ export default function ProfileCard({
                             type="button"
                             onClick={() => setEditAvatar(av.image)}
                             className={`flex flex-col items-center p-1.5 rounded-xl border transition-all cursor-pointer ${isSelected
-                                ? 'border-[#E873C3] bg-[#E873C3]/15 shadow-[0_0_15px_rgba(232,115,195,0.4)] scale-105'
-                                : 'border-white/10 bg-white/5 hover:border-white/30 hover:scale-102'
+                              ? 'border-[#E873C3] bg-[#E873C3]/15 shadow-[0_0_15px_rgba(232,115,195,0.4)] scale-105'
+                              : 'border-white/10 bg-white/5 hover:border-white/30 hover:scale-102'
                               }`}
                           >
                             <div className={`w-12 h-12 rounded-lg overflow-hidden ${av.cls} p-0.5 mb-1.5`}>
@@ -310,20 +368,63 @@ export default function ProfileCard({
                   {/* Username Input */}
                   <div>
                     <label className="block text-xs font-mono font-bold uppercase tracking-wider text-slate-400 mb-1.5">
-                      Username
+                      Username / Callsign
                     </label>
-                    <input
-                      type="text"
-                      value={editUsername}
-                      onChange={(e) => setEditUsername(e.target.value)}
-                      placeholder="Enter username"
-                      className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-2.5 text-white focus:outline-none focus:border-[#E873C3] transition-colors text-sm font-mono"
-                    />
+                    <div className="relative">
+                      <input
+                        type="text"
+                        value={editUsername}
+                        onChange={(e) => {
+                          setEditUsername(e.target.value);
+                          setSaveError(null);
+                        }}
+                        placeholder="Enter username"
+                        className={`w-full bg-black/40 border rounded-xl px-4 py-2.5 text-white focus:outline-none transition-colors text-sm font-mono pr-9 ${isNameTaken || (trimmed.length > 0 && !!formatError)
+                            ? 'border-rose-500/80 focus:border-rose-500'
+                            : isAvailable
+                              ? 'border-emerald-500/80 focus:border-emerald-500'
+                              : 'border-white/10 focus:border-[#E873C3]'
+                          }`}
+                      />
+                      <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
+                        {isChecking && (
+                          <Loader2 size={16} className="animate-spin text-white/50" />
+                        )}
+                        {(isNameTaken || (trimmed.length > 0 && !!formatError)) && (
+                          <XCircle size={16} className="text-rose-400" />
+                        )}
+                        {isAvailable && (
+                          <CheckCircle size={16} className="text-emerald-400" />
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Live status message */}
+                    <div className="min-h-[20px] mt-1.5 flex items-center gap-1.5">
+                      {isChecking && (
+                        <span className="text-[11px] font-mono text-white/50">
+                          Checking availability...
+                        </span>
+                      )}
+                      {(isNameTaken || (trimmed.length > 0 && !!formatError)) && (
+                        <span className="text-[11px] font-mono text-rose-400 font-medium">
+                          {usernameError || 'This name is already taken.'}
+                        </span>
+                      )}
+                      {isAvailable && (
+                        <span className="text-[11px] font-mono text-emerald-400 font-medium">
+                          Name available!
+                        </span>
+                      )}
+                    </div>
                   </div>
                 </div>
 
                 {saveError && (
-                  <p className="text-red-400 text-sm mt-3 font-medium">{saveError}</p>
+                  <div className="mt-3 p-2.5 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-400 text-xs font-mono flex items-center gap-2">
+                    <XCircle size={15} className="shrink-0" />
+                    <span>{saveError}</span>
+                  </div>
                 )}
 
                 <div className="mt-5 pt-4 border-t border-white/10 flex justify-end gap-3 shrink-0">
@@ -338,8 +439,8 @@ export default function ProfileCard({
                   <button
                     type="button"
                     onClick={handleSaveProfile}
-                    disabled={isPending}
-                    className="px-6 py-2.5 bg-gradient-to-r from-[#E873C3] to-[#8D37D6] rounded-xl font-bold text-white shadow-[0_0_20px_rgba(141,55,214,0.4)] hover:opacity-90 transition-opacity disabled:opacity-70 flex items-center gap-2 cursor-pointer text-sm"
+                    disabled={isPending || isChecking || isNameTaken || !!formatError}
+                    className="px-6 py-2.5 bg-gradient-to-r from-[#E873C3] to-[#8D37D6] rounded-xl font-bold text-white shadow-[0_0_20px_rgba(141,55,214,0.4)] hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 cursor-pointer text-sm"
                   >
                     {isPending && <Loader2 size={16} className="animate-spin" />}
                     Save Changes

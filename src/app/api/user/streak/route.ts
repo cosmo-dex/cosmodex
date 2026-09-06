@@ -113,22 +113,6 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    if (streakIncreased) {
-      try {
-        await prisma.notifications.create({
-          data: {
-            title: `🔥 Daily Streak: ${currentStreak} Day${currentStreak > 1 ? 's' : ''}!`,
-            description: `You maintained your daily grind! Keep the cosmic flame burning tomorrow. (+50 ✦ XP Bonus)`,
-            type: 'streak',
-            target_type: 'user',
-            target_user_id: userId,
-            link: '/dashboard',
-          },
-        });
-      } catch (notifErr) {
-        console.warn('[POST /api/user/streak] Failed to create streak notification:', notifErr);
-      }
-    }
 
     return NextResponse.json({
       success: true,
