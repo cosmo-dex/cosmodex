@@ -3,7 +3,6 @@
 import React, { useEffect } from "react";
 import { AuthProvider } from "@/context/AuthContext";
 import { NotificationProvider } from "@/context/NotificationContext";
-import DailyStreakModal from "@/components/streak/DailyStreakModal";
 
 export default function Providers({ children }: { children: React.ReactNode }) {
   useEffect(() => {
@@ -16,7 +15,6 @@ export default function Providers({ children }: { children: React.ReactNode }) {
     <AuthProvider>
       <NotificationProvider>
         {children}
-        <DailyStreakModal />
       </NotificationProvider>
     </AuthProvider>
   );

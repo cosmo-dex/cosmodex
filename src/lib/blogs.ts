@@ -1,5 +1,4 @@
 import prisma from '@/lib/prisma';
-import { BLOG_POSTS, BlogPost } from '@/data/blogData';
 
 export interface BlogPostItem {
   id: string;

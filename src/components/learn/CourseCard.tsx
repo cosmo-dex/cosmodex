@@ -31,12 +31,14 @@ const SignalBarsIcon = () => (
 export default function CourseCard({ course }: CourseCardProps) {
   const [imgError, setImgError] = useState(false);
 
-  const targetHref =
+  const isLive =
     course.id === "py-1" ||
-    course.id.startsWith("py-") ||
-    course.title.toLowerCase().includes("python")
-      ? "/learn/python"
-      : `/learn/${course.id}/theory/in-the-beginning`;
+    course.id === "python" ||
+    course.title.toLowerCase() === "python";
+
+  const targetHref = isLive
+    ? "/learn/python"
+    : `/learn/${course.id}/theory/in-the-beginning`;
 
   return (
     <Link href={targetHref} scroll={false} className="block">
@@ -51,8 +53,15 @@ export default function CourseCard({ course }: CourseCardProps) {
       {/* Highlight screen overlay on whole card component */}
       <div className="absolute inset-0 bg-white/5 opacity-0 group-hover:opacity-100 transition-opacity duration-150 pointer-events-none z-30" />
 
-      {/* 1. Image Banner - Static */}
+      {/* 1. Image Banner */}
       <div className="relative w-full h-40 overflow-hidden bg-[#0b1220] border-b border-[#1b263b]">
+        {!isLive && (
+          <div className="absolute top-2.5 right-2.5 px-2.5 py-1 rounded-full bg-purple-950/90 border border-purple-500/40 text-purple-300 text-[10px] font-mono font-bold tracking-wider uppercase backdrop-blur-md shadow-lg flex items-center gap-1.5 z-20">
+            <span className="w-1.5 h-1.5 rounded-full bg-purple-400 animate-pulse" />
+            Coming Soon
+          </div>
+        )}
+
         {course.pixelArtBanner ? (
           <div className="w-full h-full pointer-events-none">
             {course.pixelArtBanner}
@@ -94,10 +103,17 @@ export default function CourseCard({ course }: CourseCardProps) {
 
         {/* 3. Level Tag Pill */}
         <div className="flex items-center justify-start mt-auto">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#131d31] border border-[#22314e] text-[11px] font-sans font-bold tracking-wider text-[#94a3b8]">
-            <SignalBarsIcon />
-            <span>{course.level}</span>
-          </div>
+          {isLive ? (
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#131d31] border border-[#22314e] text-[11px] font-sans font-bold tracking-wider text-[#94a3b8]">
+              <SignalBarsIcon />
+              <span>{course.level}</span>
+            </div>
+          ) : (
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-purple-500/15 border border-purple-500/30 text-[11px] font-sans font-bold tracking-wider text-purple-300">
+              <span className="w-1.5 h-1.5 rounded-full bg-purple-400" />
+              <span>COMING SOON</span>
+            </div>
+          )}
         </div>
       </div>
     </motion.div>

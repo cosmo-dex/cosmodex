@@ -11,7 +11,7 @@ export function RankTable({ players }: { players: Player[] }) {
         <span>Name / User ID</span>
         <span className="hidden md:block">Battles</span>
         <span className="hidden md:block">Streak</span>
-        <span className="text-right">XP Points</span>
+        <span className="text-right">Rating (ELO)</span>
       </div>
 
       <ul className="flex flex-col gap-2">
@@ -70,7 +70,7 @@ export function RankTable({ players }: { players: Player[] }) {
               </div>
 
               <span className="text-right text-xs md:text-sm font-bold text-xp-gold transition-all duration-200 group-hover:drop-shadow-[0_0_8px_rgba(245,200,66,0.6)] shrink-0">
-                {p.xp.toLocaleString()} XP
+                {p.mmr.toLocaleString()} ELO
               </span>
             </motion.li>
           );

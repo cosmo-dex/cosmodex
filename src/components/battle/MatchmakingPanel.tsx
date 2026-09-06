@@ -93,6 +93,9 @@ function getRankLabel(experienceLevel: string | null | undefined): string {
   return "Initiate";
 }
 
+const IS_BATTLE_LEADERBOARD_LIVE = false;
+const IS_CODE_BATTLE_LIVE = false;
+
 export default function MatchmakingPanel({ socket, userId, username, onMatchFound }: Props) {
   const [mode, setMode] = useState<Mode>("mcq");
   const [queueState, setQueueState] = useState<QueueState>("idle");
@@ -388,70 +391,88 @@ export default function MatchmakingPanel({ socket, userId, username, onMatchFoun
                   <h4 className="text-[11px] font-display font-bold text-white uppercase tracking-wider flex items-center gap-1.5">
                     <Trophy size={13} className="text-[#FFA249] fill-[#FFA249]" /> Top Legends
                   </h4>
-                  <span className="text-[9px] font-mono text-white/40 uppercase tracking-wider">Quadrant</span>
+                  {!IS_BATTLE_LEADERBOARD_LIVE ? (
+                    <span className="text-[9px] font-mono font-bold text-amber-300 bg-amber-500/10 border border-amber-500/30 px-2 py-0.5 rounded-full uppercase tracking-wider">
+                      Live Soon
+                    </span>
+                  ) : (
+                    <span className="text-[9px] font-mono text-white/40 uppercase tracking-wider">Quadrant</span>
+                  )}
                 </div>
 
-                <div className="space-y-1.5">
-                  {/* Top 3 Ranks */}
-                  {top3.length > 0 ? (
-                    top3.map((entry, i) => {
-                      const isThisUser = (userRankIndex === i) || (Boolean(userId && entry.userId === userId)) || Boolean(username && entry.username && entry.username.toLowerCase() === username.toLowerCase());
-                      return (
-                        <div
-                          key={entry.userId || i}
-                          className={`flex items-center justify-between px-2.5 py-1.5 rounded-xl border text-xs transition-all ${isThisUser
-                            ? "bg-gradient-to-r from-[#9E00F6]/20 via-[#D95FD1]/15 to-[#00FFE9]/10 border-[#D95FD1]/40 shadow-[0_0_12px_rgba(217,95,209,0.25)]"
-                            : "bg-white/5 border-white/5 hover:bg-white/10 hover:border-white/15"
-                            }`}
-                        >
-                          <div className="flex items-center gap-2 min-w-0">
-                            <span className={`w-5 h-5 rounded-full flex items-center justify-center font-bold text-[10px] shrink-0 ${i === 0 ? "bg-amber-400/20 text-amber-300 border border-amber-400/30" :
-                              i === 1 ? "bg-slate-300/20 text-slate-200 border border-slate-300/30" :
-                                "bg-amber-700/20 text-amber-500 border border-amber-700/30"
-                              }`}>
-                              {i === 0 ? "🥇" : i === 1 ? "🥈" : "🥉"}
-                            </span>
-                            <span className={`font-semibold truncate text-xs flex items-center gap-1 ${isThisUser ? "text-white font-bold" : "text-white/90"}`}>
-                              {entry.username}
-                              {isThisUser && (
-                                <span className="text-[8px] font-extrabold uppercase px-1 py-0.2 rounded bg-[#FFA249]/30 text-[#FFA249] border border-[#FFA249]/40">YOU</span>
-                              )}
+                {!IS_BATTLE_LEADERBOARD_LIVE ? (
+                  <div className="bg-gradient-to-br from-[#1a0b2e]/60 to-white/[0.02] border border-amber-500/25 p-3 rounded-xl text-center shadow-[0_0_15px_rgba(245,158,11,0.08)]">
+                    <div className="flex items-center justify-center gap-1.5 text-amber-300 text-[11px] font-bold mb-1">
+                      <Sparkles size={13} className="animate-pulse text-amber-400" />
+                      <span>Leaderboard Will Be Live Soon</span>
+                    </div>
+                    <p className="text-[10px] text-white/50 leading-relaxed font-mono">
+                      Season 1 rankings unlock at official launch. Battle now to calibrate your MMR!
+                    </p>
+                  </div>
+                ) : (
+                  <div className="space-y-1.5">
+                    {/* Top 3 Ranks */}
+                    {top3.length > 0 ? (
+                      top3.map((entry, i) => {
+                        const isThisUser = (userRankIndex === i) || (Boolean(userId && entry.userId === userId)) || Boolean(username && entry.username && entry.username.toLowerCase() === username.toLowerCase());
+                        return (
+                          <div
+                            key={entry.userId || i}
+                            className={`flex items-center justify-between px-2.5 py-1.5 rounded-xl border text-xs transition-all ${isThisUser
+                              ? "bg-gradient-to-r from-[#9E00F6]/20 via-[#D95FD1]/15 to-[#00FFE9]/10 border-[#D95FD1]/40 shadow-[0_0_12px_rgba(217,95,209,0.25)]"
+                              : "bg-white/5 border-white/5 hover:bg-white/10 hover:border-white/15"
+                              }`}
+                          >
+                            <div className="flex items-center gap-2 min-w-0">
+                              <span className={`w-5 h-5 rounded-full flex items-center justify-center font-bold text-[10px] shrink-0 ${i === 0 ? "bg-amber-400/20 text-amber-300 border border-amber-400/30" :
+                                i === 1 ? "bg-slate-300/20 text-slate-200 border border-slate-300/30" :
+                                  "bg-amber-700/20 text-amber-500 border border-amber-700/30"
+                                }`}>
+                                {i === 0 ? "🥇" : i === 1 ? "🥈" : "🥉"}
+                              </span>
+                              <span className={`font-semibold truncate text-xs flex items-center gap-1 ${isThisUser ? "text-white font-bold" : "text-white/90"}`}>
+                                {entry.username}
+                                {isThisUser && (
+                                  <span className="text-[8px] font-extrabold uppercase px-1 py-0.2 rounded bg-[#FFA249]/30 text-[#FFA249] border border-[#FFA249]/40">YOU</span>
+                                )}
+                              </span>
+                            </div>
+                            <span className={`font-mono font-bold text-[11px] shrink-0 ${isThisUser ? "text-amber-300 font-extrabold" : "text-amber-400"}`}>
+                              {entry.elo} ELO
                             </span>
                           </div>
-                          <span className={`font-mono font-bold text-[11px] shrink-0 ${isThisUser ? "text-amber-300 font-extrabold" : "text-amber-400"}`}>
-                            {entry.elo} ELO
-                          </span>
-                        </div>
-                      );
-                    })
-                  ) : (
-                    <div className="bg-white/5 px-2.5 py-2 rounded-xl text-center text-white/40 text-[10px] font-mono">
-                      No leaderboard entries yet
-                    </div>
-                  )}
-
-                  {/* If user is NOT in Top 3, show dots + 4th item for current user */}
-                  {!isUserInTop3 && top3.length > 0 && (
-                    <>
-                      <div className="py-0.5 text-center text-white/30 text-[9px] font-mono tracking-widest select-none">
-                        • • •
+                        );
+                      })
+                    ) : (
+                      <div className="bg-white/5 px-2.5 py-2 rounded-xl text-center text-white/40 text-[10px] font-mono">
+                        No leaderboard entries yet
                       </div>
+                    )}
 
-                      <div className="flex items-center justify-between bg-gradient-to-r from-[#9E00F6]/20 via-[#D95FD1]/15 to-[#00FFE9]/10 px-2.5 py-1.5 rounded-xl border border-[#D95FD1]/40 shadow-[0_0_12px_rgba(217,95,209,0.25)] text-xs">
-                        <div className="flex items-center gap-2 min-w-0">
-                          <span className="w-5 h-5 rounded-full bg-[#D95FD1]/30 border border-[#D95FD1]/50 flex items-center justify-center font-mono font-bold text-[10px] text-white shrink-0">
-                            #{currentUserEntry.rank}
-                          </span>
-                          <span className="font-bold text-white truncate text-xs flex items-center gap-1">
-                            {currentUserEntry.username}
-                            <span className="text-[8px] font-extrabold uppercase px-1 py-0.2 rounded bg-[#FFA249]/30 text-[#FFA249] border border-[#FFA249]/40">YOU</span>
-                          </span>
+                    {/* If user is NOT in Top 3, show dots + 4th item for current user */}
+                    {!isUserInTop3 && top3.length > 0 && (
+                      <>
+                        <div className="py-0.5 text-center text-white/30 text-[9px] font-mono tracking-widest select-none">
+                          • • •
                         </div>
-                        <span className="font-mono text-amber-300 font-extrabold text-[11px] shrink-0">{currentUserEntry.elo} ELO</span>
-                      </div>
-                    </>
-                  )}
-                </div>
+
+                        <div className="flex items-center justify-between bg-gradient-to-r from-[#9E00F6]/20 via-[#D95FD1]/15 to-[#00FFE9]/10 px-2.5 py-1.5 rounded-xl border border-[#D95FD1]/40 shadow-[0_0_12px_rgba(217,95,209,0.25)] text-xs">
+                          <div className="flex items-center gap-2 min-w-0">
+                            <span className="w-5 h-5 rounded-full bg-[#D95FD1]/30 border border-[#D95FD1]/50 flex items-center justify-center font-mono font-bold text-[10px] text-white shrink-0">
+                              #{currentUserEntry.rank}
+                            </span>
+                            <span className="font-bold text-white truncate text-xs flex items-center gap-1">
+                              {currentUserEntry.username}
+                              <span className="text-[8px] font-extrabold uppercase px-1 py-0.2 rounded bg-[#FFA249]/30 text-[#FFA249] border border-[#FFA249]/40">YOU</span>
+                            </span>
+                          </div>
+                          <span className="font-mono text-amber-300 font-extrabold text-[11px] shrink-0">{currentUserEntry.elo} ELO</span>
+                        </div>
+                      </>
+                    )}
+                  </div>
+                )}
               </div>
 
               {/* Match History Placed Right Below Mini Leaderboard */}
@@ -521,21 +542,21 @@ export default function MatchmakingPanel({ socket, userId, username, onMatchFoun
                 onClick={() => setMode("mcq")}
                 disabled={queueState === "queuing"}
                 className={`relative flex flex-col items-start justify-between p-4 rounded-2xl border text-left transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed group overflow-hidden ${!isCode
-                    ? "bg-gradient-to-br from-[#E873C3]/25 via-[#C453D6]/20 to-[#8D37D6]/30 border-[#E873C3]/50 shadow-[0_0_18px_rgba(232,115,195,0.3)]"
-                    : "border-white/15 bg-white/5 hover:border-white/30 hover:bg-white/10"
+                  ? "bg-gradient-to-br from-[#E873C3]/25 via-[#C453D6]/20 to-[#8D37D6]/30 border-[#E873C3]/50 shadow-[0_0_18px_rgba(232,115,195,0.3)]"
+                  : "border-white/15 bg-white/5 hover:border-white/30 hover:bg-white/10"
                   }`}
               >
                 <div className="w-full flex items-center justify-between">
                   <div className={`p-2.5 rounded-xl border transition-all ${!isCode
-                      ? "bg-[#E873C3]/20 border-[#E873C3]/40 text-white"
-                      : "bg-white/10 border-white/10 text-white/70 group-hover:text-white"
+                    ? "bg-[#E873C3]/20 border-[#E873C3]/40 text-white"
+                    : "bg-white/10 border-white/10 text-white/70 group-hover:text-white"
                     }`}>
                     <ListChecks size={24} />
                   </div>
 
                   <span className={`text-[11px] font-bold px-2.5 py-0.5 rounded-full border transition-all ${!isCode
-                      ? "bg-[#E873C3]/30 text-white border-[#E873C3]/50 shadow-[0_0_8px_rgba(232,115,195,0.5)]"
-                      : "bg-white/10 text-white/60 border-white/15"
+                    ? "bg-[#E873C3]/30 text-white border-[#E873C3]/50 shadow-[0_0_8px_rgba(232,115,195,0.5)]"
+                    : "bg-white/10 text-white/60 border-white/15"
                     }`}>
                     {!isCode ? "Quiz Arena" : "Quiz"}
                   </span>
@@ -556,39 +577,59 @@ export default function MatchmakingPanel({ socket, userId, username, onMatchFoun
               </button>
 
               <button
-                onClick={() => setMode("code")}
+                onClick={() => {
+                  if (IS_CODE_BATTLE_LIVE) {
+                    setMode("code");
+                  }
+                }}
                 disabled={queueState === "queuing"}
-                className={`relative flex flex-col items-start justify-between p-4 rounded-2xl border text-left transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed group overflow-hidden ${isCode
+                className={`relative flex flex-col items-start justify-between p-4 rounded-2xl border text-left transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed group overflow-hidden ${!IS_CODE_BATTLE_LIVE
+                  ? "border-white/15 bg-white/5 hover:border-amber-400/40"
+                  : isCode
                     ? "bg-gradient-to-br from-[#E873C3]/25 via-[#C453D6]/20 to-[#8D37D6]/30 border-[#E873C3]/50 shadow-[0_0_18px_rgba(232,115,195,0.3)]"
                     : "border-white/15 bg-white/5 hover:border-white/30 hover:bg-white/10"
                   }`}
               >
                 <div className="w-full flex items-center justify-between">
-                  <div className={`p-2.5 rounded-xl border transition-all ${isCode
-                      ? "bg-[#E873C3]/20 border-[#E873C3]/40 text-white"
-                      : "bg-white/10 border-white/10 text-white/70 group-hover:text-white"
-                    }`}>
+                  <div
+                    className={`p-2.5 rounded-xl border transition-all ${!IS_CODE_BATTLE_LIVE
+                      ? "bg-white/10 border-white/10 text-white/70 group-hover:text-white"
+                      : isCode
+                        ? "bg-[#E873C3]/20 border-[#E873C3]/40 text-white"
+                        : "bg-white/10 border-white/10 text-white/70 group-hover:text-white"
+                      }`}
+                  >
                     <Terminal size={24} />
                   </div>
 
-                  <span className={`text-[11px] font-bold px-2.5 py-0.5 rounded-full border transition-all ${isCode
-                      ? "bg-[#E873C3]/30 text-white border-[#E873C3]/50 shadow-[0_0_8px_rgba(232,115,195,0.5)]"
-                      : "bg-white/10 text-white/60 border-white/15"
-                    }`}>
-                    {isCode ? "1v1 Duel" : "1v1"}
+                  <span
+                    className={`text-[10px] font-mono font-bold px-2.5 py-0.5 rounded-full border transition-all ${!IS_CODE_BATTLE_LIVE
+                      ? "bg-amber-500/15 text-amber-300 border-amber-500/30 shadow-[0_0_8px_rgba(245,158,11,0.2)]"
+                      : isCode
+                        ? "bg-[#E873C3]/30 text-white border-[#E873C3]/50 shadow-[0_0_8px_rgba(232,115,195,0.5)]"
+                        : "bg-white/10 text-white/60 border-white/15"
+                      }`}
+                  >
+                    {!IS_CODE_BATTLE_LIVE ? "LIVE SOON" : isCode ? "1v1 Duel" : "1v1"}
                   </span>
                 </div>
 
                 <div className="mt-3 w-full relative z-10">
-                  <p className={`text-base sm:text-lg font-display font-bold tracking-wide ${isCode ? "text-white" : "text-white/90 group-hover:text-white"}`}>
+                  <p
+                    className={`text-base sm:text-lg font-display font-bold tracking-wide ${isCode && IS_CODE_BATTLE_LIVE ? "text-white" : "text-white/90 group-hover:text-white"
+                      }`}
+                  >
                     Code Battle
                   </p>
-                  <p className={`text-[11px] sm:text-xs mt-0.5 font-medium leading-snug ${isCode ? "text-white/80" : "text-white/60 group-hover:text-white/80"}`}>
+                  <p
+                    className={`text-[11px] sm:text-xs mt-0.5 font-medium leading-snug ${isCode && IS_CODE_BATTLE_LIVE ? "text-white/80" : "text-white/60 group-hover:text-white/80"
+                      }`}
+                  >
                     1v1 Speed algorithmic coding duel
                   </p>
-                  <div className="flex items-center gap-1.5 mt-2 text-[10px] font-mono text-emerald-300">
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                    <span>{queueCounts.code > 0 ? `${queueCounts.code} in queue` : 'Queue open'}</span>
+                  <div className="flex items-center gap-1.5 mt-2 text-[10px] font-mono text-amber-300">
+                    <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
+                    <span>{!IS_CODE_BATTLE_LIVE ? "Live Soon • Season 2 Launch" : (queueCounts.code > 0 ? `${queueCounts.code} in queue` : 'Queue open')}</span>
                   </div>
                 </div>
               </button>
@@ -646,16 +687,25 @@ export default function MatchmakingPanel({ socket, userId, username, onMatchFoun
 
             {queueState === "idle" && (
               <div className="w-full relative z-10 mt-auto">
-                <button
-                  onClick={joinQueue}
-                  className="cosmo-btn-primary w-full h-14 text-base font-bold tracking-wider uppercase rounded-2xl cursor-pointer hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.99] transition-all duration-200 flex items-center justify-center gap-2 text-white border border-white/20"
-                  style={{
-                    fontFamily: "var(--font-body), 'Fira Code', monospace",
-                  }}
-                >
-                  <Swords size={20} />
-                  join match
-                </button>
+                {isCode && !IS_CODE_BATTLE_LIVE ? (
+                  <button
+                    disabled
+                    className="w-full h-14 text-sm font-bold tracking-wider uppercase rounded-2xl bg-white/5 border border-white/10 text-white/40 cursor-not-allowed flex items-center justify-center gap-2"
+                  >
+                    <span>Code Battle Will Be Live Soon</span>
+                  </button>
+                ) : (
+                  <button
+                    onClick={joinQueue}
+                    className="cosmo-btn-primary w-full h-14 text-base font-bold tracking-wider uppercase rounded-2xl cursor-pointer hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.99] transition-all duration-200 flex items-center justify-center gap-2 text-white border border-white/20"
+                    style={{
+                      fontFamily: "var(--font-body), 'Fira Code', monospace",
+                    }}
+                  >
+                    <Swords size={20} />
+                    join match
+                  </button>
+                )}
               </div>
             )}
 

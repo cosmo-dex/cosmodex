@@ -25,12 +25,16 @@ export default async function ProfilePage() {
   let interests: string[] = [];
   let xpTotal = 0;
   let level = 1;
+  let experienceLevel = 'Beginner';
   let streak = 0;
   let badgeCount = 0;
   let badges: Array<{ id: string; name: string; description: string | null; earnedAt: string | null }> = [];
 
   let arenaWins = 0;
   let arenaLosses = 0;
+  let arenaDraws = 0;
+  let codeElo = 1000;
+  let mcqElo = 1000;
   let avatarUrl = '/images/avatars/nebula.webp';
 
   if (parsed) {
@@ -41,6 +45,7 @@ export default async function ProfilePage() {
     interests = parsed.interests || [];
     xpTotal = parsed.xpTotal ?? xpTotal;
     level = parsed.level ?? level;
+    experienceLevel = parsed.experienceLevel || experienceLevel;
     avatarUrl = parsed.avatarId || avatarUrl;
   }
 
@@ -67,7 +72,7 @@ export default async function ProfilePage() {
         }),
         prisma.battle_user_stats.findUnique({
           where: { user_id: userId },
-          select: { wins: true, losses: true },
+          select: { wins: true, losses: true, draws: true, elo_rating: true, mcq_elo_rating: true },
         }),
         prisma.user_badges.findMany({
           where: { user_id: userId },
@@ -84,12 +89,16 @@ export default async function ProfilePage() {
         interests = dbUser.interests ?? [];
         xpTotal = dbUser.xp_total ?? 0;
         level = dbUser.level ?? 1;
+        experienceLevel = dbUser.experience_level || experienceLevel;
         createdAt = dbUser.created_at?.toISOString() ?? createdAt;
       }
 
       streak = arenaStats?.current_streak ?? 0;
       arenaWins = battleStats?.wins ?? 0;
       arenaLosses = battleStats?.losses ?? 0;
+      arenaDraws = battleStats?.draws ?? 0;
+      codeElo = battleStats?.elo_rating ?? 1000;
+      mcqElo = battleStats?.mcq_elo_rating ?? 1000;
       badgeCount = userBadges.length;
       badges = userBadges.map((ub) => ({
         id: ub.id,
@@ -111,13 +120,17 @@ export default async function ProfilePage() {
       interests={interests}
       xpTotal={xpTotal}
       level={level}
+      experienceLevel={experienceLevel}
       streak={streak}
       badgeCount={badgeCount}
       badges={badges}
-      bio="Full-Stack Cosmo Coder 🌌 Grinding Python, React & AI algorithms on CosmoDeX."
+      bio=""
       avatarUrl={avatarUrl}
       arenaWins={arenaWins}
       arenaLosses={arenaLosses}
+      arenaDraws={arenaDraws}
+      codeElo={codeElo}
+      mcqElo={mcqElo}
     />
   );
 }
