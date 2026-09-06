@@ -13,6 +13,7 @@ interface ProfileCardProps {
   experienceLevel?: string | null;
   streak?: number;
   badgeCount?: number;
+  codeElo?: number;
 }
 
 function getRankLabel(experienceLevel: string | null | undefined): string {
@@ -29,6 +30,7 @@ export default function ProfileCard({
   experienceLevel = 'Beginner',
   streak = 0,
   badgeCount = 0,
+  codeElo = 1000,
 }: ProfileCardProps) {
   const xpNeeded = level * 1000;
   const xpPct = Math.min((xpTotal / xpNeeded) * 100, 100);
@@ -87,9 +89,12 @@ export default function ProfileCard({
           <p className="font-bold text-white truncate text-xl">
             {username}
           </p>
-          <div className="mt-1">
+          <div className="mt-1 flex items-center gap-2 flex-wrap">
             <span className="inline-flex items-center text-[#E873C3] font-bold text-xs px-3 py-1 rounded-full bg-[#E873C3]/10 border border-[#E873C3]/20">
               Level {level}
+            </span>
+            <span className="inline-flex items-center text-purple-300 font-bold text-xs px-2.5 py-1 rounded-full bg-purple-500/10 border border-purple-500/25">
+              ⚔️ {codeElo.toLocaleString()} ELO
             </span>
           </div>
         </div>

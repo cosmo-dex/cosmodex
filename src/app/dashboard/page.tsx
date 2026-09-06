@@ -34,6 +34,7 @@ export default async function DashboardPage() {
 
   // Fetch dynamic data server-side in parallel
   let streak = 0;
+  let codeElo = 1000;
   let badgeCount = 0;
   let badges: Array<{ id: string; name: string; description: string | null; earnedAt: string | null }> = [];
   let activities: Array<{ id: string; type: string; label: string; timestamp: string; xp?: number }> = [];
@@ -60,10 +61,10 @@ export default async function DashboardPage() {
         take: 5,
       });
 
-      const languageIds = userEnrollments.map(e => e.languages.id);
+      const languageIds = userEnrollments.map((e) => e.language_id);
 
       // Then fetch other data in parallel
-      const [dbUser, arenaStats, userBadges, recentProgress, languageModules, userModuleCompletions] = await Promise.all([
+      const [dbUser, arenaStats, battleStats, userBadges, recentProgress, languageModules, userModuleCompletions] = await Promise.all([
         prisma.users.findUnique({
           where: { id: userId },
           select: { avatar_url: true, username: true, experience_level: true, level: true, xp_total: true },
@@ -71,6 +72,10 @@ export default async function DashboardPage() {
         prisma.arena_stats.findUnique({
           where: { user_id: userId },
           select: { current_streak: true, total_xp: true, total_solved: true },
+        }),
+        prisma.battle_user_stats.findUnique({
+          where: { user_id: userId },
+          select: { elo_rating: true },
         }),
         prisma.user_badges.findMany({
           where: { user_id: userId },
@@ -122,6 +127,7 @@ export default async function DashboardPage() {
       }
 
       streak = arenaStats?.current_streak ?? 0;
+      codeElo = battleStats?.elo_rating ?? 1000;
       badgeCount = userBadges.length;
 
       badges = userBadges.map((ub) => ({
@@ -209,6 +215,7 @@ export default async function DashboardPage() {
               experienceLevel={experienceLevel}
               streak={streak}
               badgeCount={badgeCount}
+              codeElo={codeElo}
             />
             <ActivityFeed activities={activities} />
           </div>

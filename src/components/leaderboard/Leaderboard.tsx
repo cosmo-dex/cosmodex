@@ -29,25 +29,13 @@ const SCOPES: Array<{ id: Scope; label: string; icon: typeof Globe }> = [
 
 const TIMEFRAMES: Timeframe[] = ["daily", "weekly", "monthly"];
 
-function mapEntryToPlayer(entry: LeaderboardEntry, index: number, timeframe: Timeframe): Player {
+function mapEntryToPlayer(entry: LeaderboardEntry, index: number): Player {
   const tiers: Player["tier"][] = ["diamond", "platinum", "gold", "silver", "bronze"];
-  
-  // Timeframe modifiers to make daily/weekly/monthly feel realistic & distinct
-  const timeframeFactors: Record<Timeframe, { xpMult: number; battlesMult: number }> = {
-    daily: { xpMult: 0.15, battlesMult: 0.18 },
-    weekly: { xpMult: 0.6, battlesMult: 0.65 },
-    monthly: { xpMult: 1.0, battlesMult: 1.0 },
-  };
-  
-  const factor = timeframeFactors[timeframe] || timeframeFactors.weekly;
 
-  // Add deterministic subtle variance per player and timeframe so ranks slightly shift naturally
-  const seed = (entry.userId.charCodeAt(entry.userId.length - 1) || 0) + (timeframe === "daily" ? 7 : timeframe === "weekly" ? 14 : 28);
-  const rawXp = Math.round(entry.elo * factor.xpMult + (seed % 35));
-  const battles = Math.max(1, Math.round((entry.wins + entry.losses + entry.draws) * factor.battlesMult));
-  const wins = Math.max(0, Math.round(entry.wins * factor.battlesMult));
-  const losses = Math.max(0, battles - wins);
-
+  const realElo = entry.elo || 1000;
+  const battles = entry.wins + entry.losses + entry.draws;
+  const wins = entry.wins;
+  const losses = entry.losses;
   const tier = tiers[Math.min(Math.floor(index / 2), tiers.length - 1)];
 
   return {
@@ -56,11 +44,11 @@ function mapEntryToPlayer(entry: LeaderboardEntry, index: number, timeframe: Tim
     handle: entry.userId.slice(0, 8),
     avatar: `https://api.dicebear.com/7.x/bottts-neutral/svg?seed=${encodeURIComponent(entry.userId)}`,
     tier,
-    xp: rawXp,
+    xp: realElo,
     battles,
     wins,
     losses,
-    mmr: rawXp,
+    mmr: realElo,
     streak: Math.max(wins - losses, 0),
   };
 }
@@ -77,8 +65,7 @@ export default function Leaderboard() {
     let ignore = false;
     async function fetchLeaderboard() {
       try {
-        const mode = scope === "global" ? "code" : scope;
-        const res = await fetch(`/api/battle/leaderboard?mode=${mode}`);
+        const res = await fetch(`/api/battle/leaderboard?mode=${scope}`);
         if (!res.ok) throw new Error("Failed to load leaderboard");
         const data = await res.json();
         if (!ignore) {
@@ -103,13 +90,12 @@ export default function Leaderboard() {
     return () => {
       ignore = true;
     };
-  }, [scope, timeframe]);
+  }, [scope]);
 
   const players = useMemo(() => {
-    const raw = entries.map((e, i) => mapEntryToPlayer(e, i, timeframe));
-    // Sort descending by timeframe-adjusted XP
-    return raw.sort((a, b) => b.xp - a.xp);
-  }, [entries, timeframe]);
+    const raw = entries.map((e, i) => mapEntryToPlayer(e, i));
+    return raw.sort((a, b) => b.mmr - a.mmr || b.wins - a.wins);
+  }, [entries]);
 
   const top3 = players.slice(0, 3);
   const rest = players.slice(3);
@@ -165,7 +151,7 @@ export default function Leaderboard() {
           Leader<span className="text-gradient-accent">board</span>
         </h1>
         <p className="mt-1.5 max-w-lg text-center text-xs font-light text-text-secondary md:text-sm">
-          The quadrant&apos;s elite coders, ranked by raw XP and mission completion.
+          The quadrant&apos;s elite battle gladiators, ranked by competitive ELO rating and combat victories.
         </p>
 
         {/* Timeframe selector (Daily / Weekly / Monthly) */}

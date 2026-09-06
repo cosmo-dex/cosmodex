@@ -1,5 +1,6 @@
 "use client";
 import { useState, useTransition } from 'react';
+import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Calendar,
@@ -19,6 +20,8 @@ import {
   Swords,
   Trophy,
   Lock,
+  Code2,
+  Brain,
 } from 'lucide-react';
 import Navbar from '@/components/navbar/Navbar';
 import DashboardBackground from '@/components/dashboard/DashboardBackground';
@@ -128,6 +131,9 @@ interface ProfileContentProps {
   avatarUrl?: string;
   arenaWins?: number;
   arenaLosses?: number;
+  arenaDraws?: number;
+  codeElo?: number;
+  mcqElo?: number;
 }
 
 function getProfileRankInfo(xpTotal: number, level: number) {
@@ -202,6 +208,9 @@ export default function ProfileContent({
   avatarUrl: initialAvatarUrl = '/images/avatars/nebula.webp',
   arenaWins = 0,
   arenaLosses = 0,
+  arenaDraws = 0,
+  codeElo = 1000,
+  mcqElo = 1000,
 }: ProfileContentProps) {
   const [activeTab, setActiveTab] = useState<'overview' | 'practice' | 'battles'>('overview');
   const [badgeFilter, setBadgeFilter] = useState<'all' | 'earned' | 'locked'>('all');
@@ -362,7 +371,7 @@ export default function ProfileContent({
   };
 
   const rankInfo = getProfileRankInfo(xpTotal || starPoints, level);
-  const totalBattles = arenaWins + arenaLosses;
+  const totalBattles = arenaWins + arenaLosses + arenaDraws;
   const winRate = totalBattles > 0 ? Math.round((arenaWins / totalBattles) * 100) : 0;
 
   const filteredBadges = ALL_SHOWCASE_BADGES.filter((b) => {
@@ -452,21 +461,21 @@ export default function ProfileContent({
                       setSaveError(null);
                       setIsEditing(true);
                     }}
-                    title="Change profile picture"
-                    className="absolute bottom-1 right-1 sm:bottom-2 sm:right-2 p-2.5 sm:p-3 rounded-full bg-gradient-to-tr from-[#9b30ff] to-[#E873C3] text-white shadow-[0_4px_16px_rgba(232,115,195,0.5)] border-2 border-[#120C20] hover:scale-110 active:scale-95 transition-all cursor-pointer z-30"
+                    title="Upload / Change Avatar"
+                    className="absolute bottom-1 right-1 sm:bottom-2 sm:right-2 z-30 p-2.5 rounded-full bg-[#E873C3] hover:bg-[#d95fc0] text-black transition-all shadow-[0_0_15px_rgba(232,115,195,0.8)] cursor-pointer hover:scale-110 active:scale-95 border-2 border-[#0a0518]"
                   >
-                    <Camera size={16} className="drop-shadow sm:w-5 sm:h-5" />
+                    <Camera size={18} className="text-black stroke-[2.5]" />
                   </button>
                 </div>
               </div>
 
-              {/* Profile Info */}
-              <div className="px-6 sm:px-10 mt-20">
-                <div className="flex items-center gap-3">
-                  <h1 className="text-3xl sm:text-4xl font-display font-bold text-white tracking-wide">
+              {/* Profile Bio & Content Area */}
+              <div className="mt-20 px-6 sm:px-10">
+                <div className="flex flex-wrap items-center gap-3">
+                  <h1 className="text-2xl sm:text-3xl font-bold font-display text-white tracking-wide">
                     {profile.name}
                   </h1>
-                  <span className="px-2.5 py-0.5 rounded-full bg-[#E873C3]/20 border border-[#E873C3]/40 text-[#E873C3] text-xs font-mono font-bold">
+                  <span className="px-2.5 py-0.5 rounded-full bg-[#E873C3]/10 border border-[#E873C3]/30 text-[#E873C3] text-xs font-mono font-bold">
                     Lvl {level}
                   </span>
                 </div>
@@ -482,7 +491,7 @@ export default function ProfileContent({
                 </div>
 
                 {/* ── Stats Grid Integrated inside Main Left Card ── */}
-                <div className="mt-6 pt-6 border-t border-white/10 grid grid-cols-2 sm:grid-cols-4 gap-3.5">
+                <div className="mt-6 pt-6 border-t border-white/10 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3.5">
                   <div className="flex items-center gap-3 p-3 rounded-2xl border border-white/10 bg-white/[0.03]">
                     <div className="text-[#FFD700] drop-shadow-[0_0_8px_rgba(255,215,0,0.6)] text-2xl">
                       ✦
@@ -491,6 +500,18 @@ export default function ProfileContent({
                       <p className="font-bold text-white text-lg leading-none">{rankInfo.currentXP.toLocaleString()}</p>
                       <p className="text-[10px] font-mono uppercase tracking-wider text-white/50 mt-1">
                         Star Points
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-3 p-3 rounded-2xl border border-white/10 bg-white/[0.03]">
+                    <div className="text-[#E873C3] drop-shadow-[0_0_8px_rgba(232,115,195,0.6)]">
+                      <Swords size={20} />
+                    </div>
+                    <div>
+                      <p className="font-bold text-white text-lg leading-none">{codeElo.toLocaleString()}</p>
+                      <p className="text-[10px] font-mono uppercase tracking-wider text-[#E873C3] mt-1">
+                        Battle ELO
                       </p>
                     </div>
                   </div>
@@ -521,7 +542,7 @@ export default function ProfileContent({
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-3 p-3 rounded-2xl border border-white/10 bg-white/[0.03]">
+                  <div className="flex items-center gap-3 p-3 rounded-2xl border border-white/10 bg-white/[0.03] col-span-2 sm:col-span-1">
                     <div className="text-orange-500 drop-shadow-[0_0_8px_rgba(249,115,22,0.6)]">
                       <Flame size={20} fill="currentColor" />
                     </div>
@@ -676,21 +697,104 @@ export default function ProfileContent({
 
                   {activeTab === 'battles' && (
                     <div className="space-y-6">
-                      <h2 className="text-xl font-bold font-display text-white tracking-wide">
-                        Battle Arena Statistics
-                      </h2>
-                      <div className="grid grid-cols-3 gap-4 text-center">
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                        <div>
+                          <h2 className="text-xl font-bold font-display text-white tracking-wide flex items-center gap-2.5">
+                            <Swords size={20} className="text-[#E873C3]" />
+                            Battle Arena Combat Profile
+                          </h2>
+                          <p className="text-xs text-slate-400 mt-1">
+                            Competitive ratings and match performance from live 1v1 arenas.
+                          </p>
+                        </div>
+                        <div className="flex items-center gap-2.5">
+                          <Link
+                            href="/battle"
+                            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-[#D95FD1] to-[#8D37D6] hover:brightness-110 text-white text-xs font-bold shadow-[0_0_15px_rgba(217,95,209,0.35)] transition-all cursor-pointer"
+                          >
+                            <Swords size={14} />
+                            <span>Fight Now</span>
+                          </Link>
+                          <Link
+                            href="/leaderboard"
+                            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-slate-200 hover:text-white text-xs font-bold transition-all cursor-pointer"
+                          >
+                            <Trophy size={14} className="text-amber-400" />
+                            <span>Leaderboard</span>
+                          </Link>
+                        </div>
+                      </div>
+
+                      {/* Dual ELO Rating Cards */}
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        {/* Code Battle ELO Card */}
+                        <div className="p-5 rounded-2xl border border-purple-500/25 bg-gradient-to-br from-purple-950/30 via-white/[0.02] to-transparent relative overflow-hidden group hover:border-purple-500/40 transition-all">
+                          <div className="absolute top-0 right-0 w-32 h-32 bg-purple-600/10 rounded-full blur-2xl pointer-events-none" />
+                          <div className="flex items-center justify-between mb-3">
+                            <span className="flex items-center gap-2 text-xs font-mono font-bold uppercase tracking-wider text-purple-300">
+                              <Code2 size={16} className="text-purple-400" />
+                              Code Battle Rating
+                            </span>
+                            <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-purple-500/15 border border-purple-500/30 text-purple-300 font-bold">
+                              1v1 Duel
+                            </span>
+                          </div>
+                          <div className="flex items-baseline gap-2 mt-1">
+                            <span className="text-3xl sm:text-4xl font-black font-display text-white tracking-tight">
+                              {codeElo.toLocaleString()}
+                            </span>
+                            <span className="text-sm font-mono font-bold text-purple-400">ELO</span>
+                          </div>
+                          <p className="text-xs text-slate-400 mt-2">
+                            Real-time algorithmic coding challenges & test suite validation.
+                          </p>
+                        </div>
+
+                        {/* MCQ Battle ELO Card */}
+                        <div className="p-5 rounded-2xl border border-cyan-500/25 bg-gradient-to-br from-cyan-950/30 via-white/[0.02] to-transparent relative overflow-hidden group hover:border-cyan-500/40 transition-all">
+                          <div className="absolute top-0 right-0 w-32 h-32 bg-cyan-600/10 rounded-full blur-2xl pointer-events-none" />
+                          <div className="flex items-center justify-between mb-3">
+                            <span className="flex items-center gap-2 text-xs font-mono font-bold uppercase tracking-wider text-cyan-300">
+                              <Brain size={16} className="text-cyan-400" />
+                              MCQ Battle Rating
+                            </span>
+                            <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-cyan-500/15 border border-cyan-500/30 text-cyan-300 font-bold">
+                              Speed Trivia
+                            </span>
+                          </div>
+                          <div className="flex items-baseline gap-2 mt-1">
+                            <span className="text-3xl sm:text-4xl font-black font-display text-white tracking-tight">
+                              {mcqElo.toLocaleString()}
+                            </span>
+                            <span className="text-sm font-mono font-bold text-cyan-400">ELO</span>
+                          </div>
+                          <p className="text-xs text-slate-400 mt-2">
+                            High-velocity computer science theory, logic, and syntax duels.
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Combat Statistics Grid */}
+                      <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 text-center">
                         <div className="p-4 rounded-xl border border-white/10 bg-white/[0.03]">
                           <p className="text-2xl font-bold text-white font-mono">{arenaWins}</p>
-                          <p className="text-xs font-mono uppercase text-emerald-400 mt-1">Victories</p>
+                          <p className="text-[11px] font-mono uppercase text-emerald-400 font-bold mt-1">Victories</p>
                         </div>
                         <div className="p-4 rounded-xl border border-white/10 bg-white/[0.03]">
                           <p className="text-2xl font-bold text-white font-mono">{arenaLosses}</p>
-                          <p className="text-xs font-mono uppercase text-rose-400 mt-1">Defeats</p>
+                          <p className="text-[11px] font-mono uppercase text-rose-400 font-bold mt-1">Defeats</p>
                         </div>
                         <div className="p-4 rounded-xl border border-white/10 bg-white/[0.03]">
-                          <p className="text-2xl font-bold text-white font-mono">{winRate}%</p>
-                          <p className="text-xs font-mono uppercase text-[#00FFE9] mt-1">Win Rate</p>
+                          <p className="text-2xl font-bold text-white font-mono">{arenaDraws}</p>
+                          <p className="text-[11px] font-mono uppercase text-amber-400 font-bold mt-1">Draws</p>
+                        </div>
+                        <div className="p-4 rounded-xl border border-white/10 bg-white/[0.03]">
+                          <p className="text-2xl font-bold text-white font-mono">{totalBattles}</p>
+                          <p className="text-[11px] font-mono uppercase text-slate-300 font-bold mt-1">Total Duels</p>
+                        </div>
+                        <div className="p-4 rounded-xl border border-white/10 bg-white/[0.03] col-span-2 sm:col-span-1">
+                          <p className="text-2xl font-bold text-[#00FFE9] font-mono">{winRate}%</p>
+                          <p className="text-[11px] font-mono uppercase text-[#00FFE9] font-bold mt-1">Win Rate</p>
                         </div>
                       </div>
                     </div>

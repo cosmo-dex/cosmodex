@@ -14,7 +14,8 @@ const memoryCache = new Map<string, { timestamp: number; data: LeaderboardEntry[
 const CACHE_TTL_MS = 1000;
 
 export async function GET(req: NextRequest) {
-  const mode = req.nextUrl.searchParams.get('mode') === 'mcq' ? 'mcq' : 'code';
+  const modeParam = req.nextUrl.searchParams.get('mode');
+  const mode = modeParam === 'mcq' ? 'mcq' : modeParam === 'global' ? 'global' : 'code';
   const now = Date.now();
 
   const cached = memoryCache.get(mode);
@@ -31,10 +32,9 @@ export async function GET(req: NextRequest) {
     try {
       const prisma = (await import('@/lib/prisma')).default;
       const stats = await prisma.battle_user_stats.findMany({
-        orderBy: [
-          { [mode === 'mcq' ? 'mcq_elo_rating' : 'elo_rating']: 'desc' },
-          { wins: 'desc' },
-        ],
+        orderBy: mode === 'mcq' 
+          ? [{ mcq_elo_rating: 'desc' }, { wins: 'desc' }]
+          : [{ elo_rating: 'desc' }, { mcq_elo_rating: 'desc' }, { wins: 'desc' }],
         take: 50,
         select: {
           user_id: true,
@@ -52,14 +52,39 @@ export async function GET(req: NextRequest) {
       });
 
       if (stats && stats.length > 0) {
-        const entries: LeaderboardEntry[] = stats.map((item, idx) => ({
+        const mapped = stats.map((item) => {
+          const codeElo = item.elo_rating ?? 1000;
+          const mcqElo = item.mcq_elo_rating ?? 1000;
+          let effectiveElo = codeElo;
+          if (mode === 'mcq') {
+            effectiveElo = mcqElo;
+          } else if (mode === 'global') {
+            effectiveElo = Math.max(codeElo, mcqElo);
+          }
+          return {
+            userId: item.user_id,
+            username: item.users?.username ?? 'Anonymous',
+            elo: effectiveElo,
+            codeElo,
+            mcqElo,
+            wins: item.wins ?? 0,
+            losses: item.losses ?? 0,
+            draws: item.draws ?? 0,
+          };
+        });
+
+        if (mode === 'global') {
+          mapped.sort((a, b) => b.elo - a.elo || b.wins - a.wins);
+        }
+
+        const entries: LeaderboardEntry[] = mapped.map((item, idx) => ({
           rank: idx + 1,
-          userId: item.user_id,
-          username: item.users?.username ?? 'Anonymous',
-          elo: mode === 'mcq' ? (item.mcq_elo_rating ?? 1000) : (item.elo_rating ?? 1000),
-          wins: item.wins ?? 0,
-          losses: item.losses ?? 0,
-          draws: item.draws ?? 0,
+          userId: item.userId,
+          username: item.username,
+          elo: item.elo,
+          wins: item.wins,
+          losses: item.losses,
+          draws: item.draws,
         }));
 
         memoryCache.set(mode, { timestamp: now, data: entries });

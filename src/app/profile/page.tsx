@@ -31,6 +31,9 @@ export default async function ProfilePage() {
 
   let arenaWins = 0;
   let arenaLosses = 0;
+  let arenaDraws = 0;
+  let codeElo = 1000;
+  let mcqElo = 1000;
   let avatarUrl = '/images/avatars/nebula.webp';
 
   if (parsed) {
@@ -67,7 +70,7 @@ export default async function ProfilePage() {
         }),
         prisma.battle_user_stats.findUnique({
           where: { user_id: userId },
-          select: { wins: true, losses: true },
+          select: { wins: true, losses: true, draws: true, elo_rating: true, mcq_elo_rating: true },
         }),
         prisma.user_badges.findMany({
           where: { user_id: userId },
@@ -90,6 +93,9 @@ export default async function ProfilePage() {
       streak = arenaStats?.current_streak ?? 0;
       arenaWins = battleStats?.wins ?? 0;
       arenaLosses = battleStats?.losses ?? 0;
+      arenaDraws = battleStats?.draws ?? 0;
+      codeElo = battleStats?.elo_rating ?? 1000;
+      mcqElo = battleStats?.mcq_elo_rating ?? 1000;
       badgeCount = userBadges.length;
       badges = userBadges.map((ub) => ({
         id: ub.id,
@@ -118,6 +124,9 @@ export default async function ProfilePage() {
       avatarUrl={avatarUrl}
       arenaWins={arenaWins}
       arenaLosses={arenaLosses}
+      arenaDraws={arenaDraws}
+      codeElo={codeElo}
+      mcqElo={mcqElo}
     />
   );
 }
