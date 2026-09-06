@@ -32,6 +32,13 @@ export async function GET(req: NextRequest) {
     try {
       const prisma = (await import('@/lib/prisma')).default;
       const stats = await prisma.battle_user_stats.findMany({
+        where: {
+          users: {
+            is_active: true,
+            role: { notIn: ['admin', 'super_admin'] },
+            email: { not: 'cosmodex_admin@admin.com' },
+          },
+        },
         orderBy: mode === 'mcq' 
           ? [{ mcq_elo_rating: 'desc' }, { wins: 'desc' }]
           : [{ elo_rating: 'desc' }, { mcq_elo_rating: 'desc' }, { wins: 'desc' }],
@@ -93,37 +100,6 @@ export async function GET(req: NextRequest) {
           headers: {
             'Cache-Control': 'no-store, max-age=0',
             'X-Cache': 'MISS',
-          },
-        });
-      }
-
-      const realUsers = await prisma.users.findMany({
-        where: { is_active: true },
-        take: 20,
-        orderBy: { xp_total: 'desc' },
-        select: {
-          id: true,
-          username: true,
-        },
-      });
-
-      if (realUsers && realUsers.length > 0) {
-        const entries: LeaderboardEntry[] = realUsers.map((u, idx) => ({
-          rank: idx + 1,
-          userId: u.id,
-          username: u.username || 'Explorer',
-          elo: 1000,
-          wins: 0,
-          losses: 0,
-          draws: 0,
-        }));
-
-        memoryCache.set(mode, { timestamp: now, data: entries });
-
-        return NextResponse.json(entries, {
-          headers: {
-            'Cache-Control': 'public, s-maxage=10, stale-while-revalidate=60',
-            'X-Cache': 'USERS',
           },
         });
       }
