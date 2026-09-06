@@ -5,11 +5,10 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import Navbar from "@/components/navbar/Navbar";
 import { motion } from "framer-motion";
-import { Star, Rocket } from "lucide-react";
+import { Star, BookOpen } from "lucide-react";
 import GalaxyPathMap from "@/components/learn/GalaxyPathMap";
 import ProgressSidebar from "@/components/learn/ProgressSidebar";
 import { Starfield } from "@/components/leaderboard/Starfield";
-import MissionModal from "@/components/learn/MissionModal";
 import {
   MOCK_PYTHON_CHAPTERS,
   MOCK_USER_PROGRESS,
@@ -23,9 +22,6 @@ export default function PythonCoursePage() {
   const [chapters, setChapters] = useState<Chapter[]>(MOCK_PYTHON_CHAPTERS);
   const [userProgress, setUserProgress] = useState<UserProgressData>(MOCK_USER_PROGRESS);
   const [selectedChapter, setSelectedChapter] = useState<Chapter>(MOCK_PYTHON_CHAPTERS[0]);
-  const [isMissionOpen, setIsMissionOpen] = useState<boolean>(false);
-  const [activeMissionChapter, setActiveMissionChapter] = useState<Chapter | null>(null);
-  const [activeMissionExercise, setActiveMissionExercise] = useState<Exercise | null>(null);
 
   const [userSession, setUserSession] = useState<{
     id?: string;
@@ -35,7 +31,6 @@ export default function PythonCoursePage() {
     xpTotal?: number;
   } | null>(null);
 
-  // Helper to isolate localStorage per logged-in user
   const getUserStorageKey = useCallback(
     (key: string) => {
       const userIdentifier = userSession?.id || userSession?.username || "guest";
@@ -44,7 +39,7 @@ export default function PythonCoursePage() {
     [userSession]
   );
 
-  // Always scroll to top of page on navigation unless a specific station hash (ch-*) is present
+  // Scroll to top on navigation (unless a specific station hash is present)
   useEffect(() => {
     if (typeof window === "undefined") return;
 
@@ -53,9 +48,9 @@ export default function PythonCoursePage() {
     }
 
     const currentHash = window.location.hash.replace("#", "").toLowerCase();
-    const isSpecificStationHash = currentHash.startsWith("ch-") || currentHash.startsWith("station-");
+    const isSpecificStationHash =
+      currentHash.startsWith("ch-") || currentHash.startsWith("station-");
 
-    // Clean up generic #python hash if present from /learn page navigation
     if (currentHash === "python") {
       window.history.replaceState(null, "", window.location.pathname);
     }
@@ -67,14 +62,12 @@ export default function PythonCoursePage() {
           window.__lenis.scrollTo(0, { immediate: true });
         }
       };
-
       resetToTop();
       const raf1 = requestAnimationFrame(resetToTop);
       const raf2 = requestAnimationFrame(() => requestAnimationFrame(resetToTop));
       const t1 = setTimeout(resetToTop, 50);
       const t2 = setTimeout(resetToTop, 150);
       const t3 = setTimeout(resetToTop, 400);
-
       return () => {
         cancelAnimationFrame(raf1);
         cancelAnimationFrame(raf2);
@@ -85,7 +78,7 @@ export default function PythonCoursePage() {
     }
   }, [pathname]);
 
-  // 1. Fetch authenticated session user details dynamically
+  // Fetch authenticated session
   useEffect(() => {
     async function fetchUserSession() {
       try {
@@ -94,7 +87,6 @@ export default function PythonCoursePage() {
           const data = await res.json();
           if (data?.user?.username) {
             setUserSession(data.user);
-             
             setUserProgress((prev) => ({
               ...prev,
               username: data.user.username,
@@ -110,25 +102,28 @@ export default function PythonCoursePage() {
     fetchUserSession();
   }, []);
 
-  // 2. Load user-specific progress from localStorage when session resolves or on mount
+  // Load user-specific progress from localStorage
   useEffect(() => {
     try {
       const chaptersKey = getUserStorageKey("cosmodex_python_chapters");
       const progressKey = getUserStorageKey("cosmodex_python_progress");
 
-      const savedChapters = localStorage.getItem(chaptersKey) || localStorage.getItem("cosmodex_python_chapters");
-      const savedProgress = localStorage.getItem(progressKey) || localStorage.getItem("cosmodex_python_progress");
+      const savedChapters =
+        localStorage.getItem(chaptersKey) || localStorage.getItem("cosmodex_python_chapters");
+      const savedProgress =
+        localStorage.getItem(progressKey) || localStorage.getItem("cosmodex_python_progress");
 
       if (savedChapters) {
         const parsed = JSON.parse(savedChapters);
         if (Array.isArray(parsed) && parsed.length > 0) {
-          // Merge saved completion progress with latest MOCK_PYTHON_CHAPTERS data structure
           const mergedChapters = MOCK_PYTHON_CHAPTERS.map((defaultCh) => {
             const savedCh = parsed.find((c: Chapter) => c.id === defaultCh.id);
             if (!savedCh) return defaultCh;
 
             const mergedExercises = defaultCh.exercises.map((defaultEx) => {
-              const savedEx = savedCh.exercises?.find((e: Exercise) => e.id === defaultEx.id);
+              const savedEx = savedCh.exercises?.find(
+                (e: Exercise) => e.id === defaultEx.id
+              );
               return {
                 ...defaultEx,
                 isUnlocked: savedEx ? savedEx.isUnlocked : defaultEx.isUnlocked,
@@ -153,14 +148,11 @@ export default function PythonCoursePage() {
       if (savedProgress) {
         const parsedProg = JSON.parse(savedProgress);
         if (parsedProg) {
-          if (parsedProg.username === "rizi1" || parsedProg.username === "rizzi") {
-            parsedProg.username = userSession?.username || "Explorer";
-          }
-           
           setUserProgress({
             ...parsedProg,
             username: userSession?.username || parsedProg.username || "Explorer",
-            avatarUrl: userSession?.avatarId || parsedProg.avatarUrl || "/images/avatars/nebula.webp",
+            avatarUrl:
+              userSession?.avatarId || parsedProg.avatarUrl || "/images/avatars/nebula.webp",
           });
         }
       }
@@ -169,16 +161,21 @@ export default function PythonCoursePage() {
     }
   }, [userSession, getUserStorageKey]);
 
-  // 3. Synchronize dynamic user metrics (exercises, projects, badges, cheat sheets, XP, level)
+  // Sync dynamic metrics
   useEffect(() => {
-    const totalEx = chapters.reduce((acc, ch) => acc + (ch.exercises ? ch.exercises.length : 0), 0);
+    const totalEx = chapters.reduce(
+      (acc, ch) => acc + (ch.exercises ? ch.exercises.length : 0),
+      0
+    );
     const completedEx = chapters.reduce(
       (acc, ch) => acc + (ch.exercises ? ch.exercises.filter((e) => e.isCompleted).length : 0),
       0
     );
 
     const totalProjectsCount = chapters.filter((ch) => ch.isMilestone).length || 2;
-    const completedProjectsCount = chapters.filter((ch) => ch.isMilestone && ch.isCompleted).length;
+    const completedProjectsCount = chapters.filter(
+      (ch) => ch.isMilestone && ch.isCompleted
+    ).length;
 
     const completedChaptersCount = chapters.filter((ch) => ch.isCompleted).length;
     const totalBadgesCount = chapters.length;
@@ -190,7 +187,6 @@ export default function PythonCoursePage() {
     const totalXpSum = chapters.reduce((acc, ch) => acc + (ch.xpValue || 0), 0) || 685;
     const courseEarnedXp = completedEx * 55 + completedChaptersCount * 50;
     const currentTotalXp = (userSession?.xpTotal ?? 0) + courseEarnedXp;
-
     const currentLevel = userSession?.level ?? Math.max(1, Math.floor(currentTotalXp / 250) + 1);
 
     // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -212,7 +208,7 @@ export default function PythonCoursePage() {
     }));
   }, [chapters, userSession]);
 
-  // Scroll to station ONLY if a specific station hash exists in URL (e.g. /learn/python#ch-2)
+  // Scroll to station if a specific hash exists in URL
   useEffect(() => {
     if (typeof window === "undefined") return;
     const hash = window.location.hash.replace("#", "").toLowerCase();
@@ -226,15 +222,13 @@ export default function PythonCoursePage() {
         setSelectedChapter(matched);
         setTimeout(() => {
           const el = document.getElementById(matched.id) || document.getElementById(hash);
-          if (el) {
-            el.scrollIntoView({ behavior: "smooth", block: "center" });
-          }
+          if (el) el.scrollIntoView({ behavior: "smooth", block: "center" });
         }, 300);
       }
     }
   }, [chapters]);
 
-  // Save isolated user chapters and progress to localStorage on change
+  // Save progress to localStorage
   useEffect(() => {
     try {
       const chaptersKey = getUserStorageKey("cosmodex_python_chapters");
@@ -242,8 +236,6 @@ export default function PythonCoursePage() {
 
       localStorage.setItem(chaptersKey, JSON.stringify(chapters));
       localStorage.setItem(progressKey, JSON.stringify(userProgress));
-
-      // Update generic fallback key
       localStorage.setItem("cosmodex_python_chapters", JSON.stringify(chapters));
       localStorage.setItem("cosmodex_python_progress", JSON.stringify(userProgress));
     } catch {
@@ -251,190 +243,89 @@ export default function PythonCoursePage() {
     }
   }, [chapters, userProgress, userSession, getUserStorageKey]);
 
-  const handleLaunchMission = (chapter: Chapter, exercise?: Exercise) => {
-    const targetExercise = exercise || chapter.exercises.find((ex) => ex.isUnlocked) || chapter.exercises[0];
-    setSelectedChapter(chapter);
-    setActiveMissionChapter(chapter);
-    setActiveMissionExercise(targetExercise);
-    setIsMissionOpen(true);
-  };
-
-  const handleCloseMission = () => {
-    setIsMissionOpen(false);
-    if (activeMissionChapter) {
-      setTimeout(() => {
-        const el =
-          document.getElementById(activeMissionChapter.id) ||
-          document.getElementById(`station-${activeMissionChapter.id}`);
-        if (el) {
-          el.scrollIntoView({ behavior: "smooth", block: "center" });
-        }
-      }, 150);
-    }
-  };
-
-  const handleCompleteExercise = (chapterId: string, exerciseId: string) => {
-    setChapters((prevChapters) => {
-      let newlyUnlockedNextStation = false;
-
-      const nextChapters = prevChapters.map((ch) => {
-        if (ch.id !== chapterId) return ch;
-
-        const updatedExercises = ch.exercises.map((ex, exIdx, arr) => {
-          if (ex.id === exerciseId) {
-            const updated = { ...ex, isCompleted: true };
-            if (exIdx + 1 < arr.length) {
-              arr[exIdx + 1] = { ...arr[exIdx + 1], isUnlocked: true };
-            }
-            return updated;
-          }
-          return ex;
-        });
-
-        const allDone = updatedExercises.every((e) => e.isCompleted);
-        if (allDone && !ch.isCompleted) {
-          newlyUnlockedNextStation = true;
-        }
-
-        return {
-          ...ch,
-          isCompleted: allDone || ch.isCompleted,
-          exercises: updatedExercises,
-        };
-      });
-
-      // Unlock next planet station if station is finished
-      if (newlyUnlockedNextStation) {
-        const finishedIdx = nextChapters.findIndex((c) => c.id === chapterId);
-        if (finishedIdx !== -1 && finishedIdx + 1 < nextChapters.length) {
-          nextChapters[finishedIdx + 1] = {
-            ...nextChapters[finishedIdx + 1],
-            isUnlocked: true,
-          };
-        }
-      }
-
-      return nextChapters;
-    });
-
-    setUserProgress((prev) => ({
-      ...prev,
-      exercisesCompleted: prev.exercisesCompleted + 1,
-      xpEarned: prev.xpEarned + 55,
-    }));
-  };
-
-  const handleNextMission = () => {
-    if (!activeMissionChapter || !activeMissionExercise) {
-      setIsMissionOpen(false);
-      return;
-    }
-
-    const currentExIdx = activeMissionChapter.exercises.findIndex(
-      (e) => e.id === activeMissionExercise.id
-    );
-
-    if (currentExIdx !== -1 && currentExIdx + 1 < activeMissionChapter.exercises.length) {
-      const nextEx = activeMissionChapter.exercises[currentExIdx + 1];
-      setActiveMissionExercise({ ...nextEx, isUnlocked: true });
-      setIsMissionOpen(true);
-    } else {
-      const currentChIdx = chapters.findIndex((c) => c.id === activeMissionChapter.id);
-      if (currentChIdx !== -1 && currentChIdx + 1 < chapters.length) {
-        const nextCh = chapters[currentChIdx + 1];
-        if (nextCh.isUnlocked) {
-          setSelectedChapter(nextCh);
-          setActiveMissionChapter(nextCh);
-          setActiveMissionExercise(nextCh.exercises[0]);
-          setIsMissionOpen(true);
-          return;
-        }
-      }
-      setIsMissionOpen(false);
-    }
-  };
+  // Find the first unlocked/in-progress chapter for the CTA
+  const firstStation = chapters.find((ch) => ch.isUnlocked && !ch.isCompleted) || chapters[0];
+  const ctaHref = `/learn/py-1/theory/${firstStation?.theoryLessonId || firstStation?.id || "in-the-beginning"}`;
 
   return (
     <main className="min-h-screen bg-[#05040d] relative text-white">
       <Navbar />
 
-      {/* Background Space Effects with Canvas Starfield */}
+      {/* Background Space Effects */}
       <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
         <Starfield />
-
-        {/* Ambient Nebula Clouds */}
         <div className="absolute top-[5%] left-[25%] w-[45rem] h-[30rem] bg-purple-900/20 rounded-full blur-[140px] mix-blend-screen" />
         <div className="absolute top-[40%] right-[10%] w-[35rem] h-[35rem] bg-cyan-900/15 rounded-full blur-[160px] mix-blend-screen" />
         <div className="absolute bottom-[10%] left-[10%] w-[40rem] h-[30rem] bg-fuchsia-900/15 rounded-full blur-[140px] mix-blend-screen" />
       </div>
 
-      {/* Main Container */}
       <div className="relative z-10 pt-24 pb-20 px-4 sm:px-8 max-w-7xl mx-auto">
-        {/* Top-Left Back Button */}
+        {/* Back button */}
         <div className="mb-4 sm:mb-2">
           <Link
             href="/learn"
             className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-white/70 hover:text-white text-xs sm:text-sm font-medium border border-white/10 transition-all cursor-pointer shadow-lg backdrop-blur-md group"
           >
-            <svg width="14" height="14" viewBox="0 0 16 16" fill="none" className="transition-transform group-hover:-translate-x-0.5">
-              <path d="M10 12L6 8L10 4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+            <svg
+              width="14"
+              height="14"
+              viewBox="0 0 16 16"
+              fill="none"
+              className="transition-transform group-hover:-translate-x-0.5"
+            >
+              <path
+                d="M10 12L6 8L10 4"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
             </svg>
             <span>Back to Courses</span>
           </Link>
         </div>
 
-        {/* Galaxy Hero Section */}
+        {/* Galaxy Hero */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
           className="relative mb-14 pt-4 pb-10 flex flex-col items-center text-center"
         >
-          {/* Large Header in Clean Arena Gradient */}
           <h1 className="text-6xl sm:text-8xl md:text-9xl font-black font-display tracking-widest text-transparent bg-clip-text bg-gradient-to-r from-[#E873C3] via-[#C453D6] to-[#8D37D6] mb-5">
             PYTHON
           </h1>
 
-          {/* Subtitle with Theme Highlights */}
           <p className="text-base sm:text-lg text-white/85 font-mono leading-relaxed max-w-2xl mx-auto mb-9">
-            No endless list of chapters chart a course through the{" "}
-            <span className="text-[#E873C3] font-bold">
-              Python galaxy
-            </span>
-            . Every planet is a station of exercises, and the{" "}
-            <span className="text-[#C453D6] font-bold">
-              dotted trail
-            </span>{" "}
-            shows exactly where you fly next.
+            No endless list of chapters — chart a course through the{" "}
+            <span className="text-[#E873C3] font-bold">Python galaxy</span>. Every planet is a
+            station of exercises, and the{" "}
+            <span className="text-[#C453D6] font-bold">dotted trail</span> shows exactly where you
+            fly next.
           </p>
 
-          {/* Centered CTA Button & XP Label */}
           <div className="flex flex-wrap items-center justify-center gap-5">
-            <button
-              type="button"
-              onClick={() => {
-                const ch1 = chapters[0];
-                setSelectedChapter(ch1);
-                handleLaunchMission(ch1);
-              }}
-              className="relative overflow-hidden group px-8 py-3.5 rounded-xl bg-gradient-to-r from-[#E873C3] via-[#C453D6] to-[#8D37D6] hover:from-[#f085ce] hover:via-[#cf60e0] hover:to-[#9a42e3] text-white font-mono font-bold text-xs sm:text-sm tracking-wider uppercase transition-all duration-300 transform hover:scale-[1.03] active:scale-95 cursor-pointer flex items-center gap-2.5"
+            {/* Primary CTA → goes directly to theory */}
+            <Link
+              href={ctaHref}
+              className="relative overflow-hidden group px-8 py-3.5 rounded-xl bg-gradient-to-r from-[#E873C3] via-[#C453D6] to-[#8D37D6] hover:from-[#f085ce] hover:via-[#cf60e0] hover:to-[#9a42e3] text-white font-mono font-bold text-xs sm:text-sm tracking-wider uppercase transition-all duration-300 transform hover:scale-[1.03] active:scale-95 cursor-pointer flex items-center gap-2.5 shadow-[0_0_24px_rgba(232,115,195,0.35)]"
             >
               <span className="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-white/35 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-in-out pointer-events-none" />
+              <BookOpen size={16} />
+              <span>START STATION 01</span>
+            </Link>
 
-              <Rocket size={16} className="transition-transform duration-300 group-hover:translate-x-1 group-hover:-translate-y-0.5" />
-              <span>CONTINUE AT STATION 01</span>
-            </button>
-
-            <div className="flex items-center gap-2 text-xs sm:text-sm font-mono font-bold text-amber-400 bg-amber-400/10 px-4.5 py-2.5 rounded-xl border border-amber-400/30">
+            <div className="flex items-center gap-2 text-xs sm:text-sm font-mono font-bold text-amber-400 bg-amber-400/10 px-4 py-2.5 rounded-xl border border-amber-400/30">
               <Star size={15} className="fill-amber-400 text-amber-400" />
-              <span>{userProgress.xpEarned} / {userProgress.totalXp} XP EARNED</span>
+              <span>
+                {userProgress.xpEarned} / {userProgress.totalXp} XP EARNED
+              </span>
             </div>
           </div>
         </motion.div>
 
-        {/* 2-Column Galaxy Map & Sidebar Layout */}
+        {/* 2-Column Layout: Galaxy Map + Sidebar */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch">
-          {/* Left Column: Interactive Galaxy Path Map */}
           <div className="lg:col-span-8">
             <GalaxyPathMap
               chapters={chapters}
@@ -443,26 +334,15 @@ export default function PythonCoursePage() {
             />
           </div>
 
-          {/* Right Column: Sticky Sidebar Column matching full left path height */}
           <div className="lg:col-span-4 relative h-full">
             <ProgressSidebar
               selectedChapter={selectedChapter}
               userProgress={userProgress}
-              onLaunchMission={handleLaunchMission}
+              onLaunchMission={() => {}}
             />
           </div>
         </div>
       </div>
-
-      {/* Interactive Exercise Workspace & Mission Launch Modal */}
-      <MissionModal
-        isOpen={isMissionOpen}
-        chapter={activeMissionChapter}
-        exercise={activeMissionExercise}
-        onClose={handleCloseMission}
-        onCompleteExercise={handleCompleteExercise}
-        onNextMission={handleNextMission}
-      />
     </main>
   );
 }

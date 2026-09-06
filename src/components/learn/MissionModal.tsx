@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
-import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   X,
@@ -13,7 +12,6 @@ import {
   Trophy,
   ChevronRight,
   ChevronDown,
-  BookOpen,
   Lightbulb,
   Lock,
   CheckCircle2,
@@ -34,10 +32,15 @@ import {
   Layers,
   Code2,
   History,
+  HelpCircle,
+  BookOpen,
 } from "lucide-react";
 import Editor from "@monaco-editor/react";
 import confetti from "canvas-confetti";
 import { Chapter, Exercise } from "./pythonData";
+import InteractiveCodeLab from "./InteractiveCodeLab";
+import ConceptKnowledgeQuiz from "./ConceptKnowledgeQuiz";
+import { getQuizForChapter } from "@/data/courses/python/quizData";
 function parseInlineMarkdown(text: string): React.ReactNode[] {
   const regex = /(\*\*[^*]+\*\*|`[^`]+`)/g;
   const parts = text.split(regex);
@@ -159,13 +162,11 @@ function parsePythonCode(inputCode: string): { output: string; isError: boolean 
     const rawLine = lines[i];
     const line = rawLine.trim();
 
-    // Skip empty lines & comments
     if (!line || line.startsWith("#")) continue;
 
     executableCount++;
     const cleanLine = line.replace(/;$/, "");
 
-    // Handle print(...)
     const printMatch = cleanLine.match(/^print\s*\((.*)\)$/);
     if (printMatch) {
       const content = printMatch[1].trim();
@@ -175,7 +176,6 @@ function parsePythonCode(inputCode: string): { output: string; isError: boolean 
         continue;
       }
 
-      // Check for quote mismatches inside print(...)
       const singleQ = (content.match(/'/g) || []).length;
       const doubleQ = (content.match(/"/g) || []).length;
       if (singleQ % 2 !== 0 || doubleQ % 2 !== 0) {
@@ -185,7 +185,6 @@ function parsePythonCode(inputCode: string): { output: string; isError: boolean 
         };
       }
 
-      // Parse comma-separated arguments inside print(...)
       const args = content.split(/,(?=(?:[^'"]*['"][^'"]*['"])*[^'"]*$)/);
       const evaluatedArgs: string[] = [];
       let hasError = false;
@@ -224,7 +223,6 @@ function parsePythonCode(inputCode: string): { output: string; isError: boolean 
       continue;
     }
 
-    // Variable assignment (e.g. x = 10, name = "Cosmo")
     const assignMatch = cleanLine.match(/^([a-zA-Z_][a-zA-Z0-9_]*)\s*=\s*(.+)$/);
     if (assignMatch) {
       const varName = assignMatch[1];
@@ -263,7 +261,6 @@ function parsePythonCode(inputCode: string): { output: string; isError: boolean 
       continue;
     }
 
-    // Keyword statements (if, elif, else, for, while, def, import, from, return)
     if (/^(if|elif|else|for|while|def|import|from|class|return)\b/.test(cleanLine)) {
       if (
         !cleanLine.endsWith(":") &&
@@ -278,7 +275,6 @@ function parsePythonCode(inputCode: string): { output: string; isError: boolean 
       continue;
     }
 
-    // Arbitrary non-Python text
     return {
       output: `  File "main.py", line ${i + 1}\n    ${rawLine}\nSyntaxError: invalid syntax`,
       isError: true,
@@ -306,9 +302,6 @@ function parsePythonCode(inputCode: string): { output: string; isError: boolean 
   };
 }
 
-/**
- * Dynamically computes target output for any exercise.
- */
 function getExerciseTargetOutput(exercise: Exercise): string {
   if (exercise.initialCode) {
     const res = parsePythonCode(exercise.initialCode);
@@ -327,9 +320,6 @@ function getExerciseTargetOutput(exercise: Exercise): string {
   return `Expected stdout for ${exercise.title}`;
 }
 
-/**
- * Dynamically derives topics list for any exercise.
- */
 function getExerciseTopics(chapter: Chapter, exercise: Exercise): string[] {
   const topics: string[] = ["Python 3.11"];
   const text = (
@@ -381,9 +371,6 @@ function getExerciseTopics(chapter: Chapter, exercise: Exercise): string[] {
   return Array.from(new Set(topics));
 }
 
-/**
- * Returns 3 progressive hints for the given exercise.
- */
 function getExerciseHints(exercise: Exercise): string[] {
   if (exercise.hints && exercise.hints.length >= 2) {
     return exercise.hints.slice(0, 3);
@@ -441,8 +428,8 @@ export default function MissionModal({
   const [showCelebrationModal, setShowCelebrationModal] = useState<boolean>(false);
   const [isError, setIsError] = useState<boolean>(false);
 
-  // Left Sidebar Tab Selection ('problem' | 'hints' | 'editorial' | 'submissions')
-  const [leftTab, setLeftTab] = useState<"problem" | "hints" | "editorial" | "submissions">("problem");
+  // Left Sidebar Tab Selection ('problem' | 'hints' | 'editorial' | 'quiz' | 'submissions')
+  const [leftTab, setLeftTab] = useState<"problem" | "hints" | "editorial" | "quiz" | "submissions">("problem");
 
   // GFG problem metadata states
   const [isBookmarked, setIsBookmarked] = useState<boolean>(false);
@@ -773,16 +760,7 @@ export default function MissionModal({
                 </button>
               )}
 
-              {chapter.theoryLessonId && (
-                <Link
-                  href={`/learn/py-1/theory/${chapter.theoryLessonId}`}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-pink-950/60 hover:bg-pink-900/80 border border-pink-500/40 text-pink-300 text-xs font-mono font-bold transition-all cursor-pointer shadow-sm"
-                  title="Read Chapter Theory"
-                >
-                  <BookOpen size={14} />
-                  <span className="hidden md:inline">Read Theory</span>
-                </Link>
-              )}
+
 
               <button
                 type="button"
@@ -795,14 +773,12 @@ export default function MissionModal({
             </div>
           </div>
 
-          {/* ── EXPANSIVE IDE WORKSPACE ── */}
           <div className="relative flex-1 overflow-hidden min-h-0">
             <div
               ref={workspaceContainerRef}
               className={`flex flex-col lg:flex-row h-full overflow-hidden min-h-0 ${isDraggingDivider ? "select-none cursor-col-resize" : ""
                 }`}
             >
-              {/* Left Column: Problem Details & GFG Navigation Tabs */}
               <div
                 style={{
                   width:
@@ -819,8 +795,8 @@ export default function MissionModal({
                       type="button"
                       onClick={() => setLeftTab("problem")}
                       className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-mono font-bold rounded-lg transition-all cursor-pointer whitespace-nowrap ${leftTab === "problem"
-                          ? "bg-emerald-950/70 text-emerald-300 border border-emerald-500/50 shadow-sm"
-                          : "text-white/60 hover:text-white hover:bg-white/5"
+                        ? "bg-emerald-950/70 text-emerald-300 border border-emerald-500/50 shadow-sm"
+                        : "text-white/60 hover:text-white hover:bg-white/5"
                         }`}
                     >
                       <Code2 size={14} className="text-emerald-400" />
@@ -831,8 +807,8 @@ export default function MissionModal({
                       type="button"
                       onClick={() => setLeftTab("hints")}
                       className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-mono font-bold rounded-lg transition-all cursor-pointer whitespace-nowrap ${leftTab === "hints"
-                          ? "bg-amber-950/70 text-amber-300 border border-amber-500/50 shadow-sm"
-                          : "text-white/60 hover:text-white hover:bg-white/5"
+                        ? "bg-amber-950/70 text-amber-300 border border-amber-500/50 shadow-sm"
+                        : "text-white/60 hover:text-white hover:bg-white/5"
                         }`}
                     >
                       <Lightbulb size={14} className={revealedHintsCount > 0 ? "text-amber-400" : ""} />
@@ -846,8 +822,8 @@ export default function MissionModal({
                       type="button"
                       onClick={() => setLeftTab("editorial")}
                       className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-mono font-bold rounded-lg transition-all cursor-pointer whitespace-nowrap ${leftTab === "editorial"
-                          ? "bg-purple-950/70 text-purple-300 border border-purple-500/50 shadow-sm"
-                          : "text-white/60 hover:text-white hover:bg-white/5"
+                        ? "bg-purple-950/70 text-purple-300 border border-purple-500/50 shadow-sm"
+                        : "text-white/60 hover:text-white hover:bg-white/5"
                         }`}
                     >
                       <BookOpen size={14} className="text-purple-400" />
@@ -856,10 +832,22 @@ export default function MissionModal({
 
                     <button
                       type="button"
+                      onClick={() => setLeftTab("quiz")}
+                      className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-mono font-bold rounded-lg transition-all cursor-pointer whitespace-nowrap ${leftTab === "quiz"
+                        ? "bg-pink-950/70 text-pink-300 border border-pink-500/50 shadow-sm"
+                        : "text-white/60 hover:text-white hover:bg-white/5"
+                        }`}
+                    >
+                      <HelpCircle size={14} className="text-pink-400" />
+                      <span>Quiz (MCQs)</span>
+                    </button>
+
+                    <button
+                      type="button"
                       onClick={() => setLeftTab("submissions")}
                       className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-mono font-bold rounded-lg transition-all cursor-pointer whitespace-nowrap ${leftTab === "submissions"
-                          ? "bg-cyan-950/70 text-cyan-300 border border-cyan-500/50 shadow-sm"
-                          : "text-white/60 hover:text-white hover:bg-white/5"
+                        ? "bg-cyan-950/70 text-cyan-300 border border-cyan-500/50 shadow-sm"
+                        : "text-white/60 hover:text-white hover:bg-white/5"
                         }`}
                     >
                       <History size={14} className="text-cyan-400" />
@@ -887,8 +875,8 @@ export default function MissionModal({
                             type="button"
                             onClick={() => setIsBookmarked(!isBookmarked)}
                             className={`p-2 rounded-xl border transition-all cursor-pointer shrink-0 ${isBookmarked
-                                ? "bg-amber-400/20 border-amber-400 text-amber-300"
-                                : "bg-white/5 border-white/10 text-white/40 hover:text-white hover:bg-white/10"
+                              ? "bg-amber-400/20 border-amber-400 text-amber-300"
+                              : "bg-white/5 border-white/10 text-white/40 hover:text-white hover:bg-white/10"
                               }`}
                             title={isBookmarked ? "Bookmarked" : "Bookmark Problem"}
                           >
@@ -924,38 +912,21 @@ export default function MissionModal({
                       </div>
 
                       {/* 3. GFG Structured Example Boxes */}
-                      <div className="space-y-3 pt-1">
+                      <div className="space-y-4 pt-1">
                         <h3 className="text-xs font-mono font-bold text-white uppercase tracking-wider flex items-center gap-2">
                           <Terminal size={14} className="text-emerald-400" />
-                          Examples:
+                          <span>Input &amp; Output Test Cases:</span>
                         </h3>
 
                         {defaultExamples.map((exBox, idx) => (
-                          <div
+                          <InteractiveCodeLab
                             key={idx}
-                            className="p-4 rounded-2xl bg-[#03010b] border border-white/12 font-mono text-xs text-white/85 space-y-2.5 shadow-inner"
-                          >
-                            <div className="font-bold text-cyan-300 text-[11px] uppercase tracking-wider border-b border-white/5 pb-1">
-                              Example {idx + 1}:
-                            </div>
-                            <div className="space-y-1">
-                              <div className="text-cyan-400 font-bold text-xs">Input:</div>
-                              <pre className="p-2 rounded-lg bg-white/5 border border-white/10 text-cyan-200 font-mono text-xs whitespace-pre-wrap">
-                                {exBox.input}
-                              </pre>
-                            </div>
-                            <div className="space-y-1">
-                              <div className="text-emerald-400 font-bold text-xs">Output:</div>
-                              <pre className="p-2 rounded-lg bg-white/5 border border-white/10 text-emerald-300 font-mono text-xs whitespace-pre-wrap">
-                                {exBox.output}
-                              </pre>
-                            </div>
-                            {exBox.explanation && (
-                              <div className="text-white/60 text-[11px] pt-1.5 border-t border-white/5 leading-relaxed">
-                                <span className="text-amber-300 font-bold">Explanation:</span> {exBox.explanation}
-                              </div>
-                            )}
-                          </div>
+                            title={`Test Case ${idx + 1}`}
+                            inputCode={exBox.input}
+                            outputCode={exBox.output}
+                            explanation={exBox.explanation}
+                            fileName={`test_case_${idx + 1}.py`}
+                          />
                         ))}
                       </div>
 
@@ -1115,12 +1086,12 @@ export default function MissionModal({
                             <div
                               key={index}
                               className={`p-4 rounded-2xl border transition-all ${isRevealed
-                                  ? "bg-amber-950/20 border-amber-500/40 shadow-[0_0_20px_rgba(245,158,11,0.15)]"
-                                  : isReadyToUnlock
-                                    ? "bg-purple-950/30 border-amber-400/60 shadow-[0_0_15px_rgba(245,158,11,0.1)]"
-                                    : isCooldownActive || needsAttemptFirst
-                                      ? "bg-purple-950/15 border-purple-500/30"
-                                      : "bg-white/5 border-white/10 opacity-55"
+                                ? "bg-amber-950/20 border-amber-500/40 shadow-[0_0_20px_rgba(245,158,11,0.15)]"
+                                : isReadyToUnlock
+                                  ? "bg-purple-950/30 border-amber-400/60 shadow-[0_0_15px_rgba(245,158,11,0.1)]"
+                                  : isCooldownActive || needsAttemptFirst
+                                    ? "bg-purple-950/15 border-purple-500/30"
+                                    : "bg-white/5 border-white/10 opacity-55"
                                 }`}
                             >
                               <div className="flex items-center justify-between mb-2">
@@ -1231,6 +1202,15 @@ export default function MissionModal({
                     </div>
                   )}
 
+                  {leftTab === "quiz" && (
+                    <div className="space-y-4 font-mono text-xs">
+                      <ConceptKnowledgeQuiz
+                        questions={getQuizForChapter(chapter.id || chapter.theoryLessonId || "").mcqs}
+                        chapterTitle={`${chapter.stationNumber}: ${chapter.title}`}
+                      />
+                    </div>
+                  )}
+
                   {leftTab === "submissions" && (
                     <div className="space-y-4 font-mono text-xs">
                       <div className="flex items-center justify-between pb-2 border-b border-white/10">
@@ -1309,8 +1289,8 @@ export default function MissionModal({
                       type="button"
                       onClick={() => setIsTimerActive(!isTimerActive)}
                       className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg border text-xs font-bold transition-all cursor-pointer ${isTimerActive
-                          ? "bg-amber-950/80 border-amber-400 text-amber-300 shadow-[0_0_12px_rgba(251,191,36,0.25)]"
-                          : "bg-white/5 border-white/10 text-white/60 hover:text-white hover:bg-white/10"
+                        ? "bg-amber-950/80 border-amber-400 text-amber-300 shadow-[0_0_12px_rgba(251,191,36,0.25)]"
+                        : "bg-white/5 border-white/10 text-white/60 hover:text-white hover:bg-white/10"
                         }`}
                       title={isTimerActive ? "Pause Timer" : "Start Timer"}
                     >
@@ -1390,8 +1370,8 @@ export default function MissionModal({
                       type="button"
                       onClick={() => setShowCustomInput(!showCustomInput)}
                       className={`px-3 py-2 rounded-xl border text-xs font-mono font-bold transition-all cursor-pointer flex items-center gap-1.5 ${showCustomInput
-                          ? "bg-cyan-950/60 border-cyan-400 text-cyan-300"
-                          : "bg-white/5 border-white/10 text-white/60 hover:text-white hover:bg-white/10"
+                        ? "bg-cyan-950/60 border-cyan-400 text-cyan-300"
+                        : "bg-white/5 border-white/10 text-white/60 hover:text-white hover:bg-white/10"
                         }`}
                     >
                       <Terminal size={14} />
@@ -1454,8 +1434,8 @@ export default function MissionModal({
                       onWheel={(e) => e.stopPropagation()}
                       onTouchMove={(e) => e.stopPropagation()}
                       className={`p-4 rounded-xl font-mono text-xs leading-relaxed whitespace-pre-wrap max-h-36 overflow-y-auto custom-sidebar-scrollbar shadow-inner ${isError
-                          ? "bg-red-950/25 border border-red-500/40 text-red-300"
-                          : "bg-[#020108] border border-white/10 text-emerald-400"
+                        ? "bg-red-950/25 border border-red-500/40 text-red-300"
+                        : "bg-[#020108] border border-white/10 text-emerald-400"
                         }`}
                     >
                       {output}
