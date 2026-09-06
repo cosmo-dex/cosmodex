@@ -58,7 +58,7 @@ export async function POST(req: NextRequest) {
         auth_provider: providerStr,
         role: 'student',
         avatar_url: avatarId ?? null,
-        experience_level: experienceLevel,
+        experience_level: 'Beginner',
         interests: interests ?? [],
         xp_total: 0,
         level: 1,

@@ -15,9 +15,8 @@ export type OnboardingStepId =
   | 'AUTH'
   | 'USERNAME'
   | 'AVATAR'
-  | 'PREVIEW'
-  | 'EXPERIENCE'
   | 'INTERESTS'
+  | 'PREVIEW'
   | 'COMPLETING';
 
 export interface SessionUser {
