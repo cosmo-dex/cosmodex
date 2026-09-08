@@ -12,6 +12,7 @@ export interface CourseData {
   level: "BEGINNER" | "INTERMEDIATE" | "ADVANCED";
   thumbnail: string;
   pixelArtBanner?: React.ReactNode;
+  isLive?: boolean;
 }
 
 interface CourseCardProps {
@@ -19,7 +20,6 @@ interface CourseCardProps {
   index: number;
 }
 
-// Solid Filled Signal Level Icon
 const SignalBarsIcon = () => (
   <svg width="13" height="13" viewBox="0 0 16 16" fill="none" className="inline-block">
     <rect x="2" y="8" width="3.5" height="6" rx="1" fill="#38bdf8" />
@@ -31,14 +31,13 @@ const SignalBarsIcon = () => (
 export default function CourseCard({ course }: CourseCardProps) {
   const [imgError, setImgError] = useState(false);
 
-  const isLive =
-    course.id === "py-1" ||
-    course.id === "python" ||
-    course.title.toLowerCase() === "python";
+  const isLive = course.isLive ?? true;
+  const targetCourseSlug =
+    course.id === "py-1" || course.title.toLowerCase() === "python"
+      ? "python"
+      : course.id;
 
-  const targetHref = isLive
-    ? "/learn/python"
-    : `/learn/${course.id}/theory/in-the-beginning`;
+  const targetHref = `/learn/${targetCourseSlug}`;
 
   return (
     <Link href={targetHref} scroll={false} className="block">

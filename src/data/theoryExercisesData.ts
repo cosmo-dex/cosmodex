@@ -12,6 +12,15 @@ export interface TheorySection {
   };
 }
 
+export interface QuizQuestion {
+  id: string;
+  question: string;
+  codeSnippet?: string;
+  options: string[];
+  correctAnswerIndex: number;
+  explanation: string;
+}
+
 export interface TheoryExercise {
   id: string;
   courseId: string;
@@ -39,12 +48,5 @@ export interface TheoryExercise {
     output: string;
     explanation: string;
   };
-  mcqs?: {
-    id: string;
-    question: string;
-    codeSnippet?: string;
-    options: string[];
-    correctAnswerIndex: number;
-    explanation: string;
-  }[];
+  mcqs?: QuizQuestion[];
 }

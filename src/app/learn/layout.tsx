@@ -6,7 +6,7 @@ const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://www.cosmodex.in";
 export const metadata: Metadata = {
   title: "Learn to Code — Interactive Programming Courses",
   description:
-    "Master Python, SQL, data structures, and computer science fundamentals through hands-on gamified courses, quests, and XP rewards on CosmoDex.",
+    "Master Python, SQL, data structures, and computer science fundamentals through hands-on gamified courses, quests, and interactive challenges on CosmoDex.",
   alternates: {
     canonical: `${appUrl}/learn`,
   },
