@@ -11,26 +11,27 @@ interface GalaxyPathMapProps {
   chapters: Chapter[];
   selectedChapterId: string;
   onSelectChapter: (chapter: Chapter) => void;
+  courseTitle?: string;
 }
 
-// Preset X percentages for serpentine zigzag layout
 const PLANET_X_POSITIONS = [
-  20, // Ch 1 (Hello World) - Left
-  52, // Ch 2 (Variables) - Center
-  82, // Ch 3 (Control Flow) - Right
-  68, // Ch 4 (Loops) - Center-Right
-  45, // Milestone 1 (Checkpoint) - Center
-  22, // Ch 5 (Lists) - Left
-  36, // Ch 6 (Functions) - Center-Left
-  78, // Ch 7 (Classes & Objects) - Right
-  30, // Ch 8 (Modules) - Left-Center
-  56, // Milestone 2 (Final Project) - Center
+  20,
+  52,
+  82,
+  68,
+  45,
+  22,
+  36,
+  78,
+  30,
+  56,
 ];
 
 export default function GalaxyPathMap({
   chapters,
   selectedChapterId,
   onSelectChapter,
+  courseTitle,
 }: GalaxyPathMapProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [svgPathD, setSvgPathD] = useState<string>("");
@@ -88,10 +89,10 @@ export default function GalaxyPathMap({
       {/* ── Galaxy Map Header Row ── */}
       <div className="flex flex-wrap items-center justify-between gap-4 mb-8">
         <h2 className="text-xl md:text-2xl font-bold font-mono text-white tracking-wider flex items-center gap-2">
-          THE PYTHON GALAXY
+          THE {(courseTitle || "PYTHON").toUpperCase()} GALAXY
         </h2>
         <span className="text-xs font-mono text-cyan-300/80 bg-cyan-950/40 px-3 py-1 rounded-full border border-cyan-500/20">
-          Tap a planet to preview its exercises
+          Tap a planet to view its theory &amp; MCQs
         </span>
       </div>
 
@@ -159,7 +160,6 @@ export default function GalaxyPathMap({
                   isUnlocked={chapter.isUnlocked}
                   isCurrent={chapter.isCurrent}
                   isMilestone={chapter.isMilestone}
-                  isClubLocked={chapter.isClubLocked}
                   isSelected={isSelected}
                   onClick={() => onSelectChapter(chapter)}
                 />

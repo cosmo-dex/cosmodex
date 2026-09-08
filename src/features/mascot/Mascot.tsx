@@ -237,7 +237,8 @@ export default function Mascot() {
     !pathname ||
     pathname === '/onboarding' ||
     pathname.startsWith('/onboarding/') ||
-    pathname.startsWith('/battle')
+    pathname.startsWith('/battle') ||
+    pathname.includes('/theory/')
   ) {
     return null;
   }
