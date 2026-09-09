@@ -212,6 +212,20 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 })(window,document,'script','dataLayer','GTM-MTZR6TH8');`,
           }}
         />
+        <script
+          async
+          src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8841633365335879"
+          crossOrigin="anonymous"
+        />
+        <script
+          async
+          src="https://pl31257884.profitableratecpmnetwork.com/59/2e/c7/592ec7429696819bdbed6840e82ee112.js"
+        />
+        <script
+          async
+          data-cfasync="false"
+          src="https://pl31257885.profitableratecpmnetwork.com/ba6cbf6be7b27882ce717d652ad0acb8/invoke.js"
+        />
       </head>
       <body
         className={`${displayFont.variable} ${bodyFont.variable} ${monoFont.variable} antialiased`}
@@ -242,11 +256,27 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
           `}
         </Script>
 
+        {/* CPM Network Body Script */}
+        <Script
+          src="https://pl31257886.profitableratecpmnetwork.com/71/76/42/7176422c6fb28d171c63bd88c8439c95.js"
+          strategy="afterInteractive"
+        />
+
         <Providers>
           <SmoothScroll />
           {/* Noise overlay for texture */}
           <div className="noise-overlay" aria-hidden="true" />
           {children}
+
+          {/* Ad Banner Container - unobtrusively placed at bottom of page content */}
+          <div
+            id="ad-banner-slot"
+            className="w-full flex justify-center items-center py-4 overflow-hidden relative z-10"
+            style={{ minHeight: "0px" }}
+          >
+            <div id="container-ba6cbf6be7b27882ce717d652ad0acb8" />
+          </div>
+
           <Mascot />
         </Providers>
       </body>
