@@ -63,6 +63,14 @@ export default function MatchmakingCinematic({
     };
   }, [phase]);
 
+  useEffect(() => {
+    if (phase !== 'MATCH_FOUND' || isReady || cancelledByOpponent) return;
+    const timer = setTimeout(() => {
+      onCancel();
+    }, 15000);
+    return () => clearTimeout(timer);
+  }, [phase, isReady, cancelledByOpponent, onCancel]);
+
   // HTML Canvas Logic for Sparse Stars and Streaks
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -192,11 +200,19 @@ export default function MatchmakingCinematic({
 
   return createPortal(
     <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', overflow: 'hidden', zIndex: 9999, background: 'radial-gradient(circle at 50% 100%, #1a0b2e 0%, #080312 100%)' }}>
-      {/* Background exact match copy */}
+      {!isReady && !cancelledByOpponent && (
+        <button
+          onClick={onCancel}
+          className="absolute top-6 right-6 z-50 p-2.5 rounded-full bg-white/10 hover:bg-white/20 border border-white/10 text-white/70 hover:text-white transition-all cursor-pointer shadow-lg backdrop-blur-sm"
+          aria-label="Cancel matchmaking"
+        >
+          <X size={20} />
+        </button>
+      )}
+
       <div className="absolute inset-[-10%] w-[120%] h-[120%] pointer-events-none z-0">
         <RisingStars />
 
-        {/* Nebula dust / subtle colored clouds */}
         <div className="absolute top-0 left-0 w-full h-full">
           <motion.div
             animate={{
@@ -653,8 +669,8 @@ export default function MatchmakingCinematic({
               <button
                 disabled={isReady}
                 className={`px-8 py-3.5 rounded-2xl font-bold tracking-widest text-sm uppercase transition-all duration-300 shadow-2xl border ${isReady
-                    ? 'bg-emerald-500/20 border-emerald-400/60 text-emerald-300 animate-pulse shadow-[0_0_20px_rgba(52,211,153,0.4)] cursor-wait'
-                    : 'cosmo-btn-primary text-white border-white/20 hover:scale-105 cursor-pointer shadow-[0_0_25px_rgba(217,95,209,0.5)]'
+                  ? 'bg-emerald-500/20 border-emerald-400/60 text-emerald-300 animate-pulse shadow-[0_0_20px_rgba(52,211,153,0.4)] cursor-wait'
+                  : 'cosmo-btn-primary text-white border-white/20 hover:scale-105 cursor-pointer shadow-[0_0_25px_rgba(217,95,209,0.5)]'
                   }`}
                 onClick={onEnterBattle}
               >

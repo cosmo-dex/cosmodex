@@ -113,6 +113,7 @@ export default function MatchmakingPanel({ socket, userId, username, onMatchFoun
   const onMatchFoundRef = useRef(onMatchFound);
   const hasTransitionedRef = useRef(false);
   const matchPayloadRef = useRef<MatchInfo | null>(null);
+  const cancelTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     onMatchFoundRef.current = onMatchFound;
@@ -211,11 +212,17 @@ export default function MatchmakingPanel({ socket, userId, username, onMatchFoun
       }
     };
 
-    const handleMatchCancelled = () => {
+    const handleMatchCancelled = (data?: { cancelledBy?: string }) => {
+      if (data?.cancelledBy && data.cancelledBy === userId) {
+        return;
+      }
       setCancelledByOpponent(true);
       setIsReady(false);
       setOpponentReady(false);
-      setTimeout(() => {
+      if (cancelTimeoutRef.current) {
+        clearTimeout(cancelTimeoutRef.current);
+      }
+      cancelTimeoutRef.current = setTimeout(() => {
         setCancelledByOpponent(false);
         setQueueState("idle");
         setPhase("SEARCHING");
@@ -247,6 +254,10 @@ export default function MatchmakingPanel({ socket, userId, username, onMatchFoun
     };
 
     const handleLeft = () => {
+      if (cancelTimeoutRef.current) {
+        clearTimeout(cancelTimeoutRef.current);
+        cancelTimeoutRef.current = null;
+      }
       setQueueState("idle");
       setPhase("SEARCHING");
       setOpponent(null);
@@ -257,6 +268,10 @@ export default function MatchmakingPanel({ socket, userId, username, onMatchFoun
     };
 
     const handleError = (err: { message: string }) => {
+      if (cancelTimeoutRef.current) {
+        clearTimeout(cancelTimeoutRef.current);
+        cancelTimeoutRef.current = null;
+      }
       setError(err.message);
       setQueueState("idle");
       setPhase("SEARCHING");
@@ -274,6 +289,10 @@ export default function MatchmakingPanel({ socket, userId, username, onMatchFoun
     socket.on("error", handleError);
 
     return () => {
+      if (cancelTimeoutRef.current) {
+        clearTimeout(cancelTimeoutRef.current);
+        cancelTimeoutRef.current = null;
+      }
       socket.off("match_found", handleMatchFound);
       socket.off("player_ready_update", handlePlayerReadyUpdate);
       socket.off("match_start", handleMatchStart);
@@ -287,6 +306,11 @@ export default function MatchmakingPanel({ socket, userId, username, onMatchFoun
 
 
   const joinQueue = () => {
+    if (cancelTimeoutRef.current) {
+      clearTimeout(cancelTimeoutRef.current);
+      cancelTimeoutRef.current = null;
+    }
+    setCancelledByOpponent(false);
     if (!socket?.connected) {
       setError("Not connected to arena. Reconnecting...");
       return;
@@ -295,6 +319,9 @@ export default function MatchmakingPanel({ socket, userId, username, onMatchFoun
     hasTransitionedRef.current = false;
     setIsReady(false);
     setOpponentReady(false);
+    setOpponent(null);
+    setMatchPayload(null);
+    matchPayloadRef.current = null;
     setQueueState("queuing");
     setPhase("SEARCHING");
 
@@ -302,6 +329,10 @@ export default function MatchmakingPanel({ socket, userId, username, onMatchFoun
   };
 
   const leaveQueue = () => {
+    if (cancelTimeoutRef.current) {
+      clearTimeout(cancelTimeoutRef.current);
+      cancelTimeoutRef.current = null;
+    }
     const currentPayload = matchPayloadRef.current;
     if (currentPayload) {
       socket?.emit("leave_match", { roomId: currentPayload.roomId });
