@@ -123,7 +123,7 @@ export default function MatchmakingPanel({ socket, userId, username, onMatchFoun
   }, [matchPayload]);
 
   const fetchStats = useCallback(() => {
-    fetch("/api/user/stats")
+    fetch("/api/user/stats", { cache: "no-store" })
       .then((res) => {
         if (!res.ok) return null;
         return res.json();
