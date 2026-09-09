@@ -827,10 +827,7 @@ export default function ActiveMatchView({ socket, matchInfo, userId, username, o
                     />
                   </div>
 
-                  <h3
-                    className="text-xl md:text-3xl font-black text-white mb-8 leading-snug tracking-wide"
-                    style={{ fontFamily: '"Roboto", sans-serif' }}
-                  >
+                  <h3 className="text-xl md:text-3xl font-black text-white mb-8 leading-snug tracking-wide">
                     {mcqState.currentQuestion.question}
                   </h3>
 
@@ -895,12 +892,7 @@ export default function ActiveMatchView({ socket, matchInfo, userId, username, o
                             )}>
                               {letter}
                             </span>
-                            <span
-                              className="text-sm md:text-base leading-snug flex-1"
-                              style={{ fontFamily: '"Roboto", sans-serif' }}
-                            >
-                              {option}
-                            </span>
+                            <span className="text-sm md:text-base leading-snug flex-1">{option}</span>
                           </div>
 
                           {/* Choice indicators on reveal */}
