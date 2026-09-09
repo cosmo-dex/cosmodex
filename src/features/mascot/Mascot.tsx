@@ -22,6 +22,7 @@ export default function Mascot() {
   const { user, isAuthenticated } = useAuth();
   const { message, setMessage } = useMascotStore();
   const [isGreetingDismissed, setIsGreetingDismissed] = useState(false);
+  const [isMascotHidden, setIsMascotHidden] = useState(false);
 
   const [dragConstraints, setDragConstraints] = useState<{
     left: number;
@@ -248,6 +249,19 @@ export default function Mascot() {
     return null;
   }
 
+  if (isMascotHidden) {
+    return (
+      <button
+        onClick={() => setIsMascotHidden(false)}
+        className="fixed bottom-4 right-4 z-40 p-2.5 rounded-full bg-[#120726]/90 border border-purple-500/40 text-purple-300 hover:text-white hover:border-purple-400 shadow-[0_0_15px_rgba(168,85,247,0.3)] backdrop-blur-md transition-all duration-200 cursor-pointer flex items-center gap-1.5 text-xs font-mono"
+        title="Open Cosmo Assistant"
+      >
+        <span className="text-sm">👾</span>
+        <span className="hidden sm:inline">Cosmo</span>
+      </button>
+    );
+  }
+
   return (
     <>
       <motion.div
@@ -263,8 +277,18 @@ export default function Mascot() {
           pointerEvents: chatOpen ? "none" : "auto",
         }}
         transition={{ duration: 0.2 }}
-        className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-40 w-[110px] h-[146px] sm:w-[130px] sm:h-[173px] select-none touch-none cursor-grab active:cursor-grabbing"
+        className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-40 w-[110px] h-[146px] sm:w-[130px] sm:h-[173px] select-none touch-none cursor-grab active:cursor-grabbing group"
       >
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            setIsMascotHidden(true);
+          }}
+          className="absolute -top-2 -right-2 z-50 w-5 h-5 rounded-full bg-black/80 border border-white/30 text-white/70 hover:text-white hover:bg-black flex items-center justify-center text-xs cursor-pointer shadow-md transition-all opacity-80 group-hover:opacity-100"
+          title="Minimize mascot"
+        >
+          ✕
+        </button>
         <AnimatePresence>
           {!chatOpen && (Boolean(message) || !isGreetingDismissed) && (
             <MascotGreetingPopup
