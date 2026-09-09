@@ -16,6 +16,7 @@ interface MatchmakingCinematicProps {
   opponent: { username: string; elo: number; avatar?: string } | null;
   isReady?: boolean;
   opponentReady?: boolean;
+  cancelledByOpponent?: boolean;
   onEnterBattle: () => void;
   onCancel: () => void;
 }
@@ -28,6 +29,7 @@ export default function MatchmakingCinematic({
   opponent,
   isReady = false,
   opponentReady = false,
+  cancelledByOpponent = false,
   onEnterBattle,
   onCancel,
 }: MatchmakingCinematicProps) {
@@ -612,30 +614,71 @@ export default function MatchmakingCinematic({
 
         </div>
 
-        {/* Enter Battle Button */}
+        {/* Enter Battle Button + Cancelled Overlay */}
         <AnimatePresence>
-          {phase === 'MATCH_FOUND' && (
-            <motion.button
+          {phase === 'MATCH_FOUND' && cancelledByOpponent && (
+            <motion.div
+              key="cancelled"
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.9 }}
+              style={{ position: 'absolute', bottom: '18%', pointerEvents: 'none', textAlign: 'center' }}
+            >
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
+                <span style={{ fontSize: '2rem' }}>💨</span>
+                <span style={{
+                  background: 'rgba(239,68,68,0.15)',
+                  border: '1px solid rgba(239,68,68,0.4)',
+                  color: '#fca5a5',
+                  fontWeight: 'bold',
+                  fontSize: '0.85rem',
+                  letterSpacing: '0.1em',
+                  padding: '8px 20px',
+                  borderRadius: '12px',
+                  textTransform: 'uppercase',
+                }}>
+                  Opponent cancelled — returning to lobby…
+                </span>
+              </div>
+            </motion.div>
+          )}
+          {phase === 'MATCH_FOUND' && !cancelledByOpponent && (
+            <motion.div
+              key="actions"
               initial={{ opacity: 0, y: 30, scale: 0.95 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
               transition={{ delay: 1.2, type: 'spring', damping: 15, stiffness: 100 }}
-              disabled={isReady}
-              className={`px-8 py-3.5 rounded-2xl font-bold tracking-widest text-sm uppercase transition-all duration-300 shadow-2xl border ${isReady
-                  ? 'bg-emerald-500/20 border-emerald-400/60 text-emerald-300 animate-pulse shadow-[0_0_20px_rgba(52,211,153,0.4)] cursor-wait'
-                  : 'cosmo-btn-primary text-white border-white/20 hover:scale-105 cursor-pointer shadow-[0_0_25px_rgba(217,95,209,0.5)]'
-                }`}
-              style={{ position: 'absolute', bottom: '18%', pointerEvents: 'auto' }}
-              onClick={onEnterBattle}
+              style={{ position: 'absolute', bottom: '18%', pointerEvents: 'auto', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px' }}
             >
-              {isReady ? (
-                <span className="flex items-center gap-2">
-                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
-                  READY — WAITING FOR OPPONENT...
-                </span>
-              ) : (
-                'ENTER BATTLE'
+              <button
+                disabled={isReady}
+                className={`px-8 py-3.5 rounded-2xl font-bold tracking-widest text-sm uppercase transition-all duration-300 shadow-2xl border ${isReady
+                    ? 'bg-emerald-500/20 border-emerald-400/60 text-emerald-300 animate-pulse shadow-[0_0_20px_rgba(52,211,153,0.4)] cursor-wait'
+                    : 'cosmo-btn-primary text-white border-white/20 hover:scale-105 cursor-pointer shadow-[0_0_25px_rgba(217,95,209,0.5)]'
+                  }`}
+                onClick={onEnterBattle}
+              >
+                {isReady ? (
+                  <span className="flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
+                    {opponentReady ? 'BOTH READY — STARTING…' : 'READY — WAITING FOR OPPONENT…'}
+                  </span>
+                ) : (
+                  <span className="flex items-center gap-2">
+                    ⚔️ ENTER BATTLE
+                    {opponentReady && <span className="text-[10px] bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded-full border border-emerald-400/40">Opponent Ready</span>}
+                  </span>
+                )}
+              </button>
+              {!isReady && (
+                <button
+                  onClick={onCancel}
+                  className="text-white/40 hover:text-white/70 text-xs font-mono uppercase tracking-widest transition-colors cursor-pointer"
+                >
+                  Cancel
+                </button>
               )}
-            </motion.button>
+            </motion.div>
           )}
         </AnimatePresence>
 
