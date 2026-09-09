@@ -6,6 +6,7 @@ import SmoothScroll from "@/components/landing/SmoothScroll";
 import Mascot from "@/features/mascot/Mascot";
 import Providers from "@/components/providers/Providers";
 import AdSenseBanner from "@/components/ads/AdSenseBanner";
+import ResponsiveAdBanner from "@/components/ads/ResponsiveAdBanner";
 
 const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://www.cosmodex.in";
 
@@ -222,6 +223,11 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
           async
           src="https://pl31257884.profitableratecpmnetwork.com/59/2e/c7/592ec7429696819bdbed6840e82ee112.js"
         />
+        <script
+          async
+          data-cfasync="false"
+          src="https://pl31257885.profitableratecpmnetwork.com/ba6cbf6be7b27882ce717d652ad0acb8/invoke.js"
+        />
       </head>
       <body
         className={`${displayFont.variable} ${bodyFont.variable} ${monoFont.variable} antialiased`}
@@ -264,7 +270,16 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
           <div className="noise-overlay" aria-hidden="true" />
           {children}
 
+          {/* Google AdSense Banner */}
           <AdSenseBanner />
+
+          {/* Adsterra Responsive Banner (728x90 desktop / 468x60 tablet / 320x50 mobile) */}
+          <ResponsiveAdBanner />
+
+          {/* Adsterra Native Banner Container */}
+          <div className="w-full flex justify-center items-center py-2 overflow-hidden relative z-10">
+            <div id="container-ba6cbf6be7b27882ce717d652ad0acb8" />
+          </div>
 
           <Mascot />
         </Providers>
