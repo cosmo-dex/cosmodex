@@ -5,6 +5,7 @@ import "./globals.css";
 import SmoothScroll from "@/components/landing/SmoothScroll";
 import Mascot from "@/features/mascot/Mascot";
 import Providers from "@/components/providers/Providers";
+import AdSenseBanner from "@/components/ads/AdSenseBanner";
 
 const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://www.cosmodex.in";
 
@@ -262,6 +263,8 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
           {/* Noise overlay for texture */}
           <div className="noise-overlay" aria-hidden="true" />
           {children}
+
+          <AdSenseBanner />
 
           <Mascot />
         </Providers>
