@@ -307,7 +307,7 @@ export default function BattleArenaSection() {
               <svg width="11" height="11" viewBox="0 0 12 12" fill="none" aria-hidden="true">
                 <path d="M6 1l1.5 3h3l-2.5 2 1 3L6 7.5 3 9l1-3L1.5 4h3L6 1z" fill="currentColor" />
               </svg>
-              Live Code Arena
+              Speed Quiz Live • Code Arena Season 2 Soon
             </div>
             <h2
               style={{
@@ -334,7 +334,7 @@ export default function BattleArenaSection() {
                 fontFamily: "var(--font-body), 'Fira Code', monospace",
               }}
             >
-              Compete in real-time timed coding battles, race against global coders, and climb the global leaderboard.
+              Compete in real-time speed quiz duels, race against global coders, and climb the global leaderboard.
             </p>
 
             {/* Interactive Challenge Switcher Tabs */}

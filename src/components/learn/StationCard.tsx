@@ -1,31 +1,41 @@
 "use client";
 
+import { useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  CheckCircle2,
   BookOpen,
-  Lock,
-  ChevronRight,
-  Star,
-  Zap,
-  AlertCircle,
-  Terminal,
   HelpCircle,
+  CheckCircle2,
+  ArrowRight,
+  Sparkles,
+  Layers,
 } from "lucide-react";
 import Link from "next/link";
 import { Chapter } from "./pythonData";
 
 interface StationCardProps {
   chapter: Chapter;
-  onLaunchMission?: (chapter: Chapter) => void; // kept for API compat, unused
+  courseId?: string;
 }
 
-export default function StationCard({ chapter }: StationCardProps) {
-  const totalEx = chapter.exercises.length;
-  const completedEx = chapter.exercises.filter((e) => e.isCompleted).length;
-  const progressPct = totalEx > 0 ? Math.round((completedEx / totalEx) * 100) : 0;
+export default function StationCard({ chapter, courseId }: StationCardProps) {
+  const isCompleted = Boolean(chapter.isCompleted);
+  const trackSlug = courseId || "py-1";
+  const theoryHref = `/learn/${trackSlug}/theory/${chapter.theoryLessonId || chapter.id}`;
 
-  const theoryHref = `/learn/py-1/theory/${chapter.theoryLessonId || chapter.id}`;
+  const topics = useMemo(() => {
+    if (chapter.documentation?.sections && Array.isArray(chapter.documentation.sections)) {
+      const headings = chapter.documentation.sections
+        .map((s) => s.heading)
+        .filter((h): h is string => Boolean(h && h.trim().length > 0));
+      if (headings.length > 0) return headings;
+    }
+    return [
+      "Core Concepts & Syntax",
+      "Code Demonstrations & Explanations",
+      "Concept Knowledge Quiz (MCQs)",
+    ];
+  }, [chapter.documentation]);
 
   return (
     <AnimatePresence mode="wait">
@@ -35,170 +45,88 @@ export default function StationCard({ chapter }: StationCardProps) {
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0, y: -10 }}
         transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
-        className="rounded-2xl border border-white/10 bg-[#0d0f1a] overflow-hidden shadow-[0_12px_40px_rgba(0,0,0,0.6)]"
+        className="w-full rounded-3xl border border-[#1e153b] bg-[#070514]/95 p-5 sm:p-6 space-y-5 shadow-[0_15px_40px_rgba(0,0,0,0.7)] backdrop-blur-xl"
       >
-        {/* ── Top Accent Bar ── */}
-        <div className="h-[3px] bg-gradient-to-r from-[#E873C3] via-[#9E00F6] to-[#00FFE9]" />
+        {/* ── Top Station Number & Title ── */}
+        <div className="space-y-1.5">
+          <div className="flex items-center justify-between">
+            <span className="text-[11px] font-mono font-black tracking-[0.2em] text-[#00FFE9] uppercase">
+              {chapter.stationNumber || `STATION ${String(chapter.number).padStart(2, "0")}`}
+            </span>
 
-        <div className="p-5 sm:p-6 space-y-5">
-          {/* ── Station Header ── */}
+            <span className="inline-flex items-center gap-1.5 text-[11px] font-mono font-bold text-cyan-300 bg-cyan-500/15 border border-cyan-500/30 px-2.5 py-1 rounded-full shadow-sm">
+              <span className="w-2 h-2 rounded-full bg-cyan-400" />
+              Ready to Study
+            </span>
+          </div>
+
+          <h2 className="text-2xl sm:text-3xl font-black font-mono tracking-wider text-white uppercase leading-tight pt-1">
+            {chapter.title}
+          </h2>
+
+          <p className="text-xs sm:text-[13px] font-mono text-white/70 leading-relaxed pt-1">
+            {chapter.description}
+          </p>
+        </div>
+
+        {/* ── Feature Badges Row (Pure Theory & MCQs) ── */}
+        <div className="flex flex-wrap items-center gap-2.5">
+          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-[#002f3c]/80 border border-[#00FFE9]/40 text-[#00FFE9] font-mono font-black text-[11px] tracking-wider uppercase shadow-[0_0_12px_rgba(0,255,233,0.15)]">
+            <BookOpen size={13} className="text-[#00FFE9]" />
+            <span>THEORY LESSON</span>
+          </div>
+
+          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-[#240c42]/80 border border-[#9E00F6]/40 text-[#c084fc] font-mono font-black text-[11px] tracking-wider uppercase shadow-[0_0_12px_rgba(158,0,246,0.15)]">
+            <HelpCircle size={13} className="text-[#c084fc]" />
+            <span>CONCEPT MCQS</span>
+          </div>
+        </div>
+
+        {/* ── Topics Covered in this Station ── */}
+        <div className="space-y-2.5 pt-1">
+          <div className="flex items-center justify-between text-[11px] font-mono font-bold tracking-wider uppercase">
+            <span className="text-white/45 flex items-center gap-1.5">
+              <Layers size={13} className="text-purple-400" />
+              TOPICS COVERED
+            </span>
+            <span className="text-[#00FFE9] text-[10px]">
+              {topics.length} MODULES
+            </span>
+          </div>
+
           <div className="space-y-2">
-            <div className="flex items-center justify-between gap-2">
-              <span className="text-[10px] font-mono font-black uppercase tracking-[0.2em] text-[#00FFE9]">
-                {chapter.stationNumber}
-              </span>
-              <div className="flex items-center gap-2">
-                <span className="flex items-center gap-1 text-[11px] font-mono font-bold text-amber-400 bg-amber-400/10 border border-amber-400/20 px-2 py-0.5 rounded-lg">
-                  <Star size={11} className="fill-amber-400" />
-                  {chapter.xpValue} XP
+            {topics.map((topic, idx) => (
+              <div
+                key={idx}
+                className="flex items-center gap-3 px-3.5 py-2.5 rounded-xl bg-[#0c0920] border border-[#221940] text-xs font-mono text-white/85 transition-all"
+              >
+                <span className="w-5 h-5 rounded-lg bg-cyan-950/70 border border-cyan-500/30 flex items-center justify-center text-[10px] font-black text-cyan-400 shrink-0">
+                  {String(idx + 1).padStart(2, "0")}
                 </span>
-                {chapter.isCompleted && (
-                  <span className="flex items-center gap-1 text-[10px] font-mono font-bold text-emerald-300 bg-emerald-500/10 border border-emerald-500/25 px-2 py-0.5 rounded-lg">
-                    <CheckCircle2 size={11} />
-                    Done
-                  </span>
+                <span className="truncate flex-1 font-medium">{topic}</span>
+                {isCompleted ? (
+                  <CheckCircle2 size={13} className="text-emerald-400 shrink-0" />
+                ) : (
+                  <Sparkles size={12} className="text-white/20 shrink-0" />
                 )}
               </div>
-            </div>
-
-            <h3 className="text-lg sm:text-xl font-black text-white tracking-tight leading-snug">
-              {chapter.title}
-            </h3>
-
-            <p className="text-[13px] text-white/55 font-sans leading-relaxed">
-              {chapter.description}
-            </p>
+            ))}
           </div>
+        </div>
 
-          {/* ── Feature Badges ── */}
-          <div className="flex flex-wrap gap-2">
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[#00FFE9]/[0.07] border border-[#00FFE9]/20 text-[10px] font-mono font-bold text-[#00FFE9] uppercase tracking-wider">
-              <Terminal size={10} />
-              Code Labs
-            </span>
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[#9E00F6]/[0.07] border border-[#9E00F6]/20 text-[10px] font-mono font-bold text-[#C878F0] uppercase tracking-wider">
-              <HelpCircle size={10} />
-              MCQ Quiz
-            </span>
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[#FFA249]/[0.07] border border-[#FFA249]/20 text-[10px] font-mono font-bold text-[#FFA249] uppercase tracking-wider">
-              <Zap size={10} />
-              {totalEx} Exercises
-            </span>
-          </div>
-
-          {/* ── Locked Banner ── */}
-          {!chapter.isUnlocked && (
-            <div className="flex items-center gap-2.5 p-3 rounded-xl bg-white/[0.03] border border-white/10 text-white/50 text-xs font-mono">
-              <Lock size={14} className="shrink-0 text-white/30" />
-              <span>Complete the previous station to unlock</span>
-            </div>
-          )}
-
-          {/* ── Exercise List ── */}
-          {chapter.isUnlocked && (
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <span className="text-[10px] font-mono font-bold uppercase tracking-widest text-white/35">
-                  Exercises
-                </span>
-                <span className="text-[10px] font-mono text-white/35">
-                  {completedEx}/{totalEx} done
-                </span>
-              </div>
-
-              <div className="space-y-1.5">
-                {chapter.exercises.map((exercise, i) => {
-                  const isBonus = exercise.numberLabel?.toLowerCase().includes("bonus");
-                  return (
-                    <motion.div
-                      key={exercise.id}
-                      initial={{ opacity: 0, x: -8 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: i * 0.04, duration: 0.25 }}
-                      className={`flex items-center gap-3 px-3 py-2.5 rounded-xl border text-[12px] font-mono transition-all
-                        ${
-                          exercise.isCompleted
-                            ? "bg-emerald-950/30 border-emerald-500/25 text-emerald-300"
-                            : exercise.isUnlocked
-                            ? "bg-white/[0.03] border-white/[0.08] text-white/80"
-                            : "bg-white/[0.02] border-white/[0.05] text-white/30"
-                        }`}
-                    >
-                      {/* Status dot */}
-                      <span className="shrink-0">
-                        {exercise.isCompleted ? (
-                          <CheckCircle2 size={14} className="text-emerald-400" />
-                        ) : exercise.isUnlocked ? (
-                          <span className="w-3.5 h-3.5 rounded-full border-2 border-white/25 inline-block" />
-                        ) : (
-                          <Lock size={13} className="text-white/20" />
-                        )}
-                      </span>
-
-                      {/* Label & title */}
-                      <span
-                        className={`text-[10px] font-black uppercase tracking-wider shrink-0 w-16 ${
-                          isBonus ? "text-[#FFA249]" : exercise.isCompleted ? "text-emerald-400" : "text-white/35"
-                        }`}
-                      >
-                        {exercise.numberLabel}
-                      </span>
-                      <span className={`truncate flex-1 ${exercise.isCompleted ? "line-through opacity-70" : ""}`}>
-                        {exercise.title}
-                      </span>
-
-                      {exercise.isCompleted && (
-                        <span className="shrink-0 text-[9px] font-bold text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded font-mono">
-                          ✓
-                        </span>
-                      )}
-                    </motion.div>
-                  );
-                })}
-              </div>
-            </div>
-          )}
-
-          {/* ── Progress Bar ── */}
-          {chapter.isUnlocked && totalEx > 0 && (
-            <div className="space-y-1.5">
-              <div className="flex items-center justify-between text-[10px] font-mono text-white/35">
-                <span>Progress</span>
-                <span>{progressPct}%</span>
-              </div>
-              <div className="h-1.5 rounded-full bg-white/[0.06] overflow-hidden">
-                <motion.div
-                  initial={{ width: 0 }}
-                  animate={{ width: `${progressPct}%` }}
-                  transition={{ duration: 0.6, ease: "easeOut", delay: 0.2 }}
-                  className="h-full rounded-full bg-gradient-to-r from-[#E873C3] to-[#9E00F6]"
-                />
-              </div>
-            </div>
-          )}
-
-          {/* ── Locked CTA ── */}
-          {!chapter.isUnlocked && (
-            <div className="flex items-center gap-2 p-3 rounded-xl bg-[#FFA249]/[0.06] border border-[#FFA249]/20 text-[#FFA249] text-[12px] font-mono">
-              <AlertCircle size={14} className="shrink-0" />
-              <span>Finish the previous station to unlock this one</span>
-            </div>
-          )}
-
-          {/* ── Action Buttons ── */}
-          {(chapter.documentation || chapter.theoryLessonId) && (
-            <div className="flex flex-col gap-2.5 pt-1">
-              {/* Primary — Theory & MCQs */}
-              <Link
-                href={theoryHref}
-                className="w-full py-3 px-4 rounded-xl font-bold font-mono text-[12px] tracking-wider uppercase transition-all flex items-center justify-center gap-2 cursor-pointer bg-gradient-to-r from-[#E873C3] to-[#9E00F6] text-white hover:opacity-90 shadow-[0_0_20px_rgba(158,0,246,0.25)] hover:shadow-[0_0_30px_rgba(158,0,246,0.4)] active:scale-[0.98]"
-              >
-                <BookOpen size={14} />
-                <span>Study Theory & MCQs</span>
-                <ChevronRight size={13} />
-              </Link>
-            </div>
-          )}
+        {/* ── Primary Action CTA: START THEORY & MCQS ── */}
+        <div className="pt-2">
+          <Link
+            href={theoryHref}
+            className="w-full py-3.5 px-6 rounded-2xl bg-gradient-to-r from-[#FF007A] via-[#E000FF] to-[#9E00F6] hover:opacity-95 text-white font-mono font-black text-xs sm:text-sm uppercase tracking-wider transition-all duration-200 shadow-[0_0_24px_rgba(255,0,122,0.35)] hover:shadow-[0_0_32px_rgba(255,0,122,0.55)] transform hover:scale-[1.01] active:scale-95 cursor-pointer flex items-center justify-center gap-2.5 text-center group"
+          >
+            <BookOpen size={16} className="shrink-0 text-white" />
+            <span>{isCompleted ? "REVIEW THEORY & MCQS" : "START THEORY & MCQS"}</span>
+            <ArrowRight
+              size={16}
+              className="shrink-0 transition-transform group-hover:translate-x-1"
+            />
+          </Link>
         </div>
       </motion.div>
     </AnimatePresence>

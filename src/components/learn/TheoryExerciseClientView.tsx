@@ -1,26 +1,24 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import Link from "next/link";
 import Navbar from "@/components/navbar/Navbar";
 import TheoryHeader from "@/components/learn/TheoryHeader";
 import TheoryFooter from "@/components/learn/TheoryFooter";
-import RisingStars from "@/components/RisingStar";
 import { TheoryExercise } from "@/data/theoryExercisesData";
 import InteractiveCodeLab from "@/components/learn/InteractiveCodeLab";
 import ConceptKnowledgeQuiz from "@/components/learn/ConceptKnowledgeQuiz";
+import RisingStars from "@/components/RisingStar";
 import {
   Rocket,
-  CheckCircle2,
-  Clock,
   Sparkles,
-  Zap,
-  Target,
   ChevronRight,
   Terminal,
   Hash,
   Lightbulb,
+  CheckCircle2,
+  Target,
 } from "lucide-react";
 
 interface TheoryExerciseClientViewProps {
@@ -30,7 +28,83 @@ interface TheoryExerciseClientViewProps {
 export default function TheoryExerciseClientView({
   exercise,
 }: TheoryExerciseClientViewProps) {
-  const [isCompleted, setIsCompleted] = useState(false);
+  const [isCompleted, setIsCompleted] = useState<boolean>(() => {
+    if (typeof window !== "undefined") {
+      try {
+        return localStorage.getItem(`station_completed_${exercise.id}`) === "true";
+      } catch {
+        return false;
+      }
+    }
+    return false;
+  });
+
+  useEffect(() => {
+    let active = true;
+
+    fetch("/api/learning/progress?course=python")
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (!active || !data?.progress) return;
+        const prog = data.progress;
+        const stationNum = parseInt(exercise.chapterNumber || "1", 10);
+        const isDone =
+          (Array.isArray(prog.completedStationSlugs) && (
+            prog.completedStationSlugs.includes(exercise.id) ||
+            prog.completedStationSlugs.includes(String(stationNum)) ||
+            prog.completedStationSlugs.includes(`station-${stationNum}`) ||
+            prog.completedStationSlugs.includes(`ch-${stationNum}`)
+          )) ||
+          (Array.isArray(prog.completedStationNumbers) && prog.completedStationNumbers.includes(stationNum)) ||
+          (Array.isArray(prog.completedModuleIds) && prog.completedModuleIds.includes(exercise.id));
+
+        if (isDone) {
+          setIsCompleted(true);
+        }
+      })
+      .catch(() => { });
+
+    return () => {
+      active = false;
+    };
+  }, [exercise.id, exercise.chapterNumber]);
+
+  const handleToggleComplete = async () => {
+    const nextState = !isCompleted;
+    setIsCompleted(nextState);
+    try {
+      localStorage.setItem(`station_completed_${exercise.id}`, String(nextState));
+      await fetch('/api/learning/progress', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          moduleId: exercise.id,
+          isStationComplete: nextState,
+          xpEarned: 0,
+        }),
+      });
+    } catch (err) {
+      console.warn('Failed to toggle station completion', err);
+    }
+  };
+
+  const handleQuizCompleted = async () => {
+    setIsCompleted(true);
+    try {
+      localStorage.setItem(`station_completed_${exercise.id}`, "true");
+      await fetch('/api/learning/progress', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          moduleId: exercise.id,
+          isStationComplete: true,
+          xpEarned: 0,
+        }),
+      });
+    } catch (err) {
+      console.warn('Failed to save quiz progress to server', err);
+    }
+  };
 
   const renderFormattedText = (text: string) => {
     const parts = text.split(/(\*\*.*?\*\*|`.*?`)/g);
@@ -99,11 +173,11 @@ export default function TheoryExerciseClientView({
       <Navbar />
 
       <TheoryHeader
-        activeGrindersCount={exercise.activeGrindersCount}
         courseId={exercise.courseId}
         exerciseIndex={exercise.exerciseIndex}
         totalExercises={exercise.totalExercises}
         exerciseId={exercise.id}
+        chapterTitle={exercise.title}
       />
 
       {/* ── Main Content ── */}
@@ -118,30 +192,16 @@ export default function TheoryExerciseClientView({
                 Courses
               </Link>
               <ChevronRight size={12} />
-              <Link href="/learn/python" className="text-[#00FFE9] hover:underline transition-colors">
-                Python Galaxy
+              <Link
+                href={exercise.courseId === "py-1" ? "/learn/python" : `/learn/${exercise.courseId}`}
+                className="text-[#00FFE9] hover:underline transition-colors"
+              >
+                {exercise.courseTitle || "Course"} Galaxy
               </Link>
               <ChevronRight size={12} />
               <span className="text-white/60">Station {exercise.chapterNumber}</span>
             </nav>
 
-            {/* Meta tags row */}
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="flex items-center gap-1.5 text-[11px] font-mono text-[#00FFE9] bg-[#00FFE9]/[0.08] border border-[#00FFE9]/20 px-2.5 py-1 rounded-lg">
-                <Clock size={11} />
-                5 min read
-              </span>
-              <span className="flex items-center gap-1.5 text-[11px] font-mono text-emerald-300 bg-emerald-500/[0.08] border border-emerald-500/20 px-2.5 py-1 rounded-lg">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                Active Station
-              </span>
-              <span className="flex items-center gap-1.5 text-[11px] font-mono text-[#FFA249] bg-[#FFA249]/[0.08] border border-[#FFA249]/20 px-2.5 py-1 rounded-lg">
-                <Zap size={11} />
-                {exercise.xp} XP
-              </span>
-            </div>
-
-            {/* Title */}
             <div>
               <p className="text-[11px] font-mono font-bold uppercase tracking-[0.2em] text-[#E873C3] mb-2">
                 Station {exercise.chapterNumber} · Theory
@@ -156,7 +216,6 @@ export default function TheoryExerciseClientView({
             </p>
           </header>
 
-          {/* ── Theory Sections ── */}
           <div className="space-y-12">
             {exercise.sections.map((section) => (
               <section key={section.id} className="space-y-5">
@@ -303,7 +362,7 @@ export default function TheoryExerciseClientView({
               <ConceptKnowledgeQuiz
                 questions={exercise.mcqs}
                 chapterTitle={exercise.title}
-                onCompleteQuiz={() => setIsCompleted(true)}
+                onCompleteQuiz={handleQuizCompleted}
               />
             </section>
           )}
@@ -316,11 +375,11 @@ export default function TheoryExerciseClientView({
                 <Sparkles size={14} className="text-[#00FFE9]" />
               </h4>
               <p className="text-xs text-white/45 font-sans mt-1">
-                Head back to the Python Galaxy map to unlock the next station.
+                Head back to the {exercise.courseTitle || "Course"} Galaxy map to explore the next station.
               </p>
             </div>
             <Link
-              href="/learn/python"
+              href={exercise.courseId === "py-1" ? "/learn/python" : `/learn/${exercise.courseId}`}
               className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-[#E873C3] to-[#9E00F6] text-white text-xs font-mono font-bold uppercase tracking-wider transition-all hover:opacity-90 shadow-[0_0_20px_rgba(158,0,246,0.3)] shrink-0"
             >
               <Rocket size={14} />
@@ -333,7 +392,7 @@ export default function TheoryExerciseClientView({
       <TheoryFooter
         exercise={exercise}
         isCompleted={isCompleted}
-        onToggleComplete={() => setIsCompleted(!isCompleted)}
+        onToggleComplete={handleToggleComplete}
       />
     </div>
   );

@@ -58,6 +58,11 @@ export async function GET(req: NextRequest) {
         avgTime: "—",
         codeStats: defaultModeStats,
         mcqStats: defaultModeStats,
+      }, {
+        status: userId ? 200 : 401,
+        headers: {
+          'Cache-Control': 'no-store, no-cache, must-revalidate',
+        },
       });
     }
 
@@ -224,11 +229,20 @@ export async function GET(req: NextRequest) {
             ? (oppStat?.elo_rating ?? 1000)
             : (oppStat?.mcq_elo_rating ?? 1000);
 
-        const exp = 1 / (1 + Math.pow(10, (oppRating - userRating) / 400));
-        const actual = isWin ? 1 : (isDraw ? 0.5 : 0);
-        let delta = Math.round(32 * (actual - exp));
-        if (isWin && delta <= 0) delta = 1;
-        if (!isWin && !isDraw && delta >= 0) delta = -1;
+        const matchWithDelta = m as { player1_elo_delta?: number | null; player2_elo_delta?: number | null };
+        const rawDelta = m.player1_id === userId ? matchWithDelta.player1_elo_delta : matchWithDelta.player2_elo_delta;
+        let delta: number;
+        if (typeof rawDelta === 'number' && rawDelta !== 0) {
+          delta = rawDelta;
+        } else {
+          const preMatchUserRating = isWin ? userRating - 16 : (!isDraw ? userRating + 16 : userRating);
+          const preMatchOppRating = isWin ? oppRating + 16 : (!isDraw ? oppRating - 16 : oppRating);
+          const exp = 1 / (1 + Math.pow(10, (preMatchOppRating - preMatchUserRating) / 400));
+          const actual = isWin ? 1 : (isDraw ? 0.5 : 0);
+          delta = Math.round(32 * (actual - exp));
+          if (isWin && delta <= 0) delta = 16;
+          if (!isWin && !isDraw && delta >= 0) delta = -16;
+        }
         const eloChange = delta > 0 ? `+${delta}` : `${delta}`;
 
         const duration =
@@ -385,7 +399,7 @@ export async function GET(req: NextRequest) {
       })),
     }, {
       headers: {
-        'Cache-Control': 'private, max-age=5, stale-while-revalidate=15',
+        'Cache-Control': 'no-store, no-cache, must-revalidate',
       },
     });
   } catch (err) {

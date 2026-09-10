@@ -1,45 +1,105 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import Navbar from "@/components/navbar/Navbar";
 import { motion } from "framer-motion";
-import { Star, BookOpen } from "lucide-react";
+import { Sparkles, RefreshCw } from "lucide-react";
 import GalaxyPathMap from "@/components/learn/GalaxyPathMap";
 import ProgressSidebar from "@/components/learn/ProgressSidebar";
 import { Starfield } from "@/components/leaderboard/Starfield";
 import {
-  MOCK_PYTHON_CHAPTERS,
   MOCK_USER_PROGRESS,
   Chapter,
-  Exercise,
   UserProgressData,
 } from "@/components/learn/pythonData";
 
+function getCourseSlugFromUrl(): string {
+  if (typeof window !== "undefined") {
+    const segments = window.location.pathname.split("/").filter(Boolean);
+    if (segments[0] === "learn" && segments[1]) {
+      return segments[1].toLowerCase();
+    }
+  }
+  return "python";
+}
+
+function getCourseStorageKey(course: string): string {
+  return `cosmodex_nodes_${course.toLowerCase()}`;
+}
+
+function formatCourseTitle(slug: string): string {
+  if (!slug) return "Python";
+  return slug
+    .split("-")
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(" ");
+}
+
 export default function PythonCoursePage() {
   const pathname = usePathname();
-  const [chapters, setChapters] = useState<Chapter[]>(MOCK_PYTHON_CHAPTERS);
+
+  const courseCode = useMemo(() => {
+    if (!pathname) return getCourseSlugFromUrl();
+    const segments = pathname.split("/").filter(Boolean);
+    return segments[0] === "learn" && segments[1] ? segments[1].toLowerCase() : "python";
+  }, [pathname]);
+
+  const courseDisplayName = useMemo(() => formatCourseTitle(courseCode), [courseCode]);
+  const storageKey = useMemo(() => getCourseStorageKey(courseCode), [courseCode]);
+
+  const [chapters, setChapters] = useState<Chapter[]>(() => {
+    try {
+      if (typeof window !== "undefined") {
+        const slug = getCourseSlugFromUrl();
+        const stored = sessionStorage.getItem(getCourseStorageKey(slug));
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            return parsed;
+          }
+        }
+      }
+    } catch {}
+    return [];
+  });
+  const [loadingChapters, setLoadingChapters] = useState<boolean>(() => {
+    try {
+      if (typeof window !== "undefined") {
+        const slug = getCourseSlugFromUrl();
+        const stored = sessionStorage.getItem(getCourseStorageKey(slug));
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            return false;
+          }
+        }
+      }
+    } catch {}
+    return true;
+  });
   const [userProgress, setUserProgress] = useState<UserProgressData>(MOCK_USER_PROGRESS);
-  const [selectedChapter, setSelectedChapter] = useState<Chapter>(MOCK_PYTHON_CHAPTERS[0]);
+  const [selectedChapterId, setSelectedChapterId] = useState<string>(() => {
+    try {
+      if (typeof window !== "undefined") {
+        const slug = getCourseSlugFromUrl();
+        const stored = sessionStorage.getItem(getCourseStorageKey(slug));
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            return parsed[0]?.id || "";
+          }
+        }
+      }
+    } catch {}
+    return "";
+  });
 
-  const [userSession, setUserSession] = useState<{
-    id?: string;
-    username?: string;
-    avatarId?: string;
-    level?: number;
-    xpTotal?: number;
-  } | null>(null);
+  const selectedChapter = useMemo(() => {
+    return chapters.find((c) => c.id === selectedChapterId) || chapters[0];
+  }, [chapters, selectedChapterId]);
 
-  const getUserStorageKey = useCallback(
-    (key: string) => {
-      const userIdentifier = userSession?.id || userSession?.username || "guest";
-      return `${key}_${userIdentifier}`;
-    },
-    [userSession]
-  );
-
-  // Scroll to top on navigation (unless a specific station hash is present)
   useEffect(() => {
     if (typeof window === "undefined") return;
 
@@ -78,7 +138,6 @@ export default function PythonCoursePage() {
     }
   }, [pathname]);
 
-  // Fetch authenticated session
   useEffect(() => {
     async function fetchUserSession() {
       try {
@@ -86,7 +145,6 @@ export default function PythonCoursePage() {
         if (res.ok) {
           const data = await res.json();
           if (data?.user?.username) {
-            setUserSession(data.user);
             setUserProgress((prev) => ({
               ...prev,
               username: data.user.username,
@@ -96,73 +154,138 @@ export default function PythonCoursePage() {
           }
         }
       } catch {
-        // Ignore network errors
       }
     }
     fetchUserSession();
   }, []);
 
-  // Load user-specific progress from localStorage
+
   useEffect(() => {
-    try {
-      const chaptersKey = getUserStorageKey("cosmodex_python_chapters");
-      const progressKey = getUserStorageKey("cosmodex_python_progress");
+    let active = true;
 
-      const savedChapters =
-        localStorage.getItem(chaptersKey) || localStorage.getItem("cosmodex_python_chapters");
-      const savedProgress =
-        localStorage.getItem(progressKey) || localStorage.getItem("cosmodex_python_progress");
-
-      if (savedChapters) {
-        const parsed = JSON.parse(savedChapters);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          const mergedChapters = MOCK_PYTHON_CHAPTERS.map((defaultCh) => {
-            const savedCh = parsed.find((c: Chapter) => c.id === defaultCh.id);
-            if (!savedCh) return defaultCh;
-
-            const mergedExercises = defaultCh.exercises.map((defaultEx) => {
-              const savedEx = savedCh.exercises?.find(
-                (e: Exercise) => e.id === defaultEx.id
-              );
-              return {
-                ...defaultEx,
-                isUnlocked: savedEx ? savedEx.isUnlocked : defaultEx.isUnlocked,
-                isCompleted: savedEx ? savedEx.isCompleted : defaultEx.isCompleted,
-              };
-            });
-
-            return {
-              ...defaultCh,
-              isUnlocked: savedCh.isUnlocked ?? defaultCh.isUnlocked,
-              isCompleted: savedCh.isCompleted ?? defaultCh.isCompleted,
-              exercises: mergedExercises,
-            };
-          });
-
-          // eslint-disable-next-line react-hooks/set-state-in-effect
-          setChapters(mergedChapters);
-          setSelectedChapter(mergedChapters[0]);
-        }
-      }
-
-      if (savedProgress) {
-        const parsedProg = JSON.parse(savedProgress);
-        if (parsedProg) {
-          setUserProgress({
-            ...parsedProg,
-            username: userSession?.username || parsedProg.username || "Explorer",
-            avatarUrl:
-              userSession?.avatarId || parsedProg.avatarUrl || "/images/avatars/nebula.webp",
+    async function loadCurriculum() {
+      try {
+        const res = await fetch(`/api/learning/tracks/${courseCode}`, {
+          cache: "no-store",
+          headers: { "Cache-Control": "no-cache" },
+        });
+        if (res.ok && active) {
+          const data = await res.json();
+          const incomingChapters: Chapter[] = Array.isArray(data?.chapters) ? data.chapters : [];
+          setChapters(incomingChapters);
+          try {
+            if (typeof window !== "undefined" && incomingChapters.length > 0) {
+              sessionStorage.setItem(storageKey, JSON.stringify(incomingChapters));
+            }
+          } catch {}
+          setSelectedChapterId((prev) => {
+            if (prev && incomingChapters.some((c) => c.id === prev)) {
+              return prev;
+            }
+            return incomingChapters[0]?.id || "";
           });
         }
+      } catch {
+        if (active) {
+          setChapters([]);
+        }
+      } finally {
+        if (active) {
+          setLoadingChapters(false);
+        }
       }
-    } catch {
-      // Ignore storage errors
     }
-  }, [userSession, getUserStorageKey]);
 
-  // Sync dynamic metrics
+    loadCurriculum();
+
+    const onFocus = () => {
+      loadCurriculum();
+    };
+
+    window.addEventListener("focus", onFocus);
+
+    return () => {
+      active = false;
+      window.removeEventListener("focus", onFocus);
+    };
+  }, [courseCode, storageKey]);
+
   useEffect(() => {
+    let active = true;
+
+    fetch(`/api/learning/progress?course=${courseCode}`, { cache: "no-store" })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (!active || !data?.progress) return;
+        const prog = data.progress;
+
+        const guestCompleted = new Set<string>();
+        try {
+          if (typeof window !== "undefined") {
+            for (let i = 0; i < localStorage.length; i++) {
+              const key = localStorage.key(i);
+              if (key && key.startsWith("station_completed_") && localStorage.getItem(key) === "true") {
+                guestCompleted.add(key.replace("station_completed_", ""));
+              }
+            }
+          }
+        } catch {
+        }
+
+        if (Array.isArray(prog.completedModuleIds) || Array.isArray(prog.completedStationSlugs)) {
+          const completedSlugs = new Set(prog.completedStationSlugs || []);
+          const completedIds = new Set(prog.completedModuleIds || []);
+          const completedNums = new Set(prog.completedStationNumbers || []);
+
+          setChapters((prev) =>
+            prev.map((ch) => {
+              const isCleared =
+                completedIds.has(ch.id) ||
+                completedSlugs.has(ch.id) ||
+                completedSlugs.has(ch.theoryLessonId || "") ||
+                completedNums.has(ch.number) ||
+                guestCompleted.has(ch.id) ||
+                guestCompleted.has(ch.theoryLessonId || "");
+              return {
+                ...ch,
+                isCompleted: Boolean(isCleared || ch.isCompleted),
+                isUnlocked: true,
+                exercises: (ch.exercises || []).map((ex) => ({
+                  ...ex,
+                  isUnlocked: true,
+                  isCompleted: Boolean(
+                    isCleared ||
+                    completedIds.has(ex.id) ||
+                    completedSlugs.has(ex.id) ||
+                    guestCompleted.has(ex.id) ||
+                    ex.isCompleted
+                  ),
+                })),
+              };
+            })
+          );
+        }
+
+        setUserProgress((prev) => ({
+          ...prev,
+          username: prog.user?.username || prev.username,
+          avatarUrl: prog.user?.avatarUrl || prev.avatarUrl,
+          level: prog.user?.level || prev.level,
+          exercisesCompleted: prog.totalCompletedExercises ?? prev.exercisesCompleted,
+          totalExercises: prog.totalExercises || prev.totalExercises,
+          projectsCompleted: prog.completedMilestoneProjects ?? prev.projectsCompleted,
+          totalProjects: prog.totalMilestoneProjects || prev.totalProjects,
+          xpEarned: prog.user?.xpTotal ?? prev.xpEarned,
+        }));
+      })
+      .catch(() => {});
+
+    return () => {
+      active = false;
+    };
+  }, [courseCode]);
+
+  const effectiveUserProgress = useMemo(() => {
     const totalEx = chapters.reduce(
       (acc, ch) => acc + (ch.exercises ? ch.exercises.length : 0),
       0
@@ -177,38 +300,18 @@ export default function PythonCoursePage() {
       (ch) => ch.isMilestone && ch.isCompleted
     ).length;
 
-    const completedChaptersCount = chapters.filter((ch) => ch.isCompleted).length;
-    const totalBadgesCount = chapters.length;
-
-    const ch4Done = chapters[3]?.isCompleted ?? false;
-    const ch8Done = chapters[7]?.isCompleted ?? false;
-    const cheatSheetsCount = (ch4Done ? 1 : 0) + (ch8Done ? 1 : 0);
-
     const totalXpSum = chapters.reduce((acc, ch) => acc + (ch.xpValue || 0), 0) || 685;
-    const courseEarnedXp = completedEx * 55 + completedChaptersCount * 50;
-    const currentTotalXp = (userSession?.xpTotal ?? 0) + courseEarnedXp;
-    const currentLevel = userSession?.level ?? Math.max(1, Math.floor(currentTotalXp / 250) + 1);
 
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setUserProgress((prev) => ({
-      ...prev,
-      username: userSession?.username || prev.username || "Explorer",
-      avatarUrl: userSession?.avatarId || prev.avatarUrl || "/images/avatars/nebula.webp",
-      level: currentLevel,
-      totalExercises: totalEx || prev.totalExercises,
-      exercisesCompleted: completedEx,
+    return {
+      ...userProgress,
+      totalExercises: totalEx || userProgress.totalExercises,
+      exercisesCompleted: Math.max(userProgress.exercisesCompleted, completedEx),
       totalProjects: totalProjectsCount,
-      projectsCompleted: completedProjectsCount,
+      projectsCompleted: Math.max(userProgress.projectsCompleted, completedProjectsCount),
       totalXp: totalXpSum,
-      xpEarned: courseEarnedXp,
-      totalBadges: totalBadgesCount,
-      badgesUnlocked: completedChaptersCount,
-      totalCheatSheets: 2,
-      cheatSheetsUnlocked: cheatSheetsCount,
-    }));
-  }, [chapters, userSession]);
+    };
+  }, [chapters, userProgress]);
 
-  // Scroll to station if a specific hash exists in URL
   useEffect(() => {
     if (typeof window === "undefined") return;
     const hash = window.location.hash.replace("#", "").toLowerCase();
@@ -218,40 +321,19 @@ export default function PythonCoursePage() {
         (c) => c.id.toLowerCase() === hash || c.theoryLessonId?.toLowerCase() === hash
       );
       if (matched) {
-        // eslint-disable-next-line react-hooks/set-state-in-effect
-        setSelectedChapter(matched);
         setTimeout(() => {
+          setSelectedChapterId(matched.id);
           const el = document.getElementById(matched.id) || document.getElementById(hash);
           if (el) el.scrollIntoView({ behavior: "smooth", block: "center" });
-        }, 300);
+        }, 100);
       }
     }
   }, [chapters]);
-
-  // Save progress to localStorage
-  useEffect(() => {
-    try {
-      const chaptersKey = getUserStorageKey("cosmodex_python_chapters");
-      const progressKey = getUserStorageKey("cosmodex_python_progress");
-
-      localStorage.setItem(chaptersKey, JSON.stringify(chapters));
-      localStorage.setItem(progressKey, JSON.stringify(userProgress));
-      localStorage.setItem("cosmodex_python_chapters", JSON.stringify(chapters));
-      localStorage.setItem("cosmodex_python_progress", JSON.stringify(userProgress));
-    } catch {
-      // Ignore storage errors
-    }
-  }, [chapters, userProgress, userSession, getUserStorageKey]);
-
-  // Find the first unlocked/in-progress chapter for the CTA
-  const firstStation = chapters.find((ch) => ch.isUnlocked && !ch.isCompleted) || chapters[0];
-  const ctaHref = `/learn/py-1/theory/${firstStation?.theoryLessonId || firstStation?.id || "in-the-beginning"}`;
 
   return (
     <main className="min-h-screen bg-[#05040d] relative text-white">
       <Navbar />
 
-      {/* Background Space Effects */}
       <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
         <Starfield />
         <div className="absolute top-[5%] left-[25%] w-[45rem] h-[30rem] bg-purple-900/20 rounded-full blur-[140px] mix-blend-screen" />
@@ -260,7 +342,6 @@ export default function PythonCoursePage() {
       </div>
 
       <div className="relative z-10 pt-24 pb-20 px-4 sm:px-8 max-w-7xl mx-auto">
-        {/* Back button */}
         <div className="mb-4 sm:mb-2">
           <Link
             href="/learn"
@@ -285,63 +366,64 @@ export default function PythonCoursePage() {
           </Link>
         </div>
 
-        {/* Galaxy Hero */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
           className="relative mb-14 pt-4 pb-10 flex flex-col items-center text-center"
         >
-          <h1 className="text-6xl sm:text-8xl md:text-9xl font-black font-display tracking-widest text-transparent bg-clip-text bg-gradient-to-r from-[#E873C3] via-[#C453D6] to-[#8D37D6] mb-5">
-            PYTHON
+          <h1 className="text-6xl sm:text-8xl md:text-9xl font-black font-display tracking-widest text-transparent bg-clip-text bg-gradient-to-r from-[#E873C3] via-[#C453D6] to-[#8D37D6] mb-5 uppercase">
+            {courseDisplayName}
           </h1>
 
-          <p className="text-base sm:text-lg text-white/85 font-mono leading-relaxed max-w-2xl mx-auto mb-9">
-            No endless list of chapters — chart a course through the{" "}
-            <span className="text-[#E873C3] font-bold">Python galaxy</span>. Every planet is a
-            station of exercises, and the{" "}
-            <span className="text-[#C453D6] font-bold">dotted trail</span> shows exactly where you
-            fly next.
+          <p className="text-base sm:text-lg text-white/85 font-mono leading-relaxed max-w-2xl mx-auto">
+            Chart a course through the{" "}
+            <span className="text-[#E873C3] font-bold">{courseDisplayName} galaxy</span>. Every planet is a
+            station of theory &amp; knowledge check MCQs.
           </p>
-
-          <div className="flex flex-wrap items-center justify-center gap-5">
-            {/* Primary CTA → goes directly to theory */}
-            <Link
-              href={ctaHref}
-              className="relative overflow-hidden group px-8 py-3.5 rounded-xl bg-gradient-to-r from-[#E873C3] via-[#C453D6] to-[#8D37D6] hover:from-[#f085ce] hover:via-[#cf60e0] hover:to-[#9a42e3] text-white font-mono font-bold text-xs sm:text-sm tracking-wider uppercase transition-all duration-300 transform hover:scale-[1.03] active:scale-95 cursor-pointer flex items-center gap-2.5 shadow-[0_0_24px_rgba(232,115,195,0.35)]"
-            >
-              <span className="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-white/35 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-in-out pointer-events-none" />
-              <BookOpen size={16} />
-              <span>START STATION 01</span>
-            </Link>
-
-            <div className="flex items-center gap-2 text-xs sm:text-sm font-mono font-bold text-amber-400 bg-amber-400/10 px-4 py-2.5 rounded-xl border border-amber-400/30">
-              <Star size={15} className="fill-amber-400 text-amber-400" />
-              <span>
-                {userProgress.xpEarned} / {userProgress.totalXp} XP EARNED
-              </span>
-            </div>
-          </div>
         </motion.div>
 
-        {/* 2-Column Layout: Galaxy Map + Sidebar */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch">
-          <div className="lg:col-span-8">
-            <GalaxyPathMap
-              chapters={chapters}
-              selectedChapterId={selectedChapter.id}
-              onSelectChapter={(chapter) => setSelectedChapter(chapter)}
-            />
+        {loadingChapters ? (
+          <div className="flex flex-col items-center justify-center py-20 space-y-4">
+            <RefreshCw size={28} className="animate-spin text-cyan-400 opacity-80" />
+            <p className="text-xs font-mono uppercase tracking-widest text-white/50">
+              Loading Live Curriculum Stations...
+            </p>
           </div>
+        ) : chapters.length === 0 ? (
+          <div className="bg-[#0c0920]/80 border border-white/10 rounded-3xl p-12 text-center space-y-4 max-w-lg mx-auto backdrop-blur-xl">
+            <div className="w-14 h-14 rounded-full bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center mx-auto text-cyan-300">
+              <Sparkles size={24} />
+            </div>
+            <h3 className="text-xl font-bold font-mono text-white uppercase tracking-wider">
+              No Published Stations
+            </h3>
+            <p className="text-xs sm:text-sm font-mono text-white/60 leading-relaxed">
+              Curriculum stations created in the CosmoDex Admin portal will appear here immediately once published.
+            </p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+            <div className="lg:col-span-7">
+              <GalaxyPathMap
+                chapters={chapters}
+                selectedChapterId={selectedChapter?.id || ""}
+                onSelectChapter={(chapter) => setSelectedChapterId(chapter.id)}
+                courseTitle={courseDisplayName}
+              />
+            </div>
 
-          <div className="lg:col-span-4 relative h-full">
-            <ProgressSidebar
-              selectedChapter={selectedChapter}
-              userProgress={userProgress}
-              onLaunchMission={() => {}}
-            />
+            <div className="lg:col-span-5 w-full">
+              {selectedChapter && (
+                <ProgressSidebar
+                  selectedChapter={selectedChapter}
+                  userProgress={effectiveUserProgress}
+                  courseId={courseCode}
+                />
+              )}
+            </div>
           </div>
-        </div>
+        )}
       </div>
     </main>
   );

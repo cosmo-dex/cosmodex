@@ -108,16 +108,23 @@ export default function MatchmakingPanel({ socket, userId, username, onMatchFoun
   const [stats, setStats] = useState<UserStats | null>(null);
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
   const [queueCounts, setQueueCounts] = useState<{ code: number; mcq: number; total: number }>({ code: 0, mcq: 0, total: 0 });
+  const [cancelledByOpponent, setCancelledByOpponent] = useState(false);
 
   const onMatchFoundRef = useRef(onMatchFound);
   const hasTransitionedRef = useRef(false);
+  const matchPayloadRef = useRef<MatchInfo | null>(null);
+  const cancelTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     onMatchFoundRef.current = onMatchFound;
   }, [onMatchFound]);
 
+  useEffect(() => {
+    matchPayloadRef.current = matchPayload;
+  }, [matchPayload]);
+
   const fetchStats = useCallback(() => {
-    fetch("/api/user/stats")
+    fetch("/api/user/stats", { cache: "no-store" })
       .then((res) => {
         if (!res.ok) return null;
         return res.json();
@@ -171,8 +178,9 @@ export default function MatchmakingPanel({ socket, userId, username, onMatchFoun
     if (!socket) return;
 
     const handleMatchFound = (payload: MatchInfo) => {
-      console.log("[MatchmakingPanel] match_found received", payload);
+      setCancelledByOpponent(false);
       setMatchPayload(payload);
+      matchPayloadRef.current = payload;
       setIsReady(false);
       setOpponentReady(false);
       setOpponent({
@@ -182,11 +190,12 @@ export default function MatchmakingPanel({ socket, userId, username, onMatchFoun
       });
       setPhase("MATCH_FOUND");
       setQueueState("matched");
+      socket.emit("join_room", { roomId: payload.roomId });
     };
 
     const handlePlayerReadyUpdate = (data: { readyUserIds?: string[]; allReady?: boolean }) => {
-      if (data?.readyUserIds && matchPayload) {
-        if (data.readyUserIds.includes(matchPayload.opponentId)) {
+      if (data?.readyUserIds && matchPayloadRef.current) {
+        if (data.readyUserIds.includes(matchPayloadRef.current.opponentId)) {
           setOpponentReady(true);
         }
         if (data.readyUserIds.includes(userId)) {
@@ -196,11 +205,32 @@ export default function MatchmakingPanel({ socket, userId, username, onMatchFoun
     };
 
     const handleMatchStart = () => {
-      console.log("[MatchmakingPanel] match_start received → entering battle!");
-      if (matchPayload && !hasTransitionedRef.current) {
+      const payload = matchPayloadRef.current;
+      if (payload && !hasTransitionedRef.current) {
         hasTransitionedRef.current = true;
-        onMatchFoundRef.current(matchPayload);
+        onMatchFoundRef.current(payload);
       }
+    };
+
+    const handleMatchCancelled = (data?: { cancelledBy?: string }) => {
+      if (data?.cancelledBy && data.cancelledBy === userId) {
+        return;
+      }
+      setCancelledByOpponent(true);
+      setIsReady(false);
+      setOpponentReady(false);
+      if (cancelTimeoutRef.current) {
+        clearTimeout(cancelTimeoutRef.current);
+      }
+      cancelTimeoutRef.current = setTimeout(() => {
+        setCancelledByOpponent(false);
+        setQueueState("idle");
+        setPhase("SEARCHING");
+        setOpponent(null);
+        setMatchPayload(null);
+        matchPayloadRef.current = null;
+        hasTransitionedRef.current = false;
+      }, 2500);
     };
 
     const handleQueueStatus = (status: { status?: string; codeQueueLength?: number; mcqQueueLength?: number; totalInQueue?: number }) => {
@@ -224,15 +254,24 @@ export default function MatchmakingPanel({ socket, userId, username, onMatchFoun
     };
 
     const handleLeft = () => {
+      if (cancelTimeoutRef.current) {
+        clearTimeout(cancelTimeoutRef.current);
+        cancelTimeoutRef.current = null;
+      }
       setQueueState("idle");
       setPhase("SEARCHING");
       setOpponent(null);
       setMatchPayload(null);
+      matchPayloadRef.current = null;
       setIsReady(false);
       setOpponentReady(false);
     };
 
     const handleError = (err: { message: string }) => {
+      if (cancelTimeoutRef.current) {
+        clearTimeout(cancelTimeoutRef.current);
+        cancelTimeoutRef.current = null;
+      }
       setError(err.message);
       setQueueState("idle");
       setPhase("SEARCHING");
@@ -243,24 +282,35 @@ export default function MatchmakingPanel({ socket, userId, username, onMatchFoun
     socket.on("match_found", handleMatchFound);
     socket.on("player_ready_update", handlePlayerReadyUpdate);
     socket.on("match_start", handleMatchStart);
+    socket.on("match_cancelled", handleMatchCancelled);
     socket.on("queue_status", handleQueueStatus);
     socket.on("queue_joined", handleQueueJoined);
     socket.on("queue_left", handleLeft);
     socket.on("error", handleError);
 
     return () => {
+      if (cancelTimeoutRef.current) {
+        clearTimeout(cancelTimeoutRef.current);
+        cancelTimeoutRef.current = null;
+      }
       socket.off("match_found", handleMatchFound);
       socket.off("player_ready_update", handlePlayerReadyUpdate);
       socket.off("match_start", handleMatchStart);
+      socket.off("match_cancelled", handleMatchCancelled);
       socket.off("queue_status", handleQueueStatus);
       socket.off("queue_joined", handleQueueJoined);
       socket.off("queue_left", handleLeft);
       socket.off("error", handleError);
     };
-  }, [socket, matchPayload, userId]);
+  }, [socket, userId]);
 
 
   const joinQueue = () => {
+    if (cancelTimeoutRef.current) {
+      clearTimeout(cancelTimeoutRef.current);
+      cancelTimeoutRef.current = null;
+    }
+    setCancelledByOpponent(false);
     if (!socket?.connected) {
       setError("Not connected to arena. Reconnecting...");
       return;
@@ -269,6 +319,9 @@ export default function MatchmakingPanel({ socket, userId, username, onMatchFoun
     hasTransitionedRef.current = false;
     setIsReady(false);
     setOpponentReady(false);
+    setOpponent(null);
+    setMatchPayload(null);
+    matchPayloadRef.current = null;
     setQueueState("queuing");
     setPhase("SEARCHING");
 
@@ -276,12 +329,23 @@ export default function MatchmakingPanel({ socket, userId, username, onMatchFoun
   };
 
   const leaveQueue = () => {
+    if (cancelTimeoutRef.current) {
+      clearTimeout(cancelTimeoutRef.current);
+      cancelTimeoutRef.current = null;
+    }
+    const currentPayload = matchPayloadRef.current;
+    if (currentPayload) {
+      socket?.emit("leave_match", { roomId: currentPayload.roomId });
+    }
     setQueueState("idle");
     setPhase("SEARCHING");
     setOpponent(null);
     setMatchPayload(null);
+    matchPayloadRef.current = null;
     setIsReady(false);
     setOpponentReady(false);
+    setCancelledByOpponent(false);
+    hasTransitionedRef.current = false;
     socket?.emit("leave_queue", { userId });
   };
 
@@ -719,6 +783,7 @@ export default function MatchmakingPanel({ socket, userId, username, onMatchFoun
                   opponent={opponent}
                   isReady={isReady}
                   opponentReady={opponentReady}
+                  cancelledByOpponent={cancelledByOpponent}
                   onEnterBattle={handleEnterBattle}
                   onCancel={leaveQueue}
                 />

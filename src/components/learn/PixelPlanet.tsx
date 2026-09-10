@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useId } from "react";
-import { Lock, Target } from "lucide-react";
+import { Target } from "lucide-react";
 import { PlanetType } from "./pythonData";
 import ThreeRocket from "./ThreeRocket";
 
@@ -13,7 +13,6 @@ interface PixelPlanetProps {
   isUnlocked: boolean;
   isCurrent?: boolean;
   isMilestone?: boolean;
-  isClubLocked?: boolean;
   isSelected?: boolean;
   onClick?: () => void;
 }
@@ -26,7 +25,6 @@ export default function PixelPlanet({
   isUnlocked,
   isCurrent = false,
   isMilestone = false,
-  isClubLocked = false,
   isSelected = false,
   onClick,
 }: PixelPlanetProps) {
@@ -318,28 +316,24 @@ export default function PixelPlanet({
               ? "scale-105"
               : isColored
               ? "opacity-100"
-              : "opacity-70 grayscale"
+              : "opacity-90"
           }`}
         >
           {renderPlanetGraphic()}
         </div>
 
-        {/* ── Top-Left Badge Bubble (Number, Lock, or Milestone Icon) ── */}
+        {/* ── Top-Left Badge Bubble (Number or Milestone Icon) ── */}
         <div
           className={`absolute -top-2 -left-2 w-8 h-8 rounded-full flex items-center justify-center text-xs font-mono font-black shadow-xl z-20 border transition-all duration-500 cubic-bezier(0.16, 1, 0.3, 1) group-hover:scale-105 ${
             isMilestone
               ? "bg-[#090518] text-[#00FFE9] border-[#00FFE9]/80 shadow-[0_0_10px_rgba(0,0,0,0.3)]"
-              : isUnlocked
-              ? theme.badgeBg
-              : "bg-[#181328] text-white/50 border-white/20"
+              : theme.badgeBg || "bg-[#00FFE9] text-[#050508] border-[#00FFE9]"
           }`}
         >
           {isMilestone ? (
             <Target size={15} className="text-[#00FFE9]" />
-          ) : isUnlocked ? (
-            <span>{number}</span>
           ) : (
-            <Lock size={13} className="text-white/60" />
+            <span>{number}</span>
           )}
         </div>
       </div>
@@ -352,9 +346,7 @@ export default function PixelPlanet({
               ? "text-[#00FFE9] drop-shadow-[0_0_8px_rgba(0,255,233,0.4)]"
               : isSelected || isHovered
               ? theme.textHover
-              : isUnlocked
-              ? "text-white/90 group-hover:text-white"
-              : "text-white/50 group-hover:text-white/70"
+              : "text-white/90 group-hover:text-white"
           }`}
         >
           {title}
@@ -368,13 +360,6 @@ export default function PixelPlanet({
             </div>
             <span>YOU ARE HERE</span>
           </div>
-        )}
-
-        {/* "CLUB" tag for locked club chapters */}
-        {isClubLocked && !isCurrent && (
-          <span className="mt-1 text-[9px] font-mono font-bold text-pink-400 tracking-widest uppercase bg-pink-500/15 px-2 py-0.2 rounded border border-pink-500/30">
-            CLUB
-          </span>
         )}
       </div>
     </div>

@@ -1,8 +1,6 @@
-import { PYTHON_COURSE_CHAPTERS } from "@/data/courses/python";
-
 export interface Exercise {
   id: string;
-  numberLabel: string; // e.g. "Exercise 1" or "Bonus Article"
+  numberLabel: string;
   title: string;
   isUnlocked: boolean;
   isCompleted?: boolean;
@@ -30,7 +28,7 @@ export type PlanetType =
 export interface Chapter {
   id: string;
   number: number;
-  stationNumber: string; // e.g. "STATION 01"
+  stationNumber: string;
   title: string;
   description: string;
   xpValue: number;
@@ -64,31 +62,20 @@ export interface UserProgressData {
   totalCheatSheets: number;
 }
 
-export const MOCK_PYTHON_CHAPTERS: Chapter[] = PYTHON_COURSE_CHAPTERS as Chapter[];
-
-const TOTAL_PYTHON_EXERCISES = MOCK_PYTHON_CHAPTERS.reduce(
-  (acc, ch) => acc + (ch.exercises ? ch.exercises.length : 0),
-  0
-) || 43;
-
-const TOTAL_PYTHON_XP = MOCK_PYTHON_CHAPTERS.reduce(
-  (acc, ch) => acc + (ch.xpValue || 0),
-  0
-) || 685;
+export const MOCK_PYTHON_CHAPTERS: Chapter[] = [];
 
 export const MOCK_USER_PROGRESS: UserProgressData = {
   username: "Explorer",
   level: 1,
   avatarUrl: "/images/avatars/nebula.webp",
   exercisesCompleted: 0,
-  totalExercises: TOTAL_PYTHON_EXERCISES,
+  totalExercises: 0,
   projectsCompleted: 0,
-  totalProjects: 2,
+  totalProjects: 0,
   xpEarned: 0,
-  totalXp: TOTAL_PYTHON_XP,
+  totalXp: 0,
   badgesUnlocked: 0,
   totalBadges: 8,
   cheatSheetsUnlocked: 0,
   totalCheatSheets: 2,
 };
-

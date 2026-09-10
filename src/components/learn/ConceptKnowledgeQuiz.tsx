@@ -5,7 +5,6 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   CheckCircle2,
   XCircle,
-  Trophy,
   RotateCcw,
   Zap,
   Award,
@@ -13,7 +12,7 @@ import {
   Target,
   Sparkles,
 } from "lucide-react";
-import { QuizQuestion } from "@/data/courses/python/quizData";
+import { QuizQuestion } from "@/data/theoryExercisesData";
 
 interface ConceptKnowledgeQuizProps {
   questions: QuizQuestion[];
@@ -120,10 +119,9 @@ export default function ConceptKnowledgeQuiz({
               type="button"
               onClick={() => setActiveQuestionIndex(idx)}
               className={`relative flex-shrink-0 w-9 h-9 rounded-xl border font-mono text-[11px] font-black transition-all cursor-pointer
-                ${
-                  isCurrent && !isDone
-                    ? "bg-[#9E00F6]/20 border-[#9E00F6] text-white shadow-[0_0_12px_rgba(158,0,246,0.4)]"
-                    : isDone
+                ${isCurrent && !isDone
+                  ? "bg-[#9E00F6]/20 border-[#9E00F6] text-white shadow-[0_0_12px_rgba(158,0,246,0.4)]"
+                  : isDone
                     ? isCorrect
                       ? "bg-emerald-950/60 border-emerald-500/80 text-emerald-300"
                       : "bg-rose-950/60 border-rose-500/80 text-rose-300"
@@ -234,11 +232,10 @@ export default function ConceptKnowledgeQuiz({
                 <motion.div
                   initial={{ opacity: 0, y: 8 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className={`flex items-start gap-3 p-4 rounded-xl border text-sm leading-relaxed ${
-                    isCurrentCorrect
+                  className={`flex items-start gap-3 p-4 rounded-xl border text-sm leading-relaxed ${isCurrentCorrect
                       ? "bg-emerald-950/30 border-emerald-500/30 text-emerald-200"
                       : "bg-[#1a0a2e] border-[#9E00F6]/30 text-purple-200"
-                  }`}
+                    }`}
                 >
                   <div className="shrink-0 mt-0.5">
                     {isCurrentCorrect ? (
@@ -303,7 +300,7 @@ export default function ConceptKnowledgeQuiz({
                   <Sparkles size={14} className="text-amber-400" />
                 </h4>
                 <p className="text-xs text-white/60 mt-0.5 font-sans">
-                  {score} of {totalQuestions} correct ({Math.round((score / totalQuestions) * 100)}%) — XP awarded!
+                  {score} of {totalQuestions} correct ({Math.round((score / totalQuestions) * 100)}%) — Mastery recorded!
                 </p>
               </div>
             </div>
@@ -317,10 +314,6 @@ export default function ConceptKnowledgeQuiz({
                 <RotateCcw size={12} />
                 Retry
               </button>
-              <div className="px-4 py-2 rounded-xl bg-amber-500/15 border border-amber-500/35 text-amber-300 text-xs font-mono font-black flex items-center gap-2">
-                <Trophy size={13} className="text-amber-400" />
-                +{totalQuestions * 5} XP
-              </div>
             </div>
           </motion.div>
         )}
