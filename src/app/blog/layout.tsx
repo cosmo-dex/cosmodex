@@ -24,6 +24,17 @@ export const metadata: Metadata = {
     description:
       "Insights, tutorials, and dispatches on gamified coding, real-time 1v1 battle arenas, and Python mastery.",
   },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-video-preview": -1,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+    },
+  },
 };
 
 export default function BlogLayout({
