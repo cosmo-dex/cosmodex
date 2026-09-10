@@ -84,10 +84,10 @@ function parseMarkdownToSections(body: string, defaultIllustration?: string): Th
 }
 
 import { Chapter } from "@/components/learn/pythonData";
+import { getQuizForChapter } from "@/data/courses/python/quizData";
 
 export function getExerciseFromMarkdown(courseId: string, lessonId: string): TheoryExercise | null {
   try {
-    // 1. First check if course is Python and lesson matches a chapter in our JSON course data
     if (courseId === "py-1" || courseId === "python") {
       const chapters = PYTHON_COURSE_CHAPTERS as unknown as Chapter[];
       const chapterIndex = chapters.findIndex(
@@ -98,6 +98,7 @@ export function getExerciseFromMarkdown(courseId: string, lessonId: string): The
         const ch = chapters[chapterIndex];
         const prevChapter = chapters[chapterIndex - 1];
         const nextChapter = chapters[chapterIndex + 1];
+        const quizData = getQuizForChapter(ch.id || ch.theoryLessonId || lessonId);
 
         if (ch.documentation && ch.documentation.sections) {
           return {
@@ -113,6 +114,9 @@ export function getExerciseFromMarkdown(courseId: string, lessonId: string): The
             activeGrindersCount: 4,
             prevLessonId: prevChapter ? (prevChapter.theoryLessonId || prevChapter.id) : undefined,
             nextLessonId: nextChapter ? (nextChapter.theoryLessonId || nextChapter.id) : undefined,
+            codeExamples: quizData.codeExamples,
+            practiceQuestion: quizData.practiceQuestion,
+            mcqs: quizData.mcqs,
             sections: ch.documentation.sections.map((sec, i) => ({
               id: `sec-${i + 1}`,
               heading: sec.heading,

@@ -41,6 +41,25 @@ interface RawDbBlog {
   updated_at?: Date;
 }
 
+export function getValidImageUrl(
+  url?: string | null,
+  fallback = 'https://images.unsplash.com/photo-1550745165-9bc0b252726f?q=80&w=1200&auto=format&fit=crop'
+): string {
+  if (!url || typeof url !== 'string') return fallback;
+  const trimmed = url.trim();
+  if (!trimmed) return fallback;
+  if (trimmed.startsWith('/')) return trimmed;
+  if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) {
+    try {
+      new URL(trimmed);
+      return trimmed;
+    } catch {
+      return fallback;
+    }
+  }
+  return fallback;
+}
+
 function mapDbToBlogPost(row: RawDbBlog): BlogPostItem {
   return {
     id: row.id,
@@ -52,9 +71,9 @@ function mapDbToBlogPost(row: RawDbBlog): BlogPostItem {
     author: {
       name: row.author_name,
       role: row.author_role,
-      avatar: row.author_avatar,
+      avatar: getValidImageUrl(row.author_avatar, '/images/avatars/nebula.webp'),
     },
-    coverImage: row.cover_image,
+    coverImage: getValidImageUrl(row.cover_image),
     readTime: row.read_time,
     publishedAt: row.published_at,
     featured: Boolean(row.featured),
@@ -64,7 +83,10 @@ function mapDbToBlogPost(row: RawDbBlog): BlogPostItem {
   };
 }
 
-async function ensureTableAndSeed() {
+let tableEnsured = false;
+
+export async function ensureTableAndSeed() {
+  if (tableEnsured) return;
   try {
     await prisma.$executeRawUnsafe(`
       CREATE TABLE IF NOT EXISTS blogs (
@@ -114,6 +136,7 @@ async function ensureTableAndSeed() {
         );
       }
     }
+    tableEnsured = true;
   } catch (err) {
     console.error('[blogs] ensureTableAndSeed error:', err);
   }
@@ -125,24 +148,26 @@ export async function getAllBlogs(): Promise<BlogPostItem[]> {
     const rows = (await prisma.$queryRawUnsafe(
       'SELECT * FROM blogs ORDER BY created_at DESC;'
     )) as RawDbBlog[];
-    return rows.map(mapDbToBlogPost);
+    if (rows && rows.length > 0) {
+      return rows.map(mapDbToBlogPost);
+    }
   } catch (err) {
     console.error('[getAllBlogs] error:', err);
-    return BLOG_POSTS.map((p) => ({
-      id: p.id,
-      slug: p.slug,
-      title: p.title,
-      excerpt: p.excerpt,
-      content: p.content,
-      category: p.category,
-      author: p.author,
-      coverImage: p.coverImage,
-      readTime: p.readTime,
-      publishedAt: p.publishedAt,
-      featured: Boolean(p.featured),
-      tags: p.tags,
-    }));
   }
+  return BLOG_POSTS.map((p) => ({
+    id: p.id,
+    slug: p.slug,
+    title: p.title,
+    excerpt: p.excerpt,
+    content: p.content,
+    category: p.category,
+    author: p.author,
+    coverImage: p.coverImage,
+    readTime: p.readTime,
+    publishedAt: p.publishedAt,
+    featured: Boolean(p.featured),
+    tags: p.tags,
+  }));
 }
 
 export async function getBlogBySlug(slug: string): Promise<BlogPostItem | null> {
@@ -152,7 +177,7 @@ export async function getBlogBySlug(slug: string): Promise<BlogPostItem | null> 
       'SELECT * FROM blogs WHERE slug = $1 LIMIT 1;',
       slug
     )) as RawDbBlog[];
-    if (rows.length > 0) {
+    if (rows && rows.length > 0) {
       return mapDbToBlogPost(rows[0]);
     }
   } catch (err) {
@@ -184,7 +209,6 @@ export async function createBlog(data: Omit<BlogPostItem, 'id'> & { id?: string 
   const slug = data.slug || data.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '');
   const publishedAt = data.publishedAt || new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 
-  // If featured is true, optionally un-feature others
   if (data.featured) {
     await prisma.$executeRawUnsafe('UPDATE blogs SET featured = false WHERE featured = true;').catch(() => {});
   }

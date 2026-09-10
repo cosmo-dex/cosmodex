@@ -22,13 +22,22 @@ interface MatchInfo {
   mode: 'code' | 'mcq';
 }
 
-const ARENA_URL = process.env.NEXT_PUBLIC_BATTLE_ARENA_URL || 'http://localhost:3001';
+function getArenaUrl(): string {
+  if (typeof window !== 'undefined') {
+    const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+    if (!isLocal && process.env.NEXT_PUBLIC_BATTLE_ARENA_URL?.includes('localhost')) {
+      return 'https://battle-arena-golang.onrender.com';
+    }
+  }
+  return process.env.NEXT_PUBLIC_BATTLE_ARENA_URL || 'http://localhost:3001';
+}
 
 export default function BattlePage() {
   const [user, setUser] = useState<UserSession | null>(null);
   const [loading, setLoading] = useState(true);
   const [matchInfo, setMatchInfo] = useState<MatchInfo | null>(null);
   const [socket, setSocket] = useState<ArenaSocket | null>(null);
+  const [refreshKey, setRefreshKey] = useState(0);
   const matchInfoRef = useRef<MatchInfo | null>(null);
 
   // Keep ref in sync so socket callbacks always see latest value
@@ -38,6 +47,7 @@ export default function BattlePage() {
 
   useEffect(() => {
     let activeSocket: ArenaSocket | null = null;
+    const arenaUrl = getArenaUrl();
 
     fetch('/api/battle/token')
       .then((res) => {
@@ -48,10 +58,10 @@ export default function BattlePage() {
         if (data.token && data.userId) {
           setUser({ userId: data.userId, username: data.username });
 
-          activeSocket = createArenaSocket(ARENA_URL, {
+          activeSocket = createArenaSocket(arenaUrl, {
             auth: { token: data.token },
             reconnection: true,
-            reconnectionAttempts: 10,
+            reconnectionAttempts: 15,
             reconnectionDelay: 1000,
           });
 
@@ -72,6 +82,7 @@ export default function BattlePage() {
 
 
 
+
   // ── ACTIVE MATCH: full-screen takeover (no navbar / hero) ──────────────────
   if (matchInfo && user) {
     return (
@@ -81,11 +92,15 @@ export default function BattlePage() {
           matchInfo={matchInfo}
           userId={user.userId}
           username={user.username}
-          onLeave={() => setMatchInfo(null)}
+          onLeave={() => {
+            setMatchInfo(null);
+            setRefreshKey((k) => k + 1);
+          }}
         />
       </div>
     );
   }
+
 
   // ── LOBBY / MATCHMAKING ───────────────────────────────────────────────────
   return (
@@ -195,12 +210,14 @@ export default function BattlePage() {
           ) : (
             <div className="w-full flex justify-center">
               <MatchmakingPanel
+                key={refreshKey}
                 socket={socket}
                 userId={user.userId}
                 username={user.username}
                 onMatchFound={(info) => setMatchInfo(info)}
               />
             </div>
+
           )}
         </section>
       </div>

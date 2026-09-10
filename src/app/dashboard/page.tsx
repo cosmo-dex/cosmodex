@@ -6,9 +6,8 @@ import GetStartedCard from "@/components/dashboard/GetStartedCard";
 import CourseSuggestions from "@/components/dashboard/CourseSuggestions";
 import Achievements from "@/components/dashboard/Achievements";
 import ProfileCard from "@/components/dashboard/ProfileCard";
-import ActivityFeed from "@/components/dashboard/ActivityFeed";
-import CrewPromoCard from "@/components/dashboard/CrewPromoCard";
 import Footer from "@/components/dashboard/Footer";
+import DailyStreakModal from "@/components/streak/DailyStreakModal";
 import { verifySession, SESSION_COOKIE } from '@/lib/session';
 
 export default async function DashboardPage() {
@@ -34,9 +33,9 @@ export default async function DashboardPage() {
 
   // Fetch dynamic data server-side in parallel
   let streak = 0;
+  let codeElo = 1000;
   let badgeCount = 0;
   let badges: Array<{ id: string; name: string; description: string | null; earnedAt: string | null }> = [];
-  let activities: Array<{ id: string; type: string; label: string; timestamp: string; xp?: number }> = [];
   let enrollments: Array<{
     id: string;
     languageName: string;
@@ -60,10 +59,10 @@ export default async function DashboardPage() {
         take: 5,
       });
 
-      const languageIds = userEnrollments.map(e => e.languages.id);
+      const languageIds = userEnrollments.map((e) => e.language_id);
 
       // Then fetch other data in parallel
-      const [dbUser, arenaStats, userBadges, recentProgress, languageModules, userModuleCompletions] = await Promise.all([
+      const [dbUser, arenaStats, battleStats, userBadges, languageModules, userModuleCompletions] = await Promise.all([
         prisma.users.findUnique({
           where: { id: userId },
           select: { avatar_url: true, username: true, experience_level: true, level: true, xp_total: true },
@@ -72,6 +71,10 @@ export default async function DashboardPage() {
           where: { user_id: userId },
           select: { current_streak: true, total_xp: true, total_solved: true },
         }),
+        prisma.battle_user_stats.findUnique({
+          where: { user_id: userId },
+          select: { elo_rating: true },
+        }),
         prisma.user_badges.findMany({
           where: { user_id: userId },
           include: {
@@ -79,19 +82,6 @@ export default async function DashboardPage() {
           },
           orderBy: { earned_at: 'desc' },
           take: 10,
-        }),
-        prisma.progress.findMany({
-          where: { user_id: userId, is_correct: true },
-          include: {
-            modules: {
-              select: {
-                title: true,
-                languages: { select: { name: true } },
-              },
-            },
-          },
-          orderBy: { completed_at: 'desc' },
-          take: 8,
         }),
         // Fetch total modules per language for enrolled languages
         prisma.modules.findMany({
@@ -122,6 +112,7 @@ export default async function DashboardPage() {
       }
 
       streak = arenaStats?.current_streak ?? 0;
+      codeElo = battleStats?.elo_rating ?? 1000;
       badgeCount = userBadges.length;
 
       badges = userBadges.map((ub) => ({
@@ -130,28 +121,6 @@ export default async function DashboardPage() {
         description: ub.badges.description ?? null,
         earnedAt: ub.earned_at?.toISOString() ?? null,
       }));
-
-      // Build activity feed
-      const activityList: typeof activities = [];
-      for (const p of recentProgress.slice(0, 5)) {
-        activityList.push({
-          id: p.id,
-          type: 'lesson',
-          label: `Completed ${p.modules?.title ?? 'a lesson'} in ${p.modules?.languages?.name ?? 'a course'}`,
-          timestamp: p.completed_at?.toISOString() ?? new Date().toISOString(),
-          xp: p.xp_earned ?? 0,
-        });
-      }
-      for (const ub of userBadges.slice(0, 3)) {
-        activityList.push({
-          id: ub.id,
-          type: 'badge',
-          label: `Earned badge: ${ub.badges.name}`,
-          timestamp: ub.earned_at?.toISOString() ?? new Date().toISOString(),
-        });
-      }
-      activityList.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
-      activities = activityList.slice(0, 8);
 
       // Process module data
       const languageModuleCounts = new Map<string, number>();
@@ -194,9 +163,6 @@ export default async function DashboardPage() {
             <GetStartedCard enrollments={enrollments} />
             <CourseSuggestions />
             <Achievements badges={badges} />
-            
-            {/* Subscription Promo inside left column to avoid empty space */}
-            <CrewPromoCard />
           </div>
 
           {/* Right Column (Sidebar) */}
@@ -209,8 +175,8 @@ export default async function DashboardPage() {
               experienceLevel={experienceLevel}
               streak={streak}
               badgeCount={badgeCount}
+              codeElo={codeElo}
             />
-            <ActivityFeed activities={activities} />
           </div>
 
         </div>
@@ -218,6 +184,7 @@ export default async function DashboardPage() {
       </main>
 
       <Footer />
+      <DailyStreakModal />
     </div>
   );
 }

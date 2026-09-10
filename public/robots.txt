@@ -1,41 +1,68 @@
-# Robots.txt for CosmoDex (https://cosmodex.in)
+# Robots.txt for CosmoDex (https://www.cosmodex.in)
 User-agent: *
 Allow: /
+Allow: /blog
 Allow: /learn
 Allow: /battle
 Allow: /leaderboard
 Allow: /events
-Allow: /onboarding
 Allow: /llms.txt
 Allow: /llms-full.txt
 Disallow: /api/
 Disallow: /dashboard/
 Disallow: /profile/
+Disallow: /onboarding/
+Disallow: /victory/
 Disallow: /battle/room/
+Disallow: /battle/coding/
 
-# AI Search Engine Crawlers (Allowed)
+# AI Search Engine Crawlers & LLM Agents (Allowed)
 User-agent: GPTBot
 Allow: /
 Disallow: /api/
 Disallow: /dashboard/
 Disallow: /profile/
+Disallow: /onboarding/
+Disallow: /victory/
 
 User-agent: ChatGPT-User
 Allow: /
 Disallow: /api/
 Disallow: /dashboard/
 Disallow: /profile/
+Disallow: /onboarding/
+Disallow: /victory/
 
 User-agent: ClaudeBot
 Allow: /
 Disallow: /api/
 Disallow: /dashboard/
 Disallow: /profile/
+Disallow: /onboarding/
+Disallow: /victory/
 
 User-agent: PerplexityBot
 Allow: /
 Disallow: /api/
 Disallow: /dashboard/
 Disallow: /profile/
+Disallow: /onboarding/
+Disallow: /victory/
 
-Sitemap: https://cosmodex.in/sitemap.xml
+User-agent: Google-Extended
+Allow: /
+Disallow: /api/
+Disallow: /dashboard/
+Disallow: /profile/
+Disallow: /onboarding/
+Disallow: /victory/
+
+User-agent: CCBot
+Allow: /
+Disallow: /api/
+Disallow: /dashboard/
+Disallow: /profile/
+Disallow: /onboarding/
+Disallow: /victory/
+
+Sitemap: https://www.cosmodex.in/sitemap.xml

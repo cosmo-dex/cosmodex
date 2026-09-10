@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getAllBlogs } from '@/lib/blogs';
 
+export const dynamic = 'force-dynamic';
 export async function GET() {
   try {
     const blogs = await getAllBlogs();

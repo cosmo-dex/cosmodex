@@ -186,7 +186,7 @@ function PodiumCard({ player, place }: { player: Player; place: 1 | 2 | 3 }) {
 
       <p className="mt-3 text-center text-sm font-black tracking-wide md:text-base">{player.name}</p>
       <span className="mt-1 inline-flex items-center rounded-full border border-badge/30 bg-badge/10 px-3 py-0.5 text-xs font-bold text-badge backdrop-blur-md shadow-[0_0_10px_rgba(78,205,196,0.2)]">
-        {player.xp.toLocaleString()} XP
+        {player.mmr.toLocaleString()} ELO
       </span>
 
       {/* Enhanced Glassmorphism Card */}
@@ -223,7 +223,7 @@ function PodiumCard({ player, place }: { player: Player; place: 1 | 2 | 3 }) {
             {tier.label}
           </span>
           <span className="text-[11px] md:text-xs font-semibold tracking-wide text-text-muted">
-            {player.wins}W / {player.losses}L · <span className="text-text-secondary">{player.mmr} MMR</span>
+            {player.wins}W / {player.losses}L · <span className="text-text-secondary">{player.mmr} ELO</span>
           </span>
         </div>
       </div>

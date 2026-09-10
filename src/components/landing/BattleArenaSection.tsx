@@ -334,7 +334,7 @@ export default function BattleArenaSection() {
                 fontFamily: "var(--font-body), 'Fira Code', monospace",
               }}
             >
-              Compete in real-time timed coding battles, race against global coders, climb the leaderboard, and unlock ✦ XP.
+              Compete in real-time timed coding battles, race against global coders, and climb the global leaderboard.
             </p>
 
             {/* Interactive Challenge Switcher Tabs */}
@@ -621,7 +621,7 @@ export default function BattleArenaSection() {
                           : `⚡ Executing test suite... (${passedCount}/${currentChallenge.testCount})`}
                       </span>
                       {passedCount >= currentChallenge.testCount && (
-                        <span style={{ fontWeight: 700 }}>+850 ✦</span>
+                        <span style={{ fontWeight: 700 }}>Passed</span>
                       )}
                     </motion.div>
                   )}
@@ -688,7 +688,7 @@ export default function BattleArenaSection() {
                           fontWeight: 600,
                         }}
                       >
-                        {entry.xp > 0 ? `+${entry.xp} ✦` : entry.status}
+                        #{entry.rank}
                       </span>
                     </div>
                   ))}

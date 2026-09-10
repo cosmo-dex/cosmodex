@@ -26,14 +26,14 @@ const courses = [
   {
     id: "cpp",
     title: "C++",
-    description: "Build fast, powerful software. Master memory management, OOP, and systems-level programming.",
-    level: "Intermediate",
-    lessons: 38,
-    xp: 1900,
+    description: "Build fast, powerful software with systems-level programming and memory management.",
+    level: "Coming Soon",
+    lessons: 0,
+    xp: 0,
     color: "#9b30ff",
     rgb: "155,48,255",
     category: "Popular",
-    href: "/learn#cpp",
+    placeholder: true,
     icon: (
       <svg width="28" height="28" viewBox="0 0 32 32" fill="none" aria-hidden="true">
         <path d="M16 3L4 9.5v13L16 29l12-6.5v-13L16 3z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round"/>
@@ -44,14 +44,14 @@ const courses = [
   {
     id: "java",
     title: "Java",
-    description: "Write once, run anywhere. Learn object-oriented design, data structures, and enterprise patterns.",
-    level: "Intermediate",
-    lessons: 44,
-    xp: 2200,
+    description: "Write once, run anywhere. Object-oriented design and enterprise engineering patterns.",
+    level: "Coming Soon",
+    lessons: 0,
+    xp: 0,
     color: "#c084fc",
     rgb: "192,132,252",
     category: "Popular",
-    href: "/learn#java",
+    placeholder: true,
     icon: (
       <svg width="28" height="28" viewBox="0 0 32 32" fill="none" aria-hidden="true">
         <path d="M12 22s-2 1.2-2 2.2c0 1.5 4 2.3 7 2.3s6-.7 6-2.2c0-1-.8-1.8-2-2.3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
@@ -302,8 +302,28 @@ export default function CoursesSection() {
                 {course.icon}
               </div>
 
-              {/* Level badge */}
-              {!(course as { placeholder?: boolean }).placeholder && (
+              {/* Level or Coming Soon badge */}
+              {(course as { placeholder?: boolean }).placeholder ? (
+                <div
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    padding: "3px 10px",
+                    borderRadius: "100px",
+                    fontSize: "10px",
+                    fontWeight: 700,
+                    letterSpacing: "0.07em",
+                    textTransform: "uppercase",
+                    background: "rgba(168, 85, 247, 0.15)",
+                    border: "1px solid rgba(168, 85, 247, 0.3)",
+                    color: "#c084fc",
+                    marginBottom: "10px",
+                    fontFamily: "var(--font-body), 'Fira Code', monospace",
+                  }}
+                >
+                  Coming Soon
+                </div>
+              ) : (
                 <div
                   style={{
                     display: "inline-flex",
@@ -389,7 +409,7 @@ export default function CoursesSection() {
                       gap: "5px",
                     }}
                   >
-                    ✦ {course.xp.toLocaleString()} ✦
+                    {course.xp.toLocaleString()} XP
                   </span>
                 </div>
               )}

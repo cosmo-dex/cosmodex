@@ -10,7 +10,6 @@ import AuthStep from './components/steps/AuthStep';
 import UsernameStep from './components/steps/UsernameStep';
 import AvatarStep from './components/steps/AvatarStep';
 import PreviewStep from './components/steps/PreviewStep';
-import ExperienceStep from './components/steps/ExperienceStep';
 import InterestsStep from './components/steps/InterestsStep';
 import CompletionStep from './components/steps/CompletionStep';
 import Mascot from './components/Mascot';
@@ -20,7 +19,6 @@ const STEPS: OnboardingStepId[] = [
   'AUTH',
   'USERNAME',
   'AVATAR',
-  'EXPERIENCE',
   'INTERESTS',
   'PREVIEW',
   'COMPLETING'
@@ -37,7 +35,7 @@ export default function OnboardingFlow() {
     password: '',
     username: '',
     avatarId: null,
-    experienceLevel: null,
+    experienceLevel: 'Beginner',
     interests: [],
   });
 
@@ -402,7 +400,6 @@ export default function OnboardingFlow() {
               {currentStep === 'AUTH' && <AuthStep onNext={goNext} updateData={updateData} />}
               {currentStep === 'USERNAME' && <UsernameStep onNext={goNext} onBack={goBack} updateData={updateData} data={data} />}
               {currentStep === 'AVATAR' && <AvatarStep onNext={goNext} onBack={goBack} updateData={updateData} data={data} />}
-              {currentStep === 'EXPERIENCE' && <ExperienceStep onNext={goNext} onBack={goBack} updateData={updateData} data={data} />}
               {currentStep === 'INTERESTS' && <InterestsStep onNext={goNext} onBack={goBack} updateData={updateData} data={data} />}
               {currentStep === 'PREVIEW' && <PreviewStep onNext={goNext} onBack={goBack} data={data} />}
               {currentStep === 'COMPLETING' && <CompletionStep data={data} />}

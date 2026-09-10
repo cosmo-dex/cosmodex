@@ -2,11 +2,26 @@
 
 import { useState } from "react";
 import { motion } from "framer-motion";
+import Link from "next/link";
 import Navbar from "@/components/navbar/Navbar";
 import TheoryHeader from "@/components/learn/TheoryHeader";
 import TheoryFooter from "@/components/learn/TheoryFooter";
 import RisingStars from "@/components/RisingStar";
 import { TheoryExercise } from "@/data/theoryExercisesData";
+import InteractiveCodeLab from "@/components/learn/InteractiveCodeLab";
+import ConceptKnowledgeQuiz from "@/components/learn/ConceptKnowledgeQuiz";
+import {
+  Rocket,
+  CheckCircle2,
+  Clock,
+  Sparkles,
+  Zap,
+  Target,
+  ChevronRight,
+  Terminal,
+  Hash,
+  Lightbulb,
+} from "lucide-react";
 
 interface TheoryExerciseClientViewProps {
   exercise: TheoryExercise;
@@ -17,53 +32,72 @@ export default function TheoryExerciseClientView({
 }: TheoryExerciseClientViewProps) {
   const [isCompleted, setIsCompleted] = useState(false);
 
-  // Helper to format text with **bold** terms
   const renderFormattedText = (text: string) => {
-    const parts = text.split(/(\*\*.*?\*\*)/g);
+    const parts = text.split(/(\*\*.*?\*\*|`.*?`)/g);
     return parts.map((part, index) => {
       if (part.startsWith("**") && part.endsWith("**")) {
         return (
-          <strong key={index} className="text-white font-bold tracking-tight">
+          <strong key={index} className="text-white font-bold">
             {part.slice(2, -2)}
           </strong>
+        );
+      }
+      if (part.startsWith("`") && part.endsWith("`")) {
+        return (
+          <code
+            key={index}
+            className="px-1.5 py-0.5 mx-0.5 rounded bg-[#9E00F6]/15 border border-[#9E00F6]/30 font-mono text-[#00FFE9] text-[0.82em] inline-block"
+          >
+            {part.slice(1, -1)}
+          </code>
         );
       }
       return part;
     });
   };
 
+  const parseCodeBlockFromContent = (text: string) => {
+    const codeBlockMatch = text.match(/```(?:python)?\s*([\s\S]*?)```/);
+    if (codeBlockMatch) {
+      const code = codeBlockMatch[1].trim();
+      const nonCode = text.replace(/```(?:python)?\s*[\s\S]*?```/, "").trim();
+      return { code, nonCode };
+    }
+    return null;
+  };
+
   return (
-    <div className="min-h-screen bg-[#050508] text-white relative flex flex-col font-sans overflow-x-hidden selection:bg-[#38bdf8]/30">
-      {/* ── High Performance Ultra-Smooth Space Background FX ── */}
-      <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden bg-[#050508]">
-        {/* Deep dark base canvas */}
-        <div className="absolute inset-0 bg-[#050508]" />
+    <div className="min-h-screen bg-[#07080f] text-white relative flex flex-col font-sans overflow-x-hidden">
+      {/* ── Space Background ── */}
+      <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
+        {/* Base dark */}
+        <div className="absolute inset-0 bg-[#07080f]" />
+        {/* Subtle purple nebula top-left */}
+        <div className="absolute -top-48 -left-48 w-[700px] h-[700px] bg-[radial-gradient(ellipse,rgba(158,0,246,0.12)_0%,transparent_65%)]" />
+        {/* Subtle pink nebula bottom-right */}
+        <div className="absolute -bottom-32 -right-32 w-[600px] h-[600px] bg-[radial-gradient(ellipse,rgba(232,115,195,0.08)_0%,transparent_65%)]" />
+        {/* Center teal glow very subtle */}
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[900px] h-[400px] bg-[radial-gradient(ellipse,rgba(0,255,233,0.04)_0%,transparent_70%)]" />
 
-        {/* Ambient Top & Bottom Radial Glow Blooms */}
-        <div className="absolute -top-32 -left-32 w-[600px] h-[600px] bg-[radial-gradient(ellipse,rgba(124,58,237,0.2)_0%,transparent_70%)]" />
-        <div className="absolute bottom-0 right-0 w-[500px] h-[500px] bg-[radial-gradient(ellipse,rgba(232,115,195,0.12)_0%,transparent_70%)]" />
-
-        {/* Shooting Stars FX */}
+        {/* Shooting stars */}
         <motion.div
-          className="absolute h-[1px] bg-gradient-to-r from-transparent via-white to-transparent shadow-[0_0_8px_rgba(255,255,255,0.8)]"
-          style={{ width: "150px", rotate: -35, top: "10%", right: "-10%" }}
-          animate={{ x: [0, -1200], y: [0, 800], opacity: [0, 1, 0] }}
-          transition={{ duration: 2.5, repeat: Infinity, repeatDelay: 4, ease: "linear" }}
+          className="absolute h-[1px] bg-gradient-to-r from-transparent via-white to-transparent"
+          style={{ width: "140px", rotate: -35, top: "12%", right: "-8%" }}
+          animate={{ x: [0, -1300], y: [0, 900], opacity: [0, 1, 0] }}
+          transition={{ duration: 2.8, repeat: Infinity, repeatDelay: 5, ease: "linear" }}
         />
         <motion.div
-          className="absolute h-[1px] bg-gradient-to-r from-transparent via-[#00FFE9] to-transparent shadow-[0_0_10px_rgba(0,255,233,0.8)]"
-          style={{ width: "120px", rotate: -35, top: "35%", right: "-5%" }}
-          animate={{ x: [0, -1100], y: [0, 750], opacity: [0, 0.8, 0] }}
-          transition={{ duration: 2.2, repeat: Infinity, repeatDelay: 7, ease: "linear" }}
+          className="absolute h-[1px] bg-gradient-to-r from-transparent via-[#00FFE9] to-transparent"
+          style={{ width: "100px", rotate: -35, top: "40%", right: "-4%" }}
+          animate={{ x: [0, -1100], y: [0, 750], opacity: [0, 0.7, 0] }}
+          transition={{ duration: 2.4, repeat: Infinity, repeatDelay: 8, ease: "linear" }}
         />
 
         <RisingStars />
       </div>
 
-      {/* Main Navbar */}
       <Navbar />
 
-      {/* Fixed Exercise Sub-Header (Sticks under Navbar at top-16) */}
       <TheoryHeader
         activeGrindersCount={exercise.activeGrindersCount}
         courseId={exercise.courseId}
@@ -72,72 +106,230 @@ export default function TheoryExerciseClientView({
         exerciseId={exercise.id}
       />
 
-      {/* Main Content Area (pt-36 ensures content starts below both fixed headers) */}
-      <main className="relative z-10 flex-1 w-full max-w-4xl mx-auto px-6 sm:px-12 pt-36 pb-36">
-        <article className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-          {/* Main Exercise Display Title (e.g. 01. In The Beginning...) */}
-          <div className="space-y-2 border-b border-white/10 pb-6">
-            <h1 className="text-3xl sm:text-4xl md:text-5xl font-mono font-black tracking-tight text-white filter drop-shadow-[0_0_20px_rgba(255,255,255,0.2)]">
-              {!exercise.title.startsWith(exercise.chapterNumber) &&
-                !exercise.title.startsWith(`${Number(exercise.chapterNumber)}.`) && (
-                  <span className="text-[#E873C3] mr-3 drop-shadow-[0_0_15px_rgba(232,115,195,0.5)]">
-                    {exercise.chapterNumber}.
-                  </span>
+      {/* ── Main Content ── */}
+      <main className="relative z-10 flex-1 w-full max-w-[860px] mx-auto px-4 sm:px-8 pt-36 pb-40">
+        <article className="space-y-14">
+
+          {/* ── Hero Header ── */}
+          <header className="space-y-5 pb-8 border-b border-white/[0.08]">
+            {/* Breadcrumb */}
+            <nav className="flex flex-wrap items-center gap-1.5 text-[11px] font-mono text-white/40">
+              <Link href="/learn" className="hover:text-white/70 transition-colors">
+                Courses
+              </Link>
+              <ChevronRight size={12} />
+              <Link href="/learn/python" className="text-[#00FFE9] hover:underline transition-colors">
+                Python Galaxy
+              </Link>
+              <ChevronRight size={12} />
+              <span className="text-white/60">Station {exercise.chapterNumber}</span>
+            </nav>
+
+            {/* Meta tags row */}
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="flex items-center gap-1.5 text-[11px] font-mono text-[#00FFE9] bg-[#00FFE9]/[0.08] border border-[#00FFE9]/20 px-2.5 py-1 rounded-lg">
+                <Clock size={11} />
+                5 min read
+              </span>
+              <span className="flex items-center gap-1.5 text-[11px] font-mono text-emerald-300 bg-emerald-500/[0.08] border border-emerald-500/20 px-2.5 py-1 rounded-lg">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                Active Station
+              </span>
+              <span className="flex items-center gap-1.5 text-[11px] font-mono text-[#FFA249] bg-[#FFA249]/[0.08] border border-[#FFA249]/20 px-2.5 py-1 rounded-lg">
+                <Zap size={11} />
+                {exercise.xp} XP
+              </span>
+            </div>
+
+            {/* Title */}
+            <div>
+              <p className="text-[11px] font-mono font-bold uppercase tracking-[0.2em] text-[#E873C3] mb-2">
+                Station {exercise.chapterNumber} · Theory
+              </p>
+              <h1 className="text-3xl sm:text-5xl font-black leading-[1.1] tracking-tight text-white">
+                {exercise.title}
+              </h1>
+            </div>
+
+            <p className="text-sm sm:text-base text-white/55 font-sans leading-relaxed max-w-2xl">
+              Study the concept, trace through the code examples, then test yourself with the quiz below.
+            </p>
+          </header>
+
+          {/* ── Theory Sections ── */}
+          <div className="space-y-12">
+            {exercise.sections.map((section) => (
+              <section key={section.id} className="space-y-5">
+                {section.heading && (
+                  <div className="flex items-start gap-3">
+                    <span className="mt-1 flex-shrink-0 w-6 h-6 rounded-lg bg-[#00FFE9]/10 border border-[#00FFE9]/30 flex items-center justify-center">
+                      <Hash size={12} className="text-[#00FFE9]" />
+                    </span>
+                    <h2 className="text-xl sm:text-2xl font-black text-white tracking-tight leading-snug">
+                      {section.heading}
+                    </h2>
+                  </div>
                 )}
-              {exercise.title}
-            </h1>
+
+                {section.content.map((paragraph, pIdx) => {
+                  const parsedBlock = parseCodeBlockFromContent(paragraph);
+                  if (parsedBlock) {
+                    return (
+                      <div key={pIdx} className="space-y-3">
+                        {parsedBlock.nonCode && (
+                          <p className="text-[15px] text-white/70 leading-relaxed font-sans">
+                            {renderFormattedText(parsedBlock.nonCode)}
+                          </p>
+                        )}
+                        <InteractiveCodeLab
+                          title="Syntax Example"
+                          inputCode={parsedBlock.code}
+                          outputCode="[Program executed with exit code 0]"
+                          explanation="Study the code structure and indentation."
+                        />
+                      </div>
+                    );
+                  }
+
+                  if (paragraph.startsWith("**Step")) {
+                    return (
+                      <div
+                        key={pIdx}
+                        className="flex items-start gap-3 p-4 rounded-xl bg-[#00FFE9]/[0.05] border border-[#00FFE9]/15"
+                      >
+                        <CheckCircle2 size={15} className="text-[#00FFE9] mt-0.5 shrink-0" />
+                        <p className="text-[14px] text-white/75 leading-relaxed font-sans">
+                          {renderFormattedText(paragraph)}
+                        </p>
+                      </div>
+                    );
+                  }
+
+                  return (
+                    <p key={pIdx} className="text-[15px] text-white/70 leading-relaxed font-sans">
+                      {renderFormattedText(paragraph)}
+                    </p>
+                  );
+                })}
+
+                {/* Bullet Key Takeaways */}
+                {section.bulletPoints && section.bulletPoints.length > 0 && (
+                  <div className="rounded-xl border border-[#9E00F6]/20 bg-[#9E00F6]/[0.05] p-4 sm:p-5 space-y-3">
+                    <div className="flex items-center gap-2 mb-1">
+                      <Lightbulb size={13} className="text-[#FFA249]" />
+                      <span className="text-[11px] font-mono font-bold uppercase tracking-widest text-[#FFA249]">
+                        Key Takeaways
+                      </span>
+                    </div>
+                    <ul className="space-y-2.5">
+                      {section.bulletPoints.map((item, bIdx) => (
+                        <li key={bIdx} className="flex items-start gap-3 text-[14px] text-white/65 font-sans">
+                          <span className="w-1.5 h-1.5 rounded-full bg-[#9E00F6] mt-[7px] shrink-0" />
+                          <span>{renderFormattedText(item)}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </section>
+            ))}
           </div>
 
-          {/* Exercise Sections */}
-          {exercise.sections.map((section) => (
-            <div
-              key={section.id}
-              className="space-y-6 text-[#cbd5e1] leading-relaxed text-sm sm:text-base md:text-lg"
-            >
-              {/* Section Heading e.g. # A Brief History */}
-              {section.heading && (
-                <div className="flex items-center gap-2 pt-2">
-                  <span className="text-[#38bdf8] font-mono font-black text-xl sm:text-2xl">
-                    #
-                  </span>
-                  <h2 className="text-xl sm:text-2xl md:text-3xl font-mono font-bold text-white tracking-tight">
-                    {section.heading}
-                  </h2>
+          {/* ── Code Examples Section ── */}
+          {exercise.codeExamples && exercise.codeExamples.length > 0 && (
+            <section className="space-y-5 pt-4 border-t border-white/[0.08]">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-xl bg-[#00FFE9]/10 border border-[#00FFE9]/30 flex items-center justify-center shadow-[0_0_12px_rgba(0,255,233,0.2)]">
+                  <Terminal size={16} className="text-[#00FFE9]" />
                 </div>
-              )}
-
-              {/* Paragraphs */}
-              {section.content.map((paragraph, pIdx) => (
-                <p key={pIdx} className="font-sans text-slate-300 leading-relaxed">
-                  {renderFormattedText(paragraph)}
-                </p>
-              ))}
-
-              {/* Bullet Points List */}
-              {section.bulletPoints && section.bulletPoints.length > 0 && (
-                <div className="space-y-3 pt-2 bg-[#0d0922]/60 p-5 rounded-2xl border border-white/10">
-                  <p className="text-sm font-sans font-semibold text-slate-200">
-                    They are known by different names:
+                <div>
+                  <p className="text-[11px] font-mono font-bold uppercase tracking-widest text-[#00FFE9]">
+                    Code Examples
                   </p>
-                  <ul className="space-y-2.5 pl-2">
-                    {section.bulletPoints.map((item, bIdx) => (
-                      <li
-                        key={bIdx}
-                        className="flex items-center gap-3 text-sm sm:text-base font-sans text-slate-300"
-                      >
-                        <span className="w-2 h-2 rounded-full bg-[#38bdf8] shadow-[0_0_8px_#38bdf8]" />
-                        <span>{item}</span>
-                      </li>
-                    ))}
-                  </ul>
+                  <h3 className="text-lg font-black text-white">Interactive Demos</h3>
                 </div>
-              )}
+              </div>
+
+              <div className="space-y-4">
+                {exercise.codeExamples.map((ex, idx) => (
+                  <InteractiveCodeLab
+                    key={idx}
+                    title={ex.title}
+                    inputCode={ex.input}
+                    outputCode={ex.output}
+                    explanation={ex.explanation}
+                    fileName={`example_${idx + 1}.py`}
+                  />
+                ))}
+              </div>
+            </section>
+          )}
+
+          {/* ── Practice Challenge ── */}
+          {exercise.practiceQuestion && (
+            <section className="space-y-4 pt-4 border-t border-white/[0.08]">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-xl bg-[#FFA249]/10 border border-[#FFA249]/30 flex items-center justify-center shadow-[0_0_12px_rgba(255,162,73,0.2)]">
+                  <Target size={16} className="text-[#FFA249]" />
+                </div>
+                <div>
+                  <p className="text-[11px] font-mono font-bold uppercase tracking-widest text-[#FFA249]">
+                    Practice Challenge
+                  </p>
+                  <h3 className="text-lg font-black text-white">
+                    {exercise.practiceQuestion.title}
+                  </h3>
+                </div>
+              </div>
+
+              <div className="rounded-2xl border border-white/10 bg-[#0d0f1a] p-5 sm:p-6 space-y-4">
+                <p className="text-[14px] text-white/65 font-sans leading-relaxed">
+                  {exercise.practiceQuestion.description}
+                </p>
+                <InteractiveCodeLab
+                  title="Challenge"
+                  inputCode={exercise.practiceQuestion.input}
+                  outputCode={exercise.practiceQuestion.output}
+                  explanation={exercise.practiceQuestion.explanation}
+                  fileName="challenge.py"
+                />
+              </div>
+            </section>
+          )}
+
+          {/* ── MCQ Quiz ── */}
+          {exercise.mcqs && exercise.mcqs.length > 0 && (
+            <section className="pt-4 border-t border-white/[0.08]">
+              <ConceptKnowledgeQuiz
+                questions={exercise.mcqs}
+                chapterTitle={exercise.title}
+                onCompleteQuiz={() => setIsCompleted(true)}
+              />
+            </section>
+          )}
+
+          {/* ── Bottom Navigation Card ── */}
+          <div className="rounded-2xl border border-white/[0.08] bg-[#0d0f1a] p-5 sm:p-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div>
+              <h4 className="text-base font-black text-white flex items-center gap-2">
+                Station {exercise.chapterNumber} Mastered?
+                <Sparkles size={14} className="text-[#00FFE9]" />
+              </h4>
+              <p className="text-xs text-white/45 font-sans mt-1">
+                Head back to the Python Galaxy map to unlock the next station.
+              </p>
             </div>
-          ))}
+            <Link
+              href="/learn/python"
+              className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-[#E873C3] to-[#9E00F6] text-white text-xs font-mono font-bold uppercase tracking-wider transition-all hover:opacity-90 shadow-[0_0_20px_rgba(158,0,246,0.3)] shrink-0"
+            >
+              <Rocket size={14} />
+              <span>Back to Galaxy Map</span>
+            </Link>
+          </div>
         </article>
       </main>
 
-      {/* Sticky Bottom Action Footer */}
       <TheoryFooter
         exercise={exercise}
         isCompleted={isCompleted}

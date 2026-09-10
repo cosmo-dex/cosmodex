@@ -11,10 +11,19 @@ import SmoothScroll from "@/components/landing/SmoothScroll";
 import ClickParticles from "@/components/landing/ClickParticles";
 import FAQSection from "@/components/faq/FAQSection";
 
+const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://www.cosmodex.in";
+
 export const metadata = {
   title: "CosmoDeX — Start Your Coding Expedition",
   description:
     "Learn to code through interactive courses, battle challenges, and level up your skills. One expedition at a time.",
+  alternates: {
+    canonical: appUrl,
+  },
+  robots: {
+    index: false,
+    follow: true,
+  },
 };
 
 export default function LandingPage() {

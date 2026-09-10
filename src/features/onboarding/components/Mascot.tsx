@@ -58,7 +58,6 @@ export default function Mascot({ step }: MascotProps) {
           return { x: 0, y: -270, rotate: 0, scale: 0.65 };
         case 'USERNAME':
         case 'AVATAR':
-        case 'EXPERIENCE':
         case 'INTERESTS':
         case 'PREVIEW':
           return { x: 0, y: -270, rotate: 5, scale: 0.65 };
@@ -81,8 +80,6 @@ export default function Mascot({ step }: MascotProps) {
         return { x: -320, y: -140, rotate: -10, scale: 1.05 };
       case 'PREVIEW':
         return { x: -290, y: -40, rotate: -8, scale: 0.95 };
-      case 'EXPERIENCE':
-        return { x: -350, y: 120, rotate: -15, scale: 0.9 };
       case 'INTERESTS':
         return { x: 350, y: 120, rotate: 10, scale: 0.95 };
       case 'COMPLETING':

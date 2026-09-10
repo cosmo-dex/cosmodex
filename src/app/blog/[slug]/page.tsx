@@ -5,7 +5,7 @@ import { notFound } from "next/navigation";
 import Navbar from "@/components/navbar/Navbar";
 import Footer from "@/components/landing/Footer";
 import RisingStars from "@/component/RisingStar";
-import { getBlogBySlug, getAllBlogs } from "@/lib/blogs";
+import { getBlogBySlug, getAllBlogs, getValidImageUrl } from "@/lib/blogs";
 import { getAvatarUrl } from "@/lib/avatar";
 import {
   ArrowLeft,
@@ -125,6 +125,9 @@ function renderMarkdown(content: string) {
   });
 }
 
+export const dynamicParams = true;
+export const revalidate = 0;
+
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const resolvedParams = await params;
   const post = await getBlogBySlug(resolvedParams.slug);
@@ -135,12 +138,18 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     };
   }
 
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://www.cosmodex.in";
+
   return {
     title: `${post.title} | CosmoDex Blog`,
     description: post.excerpt,
+    alternates: {
+      canonical: `${appUrl}/blog/${post.slug}`,
+    },
     openGraph: {
       title: post.title,
       description: post.excerpt,
+      url: `${appUrl}/blog/${post.slug}`,
       type: "article",
       publishedTime: post.publishedAt,
       authors: [post.author.name],
@@ -302,7 +311,7 @@ export default async function BlogPostDetailPage({ params }: Props) {
           {/* Cover Image Banner */}
           <div className="relative h-72 sm:h-96 w-full rounded-3xl overflow-hidden bg-gray-900 border border-white/10 shadow-2xl">
             <Image
-              src={post.coverImage}
+              src={getValidImageUrl(post.coverImage)}
               alt={post.title}
               fill
               sizes="(max-width: 1024px) 100vw, 896px"

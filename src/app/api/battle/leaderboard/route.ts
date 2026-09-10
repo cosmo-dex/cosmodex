@@ -11,17 +11,18 @@ interface LeaderboardEntry {
 }
 
 const memoryCache = new Map<string, { timestamp: number; data: LeaderboardEntry[] }>();
-const CACHE_TTL_MS = 10_000;
+const CACHE_TTL_MS = 1000;
 
 export async function GET(req: NextRequest) {
-  const mode = req.nextUrl.searchParams.get('mode') === 'mcq' ? 'mcq' : 'code';
+  const modeParam = req.nextUrl.searchParams.get('mode');
+  const mode = modeParam === 'mcq' ? 'mcq' : modeParam === 'global' ? 'global' : 'code';
   const now = Date.now();
 
   const cached = memoryCache.get(mode);
   if (cached && now - cached.timestamp < CACHE_TTL_MS) {
     return NextResponse.json(cached.data, {
       headers: {
-        'Cache-Control': 'public, s-maxage=10, stale-while-revalidate=60',
+        'Cache-Control': 'no-store, max-age=0',
         'X-Cache': 'HIT',
       },
     });
@@ -31,9 +32,16 @@ export async function GET(req: NextRequest) {
     try {
       const prisma = (await import('@/lib/prisma')).default;
       const stats = await prisma.battle_user_stats.findMany({
-        orderBy: {
-          [mode === 'mcq' ? 'mcq_elo_rating' : 'elo_rating']: 'desc',
+        where: {
+          users: {
+            is_active: true,
+            role: { notIn: ['admin', 'super_admin'] },
+            email: { not: 'cosmodex_admin@admin.com' },
+          },
         },
+        orderBy: mode === 'mcq' 
+          ? [{ mcq_elo_rating: 'desc' }, { wins: 'desc' }]
+          : [{ elo_rating: 'desc' }, { mcq_elo_rating: 'desc' }, { wins: 'desc' }],
         take: 50,
         select: {
           user_id: true,
@@ -51,46 +59,59 @@ export async function GET(req: NextRequest) {
       });
 
       if (stats && stats.length > 0) {
-        const entries: LeaderboardEntry[] = stats.map((item, idx) => ({
+        const mapped = stats.map((item) => {
+          const codeElo = item.elo_rating ?? 1000;
+          const mcqElo = item.mcq_elo_rating ?? 1000;
+          let effectiveElo = codeElo;
+          if (mode === 'mcq') {
+            effectiveElo = mcqElo;
+          } else if (mode === 'global') {
+            effectiveElo = Math.max(codeElo, mcqElo);
+          }
+          return {
+            userId: item.user_id,
+            username: item.users?.username ?? 'Anonymous',
+            elo: effectiveElo,
+            codeElo,
+            mcqElo,
+            wins: item.wins ?? 0,
+            losses: item.losses ?? 0,
+            draws: item.draws ?? 0,
+          };
+        });
+
+        if (mode === 'global') {
+          mapped.sort((a, b) => b.elo - a.elo || b.wins - a.wins);
+        }
+
+        const entries: LeaderboardEntry[] = mapped.map((item, idx) => ({
           rank: idx + 1,
-          userId: item.user_id,
-          username: item.users?.username ?? 'Anonymous',
-          elo: mode === 'mcq' ? (item.mcq_elo_rating ?? 1000) : (item.elo_rating ?? 1000),
-          wins: item.wins ?? 0,
-          losses: item.losses ?? 0,
-          draws: item.draws ?? 0,
+          userId: item.userId,
+          username: item.username,
+          elo: item.elo,
+          wins: item.wins,
+          losses: item.losses,
+          draws: item.draws,
         }));
 
         memoryCache.set(mode, { timestamp: now, data: entries });
 
         return NextResponse.json(entries, {
           headers: {
-            'Cache-Control': 'public, s-maxage=10, stale-while-revalidate=60',
+            'Cache-Control': 'no-store, max-age=0',
             'X-Cache': 'MISS',
           },
         });
       }
     } catch (err) {
-      console.warn('[battle/leaderboard] DB query failed, using fallback:', err);
+      console.warn('[battle/leaderboard] DB query failed:', err);
     }
   }
 
-  const fallbackStats = Array.from({ length: 20 }, (_, i) => ({
-    rank: i + 1,
-    userId: `user-${i + 1}`,
-    username: `Player${i + 1}`,
-    elo: mode === 'mcq' ? 2200 - i * 20 : 2000 - i * 25,
-    wins: 40 - i,
-    losses: i,
-    draws: i % 3,
-  }));
-
-  memoryCache.set(mode, { timestamp: now, data: fallbackStats });
-
-  return NextResponse.json(fallbackStats, {
+  return NextResponse.json([], {
     headers: {
-      'Cache-Control': 'public, s-maxage=10, stale-while-revalidate=60',
-      'X-Cache': 'FALLBACK',
+      'Cache-Control': 'no-store',
+      'X-Cache': 'EMPTY',
     },
   });
 }

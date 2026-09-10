@@ -43,10 +43,10 @@ export default function NoExercisesView({ courseId }: NoExercisesViewProps) {
           {/* Heading & Text */}
           <div className="space-y-2">
             <h1 className="text-2xl sm:text-3xl font-mono font-black text-white tracking-tight">
-              No Exercises Yet for {formattedCourseName}
+              {formattedCourseName} is Coming Soon
             </h1>
             <p className="text-sm sm:text-base text-slate-300 leading-relaxed font-sans max-w-md mx-auto">
-              Exercises for <span className="text-[#38bdf8] font-semibold">{formattedCourseName}</span> are currently being written. Try our <span className="text-purple-300 font-semibold">Python</span> course for the full demo!
+              The interactive curriculum for <span className="text-[#38bdf8] font-semibold">{formattedCourseName}</span> is currently in development. Explore our active <span className="text-purple-300 font-semibold">Python</span> course to start learning now!
             </p>
           </div>
 
@@ -63,10 +63,10 @@ export default function NoExercisesView({ courseId }: NoExercisesViewProps) {
             </Link>
 
             <Link
-              href="/learn/python/theory/in-the-beginning"
+              href="/learn/python"
               className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-sans font-bold text-sm text-[#38bdf8] bg-[#131d31] border border-[#22314e] hover:border-[#38bdf8]/50 hover:bg-[#1b273e] transition-all cursor-pointer"
             >
-              <span>Try Python Demo</span>
+              <span>Start Python Track</span>
             </Link>
           </div>
         </div>

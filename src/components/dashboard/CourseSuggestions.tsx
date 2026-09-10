@@ -80,6 +80,7 @@ interface SuggestedCourse {
   level: string;
   banner: React.ReactNode;
   href: string;
+  isLive?: boolean;
 }
 
 const SUGGESTED_COURSES: SuggestedCourse[] = [
@@ -90,30 +91,34 @@ const SUGGESTED_COURSES: SuggestedCourse[] = [
     level: "BEGINNER",
     banner: <PythonBanner />,
     href: "/learn/python",
+    isLive: true,
   },
   {
     id: "s-html",
     title: "HTML",
     description: "Build the structure of web pages with semantic HTML tags.",
-    level: "BEGINNER",
+    level: "COMING SOON",
     banner: <HTMLBanner />,
-    href: "/learn/web-1/theory/in-the-beginning",
+    href: "/learn",
+    isLive: false,
   },
   {
     id: "s-js",
     title: "JavaScript",
     description: "Add interactive behavior, DOM manipulation, and logic to the web.",
-    level: "INTERMEDIATE",
+    level: "COMING SOON",
     banner: <JSBanner />,
-    href: "/learn/web-3/theory/in-the-beginning",
+    href: "/learn",
+    isLive: false,
   },
   {
     id: "s-java",
     title: "Java",
     description: "Master object-oriented programming, classes, and robust software design.",
-    level: "BEGINNER",
+    level: "COMING SOON",
     banner: <JavaBanner />,
-    href: "/learn/oop-1/theory/in-the-beginning",
+    href: "/learn",
+    isLive: false,
   },
 ];
 
@@ -204,10 +209,16 @@ export default function CourseSuggestions() {
 
                 {/* Bottom row: level pill + start arrow */}
                 <div className="flex items-center justify-between mt-auto">
-                  <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white/5 border border-white/10 text-[10px] font-bold tracking-wider text-white/50">
-                    <SignalBarsIcon />
-                    <span>{course.level}</span>
-                  </div>
+                  {course.isLive ? (
+                    <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white/5 border border-white/10 text-[10px] font-bold tracking-wider text-white/50">
+                      <SignalBarsIcon />
+                      <span>{course.level}</span>
+                    </div>
+                  ) : (
+                    <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-purple-500/15 border border-purple-500/30 text-[10px] font-bold tracking-wider text-purple-300">
+                      <span>Coming Soon</span>
+                    </div>
+                  )}
                   <div className="w-7 h-7 rounded-full bg-white/5 border border-white/10 flex items-center justify-center group-hover:bg-[#E873C3]/20 group-hover:border-[#E873C3]/30 transition-all duration-200">
                     <ArrowRight size={13} className="text-white/40 group-hover:text-[#E873C3] transition-colors duration-200" />
                   </div>

@@ -30,7 +30,9 @@ export async function proxy(request: NextRequest) {
   const sessionCookie = request.cookies.get(SESSION_COOKIE);
   const user: SessionPayload | null = await verifySession(sessionCookie?.value);
 
-  const isProtectedApi = PROTECTED_API_PREFIXES.some((prefix) => pathname.startsWith(prefix));
+  const isProtectedApi =
+    PROTECTED_API_PREFIXES.some((prefix) => pathname.startsWith(prefix)) &&
+    !pathname.startsWith('/api/battle/leaderboard');
   if (isProtectedApi) {
     if (!user || !user.userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });

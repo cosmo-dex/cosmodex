@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
+import { verifySession, SESSION_COOKIE } from '@/lib/session';
 
 export async function GET(req: NextRequest) {
   try {
@@ -19,17 +20,28 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ available: false, reason: 'Only letters, numbers, and underscores.' });
     }
 
+    const sessionCookie = req.cookies.get(SESSION_COOKIE);
+    const session = await verifySession(sessionCookie?.value);
+    const currentUserId = session?.userId;
+
     const existing = await prisma.users.findFirst({
-      where: { username: { equals: trimmed, mode: 'insensitive' } },
+      where: {
+        username: { equals: trimmed, mode: 'insensitive' },
+        ...(currentUserId ? { NOT: { id: currentUserId } } : {}),
+      },
       select: { id: true },
     });
 
     return NextResponse.json(
-      { available: !existing },
-      { headers: { 'Cache-Control': 'private, max-age=5, stale-while-revalidate=10' } }
+      {
+        available: !existing,
+        reason: existing ? 'This name is already taken.' : undefined,
+      },
+      { headers: { 'Cache-Control': 'no-store' } }
     );
   } catch (err) {
     console.error('[check-username] Error:', err);
     return NextResponse.json({ error: 'Internal server error.' }, { status: 500 });
   }
 }
+
