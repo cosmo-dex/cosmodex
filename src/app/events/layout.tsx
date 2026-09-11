@@ -18,11 +18,30 @@ export const metadata: Metadata = {
     siteName: "CosmoDex",
     type: "website",
   },
+  keywords: [
+    "coding events",
+    "college hackathons 2025",
+    "student coding contests",
+    "online programming competitions",
+    "hackathons with prizes",
+    "competitive coding challenge",
+  ],
   twitter: {
     card: "summary_large_image",
     title: "Coding Events, Hackathons & Competitions | CosmoDex",
     description:
       "Browse upcoming hackathons, coding contests, and programming challenges on CosmoDex.",
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-video-preview": -1,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+    },
   },
 };
 
