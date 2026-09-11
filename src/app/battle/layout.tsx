@@ -32,7 +32,7 @@ export default function BattleLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="battle-layout">
+    <div className="battle-layout google-anno-skip">
       {children}
     </div>
   );
