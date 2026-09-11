@@ -3,23 +3,18 @@ import { verifySession, SESSION_COOKIE, type SessionPayload } from '@/lib/sessio
 
 const PROTECTED_USER_ROUTES = [
   '/dashboard',
+  '/learn',
+  '/battle',
+  '/coding',
+  '/events',
+  '/leaderboard',
   '/profile',
   '/victory',
-  '/battle/coding',
-  '/battle/room',
 ];
 const PROTECTED_API_PREFIXES = [
   '/api/user',
   '/api/battle',
 ];
-
-const BOT_USER_AGENTS =
-  /googlebot|google-inspectiontool|mediapartners-google|feedfetcher-google|bingbot|yandex|baiduspider|duckduckbot|slurp|twitterbot|facebookexternalhit|linkedinbot|embedly|quora|whatsapp|applebot/i;
-
-function isSearchEngineBot(userAgent: string | null): boolean {
-  if (!userAgent) return false;
-  return BOT_USER_AGENTS.test(userAgent);
-}
 
 function getSafeRedirectUrl(target: string | null, fallback: string): string {
   if (!target) return fallback;
@@ -31,12 +26,6 @@ function getSafeRedirectUrl(target: string | null, fallback: string): string {
 
 export async function proxy(request: NextRequest) {
   const { pathname, search } = request.nextUrl;
-  const userAgent = request.headers.get('user-agent');
-
-  // Never redirect search engine crawlers (Googlebot, Inspection tool, etc.)
-  if (isSearchEngineBot(userAgent)) {
-    return NextResponse.next();
-  }
 
   const sessionCookie = request.cookies.get(SESSION_COOKIE);
   const user: SessionPayload | null = await verifySession(sessionCookie?.value);

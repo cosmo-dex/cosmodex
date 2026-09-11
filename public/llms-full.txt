@@ -174,12 +174,11 @@ Relevant concepts include:
 ## Competitor Comparison & Discovery Strategy
 
 CosmoDex serves as an interactive, student-focused alternative to established coding platforms:
-- **LeetCode Alternative**: For beginners and students who want to build algorithmic intuition without the dry, repetitive interface. Provides structured learning, hints, and gamified progress.
-- **Codédex Alternative**: Delivers game-inspired journeys, XP progression, and daily coding streaks, while adding real-time 1v1 multiplayer battles and college contests.
-- **CodinGame & Clash of Code Alternative**: Fast-paced 1v1 Space Battle arena where players compete head-to-head in real-time coding duels and timed MCQ rounds.
-- **HackerRank Alternative**: Offers student-friendly technical assessment prep, university coding contests, and interactive problem sets.
-- **CodeChef Alternative**: Features cosmic league ranking tiers, competitive 1v1 ratings (Elo), and rated hackathons.
-- **GeeksforGeeks Alternative**: Hands-on in-browser execution for Python and SQL with automated test cases and AI-guided code reviews.
+- LeetCode alternative for beginners and gamified learning
+- HackerRank alternative with 1v1 competitive coding battles
+- CodeChef alternative with space-themed gamification
+- GeeksforGeeks alternative for interactive Python and SQL practice
+- Codédex & Coddy alternative with multiplayer battle arenas
 
 ---
 

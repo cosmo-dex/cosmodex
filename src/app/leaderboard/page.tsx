@@ -21,30 +21,11 @@ export const metadata: Metadata = {
     siteName: "CosmoDex",
     type: "website",
   },
-  keywords: [
-    "coding leaderboard",
-    "cosmic league ranks",
-    "top coders ranking",
-    "competitive coding rating",
-    "student developer leaderboard",
-    "elo rating coding",
-  ],
   twitter: {
     card: "summary_large_image",
     title: "Galactic Leaderboard — Top Coders & League Rankings | CosmoDex",
     description:
       "See the top CosmoDex coders ranked by XP across 1v1 coding battles and global league standings.",
-  },
-  robots: {
-    index: true,
-    follow: true,
-    googleBot: {
-      index: true,
-      follow: true,
-      "max-video-preview": -1,
-      "max-image-preview": "large",
-      "max-snippet": -1,
-    },
   },
 };
 
