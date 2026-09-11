@@ -21,10 +21,7 @@
 - Learners seeking interactive, game-inspired coding platforms
 
 ## Competitor Positioning & Alternatives
-- **LeetCode, HackerRank & Coding Ninjas Alternative**: Built for college students and beginners seeking an engaging, habit-building path to master Python, Java, SQL, and DSA without the dry, sterile interface.
-- **Codédex & Coddy Alternative**: Combines beginner-friendly gamified quests, streaks, and XP with competitive 1v1 multiplayer code battles and college tournaments.
-- **CodinGame & Clash of Code Alternative**: Real-time 1v1 Space Battle arena featuring timed algorithmic code duels and rapid MCQ rounds with live matchmaking and Elo ratings.
-- **Top Free Coding Practice Site**: A modern online coding platform providing hands-on browser coding, interactive Python coding, Java courses, and AI-assisted code reviews.
+CosmoDex serves as a student-focused, highly interactive alternative to platforms like LeetCode, HackerRank, CodeChef, GeeksforGeeks, Codédex, and Coddy by combining gamification, 1v1 battle competition, and structured learning loops.
 
 ## Official Links & Resources
 - Home: https://www.cosmodex.in/

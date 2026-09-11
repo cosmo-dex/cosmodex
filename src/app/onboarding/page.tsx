@@ -4,13 +4,8 @@ import { Suspense } from "react";
 
 export const dynamic = "force-dynamic";
 
-const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://www.cosmodex.in";
-
 export const metadata: Metadata = {
   title: "Onboarding | CosmoDex",
-  alternates: {
-    canonical: `${appUrl}/onboarding`,
-  },
   robots: {
     index: false,
     follow: false,
