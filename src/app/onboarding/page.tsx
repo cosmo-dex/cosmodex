@@ -14,10 +14,8 @@ export const metadata: Metadata = {
 
 export default function Page() {
   return (
-    <div className="google-anno-skip w-full min-h-screen">
-      <Suspense fallback={<div className="min-h-screen bg-[#0a0518] flex items-center justify-center text-white font-mono">Loading...</div>}>
-        <OnboardingFlow />
-      </Suspense>
-    </div>
+    <Suspense fallback={<div className="min-h-screen bg-[#0a0518] flex items-center justify-center text-white font-mono">Loading...</div>}>
+      <OnboardingFlow />
+    </Suspense>
   );
 }

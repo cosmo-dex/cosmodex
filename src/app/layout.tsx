@@ -5,7 +5,6 @@ import "./globals.css";
 import SmoothScroll from "@/components/landing/SmoothScroll";
 import Mascot from "@/features/mascot/Mascot";
 import Providers from "@/components/providers/Providers";
-import GlobalAds from "@/components/ads/GlobalAds";
 
 const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://www.cosmodex.in";
 
@@ -213,11 +212,6 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 })(window,document,'script','dataLayer','GTM-MTZR6TH8');`,
           }}
         />
-        <script
-          async
-          src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8841633365335879"
-          crossOrigin="anonymous"
-        />
       </head>
       <body
         className={`${displayFont.variable} ${bodyFont.variable} ${monoFont.variable} antialiased`}
@@ -253,10 +247,6 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
           {/* Noise overlay for texture */}
           <div className="noise-overlay" aria-hidden="true" />
           {children}
-
-          {/* Contextual Ads - Excludes /onboarding and /battle */}
-          <GlobalAds />
-
           <Mascot />
         </Providers>
       </body>
