@@ -79,7 +79,7 @@ export default function ConceptKnowledgeQuiz({
           <p className="text-[11px] font-mono font-bold uppercase tracking-widest text-[#9E00F6]">
             Knowledge Check
           </p>
-          <h3 className="text-lg font-black text-white tracking-tight">{chapterTitle}</h3>
+          <h3 className="text-lg font-black text-white tracking-tight font-display">{chapterTitle}</h3>
         </div>
         <div className="ml-auto flex items-center gap-2">
           <div className="px-3 py-1.5 rounded-full bg-white/[0.05] border border-white/10 font-mono text-xs font-bold">
@@ -154,7 +154,7 @@ export default function ConceptKnowledgeQuiz({
             className="p-5 sm:p-6 space-y-5"
           >
             {/* Question text */}
-            <h4 className="text-base sm:text-lg font-bold text-white leading-snug">
+            <h4 className="text-base sm:text-lg font-bold text-white leading-snug font-sans">
               {currentQ.question}
             </h4>
 
@@ -211,7 +211,7 @@ export default function ConceptKnowledgeQuiz({
                     >
                       {letter}
                     </span>
-                    <span className="leading-snug flex-1">{optionText}</span>
+                    <span className="leading-snug flex-1 font-sans">{optionText}</span>
                     {hasAnsweredCurrent && (
                       <span className="shrink-0 ml-1">
                         {isThisCorrect ? (
