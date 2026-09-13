@@ -7,6 +7,16 @@ export const metadata: Metadata = {
   title: "Cosmic Dispatches — CosmoDex Engineering & Learning Blog",
   description:
     "Insights, tutorials, and dispatches on gamified coding, real-time 1v1 battle arenas, Python mastery, and technical interview preparation.",
+  keywords: [
+    "coding blog",
+    "programming tutorials",
+    "python tutorials for beginners",
+    "how to learn coding",
+    "coding guides",
+    "technical interview preparation",
+    "dsa tips and tricks",
+    "gamified learning insights",
+  ],
   alternates: {
     canonical: `${appUrl}/blog`,
   },
@@ -23,6 +33,17 @@ export const metadata: Metadata = {
     title: "Cosmic Dispatches — CosmoDex Engineering & Learning Blog",
     description:
       "Insights, tutorials, and dispatches on gamified coding, real-time 1v1 battle arenas, and Python mastery.",
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-video-preview": -1,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+    },
   },
 };
 
