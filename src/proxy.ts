@@ -7,6 +7,7 @@ const PROTECTED_USER_ROUTES = [
   '/victory',
   '/battle/coding',
   '/battle/room',
+  '/learn',
 ];
 const PROTECTED_API_PREFIXES = [
   '/api/user',
