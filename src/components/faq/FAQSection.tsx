@@ -44,6 +44,21 @@ const faqs = [
     answer:
       "Unlike traditional problem sets, CosmoDex is student-focused and combines gamified level progression (XP, streaks, ranks) with real-time 1v1 Space Coding Battles and tangible rewards.",
   },
+  {
+    question: "Is CosmoDex a good alternative to Codédex and LeetCode?",
+    answer:
+      "Yes. CosmoDex provides beginner-friendly gamified quests and interactive courses like Codédex, but introduces real-time multiplayer 1v1 coding duels, college hackathons, and Elo ratings to prepare students for real-world technical assessments.",
+  },
+  {
+    question: "Where can I find free coding practice sites to learn Python and Java?",
+    answer:
+      "CosmoDex is a free coding platform where students can practice Python, Java, SQL, and data structures with interactive courses, real-time code challenges, and instant automated feedback.",
+  },
+  {
+    question: "What makes CosmoDex a fun coding game for students?",
+    answer:
+      "CosmoDex combines programming education with multiplayer gaming mechanics: earn XP, maintain streaks, climb 6 cosmic league ranks, and compete in live 1v1 Space Battles.",
+  },
 ] as const;
 
 export function FAQSection() {
