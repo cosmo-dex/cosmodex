@@ -5,9 +5,22 @@ import BreadcrumbSchema from "@/components/seo/BreadcrumbSchema";
 const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://www.cosmodex.in";
 
 export const metadata: Metadata = {
-  title: "Learn Python from Scratch — Interactive Course",
+  title: "Learn Python from Scratch — Free Interactive Python Course",
   description:
-    "Free interactive Python course for students and beginners. Learn Python syntax, loops, data structures, and algorithms with gamified missions and terminal challenges.",
+    "Free interactive Python course for students and beginners. Learn Python syntax, loops, data structures, and algorithms with gamified missions, terminal challenges, and live code duels.",
+  keywords: [
+    "python coding",
+    "coding python",
+    "learn python free",
+    "how to learn python",
+    "interactive python course",
+    "free coding practice sites",
+    "python programming fundamentals",
+    "python for beginners",
+    "learn python by doing",
+    "python exercises with solutions",
+    "python dsa for beginners",
+  ],
   alternates: {
     canonical: `${appUrl}/learn/python`,
   },
@@ -23,6 +36,17 @@ export const metadata: Metadata = {
     title: "Learn Python from Scratch — Interactive Course | CosmoDex",
     description:
       "Free interactive Python course with gamified missions, terminal exercises, and battle prep.",
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-video-preview": -1,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+    },
   },
 };
 
