@@ -6,6 +6,7 @@ Allow: /learn
 Allow: /battle
 Allow: /leaderboard
 Allow: /events
+Allow: /support
 Allow: /llms.txt
 Allow: /llms-full.txt
 Disallow: /api/

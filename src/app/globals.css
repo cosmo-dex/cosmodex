@@ -768,7 +768,7 @@ h6 {
 }
 
 /* ─── Focus Visible ──────────────────────────────────────────────────────────── */
-:focus-visible {
+:focus-visible:not(input):not(textarea):not(select) {
   outline: 2px solid rgba(255, 45, 120, 0.6);
   outline-offset: 3px;
   border-radius: 4px;

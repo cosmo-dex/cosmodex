@@ -90,6 +90,8 @@ export default function InteractiveCodeLab({
     });
   };
 
+  const isHtml = fileName.toLowerCase().endsWith('.html');
+
   return (
     <div className="my-5 rounded-2xl overflow-hidden border border-white/10 bg-[#0d0f1a] shadow-[0_8px_32px_rgba(0,0,0,0.6)] font-mono">
       {/* ── Top Bar ── */}
@@ -186,11 +188,31 @@ export default function InteractiveCodeLab({
               exit: 0
             </span>
           </div>
-          <div className="p-4 flex-1 text-[13px] font-mono leading-6 min-h-[100px]">
+          <div className="p-4 flex-1 text-[13px] font-mono leading-6 min-h-[100px] flex flex-col">
             {isRunning ? (
               <span className="text-[#00FFE9] animate-pulse">Executing…</span>
             ) : hasExecuted ? (
-              <span className="text-emerald-300 whitespace-pre-wrap">{outputCode}</span>
+              <div className="flex flex-col gap-3 h-full">
+                {isHtml && (
+                  <div className="flex-1 bg-white/90 rounded overflow-hidden p-1 min-h-[150px]">
+                    <iframe
+                      srcDoc={inputCode}
+                      title="HTML Preview"
+                      sandbox="allow-scripts"
+                      className="w-full h-full bg-white rounded-sm"
+                    />
+                  </div>
+                )}
+                {outputCode && !isHtml && (
+                  <span className="text-emerald-300 whitespace-pre-wrap">{outputCode}</span>
+                )}
+                {outputCode && isHtml && (
+                  <div className="text-emerald-300/80 text-[11px] mt-auto pt-2 border-t border-white/10 whitespace-pre-wrap">
+                    <span className="text-white/50 font-bold">Note: </span>
+                    {outputCode}
+                  </div>
+                )}
+              </div>
             ) : (
               <span className="text-white/30 italic text-xs">Click Run ▶ to see output</span>
             )}
