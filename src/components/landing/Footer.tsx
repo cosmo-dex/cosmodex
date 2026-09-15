@@ -114,7 +114,7 @@ export default function Footer() {
               { label: "Blog & News", href: "/blog" },
               { label: "Discord", href: "https://discord.gg", external: true },
               { label: "Forum", href: "/events" },
-              { label: "Support", href: "/onboarding?mode=login" },
+              { label: "Support", href: "/support" },
             ]}
           />
 

@@ -93,7 +93,7 @@ export default function Footer() {
             <a href="https://discord.gg" target="_blank" rel="noopener noreferrer" className="text-white/70 hover:text-white hover:translate-x-1 text-xs font-medium transition-all w-fit cursor-pointer">
               Discord Server
             </a>
-            <Link href="/onboarding?mode=login" className="text-white/70 hover:text-white hover:translate-x-1 text-xs font-medium transition-all w-fit cursor-pointer">
+            <Link href="/support" className="text-white/70 hover:text-white hover:translate-x-1 text-xs font-medium transition-all w-fit cursor-pointer">
               Support & FAQ
             </Link>
           </div>
