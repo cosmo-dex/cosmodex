@@ -408,12 +408,20 @@ export default function PythonCoursePage() {
               <GalaxyPathMap
                 chapters={chapters}
                 selectedChapterId={selectedChapter?.id || ""}
-                onSelectChapter={(chapter) => setSelectedChapterId(chapter.id)}
+                onSelectChapter={(chapter) => {
+                  setSelectedChapterId(chapter.id);
+                  if (typeof window !== "undefined" && window.innerWidth < 1024) {
+                    const sidebar = document.getElementById("station-detail-sidebar");
+                    if (sidebar) {
+                      sidebar.scrollIntoView({ behavior: "smooth", block: "center" });
+                    }
+                  }
+                }}
                 courseTitle={courseDisplayName}
               />
             </div>
 
-            <div className="lg:col-span-5 w-full">
+            <div id="station-detail-sidebar" className="lg:col-span-5 w-full lg:sticky lg:top-28 z-20 transition-all duration-300">
               {selectedChapter && (
                 <ProgressSidebar
                   selectedChapter={selectedChapter}

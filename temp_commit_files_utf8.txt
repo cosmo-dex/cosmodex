@@ -1,0 +1,67 @@
+﻿commit cb685fddb5989642308ec978e014bb588b44d3f9
+Author: rishiii183 <coderrishi183@gmail.com>
+Date:   Mon Sep 14 20:51:51 2026 +0530
+
+    feat(html): add HTML course curriculum, rich station theory, and route protection
+
+A	prisma/seed.ts
+D	src/app/admin/page.tsx
+D	src/app/api/admin/arena/matches/route.ts
+D	src/app/api/admin/arena/mcq/[id]/route.ts
+D	src/app/api/admin/arena/mcq/bulk-json/route.ts
+D	src/app/api/admin/arena/mcq/route.ts
+D	src/app/api/admin/arena/problems/[id]/route.ts
+D	src/app/api/admin/arena/problems/bulk-json/route.ts
+D	src/app/api/admin/arena/problems/route.ts
+D	src/app/api/admin/arena/stats/route.ts
+D	src/app/api/admin/blogs/[id]/route.ts
+D	src/app/api/admin/blogs/route.ts
+D	src/app/api/admin/learning/bulk-json/route.ts
+D	src/app/api/admin/learning/languages/[id]/route.ts
+D	src/app/api/admin/learning/languages/route.ts
+D	src/app/api/admin/learning/modules/[id]/route.ts
+D	src/app/api/admin/learning/modules/route.ts
+D	src/app/api/admin/learning/questions/[id]/route.ts
+D	src/app/api/admin/learning/questions/route.ts
+D	src/app/api/admin/learning/stats/route.ts
+D	src/app/api/admin/super/change-password/route.ts
+D	src/app/api/admin/super/create-admin/route.ts
+D	src/app/api/admin/super/events/[id]/leaderboard/route.ts
+D	src/app/api/admin/super/events/[id]/registrations/route.ts
+D	src/app/api/admin/super/events/[id]/route.ts
+D	src/app/api/admin/super/events/route.ts
+D	src/app/api/admin/super/logs/route.ts
+D	src/app/api/admin/super/notifications/[id]/route.ts
+D	src/app/api/admin/super/notifications/route.ts
+D	src/app/api/admin/super/stats/route.ts
+D	src/app/api/admin/super/users/route.ts
+D	src/app/arena-admin/change-password/page.tsx
+D	src/app/arena-admin/page.tsx
+D	src/app/arena-admin/problems/page.tsx
+M	src/app/learn/python/page.tsx
+D	src/app/learning-admin/change-password/page.tsx
+D	src/app/learning-admin/courses/page.tsx
+D	src/app/learning-admin/modules/page.tsx
+D	src/app/learning-admin/page.tsx
+D	src/app/learning-admin/questions/page.tsx
+D	src/app/super-admin/blogs/page.tsx
+D	src/app/super-admin/change-password/page.tsx
+D	src/app/super-admin/create-admin/page.tsx
+D	src/app/super-admin/events/[id]/page.tsx
+D	src/app/super-admin/events/create/page.tsx
+D	src/app/super-admin/events/page.tsx
+D	src/app/super-admin/logs/page.tsx
+D	src/app/super-admin/notifications/page.tsx
+D	src/app/super-admin/page.tsx
+D	src/app/super-admin/users/page.tsx
+D	src/components/admin/AdminLayout.tsx
+D	src/components/admin/DateTimePicker.tsx
+M	src/components/dashboard/CourseSuggestions.tsx
+M	src/components/landing/CoursesSection.tsx
+M	src/components/learn/CourseCard.tsx
+M	src/components/learn/GalaxyPathMap.tsx
+M	src/components/learn/PixelPlanet.tsx
+M	src/components/learn/TheoryExerciseClientView.tsx
+M	src/components/navbar/Navbar.tsx
+M	src/lib/learningService.ts
+M	src/proxy.ts

@@ -15,16 +15,16 @@ interface GalaxyPathMapProps {
 }
 
 const PLANET_X_POSITIONS = [
-  20,
-  52,
-  82,
-  68,
-  45,
   22,
+  46,
+  62,
+  50,
   36,
-  78,
-  30,
-  56,
+  20,
+  34,
+  60,
+  26,
+  48,
 ];
 
 export default function GalaxyPathMap({
@@ -128,7 +128,7 @@ export default function GalaxyPathMap({
         </svg>
 
         {/* ── Planets List Grid/Node Map ── */}
-        <div className="relative z-10 flex flex-col gap-24 py-6">
+        <div className="relative z-10 flex flex-col gap-36 sm:gap-40 py-6">
           {chapters.map((chapter, index) => {
             const xPercent = PLANET_X_POSITIONS[index % PLANET_X_POSITIONS.length];
             const isSelected = selectedChapterId === chapter.id;

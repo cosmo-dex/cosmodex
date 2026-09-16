@@ -3,7 +3,6 @@
 import React, { useState, useId } from "react";
 import { Target } from "lucide-react";
 import { PlanetType } from "./pythonData";
-import ThreeRocket from "./ThreeRocket";
 
 interface PixelPlanetProps {
   type: PlanetType;
@@ -339,9 +338,9 @@ export default function PixelPlanet({
       </div>
 
       {/* ── Planet Title & Sublabels Below ── */}
-      <div className="flex flex-col items-center mt-3.5 text-center">
+      <div className="flex flex-col items-center mt-3 text-center max-w-[210px] sm:max-w-[240px]">
         <span
-          className={`text-xs md:text-sm font-bold font-mono tracking-wider transition-all duration-500 ease-out ${
+          className={`text-xs md:text-sm font-bold font-mono tracking-wider leading-snug transition-all duration-500 ease-out ${
             isCurrent
               ? "text-[#00FFE9] drop-shadow-[0_0_8px_rgba(0,255,233,0.4)]"
               : isSelected || isHovered
@@ -352,12 +351,10 @@ export default function PixelPlanet({
           {title}
         </span>
 
-        {/* "YOU ARE HERE" label with 3D Rocket */}
+        {/* "YOU ARE HERE" label */}
         {isCurrent && (
-          <div className="flex items-center gap-1.5 mt-1 text-[11px] font-mono font-bold text-[#00FFE9] tracking-widest uppercase bg-[#00FFE9]/10 px-2.5 py-0.5 rounded-full border border-[#00FFE9]/40 shadow-[0_0_12px_rgba(0,255,233,0.3)]">
-            <div className="w-5 h-5 flex items-center justify-center shrink-0">
-              <ThreeRocket />
-            </div>
+          <div className="flex items-center gap-1.5 mt-1.5 text-[10px] sm:text-[11px] font-mono font-bold text-[#00FFE9] tracking-widest uppercase bg-[#00FFE9]/10 px-2.5 py-1 rounded-full border border-[#00FFE9]/40 shadow-[0_0_12px_rgba(0,255,233,0.3)]">
+            <span className="w-2 h-2 rounded-full bg-[#00FFE9] animate-pulse shrink-0" />
             <span>YOU ARE HERE</span>
           </div>
         )}

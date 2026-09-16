@@ -35,6 +35,8 @@ export default function CourseCard({ course }: CourseCardProps) {
   const targetCourseSlug =
     course.id === "py-1" || course.title.toLowerCase() === "python"
       ? "python"
+      : course.id === "web-1" || course.title.toLowerCase() === "html"
+      ? "html"
       : course.id;
 
   const targetHref = `/learn/${targetCourseSlug}`;
