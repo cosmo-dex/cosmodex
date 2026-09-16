@@ -97,10 +97,10 @@ const SUGGESTED_COURSES: SuggestedCourse[] = [
     id: "s-html",
     title: "HTML",
     description: "Build the structure of web pages with semantic HTML tags.",
-    level: "COMING SOON",
+    level: "BEGINNER",
     banner: <HTMLBanner />,
-    href: "/learn",
-    isLive: false,
+    href: "/learn/html",
+    isLive: true,
   },
   {
     id: "s-js",

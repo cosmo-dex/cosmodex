@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { motion } from "framer-motion";
 import Link from "next/link";
 import Navbar from "@/components/navbar/Navbar";
@@ -68,6 +68,16 @@ export default function TheoryExerciseClientView({
       active = false;
     };
   }, [exercise.id, exercise.chapterNumber]);
+
+  const fileExt = useMemo(() => {
+    const cid = (exercise.courseId || "").toLowerCase();
+    if (cid.includes("html") || cid.includes("web")) return "html";
+    if (cid.includes("css")) return "css";
+    if (cid.includes("js") || cid.includes("javascript") || cid.includes("react")) return "js";
+    if (cid.includes("java")) return "java";
+    if (cid.includes("cpp") || cid.includes("c++")) return "cpp";
+    return "py";
+  }, [exercise.courseId]);
 
   const handleToggleComplete = async () => {
     const nextState = !isCompleted;
@@ -181,7 +191,7 @@ export default function TheoryExerciseClientView({
       />
 
       {/* ── Main Content ── */}
-      <main className="relative z-10 flex-1 w-full max-w-[860px] mx-auto px-4 sm:px-8 pt-36 pb-40">
+      <main className="relative z-10 flex-1 w-full max-w-[1240px] mx-auto px-4 sm:px-8 pt-36 pb-40">
         <article className="space-y-14">
 
           {/* ── Hero Header ── */}
@@ -317,7 +327,7 @@ export default function TheoryExerciseClientView({
                     inputCode={ex.input}
                     outputCode={ex.output}
                     explanation={ex.explanation}
-                    fileName={`example_${idx + 1}.py`}
+                    fileName={`example_${idx + 1}.${fileExt}`}
                   />
                 ))}
               </div>
@@ -350,7 +360,7 @@ export default function TheoryExerciseClientView({
                   inputCode={exercise.practiceQuestion.input}
                   outputCode={exercise.practiceQuestion.output}
                   explanation={exercise.practiceQuestion.explanation}
-                  fileName="challenge.py"
+                  fileName={`challenge.${fileExt}`}
                 />
               </div>
             </section>
