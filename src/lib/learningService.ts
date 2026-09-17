@@ -68,9 +68,9 @@ const curriculumCache = new Map<string, CacheItem<Chapter[]>>();
 const theoryCache = new Map<string, CacheItem<TheoryExercise | null>>();
 const progressCache = new Map<string, CacheItem<StudentProgressResult>>();
 
-const CURRICULUM_CACHE_TTL = 15000;
-const THEORY_CACHE_TTL = 30000;
-const PROGRESS_CACHE_TTL = 10000;
+const CURRICULUM_CACHE_TTL = 600000; // 10 minutes in-memory
+const THEORY_CACHE_TTL = 600000; // 10 minutes in-memory
+const PROGRESS_CACHE_TTL = 30000; // 30 seconds
 
 export function invalidateLearningCache(courseCode?: string) {
   if (courseCode) {
@@ -119,7 +119,7 @@ async function loadCurriculumFromDb(courseCode: string): Promise<Chapter[]> {
       return modules.map((mod) => {
         const topic = mod.topics[0];
         const content = (topic?.content_json as TopicContent) || {};
-        const isMilestone = mod.module_number === 5 || mod.module_number === 10;
+        const isMilestone = Boolean(content.theoryLessonId?.includes('milestone') || mod.module_number === 5 || mod.module_number === 10);
         const totalEx = mod._count?.questions ?? 0;
 
         const exercises: Exercise[] = Array.from({ length: totalEx }, (_, idx) => ({
@@ -137,9 +137,11 @@ async function loadCurriculumFromDb(courseCode: string): Promise<Chapter[]> {
 
         let stationNumber = content.stationNumber;
         if (!stationNumber) {
-          if (mod.module_number === 5) stationNumber = 'CHECKPOINT 01';
-          else if (mod.module_number === 10) stationNumber = 'CAPSTONE 02';
-          else stationNumber = `STATION ${String(mod.module_number).padStart(2, '0')}`;
+          if (isMilestone) {
+            stationNumber = (mod.module_number === 10 || mod.module_number === modules.length) ? 'CAPSTONE 02' : 'CHECKPOINT 01';
+          } else {
+            stationNumber = `STATION ${String(mod.module_number).padStart(2, '0')}`;
+          }
         }
 
         return {
@@ -234,16 +236,27 @@ async function loadTheoryExerciseFromDb(
       const topic = m.topics[0];
       const content = (topic?.content_json as TopicContent) || {};
       const stationNum = String(m.module_number);
-      const normLessonId = lessonId.replace('station-', '').replace('station', '');
+      const normLessonId = lessonId.replace('station-', '').replace('station', '').replace('ch-', '').replace('ch', '');
 
-      return (
-        content.theoryLessonId === lessonId ||
-        m.id === lessonId ||
+      if (content.theoryLessonId === lessonId || m.id === lessonId) {
+        return true;
+      }
+
+      if (
         normLessonId === stationNum ||
         String(m.module_number).padStart(2, '0') === lessonId ||
-        (lessonId === 'milestone-1' && m.module_number === 5) ||
-        (lessonId === 'milestone-2' && m.module_number === 10)
-      );
+        `ch-${m.module_number}` === lessonId ||
+        `ch-${String(m.module_number).padStart(2, '0')}` === lessonId
+      ) {
+        return true;
+      }
+
+      if (!content.theoryLessonId) {
+        if (lessonId === 'milestone-1' && m.module_number === 5) return true;
+        if (lessonId === 'milestone-2' && m.module_number === 10) return true;
+      }
+
+      return false;
     });
 
     if (targetIndex !== -1) {
@@ -277,6 +290,7 @@ async function loadTheoryExerciseFromDb(
         id: `sec-${i + 1}`,
         heading: sec.heading,
         content: sec.content,
+        bulletPoints: (sec as { bulletPoints?: string[] }).bulletPoints || [],
         illustration: 'command-line' as const,
       }));
 
@@ -458,25 +472,25 @@ export async function recordStudentCompletion(params: {
       const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(moduleId);
 
       if (!isUuid) {
-        if (moduleId === 'in-the-beginning') {
-          const mod = await tx.modules.findFirst({ where: { module_number: 1 } });
-          if (mod) resolvedModuleId = mod.id;
-        } else if (moduleId === 'command-line-basics') {
-          const mod = await tx.modules.findFirst({ where: { module_number: 2 } });
-          if (mod) resolvedModuleId = mod.id;
-        } else if (moduleId === 'milestone-1') {
-          const mod = await tx.modules.findFirst({ where: { module_number: 5 } });
-          if (mod) resolvedModuleId = mod.id;
-        } else if (moduleId === 'milestone-2') {
-          const mod = await tx.modules.findFirst({ where: { module_number: 10 } });
-          if (mod) resolvedModuleId = mod.id;
+        const allMods = await tx.modules.findMany({
+          include: { topics: true },
+        });
+        
+        const matchedMod = allMods.find((m) => {
+          const t = m.topics[0];
+          const c = (t?.content_json as TopicContent) || {};
+          return c.theoryLessonId === moduleId || m.id === moduleId;
+        });
+
+        if (matchedMod) {
+          resolvedModuleId = matchedMod.id;
         } else {
           const modNum = parseInt(moduleId.replace(/\D/g, ''), 10);
           if (!isNaN(modNum)) {
-            const mod = await tx.modules.findFirst({
+            const numMod = await tx.modules.findFirst({
               where: { module_number: modNum },
             });
-            if (mod) resolvedModuleId = mod.id;
+            if (numMod) resolvedModuleId = numMod.id;
           }
         }
       }
