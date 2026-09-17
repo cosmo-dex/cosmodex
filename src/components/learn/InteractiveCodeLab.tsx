@@ -74,6 +74,17 @@ function buildHtmlPreview(inputCode: string, title?: string): string {
         background: rgba(158, 0, 246, 0.7);
       }
     </style>
+    <script>
+      window.addEventListener("click", (e) => {
+        const a = e.target.closest("a");
+        if (a && a.getAttribute("href") && a.getAttribute("href").startsWith("#")) {
+          e.preventDefault();
+          const id = a.getAttribute("href").substring(1);
+          const el = document.getElementById(id);
+          if (el) el.scrollIntoView({ behavior: "smooth" });
+        }
+      });
+    </script>
   `;
 
   if (code.toLowerCase().includes("<head>")) {
