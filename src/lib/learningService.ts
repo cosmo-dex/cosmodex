@@ -68,9 +68,9 @@ const curriculumCache = new Map<string, CacheItem<Chapter[]>>();
 const theoryCache = new Map<string, CacheItem<TheoryExercise | null>>();
 const progressCache = new Map<string, CacheItem<StudentProgressResult>>();
 
-const CURRICULUM_CACHE_TTL = 15000;
-const THEORY_CACHE_TTL = 30000;
-const PROGRESS_CACHE_TTL = 10000;
+const CURRICULUM_CACHE_TTL = 600000; // 10 minutes in-memory
+const THEORY_CACHE_TTL = 600000; // 10 minutes in-memory
+const PROGRESS_CACHE_TTL = 30000; // 30 seconds
 
 export function invalidateLearningCache(courseCode?: string) {
   if (courseCode) {

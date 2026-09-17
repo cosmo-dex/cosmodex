@@ -1,17 +1,15 @@
 'use client';
 
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import Image from 'next/image';
 import Navbar from '@/components/navbar/Navbar';
 import Footer from '@/components/landing/Footer';
 import { motion, AnimatePresence } from 'framer-motion';
 import RisingStars from '@/components/RisingStar';
 import {
   CalendarDays, Trophy, Users, Clock, Search,
-  Zap, Hammer, BookOpen, Star, ChevronRight, ChevronDown, Check,
-  UserCheck, UsersRound, Flame, Lock, Globe, BadgeCheck, Sparkles, RefreshCw, X, RotateCcw,
+  Zap, Hammer, BookOpen, Star, ChevronDown, Check,
+  UserCheck, UsersRound, Flame, Globe, Sparkles, RefreshCw, X, RotateCcw,
   Rocket, Terminal, Layers, CheckCircle2, LucideIcon
 } from 'lucide-react';
 
@@ -44,26 +42,6 @@ const TYPE_META: Record<string, { label: string; icon: React.ComponentType<{ siz
   challenge: { label: 'Challenge', icon: Star, color: '#8D37D6', bg: 'rgba(141,55,214,0.18)' },
 };
 
-function useCountdownStr(target: string | null) {
-  const [txt, setTxt] = useState('');
-  useEffect(() => {
-    if (!target) return;
-    function calc() {
-      const diff = new Date(target!).getTime() - Date.now();
-      if (diff <= 0) { setTxt(''); return; }
-      const d = Math.floor(diff / 86400000);
-      const h = Math.floor((diff % 86400000) / 3600000);
-      const m = Math.floor((diff % 3600000) / 60000);
-      if (d > 0) setTxt(`${d}d ${h}h`);
-      else if (h > 0) setTxt(`${h}h ${m}m`);
-      else setTxt(`${m}m`);
-    }
-    calc();
-    const t = setInterval(calc, 30000);
-    return () => clearInterval(t);
-  }, [target]);
-  return txt;
-}
 
 interface DropdownOption {
   key: string;
@@ -273,7 +251,6 @@ const PARTICIPATION_FILTERS: DropdownOption[] = [
 ];
 
 export default function EventsPage() {
-  const router = useRouter();
   const [events, setEvents] = useState<EventCard[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');

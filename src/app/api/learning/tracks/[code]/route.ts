@@ -11,9 +11,7 @@ interface RouteContext {
 export async function GET(req: NextRequest, { params }: RouteContext) {
   const { code } = await params;
   const courseCode = code?.toLowerCase() || 'python';
-  const bypassCache =
-    req.nextUrl.searchParams.get('fresh') === 'true' ||
-    req.headers.get('cache-control')?.includes('no-cache');
+  const bypassCache = req.nextUrl.searchParams.get('fresh') === 'true';
 
   try {
     const chapters = await getCourseCurriculum(courseCode, { bypassCache });
@@ -35,7 +33,7 @@ export async function GET(req: NextRequest, { params }: RouteContext) {
       },
       {
         headers: {
-          'Cache-Control': 'public, max-age=5, stale-while-revalidate=30',
+          'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=600',
         },
       }
     );

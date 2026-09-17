@@ -42,7 +42,8 @@ export default function TheoryExerciseClientView({
   useEffect(() => {
     let active = true;
 
-    fetch("/api/learning/progress?course=python")
+    const courseCode = exercise.courseId || "python";
+    fetch(`/api/learning/progress?course=${courseCode}`)
       .then((res) => (res.ok ? res.json() : null))
       .then((data) => {
         if (!active || !data?.progress) return;
@@ -67,7 +68,7 @@ export default function TheoryExerciseClientView({
     return () => {
       active = false;
     };
-  }, [exercise.id, exercise.chapterNumber]);
+  }, [exercise.id, exercise.chapterNumber, exercise.courseId]);
 
   const fileExt = useMemo(() => {
     const cid = (exercise.courseId || "").toLowerCase();
@@ -89,6 +90,7 @@ export default function TheoryExerciseClientView({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           moduleId: exercise.id,
+          courseCode: exercise.courseId || 'python',
           isStationComplete: nextState,
           xpEarned: 0,
         }),
@@ -107,6 +109,7 @@ export default function TheoryExerciseClientView({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           moduleId: exercise.id,
+          courseCode: exercise.courseId || 'python',
           isStationComplete: true,
           xpEarned: 0,
         }),
@@ -141,10 +144,10 @@ export default function TheoryExerciseClientView({
   };
 
   const parseCodeBlockFromContent = (text: string) => {
-    const codeBlockMatch = text.match(/```(?:python)?\s*([\s\S]*?)```/);
+    const codeBlockMatch = text.match(/```(?:[a-zA-Z0-9_\-#+]+)?\s*([\s\S]*?)```/);
     if (codeBlockMatch) {
       const code = codeBlockMatch[1].trim();
-      const nonCode = text.replace(/```(?:python)?\s*[\s\S]*?```/, "").trim();
+      const nonCode = text.replace(/```(?:[a-zA-Z0-9_\-#+]+)?\s*[\s\S]*?```/, "").trim();
       return { code, nonCode };
     }
     return null;
@@ -255,6 +258,7 @@ export default function TheoryExerciseClientView({
                           inputCode={parsedBlock.code}
                           outputCode="[Program executed with exit code 0]"
                           explanation="Study the code structure and indentation."
+                          fileName={`syntax.${fileExt}`}
                         />
                       </div>
                     );
