@@ -101,13 +101,10 @@ export default function Footer() {
           {/* Column 3: Legal */}
           <div className="flex flex-col gap-2.5">
             <h4 className="text-white/40 text-[11px] font-bold tracking-widest uppercase mb-1 font-mono">Legal</h4>
-            <Link href="/events" className="text-white/70 hover:text-white hover:translate-x-1 text-xs font-medium transition-all w-fit cursor-pointer">
+            <Link href="/terms" className="text-white/70 hover:text-white hover:translate-x-1 text-xs font-medium transition-all w-fit cursor-pointer">
               Terms of Service
             </Link>
-            <Link href="/events" className="text-white/70 hover:text-white hover:translate-x-1 text-xs font-medium transition-all w-fit cursor-pointer">
-              Privacy Policy
-            </Link>
-            <Link href="/events" className="text-white/70 hover:text-white hover:translate-x-1 text-xs font-medium transition-all w-fit cursor-pointer">
+            <Link href="/cookies" className="text-white/70 hover:text-white hover:translate-x-1 text-xs font-medium transition-all w-fit cursor-pointer">
               Cookie Policy
             </Link>
           </div>
