@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { usePathname } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { Flame, Sparkles, X, Trophy, ArrowRight } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
@@ -9,7 +8,6 @@ import { useAuth } from "@/context/AuthContext";
 const DAYS_OF_WEEK = ["M", "T", "W", "T", "F", "S", "S"];
 
 export default function DailyStreakModal() {
-  const pathname = usePathname();
   const { user, isAuthenticated } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
   const [streakCount, setStreakCount] = useState(1);
@@ -21,7 +19,6 @@ export default function DailyStreakModal() {
   })();
 
   useEffect(() => {
-    if (pathname !== "/dashboard") return;
     if (!isAuthenticated || !user?.userId) return;
 
     const todayStr = new Date().toISOString().split("T")[0];
@@ -40,16 +37,13 @@ export default function DailyStreakModal() {
         if (data && data.success) {
           setStreakCount(data.currentStreak || 1);
           setBestStreak(data.bestStreak || 1);
-
-          if (data.streakIncreased) {
-            setIsOpen(true);
-          }
+          setIsOpen(true);
         }
       })
       .catch((err) => {
         console.warn("[DailyStreakModal] Streak check error:", err);
       });
-  }, [pathname, isAuthenticated, user?.userId]);
+  }, [isAuthenticated, user?.userId]);
 
   const handleClose = () => {
     setIsOpen(false);
@@ -58,11 +52,6 @@ export default function DailyStreakModal() {
       localStorage.setItem(`cosmodex_streak_popup_dismissed_${user.userId}_${todayStr}`, "true");
     }
   };
-
-  // Do not render anything if not on dashboard
-  if (pathname !== "/dashboard") {
-    return null;
-  }
 
   return (
     <AnimatePresence>

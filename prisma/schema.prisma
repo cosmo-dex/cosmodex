@@ -43,6 +43,7 @@ model users {
   modules                                        modules[]
   progress                                       progress[]
   questions                                      questions[]
+  quiz_attempts                                  quiz_attempts[]
   skip_test_attempts                             skip_test_attempts[]
   submissions                                    submissions[]
   topics                                         topics[]
@@ -83,6 +84,7 @@ model modules {
 
   enrollments          enrollments[]
   module_completions   module_completions[]
+  quiz_attempts        quiz_attempts[]
   users                users?               @relation(fields: [created_by], references: [id], onUpdate: NoAction)
   languages            languages            @relation(fields: [language_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
   progress             progress[]
@@ -165,6 +167,21 @@ model module_completions {
 
   modules         modules   @relation(fields: [module_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
   users           users     @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+}
+
+model quiz_attempts {
+  id           String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  user_id      String    @db.Uuid
+  module_id    String    @db.Uuid
+  score        Int       @default(0)
+  total        Int       @default(5)
+  passed       Boolean   @default(false)
+  attempted_at DateTime  @default(now()) @db.Timestamptz(6)
+
+  modules      modules   @relation(fields: [module_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  users        users     @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([user_id, module_id])
 }
 
 model submissions {

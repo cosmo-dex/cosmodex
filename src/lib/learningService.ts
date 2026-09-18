@@ -126,7 +126,7 @@ async function loadCurriculumFromDb(courseCode: string): Promise<Chapter[]> {
           id: `${mod.id}-ex-${idx + 1}`,
           numberLabel: `Exercise ${idx + 1}`,
           title: `Exercise ${idx + 1}`,
-          isUnlocked: true,
+          isUnlocked: mod.module_number === 1,
           isCompleted: false,
         }));
 
@@ -153,7 +153,7 @@ async function loadCurriculumFromDb(courseCode: string): Promise<Chapter[]> {
           xpValue: content.xpValue || (isMilestone ? 120 : 55),
           planetType: (mod.icon_svg as Chapter['planetType']) || content.planetType || (isMilestone ? 'grid-web' : 'green-crater'),
           isMilestone,
-          isUnlocked: true,
+          isUnlocked: mod.module_number === 1,
           isCompleted: false,
           isCurrent: mod.module_number === 1,
           theoryLessonId: content.theoryLessonId || stationId,
@@ -313,7 +313,7 @@ async function loadTheoryExerciseFromDb(
         nextLessonId: getLessonSlug(nextMod),
         codeExamples: content.codeExamples || [],
         practiceQuestion: content.practiceQuestion,
-        mcqs: mcqs.length > 0 ? mcqs : content.mcqs || [],
+        mcqs,
         sections,
       };
     }
@@ -356,8 +356,20 @@ export async function getTheoryExercise(
   return result;
 }
 
+export function normalizeCourseSlug(slug?: string): string {
+  if (!slug) return 'python';
+  const s = slug.toLowerCase().trim();
+  if (s === 'python' || s === 'py' || s === 'py-1' || s.startsWith('py-') || s.startsWith('python')) {
+    return 'python';
+  }
+  if (s === 'html' || s === 'web-1' || s === 'html-1' || s.startsWith('html-') || s.startsWith('web-')) {
+    return 'html';
+  }
+  return s;
+}
+
 export async function getStudentProgress(userId: string, courseCode: string = 'python') {
-  const normCourse = courseCode.toLowerCase();
+  const normCourse = normalizeCourseSlug(courseCode);
   const cacheKey = `${userId}:${normCourse}`;
   const now = Date.now();
   const cached = progressCache.get(cacheKey);
@@ -372,10 +384,21 @@ export async function getStudentProgress(userId: string, courseCode: string = 'p
         where: { user_id: userId, languages: { code: normCourse } },
       }),
       prisma.module_completions.findMany({
-        where: { user_id: userId },
+        where: {
+          user_id: userId,
+          modules: {
+            languages: { code: normCourse },
+          },
+        },
       }),
       prisma.progress.findMany({
-        where: { user_id: userId, is_correct: true },
+        where: {
+          user_id: userId,
+          is_correct: true,
+          modules: {
+            languages: { code: normCourse },
+          },
+        },
       }),
       prisma.users.findUnique({
         where: { id: userId },
@@ -412,8 +435,9 @@ export async function getStudentProgress(userId: string, courseCode: string = 'p
         completedStationSlugs.push(String(mod.module_number));
         completedStationSlugs.push(`station-${mod.module_number}`);
         completedStationSlugs.push(`ch-${mod.module_number}`);
-        if (mod.module_number === 5) completedStationSlugs.push('milestone-1');
-        if (mod.module_number === 10) completedStationSlugs.push('milestone-2');
+        if (mod.module_number === 5 && normCourse === 'python') completedStationSlugs.push('milestone-1');
+        if (mod.module_number === 10 && normCourse === 'python') completedStationSlugs.push('milestone-2');
+        if (mod.module_number === 7 && normCourse === 'html') completedStationSlugs.push('milestone-1');
         const topic = mod.topics[0];
         const content = (topic?.content_json as TopicContent) || {};
         if (content.theoryLessonId) {
@@ -423,9 +447,15 @@ export async function getStudentProgress(userId: string, courseCode: string = 'p
     });
 
     const totalExercises = modules.reduce((acc, m) => acc + (m._count?.questions ?? 0), 0);
-    const totalMilestoneProjects = modules.filter((m) => m.module_number === 5 || m.module_number === 10).length;
+    const isModuleMilestone = (m: (typeof modules)[0]) => {
+      const topic = m.topics[0];
+      const content = (topic?.content_json as TopicContent) || {};
+      return Boolean(content.theoryLessonId?.includes('milestone') || m.module_number === 5 || m.module_number === 10 || (normCourse === 'html' && m.module_number === 7));
+    };
+
+    const totalMilestoneProjects = modules.filter(isModuleMilestone).length;
     const completedMilestoneProjects = modules.filter(
-      (m) => (m.module_number === 5 || m.module_number === 10) && completedModuleIdSet.has(m.id)
+      (m) => isModuleMilestone(m) && completedModuleIdSet.has(m.id)
     ).length;
 
     const result = {
@@ -457,44 +487,123 @@ export async function getStudentProgress(userId: string, courseCode: string = 'p
   }
 }
 
+export async function resolveModule(
+  moduleIdOrSlug: string,
+  courseCode?: string
+): Promise<{ id: string; module_number: number; language_id?: string } | null> {
+  if (!moduleIdOrSlug) return null;
+  const normCourse = courseCode ? normalizeCourseSlug(courseCode) : undefined;
+  const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(moduleIdOrSlug);
+
+  if (isUuid) {
+    const mod = await prisma.modules.findUnique({
+      where: { id: moduleIdOrSlug },
+      select: { id: true, module_number: true, language_id: true },
+    });
+    if (mod) return mod;
+  }
+
+  const whereClause: { is_published: boolean; languages?: { code: string } } = { is_published: true };
+  if (normCourse) {
+    whereClause.languages = { code: normCourse };
+  }
+
+  const modules = await prisma.modules.findMany({
+    where: whereClause,
+    orderBy: { module_number: 'asc' },
+    select: {
+      id: true,
+      module_number: true,
+      language_id: true,
+      title: true,
+      topics: {
+        where: { is_published: true },
+        take: 1,
+        select: { content_json: true },
+      },
+    },
+  });
+
+  if (modules.length === 0) return null;
+
+  const targetSlug = moduleIdOrSlug.toLowerCase().trim();
+
+  // 1. Direct theoryLessonId match
+  for (const m of modules) {
+    const topic = m.topics[0];
+    const content = (topic?.content_json as TopicContent) || {};
+    if (content.theoryLessonId && content.theoryLessonId.toLowerCase() === targetSlug) {
+      return m;
+    }
+  }
+
+  // 2. Specific named aliases
+  if (targetSlug === 'milestone-1' || targetSlug === 'milestone1') {
+    const m1 = modules.find((m) => {
+      const topic = m.topics[0];
+      const content = (topic?.content_json as TopicContent) || {};
+      return content.theoryLessonId === 'milestone-1' || (normCourse === 'html' ? m.module_number === 7 : m.module_number === 5);
+    });
+    if (m1) return m1;
+  }
+
+  if (targetSlug === 'milestone-2' || targetSlug === 'milestone2') {
+    const m2 = modules.find((m) => {
+      const topic = m.topics[0];
+      const content = (topic?.content_json as TopicContent) || {};
+      return content.theoryLessonId === 'milestone-2' || m.module_number === 10 || m.module_number === modules.length;
+    });
+    if (m2) return m2;
+  }
+
+  if (targetSlug === 'in-the-beginning') {
+    const mInit = modules.find((m) => m.module_number === 1);
+    if (mInit) return mInit;
+  }
+
+  if (targetSlug === 'command-line-basics') {
+    const mCmd = modules.find((m) => m.module_number === 2);
+    if (mCmd) return mCmd;
+  }
+
+  // 3. ch-X or station-X or numeric
+  const numMatch = targetSlug.match(/\d+/);
+  if (numMatch) {
+    const num = parseInt(numMatch[0], 10);
+    // If target is ch-X, check if any module has theoryLessonId = targetSlug first
+    const exactSlugMod = modules.find((m) => {
+      const topic = m.topics[0];
+      const content = (topic?.content_json as TopicContent) || {};
+      return content.theoryLessonId === `ch-${num}` || content.theoryLessonId === `station-${num}`;
+    });
+    if (exactSlugMod) return exactSlugMod;
+
+    const byNum = modules.find((m) => m.module_number === num);
+    if (byNum) return byNum;
+  }
+
+  // 4. Title match
+  const byTitle = modules.find((m) => m.title.toLowerCase().includes(targetSlug));
+  if (byTitle) return byTitle;
+
+  return modules[0] || null;
+}
+
 export async function recordStudentCompletion(params: {
   userId: string;
   moduleId: string;
   questionId?: string;
   xpEarned?: number;
   isStationComplete?: boolean;
+  courseCode?: string;
 }) {
-  const { userId, moduleId, questionId, isStationComplete } = params;
+  const { userId, moduleId, questionId, isStationComplete, courseCode } = params;
 
   try {
+    const resolvedMod = await resolveModule(moduleId, courseCode);
+    const resolvedModuleId = resolvedMod?.id || moduleId;
+
     const result = await prisma.$transaction(async (tx) => {
-      let resolvedModuleId = moduleId;
-      const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(moduleId);
-
-      if (!isUuid) {
-        const allMods = await tx.modules.findMany({
-          include: { topics: true },
-        });
-        
-        const matchedMod = allMods.find((m) => {
-          const t = m.topics[0];
-          const c = (t?.content_json as TopicContent) || {};
-          return c.theoryLessonId === moduleId || m.id === moduleId;
-        });
-
-        if (matchedMod) {
-          resolvedModuleId = matchedMod.id;
-        } else {
-          const modNum = parseInt(moduleId.replace(/\D/g, ''), 10);
-          if (!isNaN(modNum)) {
-            const numMod = await tx.modules.findFirst({
-              where: { module_number: modNum },
-            });
-            if (numMod) resolvedModuleId = numMod.id;
-          }
-        }
-      }
-
       if (questionId) {
         const existingProgress = await tx.progress.findFirst({
           where: { user_id: userId, question_id: questionId },
@@ -563,7 +672,7 @@ export async function recordStudentCompletion(params: {
       return { resolvedModuleId };
     });
 
-    invalidateLearningCache();
+    invalidateLearningCache(courseCode);
 
     return { success: true, ...result };
   } catch (error) {

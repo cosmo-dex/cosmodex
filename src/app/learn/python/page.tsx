@@ -168,9 +168,11 @@ export default function PythonCoursePage() {
         if (!active) return;
 
         // 1. Session user
+        let isAuthenticated = false;
         if (sessionRes.status === "fulfilled" && sessionRes.value.ok) {
           const sessionData = await sessionRes.value.json();
           if (sessionData?.user?.username) {
+            isAuthenticated = true;
             setUserProgress((prev) => ({
               ...prev,
               username: sessionData.user.username,
@@ -197,10 +199,11 @@ export default function PythonCoursePage() {
         const guestCompleted = new Set<string>();
         try {
           if (typeof window !== "undefined") {
+            const coursePrefix = `station_completed_${courseCode}_`;
             for (let i = 0; i < localStorage.length; i++) {
               const key = localStorage.key(i);
-              if (key && key.startsWith("station_completed_") && localStorage.getItem(key) === "true") {
-                guestCompleted.add(key.replace("station_completed_", ""));
+              if (key && key.startsWith(coursePrefix) && localStorage.getItem(key) === "true") {
+                guestCompleted.add(key.replace(coursePrefix, ""));
               }
             }
           }
@@ -212,27 +215,37 @@ export default function PythonCoursePage() {
 
         setChapters((prevChapters) => {
           const baseChapters = loadedChapters.length > 0 ? loadedChapters : prevChapters;
-          const merged = baseChapters.map((ch) => {
-            const isCleared =
-              completedIds.has(ch.id) ||
-              completedSlugs.has(ch.id) ||
-              completedSlugs.has(ch.theoryLessonId || "") ||
-              completedNums.has(ch.number) ||
-              guestCompleted.has(ch.id) ||
-              guestCompleted.has(ch.theoryLessonId || "");
+
+          const completionMap = new Map<number, boolean>();
+          baseChapters.forEach((ch, index) => {
+            const isCleared = isAuthenticated
+              ? (completedIds.has(ch.id) ||
+                 completedSlugs.has(ch.id) ||
+                 (ch.theoryLessonId ? completedSlugs.has(ch.theoryLessonId) : false) ||
+                 completedNums.has(ch.number))
+              : (guestCompleted.has(ch.id) ||
+                 (ch.theoryLessonId ? guestCompleted.has(ch.theoryLessonId) : false));
+
+            completionMap.set(index, Boolean(isCleared));
+          });
+
+          const merged = baseChapters.map((ch, index) => {
+            const isCompleted = Boolean(completionMap.get(index));
+            const prevIsCompleted = index === 0 ? true : Boolean(completionMap.get(index - 1));
+            const isUnlocked = index === 0 || prevIsCompleted;
+
             return {
               ...ch,
-              isCompleted: Boolean(isCleared || ch.isCompleted),
-              isUnlocked: true,
+              isCompleted,
+              isUnlocked,
               exercises: (ch.exercises || []).map((ex) => ({
                 ...ex,
-                isUnlocked: true,
+                isUnlocked: isUnlocked,
                 isCompleted: Boolean(
-                  isCleared ||
+                  isCompleted ||
                   completedIds.has(ex.id) ||
                   completedSlugs.has(ex.id) ||
-                  guestCompleted.has(ex.id) ||
-                  ex.isCompleted
+                  (!isAuthenticated && guestCompleted.has(ex.id))
                 ),
               })),
             };
@@ -390,6 +403,26 @@ export default function PythonCoursePage() {
               Loading Live Curriculum Stations...
             </p>
           </div>
+        ) : courseCode !== "python" && courseCode !== "html" ? (
+          <div className="bg-[#0c0920]/80 border border-purple-500/30 rounded-3xl p-12 text-center space-y-6 max-w-lg mx-auto backdrop-blur-xl shadow-[0_0_50px_rgba(168,85,247,0.15)]">
+            <div className="w-16 h-16 rounded-2xl bg-purple-500/10 border border-purple-500/30 flex items-center justify-center mx-auto text-purple-300">
+              <Sparkles size={28} />
+            </div>
+            <div className="space-y-2">
+              <h3 className="text-2xl font-bold font-mono text-white uppercase tracking-wider">
+                {courseDisplayName} Galaxy Launching Soon
+              </h3>
+              <p className="text-xs sm:text-sm font-sans text-white/60 leading-relaxed">
+                This curriculum is currently in development. Explore our live <strong className="text-cyan-300">Python</strong> and <strong className="text-amber-300">HTML</strong> masterclasses now!
+              </p>
+            </div>
+            <Link
+              href="/learn"
+              className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-[#E873C3] to-[#9E00F6] text-white font-mono font-bold text-xs uppercase tracking-wider hover:opacity-90 transition-all shadow-[0_0_20px_rgba(232,115,195,0.3)]"
+            >
+              <span>Explore Live Courses</span>
+            </Link>
+          </div>
         ) : chapters.length === 0 ? (
           <div className="bg-[#0c0920]/80 border border-white/10 rounded-3xl p-12 text-center space-y-4 max-w-lg mx-auto backdrop-blur-xl">
             <div className="w-14 h-14 rounded-full bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center mx-auto text-cyan-300">
@@ -418,6 +451,7 @@ export default function PythonCoursePage() {
                   }
                 }}
                 courseTitle={courseDisplayName}
+                courseId={courseCode}
               />
             </div>
 
@@ -427,6 +461,7 @@ export default function PythonCoursePage() {
                   selectedChapter={selectedChapter}
                   userProgress={effectiveUserProgress}
                   courseId={courseCode}
+                  allChapters={chapters}
                 />
               )}
             </div>

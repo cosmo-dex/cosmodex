@@ -53,19 +53,21 @@ export async function POST(req: NextRequest) {
       });
     }
 
+    const resolvedCourse = courseCode || 'python';
+
     const result = await recordStudentCompletion({
       userId: session.userId,
       moduleId,
       questionId,
       xpEarned: Number(xpEarned || 0),
       isStationComplete,
+      courseCode: resolvedCourse,
     });
 
     if (!result.success) {
       return NextResponse.json({ error: result.error || 'Failed to record progress' }, { status: 500 });
     }
 
-    const resolvedCourse = courseCode || 'python';
     const updatedProgress = await getStudentProgress(session.userId, resolvedCourse);
 
     return NextResponse.json({
