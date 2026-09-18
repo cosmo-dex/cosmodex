@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { AnimatePresence, motion } from "framer-motion";
-import { List, ChevronLeft, ChevronRight, X, RefreshCw } from "lucide-react";
+import { List, ChevronLeft, ChevronRight, X, RefreshCw, Lock } from "lucide-react";
 import { TheoryExercise } from "@/data/theoryExercisesData";
 
 interface DrawerStation {
@@ -19,12 +19,31 @@ interface TheoryFooterProps {
   isCompleted?: boolean;
 }
 
+function normalizeCourseSlug(slug?: string): string {
+  if (!slug) return "python";
+  const s = slug.toLowerCase().trim();
+  if (s === "python" || s === "py" || s === "py-1" || s.startsWith("py-") || s.startsWith("python")) {
+    return "python";
+  }
+  if (s === "html" || s === "web-1" || s === "html-1" || s.startsWith("html-") || s.startsWith("web-")) {
+    return "html";
+  }
+  return s;
+}
+
 export default function TheoryFooter({
   exercise,
+  isCompleted = false,
 }: TheoryFooterProps) {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [stations, setStations] = useState<DrawerStation[]>([]);
   const [loadingStations, setLoadingStations] = useState(false);
+
+  const cleanCourseCode = normalizeCourseSlug(exercise.courseId);
+
+  const nextHref = exercise.nextLessonId
+    ? `/learn/${exercise.courseId}/theory/${exercise.nextLessonId}`
+    : `/learn/${cleanCourseCode}`;
 
   useEffect(() => {
     if (!drawerOpen) return;
@@ -80,10 +99,11 @@ export default function TheoryFooter({
         </div>
 
         <div className="flex items-center gap-2 sm:gap-3">
+          {/* Back Button */}
           {exercise.prevLessonId ? (
             <Link
               href={`/learn/${exercise.courseId}/theory/${exercise.prevLessonId}`}
-              className="px-4 py-2 rounded-xl border border-white/10 bg-white/[0.04] text-slate-300 hover:border-[#E873C3]/50 hover:bg-[#E873C3]/10 hover:text-[#E873C3] text-xs font-mono font-semibold uppercase tracking-wider transition-all flex items-center gap-1.5 shadow-sm"
+              className="px-4 py-2 rounded-xl border border-white/10 bg-white/[0.04] text-slate-300 hover:border-[#E873C3]/50 hover:bg-[#E873C3]/10 hover:text-[#E873C3] text-xs font-mono font-semibold uppercase tracking-wider transition-all flex items-center gap-1.5 shadow-sm cursor-pointer"
             >
               <ChevronLeft size={16} />
               <span className="hidden sm:inline">Back</span>
@@ -98,20 +118,23 @@ export default function TheoryFooter({
             </button>
           )}
 
-          {exercise.nextLessonId ? (
+          {/* Next Button - Clickable ONLY when isCompleted is true */}
+          {isCompleted ? (
             <Link
-              href={`/learn/${exercise.courseId}/theory/${exercise.nextLessonId}`}
-              className="px-4 py-2 rounded-xl border border-[#E873C3]/50 bg-[#E873C3]/15 text-[#E873C3] hover:border-[#E873C3] hover:bg-[#E873C3]/25 text-xs font-mono font-semibold uppercase tracking-wider transition-all flex items-center gap-1.5 shadow-[0_0_12px_rgba(232,115,195,0.2)]"
+              href={nextHref}
+              className="px-5 py-2 rounded-xl border border-cyan-400 bg-gradient-to-r from-cyan-500/20 via-blue-500/30 to-purple-500/30 hover:bg-cyan-500/30 text-cyan-300 hover:text-white text-xs font-mono font-bold uppercase tracking-wider transition-all flex items-center gap-1.5 shadow-[0_0_20px_rgba(0,255,233,0.35)] cursor-pointer"
             >
-              <span className="hidden sm:inline">Next</span>
+              <span>Next</span>
               <ChevronRight size={16} />
             </Link>
           ) : (
             <button
               disabled
-              className="px-4 py-2 rounded-xl border border-white/5 bg-white/[0.02] text-slate-600 text-xs font-mono font-semibold uppercase tracking-wider cursor-not-allowed flex items-center gap-1.5"
+              title="Pass the quiz (score >= 3/5) to unlock Next"
+              className="px-5 py-2 rounded-xl border border-white/5 bg-white/[0.02] text-slate-600 text-xs font-mono font-semibold uppercase tracking-wider cursor-not-allowed flex items-center gap-1.5"
             >
-              <span className="hidden sm:inline">Next</span>
+              <Lock size={12} className="text-slate-600" />
+              <span>Next</span>
               <ChevronRight size={16} />
             </button>
           )}
