@@ -51,7 +51,6 @@ export default function SupportPage() {
     e.preventDefault();
     setStatus("submitting");
 
-    // Simulated frontend transmission delay (backend email dispatch will connect here)
     setTimeout(() => {
       const randomHex = Math.random().toString(16).substring(2, 8).toUpperCase();
       setTransmissionId(`CDX-${randomHex}`);
