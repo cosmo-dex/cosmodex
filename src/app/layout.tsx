@@ -315,63 +315,6 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
           />
         </noscript>
 
-        {/* Ad Network — body scripts */}
-        <Script
-          src="https://pl31257885.profitableratecpmnetwork.com/ba6cbf6be7b27882ce717d652ad0acb8/invoke.js"
-          data-cfasync="false"
-          strategy="afterInteractive"
-        />
-        <div id="container-ba6cbf6be7b27882ce717d652ad0acb8" />
-        <Script
-          src="https://pl31257886.profitableratecpmnetwork.com/71/76/42/7176422c6fb28d171c63bd88c8439c95.js"
-          strategy="afterInteractive"
-        />
-
-        {/* highrevenueformat — 468x60 banner */}
-        <Script id="ad-hr-1" strategy="afterInteractive">
-          {`atOptions = { 'key': 'd539f5aaa7b22bda531b299161a0c850', 'format': 'iframe', 'height': 60, 'width': 468, 'params': {} };`}
-        </Script>
-        <Script
-          src="https://www.highrevenueformat.com/d539f5aaa7b22bda531b299161a0c850/invoke.js"
-          strategy="afterInteractive"
-        />
-
-        {/* highrevenueformat — 300x250 banner */}
-        <Script id="ad-hr-2" strategy="afterInteractive">
-          {`atOptions = { 'key': 'f2ee77db0d55d16f49153c92557d2335', 'format': 'iframe', 'height': 250, 'width': 300, 'params': {} };`}
-        </Script>
-        <Script
-          src="https://www.highrevenueformat.com/f2ee77db0d55d16f49153c92557d2335/invoke.js"
-          strategy="afterInteractive"
-        />
-
-        {/* highrevenueformat — 160x300 banner */}
-        <Script id="ad-hr-3" strategy="afterInteractive">
-          {`atOptions = { 'key': '92f110926312f17cb4aa68de007cabbf', 'format': 'iframe', 'height': 300, 'width': 160, 'params': {} };`}
-        </Script>
-        <Script
-          src="https://www.highrevenueformat.com/92f110926312f17cb4aa68de007cabbf/invoke.js"
-          strategy="afterInteractive"
-        />
-
-        {/* highrevenueformat — 320x50 banner */}
-        <Script id="ad-hr-4" strategy="afterInteractive">
-          {`atOptions = { 'key': '727d83ce8b8c81b2bfba7f3004b874db', 'format': 'iframe', 'height': 50, 'width': 320, 'params': {} };`}
-        </Script>
-        <Script
-          src="https://www.highrevenueformat.com/727d83ce8b8c81b2bfba7f3004b874db/invoke.js"
-          strategy="afterInteractive"
-        />
-
-        {/* highrevenueformat — 728x90 leaderboard */}
-        <Script id="ad-hr-5" strategy="afterInteractive">
-          {`atOptions = { 'key': '72aa18b347c03cdf69f297374fe51641', 'format': 'iframe', 'height': 90, 'width': 728, 'params': {} };`}
-        </Script>
-        <Script
-          src="https://www.highrevenueformat.com/72aa18b347c03cdf69f297374fe51641/invoke.js"
-          strategy="afterInteractive"
-        />
-
         {/* Google tag (gtag.js) - Added just after head end */}
         <Script
           src="https://www.googletagmanager.com/gtag/js?id=G-LN4YNMPR0D"
@@ -392,6 +335,99 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
           <div className="noise-overlay" aria-hidden="true" />
           {children}
         </Providers>
+
+        {/* ========================================================================= */}
+        {/* Ad Network — body scripts (inside <body>)                                 */}
+        {/* ========================================================================= */}
+        {/* eslint-disable-next-line @next/next/no-sync-scripts */}
+        <script
+          async
+          data-cfasync="false"
+          src="https://pl31257885.profitableratecpmnetwork.com/ba6cbf6be7b27882ce717d652ad0acb8/invoke.js"
+        />
+        <div id="container-ba6cbf6be7b27882ce717d652ad0acb8" />
+        {/* eslint-disable-next-line @next/next/no-sync-scripts */}
+        <script src="https://pl31257886.profitableratecpmnetwork.com/71/76/42/7176422c6fb28d171c63bd88c8439c95.js" />
+
+        {/* 468x60 Banner */}
+        <script
+          type="text/javascript"
+          dangerouslySetInnerHTML={{
+            __html: `atOptions = {
+  'key' : 'd539f5aaa7b22bda531b299161a0c850',
+  'format' : 'iframe',
+  'height' : 60,
+  'width' : 468,
+  'params' : {}
+};`,
+          }}
+        />
+        {/* eslint-disable-next-line @next/next/no-sync-scripts */}
+        <script type="text/javascript" src="https://www.highrevenueformat.com/d539f5aaa7b22bda531b299161a0c850/invoke.js" />
+
+        {/* 300x250 Banner */}
+        <script
+          type="text/javascript"
+          dangerouslySetInnerHTML={{
+            __html: `atOptions = {
+  'key' : 'f2ee77db0d55d16f49153c92557d2335',
+  'format' : 'iframe',
+  'height' : 250,
+  'width' : 300,
+  'params' : {}
+};`,
+          }}
+        />
+        {/* eslint-disable-next-line @next/next/no-sync-scripts */}
+        <script type="text/javascript" src="https://www.highrevenueformat.com/f2ee77db0d55d16f49153c92557d2335/invoke.js" />
+
+        {/* 160x300 Banner */}
+        <script
+          type="text/javascript"
+          dangerouslySetInnerHTML={{
+            __html: `atOptions = {
+  'key' : '92f110926312f17cb4aa68de007cabbf',
+  'format' : 'iframe',
+  'height' : 300,
+  'width' : 160,
+  'params' : {}
+};`,
+          }}
+        />
+        {/* eslint-disable-next-line @next/next/no-sync-scripts */}
+        <script type="text/javascript" src="https://www.highrevenueformat.com/92f110926312f17cb4aa68de007cabbf/invoke.js" />
+
+        {/* 320x50 Banner */}
+        <script
+          type="text/javascript"
+          dangerouslySetInnerHTML={{
+            __html: `atOptions = {
+  'key' : '727d83ce8b8c81b2bfba7f3004b874db',
+  'format' : 'iframe',
+  'height' : 50,
+  'width' : 320,
+  'params' : {}
+};`,
+          }}
+        />
+        {/* eslint-disable-next-line @next/next/no-sync-scripts */}
+        <script type="text/javascript" src="https://www.highrevenueformat.com/727d83ce8b8c81b2bfba7f3004b874db/invoke.js" />
+
+        {/* 728x90 Banner */}
+        <script
+          type="text/javascript"
+          dangerouslySetInnerHTML={{
+            __html: `atOptions = {
+  'key' : '72aa18b347c03cdf69f297374fe51641',
+  'format' : 'iframe',
+  'height' : 90,
+  'width' : 728,
+  'params' : {}
+};`,
+          }}
+        />
+        {/* eslint-disable-next-line @next/next/no-sync-scripts */}
+        <script type="text/javascript" src="https://www.highrevenueformat.com/72aa18b347c03cdf69f297374fe51641/invoke.js" />
       </body>
     </html>
   );
