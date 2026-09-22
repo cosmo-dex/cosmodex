@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Script from "next/script";
-import { displayFont, bodyFont, monoFont } from "@/fonts";
+import { displayFont, bodyFont, monoFont, interFont } from "@/fonts";
 import "./globals.css";
 import SmoothScroll from "@/components/landing/SmoothScroll";
 import Mascot from "@/features/mascot/Mascot";
@@ -214,7 +214,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
         />
       </head>
       <body
-        className={`${displayFont.variable} ${bodyFont.variable} ${monoFont.variable} antialiased`}
+        className={`${displayFont.variable} ${bodyFont.variable} ${monoFont.variable} ${interFont.variable} antialiased`}
         style={{ background: "#08040f", color: "#f0e6ff" }}
         suppressHydrationWarning
       >

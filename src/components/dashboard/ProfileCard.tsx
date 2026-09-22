@@ -188,7 +188,7 @@ export default function ProfileCard({
 
   return (
     <>
-      <div className="cosmo-glass-panel p-6 border border-white/10 relative">
+      <div id="tour-profile" className="cosmo-glass-panel p-6 border border-white/10 relative">
         <div className="flex items-center gap-4">
           <div className="relative shrink-0 group/avatar">
             <button

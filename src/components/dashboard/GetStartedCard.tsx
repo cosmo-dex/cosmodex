@@ -38,7 +38,7 @@ export default function GetStartedCard({ enrollments = [] }: GetStartedCardProps
   // No enrollments — show onboarding / get started CTA
   if (enrollments.length === 0) {
     return (
-      <div className="flex flex-col">
+      <div id="tour-courses" className="flex flex-col">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-xl font-bold font-display text-white tracking-wide">Get Started</h2>
         </div>
@@ -74,7 +74,7 @@ export default function GetStartedCard({ enrollments = [] }: GetStartedCardProps
   const targetHref = selected.href || (selected.languageCode.toLowerCase().includes('python') ? '/learn/python' : '/learn');
 
   return (
-    <div className="flex flex-col">
+    <div id="tour-courses" className="flex flex-col">
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-xl font-bold font-display text-white tracking-wide">Continue Learning</h2>
         {enrollments.length > 1 && (

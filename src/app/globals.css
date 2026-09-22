@@ -48,6 +48,7 @@
   --font-mono: var(--font-mono), ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
   --font-lato: Lato, sans-serif;
   --font-ayaha: var(--font-ayaha), cursive;
+  --font-inter: var(--font-inter), Inter, ui-sans-serif, system-ui, -apple-system, sans-serif;
 
   /* ── Landing / Global Colors ───────────────────────────── */
   --color-cosmo-bg: #090214;
@@ -2208,5 +2209,15 @@ next-route-announcer {
     transform: scale(2.6);
     opacity: 0;
     box-shadow: 0 0 45px rgba(0, 255, 233, 0);
+  }
+}
+
+/* ── Website Tour Onboarding Shimmer ──────────────────── */
+@keyframes shimmer-slide {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(200%);
   }
 }

@@ -8,7 +8,7 @@ interface WelcomeBannerProps {
 
 export default function WelcomeBanner({ username = 'Explorer' }: WelcomeBannerProps) {
   return (
-    <div className="flex items-center gap-4 sm:gap-6 relative z-20 w-full">
+    <div id="tour-welcome" className="flex items-center gap-4 sm:gap-6 relative z-20 w-full">
       {/* Back Button */}
       <Link
         href="/"

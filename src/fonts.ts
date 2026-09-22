@@ -19,6 +19,8 @@
  *                                  badges, forms, footer, cards, modals
  *  mono     →  --font-mono     →  code blocks, terminal mockups, XP values
  *                                  (same as body — unified Fira Code)
+ *  inter    →  --font-inter    →  readable sans-serif for long-form text,
+ *                                  MCQ questions, option labels, paragraphs
  */
 
 import localFont from "next/font/local";
@@ -30,6 +32,9 @@ import {
   // ── MONO font (code blocks, terminal, XP values) ──────────────────────────────
   // Same as body — unified Fira Code throughout for a cohesive dev experience
   Fira_Code as MonoFont,
+
+  // ── INTER font (readable sans-serif for MCQ questions, long-form text) ────────
+  Inter as InterFont,
 } from "next/font/google";
 
 // ── Display ──────────────────────────────────────────────────────────────────
@@ -65,3 +70,13 @@ export const monoFont = MonoFont({
   subsets: ["latin"],
   weight: ["400", "500", "600"],
 });
+
+// ── Inter (Readable Sans-Serif) ──────────────────────────────────────────────
+// Clean proportional sans-serif for MCQ questions, option labels, and any
+// long-form text where monospace Fira Code would hurt readability.
+export const interFont = InterFont({
+  variable: "--font-inter",
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700", "800", "900"],
+});
+
