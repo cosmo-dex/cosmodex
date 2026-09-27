@@ -164,86 +164,41 @@ export function NotificationProvider({
     };
   }, []);
 
+  // Intelligent polling: polls only when tab is visible, plus on focus/visibility change
   useEffect(() => {
     if (!isAuthenticated) return;
 
-    let eventSource: EventSource | null = null;
-    let fallbackInterval: NodeJS.Timeout | null = null;
-
-    try {
-      eventSource = new EventSource("/api/notifications/stream", {
-        withCredentials: true,
-      });
-
-      eventSource.addEventListener("notification", (event) => {
-        try {
-          const payload = JSON.parse(event.data);
-          if (payload.type === "notification:created" && payload.notification) {
-            const newNotif: NotificationItem = {
-              ...payload.notification,
-              time: formatRelativeTime(payload.notification.created_at),
-              read: false,
-            };
-
-            setNotifications((prev) => {
-              if (prev.some((n) => n.id === newNotif.id)) return prev;
-              return [newNotif, ...prev];
-            });
-
-            setIsPulsing(true);
-            setTimeout(() => setIsPulsing(false), 3000);
-          } else if (
-            payload.type === "notification:updated" &&
-            payload.notification
-          ) {
-            setNotifications((prev) =>
-              prev.map((n) =>
-                n.id === payload.notification.id
-                  ? {
-                    ...n,
-                    ...payload.notification,
-                    time: formatRelativeTime(
-                      payload.notification.created_at
-                    ),
-                  }
-                  : n
-              )
-            );
-          } else if (
-            payload.type === "notification:deleted" &&
-            payload.notificationId
-          ) {
-            setNotifications((prev) =>
-              prev.filter((n) => n.id !== payload.notificationId)
-            );
-          }
-        } catch {
-          // Ignore parsing errors
-        }
-      });
-
-      eventSource.onerror = () => {
-        if (!fallbackInterval) {
-          fallbackInterval = setInterval(() => {
-            fetchNotifications(true);
-          }, 30000);
-        }
-      };
-    } catch {
-      fallbackInterval = setInterval(() => {
-        fetchNotifications(true);
-      }, 30000);
-    }
-
-    return () => {
-      if (eventSource) {
-        eventSource.close();
+    // 1. Poll every 60 seconds, but ONLY if the tab is visible
+    const pollInterval = setInterval(() => {
+      if (typeof document !== "undefined" && !document.hidden) {
+        fetchNotifications();
       }
-      if (fallbackInterval) {
-        clearInterval(fallbackInterval);
+    }, 60000);
+
+    // 2. Fetch immediately when user switches back to this tab
+    const handleVisibilityChange = () => {
+      if (typeof document !== "undefined" && !document.hidden) {
+        fetchNotifications();
       }
     };
-  }, [isAuthenticated, user?.userId, fetchNotifications, setNotifications]);
+
+    const handleFocus = () => {
+      fetchNotifications();
+    };
+
+    if (typeof document !== "undefined") {
+      document.addEventListener("visibilitychange", handleVisibilityChange);
+    }
+    window.addEventListener("focus", handleFocus);
+
+    return () => {
+      clearInterval(pollInterval);
+      if (typeof document !== "undefined") {
+        document.removeEventListener("visibilitychange", handleVisibilityChange);
+      }
+      window.removeEventListener("focus", handleFocus);
+    };
+  }, [isAuthenticated, fetchNotifications]);
 
   const markAsRead = useCallback(
     async (id: string) => {

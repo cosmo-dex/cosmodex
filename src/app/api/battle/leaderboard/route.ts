@@ -22,7 +22,7 @@ export async function GET(req: NextRequest) {
   if (cached && now - cached.timestamp < CACHE_TTL_MS) {
     return NextResponse.json(cached.data, {
       headers: {
-        'Cache-Control': 'no-store, max-age=0',
+        'Cache-Control': 'public, s-maxage=15, stale-while-revalidate=60',
         'X-Cache': 'HIT',
       },
     });
@@ -98,7 +98,7 @@ export async function GET(req: NextRequest) {
 
         return NextResponse.json(entries, {
           headers: {
-            'Cache-Control': 'no-store, max-age=0',
+            'Cache-Control': 'public, s-maxage=15, stale-while-revalidate=60',
             'X-Cache': 'MISS',
           },
         });

@@ -137,20 +137,48 @@ export default function MatchmakingPanel({ socket, userId, username, onMatchFoun
 
   useEffect(() => {
     fetchStats();
-    const interval = setInterval(fetchStats, 10000);
-    return () => clearInterval(interval);
+    const interval = setInterval(() => {
+      if (typeof document !== "undefined" && !document.hidden) {
+        fetchStats();
+      }
+    }, 30000);
+
+    const handleVisibility = () => {
+      if (typeof document !== "undefined" && !document.hidden) {
+        fetchStats();
+      }
+    };
+    document.addEventListener("visibilitychange", handleVisibility);
+
+    return () => {
+      clearInterval(interval);
+      document.removeEventListener("visibilitychange", handleVisibility);
+    };
   }, [fetchStats]);
 
   useEffect(() => {
     const fetchLeaderboard = () => {
+      if (typeof document !== "undefined" && document.hidden) return;
       fetch(`/api/battle/leaderboard?mode=${mode}`)
         .then((res) => (res.ok ? res.json() : []))
         .then((data) => setLeaderboard(data))
         .catch(() => setLeaderboard([]));
     };
+
     fetchLeaderboard();
-    const interval = setInterval(fetchLeaderboard, 5000);
-    return () => clearInterval(interval);
+    const interval = setInterval(fetchLeaderboard, 20000);
+
+    const handleVisibility = () => {
+      if (typeof document !== "undefined" && !document.hidden) {
+        fetchLeaderboard();
+      }
+    };
+    document.addEventListener("visibilitychange", handleVisibility);
+
+    return () => {
+      clearInterval(interval);
+      document.removeEventListener("visibilitychange", handleVisibility);
+    };
   }, [mode]);
 
   useEffect(() => {
