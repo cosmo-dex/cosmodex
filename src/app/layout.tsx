@@ -102,7 +102,7 @@ const jsonLdData = {
       name: "CosmoDex",
       alternateName: ["CosmoDeX", "Cosmo Dex"],
       url: appUrl,
-      logo: `${appUrl}/images/logo.png`,
+      logo: `${appUrl}/images/logo.webp`,
       email: "connect.cosmodex@gmail.com",
       sameAs: [
         "https://github.com/cosmo-dex",

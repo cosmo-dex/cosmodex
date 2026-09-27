@@ -10,8 +10,8 @@ import { useAuth } from "@/context/AuthContext";
 import Assistant from "./Assistant";
 import MascotGreetingPopup from "./MascotGreetingPopup";
 
-import mascotBody from "./Mascot - Without Eyes.png";
-import mascotPupil from "./Mascot - Pupil.png";
+import mascotBody from "./Mascot-Without-Eyes.webp";
+import mascotPupil from "./Mascot-Pupil.webp";
 
 export default function Mascot() {
   const leftEyeRef = useRef<HTMLDivElement>(null);

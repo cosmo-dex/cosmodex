@@ -1,4 +1,3 @@
-import { motion } from "framer-motion";
 import { Flame, Swords } from "lucide-react";
 import { TIER_STYLES, type Player } from "@/data/leaderboard";
 import { cn } from "@/lib/utils";
@@ -18,17 +17,9 @@ export function RankTable({ players }: { players: Player[] }) {
         {players.map((p, i) => {
           const tier = TIER_STYLES[p.tier];
           return (
-            <motion.li
+            <li
               key={p.id}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.25, delay: i * 0.03 }}
-              whileHover={{
-                scale: 1.015,
-                y: -2,
-                boxShadow: "0 10px 30px -5px rgba(124, 58, 237, 0.28), inset 0 1px 1px rgba(255, 255, 255, 0.2)",
-              }}
-              className="group relative z-0 grid grid-cols-[2.5rem_1fr_auto] items-center gap-3 rounded-btn border border-border-subtle bg-bg-surface px-3 py-3 transition-all duration-200 hover:z-10 hover:border-border-accent hover:bg-white/[0.07] md:grid-cols-[3rem_1fr_7rem_6rem_7rem]"
+              className="group relative z-0 grid grid-cols-[2.5rem_1fr_auto] items-center gap-3 rounded-btn border border-border-subtle bg-bg-surface px-3 py-3 transition-all duration-200 hover:z-10 hover:-translate-y-0.5 hover:border-border-accent hover:bg-white/[0.07] hover:shadow-[0_10px_30px_-5px_rgba(124,58,237,0.28)] md:grid-cols-[3rem_1fr_7rem_6rem_7rem]"
             >
               <span className="font-display text-sm font-semibold text-text-secondary transition-colors group-hover:text-text-accent">#{i + 4}</span>
 
@@ -72,7 +63,7 @@ export function RankTable({ players }: { players: Player[] }) {
               <span className="text-right text-xs md:text-sm font-bold text-xp-gold transition-all duration-200 group-hover:drop-shadow-[0_0_8px_rgba(245,200,66,0.6)] shrink-0">
                 {p.mmr.toLocaleString()} ELO
               </span>
-            </motion.li>
+            </li>
           );
         })}
       </ul>

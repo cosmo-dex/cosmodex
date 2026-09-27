@@ -422,7 +422,7 @@ export default function Navbar() {
             >
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
-                src="/logo.png"
+                src="/logo.webp"
                 alt="CosmoDeX"
                 style={{ height: "44px", width: "auto", display: "block" }}
               />

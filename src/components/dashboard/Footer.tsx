@@ -54,7 +54,7 @@ export default function Footer() {
           <div className="md:col-span-1 flex flex-col gap-3">
             <Link href="/" className="flex items-center gap-3 w-fit hover:opacity-80 transition-opacity">
               <Image
-                src="/images/logo.png"
+                src="/images/logo.webp"
                 alt="CosmoDex Logo"
                 width={28}
                 height={28}

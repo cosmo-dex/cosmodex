@@ -24,7 +24,7 @@ export default function WelcomeBanner({ username = 'Explorer' }: WelcomeBannerPr
         <div className="absolute inset-0 rounded-full bg-accent/20 blur-xl scale-125 animate-pulse-slow" />
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
-          src="/images/mascot-transparent.gif"
+          src="/images/mascot-transparent.webp"
           alt="Cosmodex Mascot"
           className="relative object-contain w-full h-full drop-shadow-xl"
         />

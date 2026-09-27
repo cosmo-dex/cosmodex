@@ -261,7 +261,12 @@ export default function MatchmakingPanel({ socket, userId, username, onMatchFoun
 
 
   const joinQueue = () => {
-    if (!socket?.connected) {
+    if (!socket) {
+      setError("Not connected to arena. Reconnecting...");
+      return;
+    }
+
+    if (!socket.connected) {
       setError("Not connected to arena. Reconnecting...");
       // Continuing to show UI queuing state anyway
     }
@@ -276,13 +281,16 @@ export default function MatchmakingPanel({ socket, userId, username, onMatchFoun
   };
 
   const leaveQueue = () => {
+    if (!socket) {
+      return;
+    }
     setQueueState("idle");
     setPhase("SEARCHING");
     setOpponent(null);
     setMatchPayload(null);
     setIsReady(false);
     setOpponentReady(false);
-    socket?.emit("leave_queue", { userId });
+    socket.emit("leave_queue", { userId });
   };
 
   const handleEnterBattle = () => {

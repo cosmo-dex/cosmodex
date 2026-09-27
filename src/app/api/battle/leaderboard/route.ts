@@ -11,7 +11,7 @@ interface LeaderboardEntry {
 }
 
 const memoryCache = new Map<string, { timestamp: number; data: LeaderboardEntry[] }>();
-const CACHE_TTL_MS = 1000;
+const CACHE_TTL_MS = 60_000;
 
 export async function GET(req: NextRequest) {
   const modeParam = req.nextUrl.searchParams.get('mode');

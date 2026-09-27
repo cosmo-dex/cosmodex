@@ -5,7 +5,10 @@ const nextConfig: NextConfig = {
   poweredByHeader: false,
   compress: true,
   images: {
-    formats: ['image/avif', 'image/webp'],
+    // Serve static files as-is. Avoids Vercel Image Optimization quota
+    // (exhausted transformations take the site down with 402s).
+    unoptimized: true,
+    formats: ['image/webp'],
     minimumCacheTTL: 2592000, // 30 days
     remotePatterns: [
       {
@@ -52,6 +55,24 @@ const nextConfig: NextConfig = {
       },
       {
         source: '/images/:path*',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'public, max-age=31536000, immutable',
+          },
+        ],
+      },
+      {
+        source: '/:path*.(webp|png|jpg|jpeg|gif|svg|lottie)',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'public, max-age=31536000, immutable',
+          },
+        ],
+      },
+      {
+        source: '/ezgif-65262e46052e95d2-webp/:path*',
         headers: [
           {
             key: 'Cache-Control',
