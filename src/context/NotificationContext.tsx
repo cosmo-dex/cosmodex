@@ -39,28 +39,12 @@ const NotificationContext = createContext<NotificationContextType | undefined>(
 
 const NOTIFICATIONS_STORAGE_KEY = "cosmodex_notifications_cache";
 
-function formatRelativeTime(dateStr?: string | Date | null): string {
-  if (!dateStr) return "Just now";
-  const date = new Date(dateStr);
-  const now = new Date();
-  const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
-
-  if (diffInSeconds < 60) return "Just now";
-  const diffInMinutes = Math.floor(diffInSeconds / 60);
-  if (diffInMinutes < 60) return `${diffInMinutes}m ago`;
-  const diffInHours = Math.floor(diffInMinutes / 60);
-  if (diffInHours < 24) return `${diffInHours}h ago`;
-  const diffInDays = Math.floor(diffInHours / 24);
-  if (diffInDays < 7) return `${diffInDays}d ago`;
-  return date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
-}
-
 export function NotificationProvider({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const { user, isAuthenticated } = useAuth();
+  const { isAuthenticated } = useAuth();
   const [notifications, setNotificationsState] = useState<NotificationItem[]>(
     () => {
       if (typeof window !== "undefined") {
@@ -121,6 +105,10 @@ export function NotificationProvider({
             const data = await res.json();
             if (Array.isArray(data.notifications)) {
               setNotifications(data.notifications);
+              if (data.unreadCount > 0) {
+                setIsPulsing(true);
+                setTimeout(() => setIsPulsing(false), 3000);
+              }
             }
           }
         } catch {
