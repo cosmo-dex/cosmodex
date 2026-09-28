@@ -98,7 +98,7 @@ export default function Navbar() {
           className="flex shrink-0 items-center gap-2.5"
         >
           <Image
-            src="/images/logo.png"
+            src="/images/logo.webp"
             alt="CosmoDex logo"
             width={30}
             height={30}

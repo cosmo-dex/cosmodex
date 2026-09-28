@@ -6,6 +6,7 @@ import Navbar from '@/components/navbar/Navbar';
 import BattleArenaHero from '@/components/battle/BattleArenaHero';
 import MatchmakingPanel from '@/components/battle/MatchmakingPanel';
 import ActiveMatchView from '@/components/battle/ActiveMatchView';
+import BattleTour from '@/components/battle/BattleTour';
 import { createArenaSocket, ArenaSocket } from '@/lib/arenaWsClient';
 import RisingStars from '@/components/RisingStar';
 
@@ -208,16 +209,18 @@ export default function BattlePage() {
               </div>
             </div>
           ) : (
-            <div className="w-full flex justify-center">
-              <MatchmakingPanel
-                key={refreshKey}
-                socket={socket}
-                userId={user.userId}
-                username={user.username}
-                onMatchFound={(info) => setMatchInfo(info)}
-              />
-            </div>
-
+            <>
+              <div className="w-full flex justify-center">
+                <MatchmakingPanel
+                  key={refreshKey}
+                  socket={socket}
+                  userId={user.userId}
+                  username={user.username}
+                  onMatchFound={(info) => setMatchInfo(info)}
+                />
+              </div>
+              <BattleTour />
+            </>
           )}
         </section>
       </div>

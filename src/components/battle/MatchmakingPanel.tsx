@@ -93,8 +93,8 @@ function getRankLabel(experienceLevel: string | null | undefined): string {
   return "Initiate";
 }
 
-const IS_BATTLE_LEADERBOARD_LIVE = false;
-const IS_CODE_BATTLE_LIVE = false;
+const IS_BATTLE_LEADERBOARD_LIVE = true;
+const IS_CODE_BATTLE_LIVE = true;
 
 export default function MatchmakingPanel({ socket, userId, username, onMatchFound }: Props) {
   const [mode, setMode] = useState<Mode>("mcq");
@@ -311,9 +311,14 @@ export default function MatchmakingPanel({ socket, userId, username, onMatchFoun
       cancelTimeoutRef.current = null;
     }
     setCancelledByOpponent(false);
-    if (!socket?.connected) {
+    if (!socket) {
       setError("Not connected to arena. Reconnecting...");
       return;
+    }
+
+    if (!socket.connected) {
+      setError("Not connected to arena. Reconnecting...");
+      // Continuing to show UI queuing state anyway
     }
     setError(null);
     hasTransitionedRef.current = false;
@@ -334,8 +339,8 @@ export default function MatchmakingPanel({ socket, userId, username, onMatchFoun
       cancelTimeoutRef.current = null;
     }
     const currentPayload = matchPayloadRef.current;
-    if (currentPayload) {
-      socket?.emit("leave_match", { roomId: currentPayload.roomId });
+    if (currentPayload && socket) {
+      socket.emit("leave_match", { roomId: currentPayload.roomId });
     }
     setQueueState("idle");
     setPhase("SEARCHING");
@@ -346,7 +351,9 @@ export default function MatchmakingPanel({ socket, userId, username, onMatchFoun
     setOpponentReady(false);
     setCancelledByOpponent(false);
     hasTransitionedRef.current = false;
-    socket?.emit("leave_queue", { userId });
+    if (socket) {
+      socket.emit("leave_queue", { userId });
+    }
   };
 
   const handleEnterBattle = () => {
@@ -603,6 +610,7 @@ export default function MatchmakingPanel({ socket, userId, username, onMatchFoun
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 mb-4 relative z-10 flex-1 items-stretch">
               <button
+                id="battle-mode-mcq"
                 onClick={() => setMode("mcq")}
                 disabled={queueState === "queuing"}
                 className={`relative flex flex-col items-start justify-between p-4 rounded-2xl border text-left transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed group overflow-hidden ${!isCode
@@ -641,6 +649,7 @@ export default function MatchmakingPanel({ socket, userId, username, onMatchFoun
               </button>
 
               <button
+                id="battle-mode-code"
                 onClick={() => {
                   if (IS_CODE_BATTLE_LIVE) {
                     setMode("code");
@@ -760,6 +769,7 @@ export default function MatchmakingPanel({ socket, userId, username, onMatchFoun
                   </button>
                 ) : (
                   <button
+                    id="battle-join-btn"
                     onClick={joinQueue}
                     className="cosmo-btn-primary w-full h-14 text-base font-bold tracking-wider uppercase rounded-2xl cursor-pointer hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.99] transition-all duration-200 flex items-center justify-center gap-2 text-white border border-white/20"
                     style={{
@@ -793,7 +803,7 @@ export default function MatchmakingPanel({ socket, userId, username, onMatchFoun
         </div>
 
         {/* ── 3. RIGHT SECTION: BATTLE STATS & QUADRANT DOSSIER ──────────────── */}
-        <div className="lg:col-span-3 flex flex-col h-full">
+        <div id="battle-stats-panel" className="lg:col-span-3 flex flex-col h-full">
           <div className="bg-white/[0.08] backdrop-blur-xl border border-white/12 rounded-[20px] p-4 sm:p-5 relative overflow-hidden flex flex-col justify-between h-full min-h-[380px] sm:min-h-[400px]">
             <div className="absolute bottom-0 right-0 w-28 h-28 bg-[#00FFE9]/10 rounded-full blur-xl pointer-events-none" />
 
@@ -848,7 +858,7 @@ export default function MatchmakingPanel({ socket, userId, username, onMatchFoun
 
 
               {/* Arena Pro Tips Section */}
-              <div className="bg-white/[0.04] rounded-2xl p-3.5 sm:p-4 hover:bg-white/[0.07] transition-all duration-200">
+              <div id="battle-pro-tips" className="bg-white/[0.04] rounded-2xl p-3.5 sm:p-4 hover:bg-white/[0.07] transition-all duration-200">
                 <div className="flex items-center justify-between border-b border-white/5 pb-2 mb-2.5">
                   <span className="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-1.5 font-display">
                     <Sparkles size={14} className="text-[#FFA249] fill-[#FFA249]" /> Arena Pro Tips

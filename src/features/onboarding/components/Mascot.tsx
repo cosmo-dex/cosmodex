@@ -3,8 +3,8 @@ import { Sparkles, Hand } from 'lucide-react';
 import { OnboardingStepId, OnboardingData } from '../types/onboarding';
 import { useState, useEffect, useRef } from 'react';
 import Image from "next/image";
-import mascotBody from '../../mascot/Mascot - Without Eyes.png';
-import mascotPupil from '../../mascot/Mascot - Pupil.png';
+import mascotBody from '../../mascot/Mascot-Without-Eyes.webp';
+import mascotPupil from '../../mascot/Mascot-Pupil.webp';
 
 interface MascotProps {
   step: OnboardingStepId;

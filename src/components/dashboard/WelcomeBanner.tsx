@@ -8,7 +8,7 @@ interface WelcomeBannerProps {
 
 export default function WelcomeBanner({ username = 'Explorer' }: WelcomeBannerProps) {
   return (
-    <div className="flex items-center gap-4 sm:gap-6 relative z-20 w-full">
+    <div id="tour-welcome" className="flex items-center gap-4 sm:gap-6 relative z-20 w-full">
       {/* Back Button */}
       <Link
         href="/"
@@ -24,7 +24,7 @@ export default function WelcomeBanner({ username = 'Explorer' }: WelcomeBannerPr
         <div className="absolute inset-0 rounded-full bg-accent/20 blur-xl scale-125 animate-pulse-slow" />
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
-          src="/images/mascot-transparent.gif"
+          src="/images/mascot-transparent.webp"
           alt="Cosmodex Mascot"
           className="relative object-contain w-full h-full drop-shadow-xl"
         />

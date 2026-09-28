@@ -14,8 +14,8 @@
  *
  * Pipeline
  * ────────
- * 1. Preload all 240 HTMLImageElements (decode() called immediately so
- *    the browser GPU-uploads them before they're needed).
+ * 1. Load compressed WebP frames (120 instead of 240). The first frames
+ *    decode immediately so the page can show; the rest load in the background.
  * 2. Lenis scroll → raw float frame position (no rounding).
  * 3. RAF loop: lerp currentFrame toward target at a rate that tracks
  *    scroll tightly (factor 0.18) without overshooting.
@@ -29,9 +29,10 @@
 
 import { useEffect, useRef, useState } from "react";
 
-const TOTAL_FRAMES = 240;
+const TOTAL_FRAMES = 120;
+const READY_AFTER_FRAMES = 16;
 const FRAME_PATH = (n: number) =>
-  `/ezgif-65262e46052e95d2-jpg/ezgif-frame-${String(n).padStart(3, "0")}.jpg`;
+  `/ezgif-65262e46052e95d2-webp/ezgif-frame-${String(n).padStart(3, "0")}.webp`;
 
 const ANIMATION_SECTION_IDS = [
   "hero",
@@ -154,15 +155,14 @@ export default function ScrollAnimation() {
         images[i].decode().catch(() => {/* ignore */});
       }
 
-      if (loaded === TOTAL_FRAMES) {
+      if (loaded >= READY_AFTER_FRAMES) {
         setIsReady(true);
       }
     };
 
     for (let i = 0; i < TOTAL_FRAMES; i++) {
       const img = new Image();
-      // Hint browser to prioritise first ~30 frames for fast initial render
-      img.fetchPriority = i < 30 ? "high" : "auto";
+      img.fetchPriority = i < READY_AFTER_FRAMES ? "high" : "low";
       img.src = FRAME_PATH(i + 1);
       img.onload = () => onLoad(i);
       img.onerror = () => onLoad(i);

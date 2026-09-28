@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Script from "next/script";
-import { displayFont, bodyFont, monoFont } from "@/fonts";
+import { displayFont, bodyFont, monoFont, interFont } from "@/fonts";
 import "./globals.css";
 import SmoothScroll from "@/components/landing/SmoothScroll";
 import Providers from "@/components/providers/Providers";
@@ -162,7 +162,7 @@ const jsonLdData = {
       name: "CosmoDex",
       alternateName: ["CosmoDeX", "Cosmo Dex"],
       url: appUrl,
-      logo: `${appUrl}/images/logo.png`,
+      logo: `${appUrl}/images/logo.webp`,
       email: "connect.cosmodex@gmail.com",
       sameAs: [
         "https://github.com/cosmo-dex",
@@ -301,7 +301,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
         <script src="https://pl31257884.profitableratecpmnetwork.com/59/2e/c7/592ec7429696819bdbed6840e82ee112.js" />
       </head>
       <body
-        className={`${displayFont.variable} ${bodyFont.variable} ${monoFont.variable} antialiased`}
+        className={`${displayFont.variable} ${bodyFont.variable} ${monoFont.variable} ${interFont.variable} antialiased`}
         style={{ background: "#08040f", color: "#f0e6ff" }}
         suppressHydrationWarning
       >

@@ -1,15 +1,16 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { AnimatePresence, motion } from "framer-motion";
 import { Brain, Code2, Globe, Trophy, Sparkles } from "lucide-react";
 import { useRouter } from "next/navigation";
-import SmoothScroll from "@/components/landing/SmoothScroll";
 import { Podium } from "./Podium";
 import { RankTable } from "./RankTable";
 import { Starfield } from "./Starfield";
 import { type Player, type Scope, type Timeframe } from "@/data/leaderboard";
+import { AVATARS } from "@/lib/avatar";
 import { cn } from "@/lib/utils";
+
+const IS_LEADERBOARD_LIVE = false;
 
 interface LeaderboardEntry {
   rank: number;
@@ -42,7 +43,7 @@ function mapEntryToPlayer(entry: LeaderboardEntry, index: number): Player {
     id: entry.userId,
     name: entry.username,
     handle: entry.userId.slice(0, 8),
-    avatar: `https://api.dicebear.com/7.x/bottts-neutral/svg?seed=${encodeURIComponent(entry.userId)}`,
+    avatar: AVATARS[index % AVATARS.length].image,
     tier,
     xp: realElo,
     battles,
@@ -58,10 +59,14 @@ export default function Leaderboard() {
   const [scope, setScope] = useState<Scope>("global");
   const [timeframe, setTimeframe] = useState<Timeframe>("weekly");
   const [entries, setEntries] = useState<LeaderboardEntry[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(() => !IS_LEADERBOARD_LIVE);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    if (!IS_LEADERBOARD_LIVE) {
+      return;
+    }
+
     let ignore = false;
     async function fetchLeaderboard() {
       try {
@@ -119,12 +124,9 @@ export default function Leaderboard() {
     );
   }
 
-  const IS_LEADERBOARD_LIVE = false;
-
   if (!IS_LEADERBOARD_LIVE) {
     return (
       <main className="starfield relative min-h-screen overflow-hidden px-4 pb-16 pt-16 md:pt-20">
-        <SmoothScroll />
         <Starfield />
 
         <button
@@ -208,7 +210,6 @@ export default function Leaderboard() {
   }
   return (
     <main className="starfield relative min-h-screen overflow-hidden px-4 pb-16 pt-16 md:pt-20">
-      <SmoothScroll />
       <Starfield />
 
       {/* Back Button */}
@@ -256,11 +257,7 @@ export default function Leaderboard() {
                 )}
               >
                 {isActive && (
-                  <motion.div
-                    layoutId="active-timeframe-pill"
-                    className="absolute inset-0 rounded-pill bg-accent/20"
-                    transition={{ type: "spring", stiffness: 400, damping: 30 }}
-                  />
+                  <span className="absolute inset-0 rounded-pill bg-accent/20" />
                 )}
                 <span className="relative z-10">{t}</span>
               </button>
@@ -284,11 +281,7 @@ export default function Leaderboard() {
                 )}
               >
                 {isActive && (
-                  <motion.div
-                    layoutId="active-scope-pill"
-                    className="absolute inset-0 rounded-btn bg-accent/15"
-                    transition={{ type: "spring", stiffness: 400, damping: 30 }}
-                  />
+                  <span className="absolute inset-0 rounded-btn bg-accent/15" />
                 )}
                 <Icon className="relative z-10 size-3.5" strokeWidth={1.7} />
                 <span className="relative z-10">{label}</span>
@@ -297,39 +290,16 @@ export default function Leaderboard() {
           })}
         </div>
 
-        {/* Animated Leaderboard Podium and Table */}
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={`${scope}-${timeframe}`}
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -12 }}
-            transition={{ duration: 0.25, ease: "easeOut" }}
-            className="w-full"
-          >
-            <motion.section
-              initial={{ opacity: 0, y: 16 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, margin: "-40px" }}
-              transition={{ duration: 0.5, ease: "easeOut" }}
-              className="mt-6 w-full md:mt-8"
-              aria-label="Top three"
-            >
-              <Podium players={top3} />
-            </motion.section>
+        {/* Leaderboard Podium and Table */}
+        <div key={`${scope}-${timeframe}`} className="w-full transition-opacity duration-200 ease-out">
+          <section className="mt-6 w-full md:mt-8" aria-label="Top three">
+            <Podium players={top3} />
+          </section>
 
-            <motion.section
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, margin: "-40px" }}
-              transition={{ duration: 0.5, ease: "easeOut", delay: 0.1 }}
-              className="mt-6 w-full"
-              aria-label="Ranks four and below"
-            >
-              <RankTable players={rest} />
-            </motion.section>
-          </motion.div>
-        </AnimatePresence>
+          <section className="mt-6 w-full" aria-label="Ranks four and below">
+            <RankTable players={rest} />
+          </section>
+        </div>
       </div>
     </main>
   );

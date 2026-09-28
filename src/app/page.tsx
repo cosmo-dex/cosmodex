@@ -10,6 +10,7 @@ import ScrollAnimation from "@/components/landing/ScrollAnimation";
 import SmoothScroll from "@/components/landing/SmoothScroll";
 import ClickParticles from "@/components/landing/ClickParticles";
 import FAQSection from "@/components/faq/FAQSection";
+import WebsiteTour from "@/components/onboarding/WebsiteTour";
 
 export default function Home() {
   return (
@@ -45,6 +46,7 @@ export default function Home() {
       <div style={{ position: "relative", zIndex: 3, background: "#050508" }}>
         <Footer />
       </div>
+      <WebsiteTour />
     </main>
   );
 }

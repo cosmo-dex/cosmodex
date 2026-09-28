@@ -29,7 +29,7 @@ export default function NavbarOriginal() {
         {/* ── Logo ── */}
         <Link href="/" className="flex items-center gap-2.5 shrink-0">
           <Image
-            src="/images/logo.png"
+            src="/images/logo.webp"
             alt="CosmoDeX logo"
             width={28}
             height={28}

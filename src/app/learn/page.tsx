@@ -514,7 +514,7 @@ export default function LearnPage() {
         >
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src="/images/space-hero-banner.jpg"
+            src="/images/space-hero-banner.webp"
             alt="CosmoDeX Space Banner"
             className="absolute inset-0 w-full h-full object-cover pointer-events-none z-0"
           />

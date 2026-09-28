@@ -18,6 +18,11 @@ declare module '*.gif' {
   export default content;
 }
 
+declare module '*.webp' {
+  const content: import('next/image').StaticImageData;
+  export default content;
+}
+
 declare module '*.svg' {
   import React from 'react';
   const ReactComponent: React.FC<React.SVGProps<SVGSVGElement>>;

@@ -10,22 +10,18 @@ interface Star {
   driftAmp: number;
   driftFreq: number;
   driftOffset: number;
-  opacity: number;
   baseOpacity: number;
   twinkleSpeed: number;
   twinkleOffset: number;
   color: string;
-  depth: number;
 }
 
 const STAR_PALETTE = [
-  "255, 255, 255",   // pure white
-  "255, 255, 255",   // pure white
-  "255, 255, 255",   // pure white
-  "220, 235, 255",   // soft blue-white
-  "217, 95, 209",    // cosmo pink/magenta
-  "0, 255, 233",     // neon cyan
-  "168, 85, 247",    // purple tint
+  "255, 255, 255",
+  "220, 235, 255",
+  "217, 95, 209",
+  "0, 255, 233",
+  "168, 85, 247",
 ];
 
 export function Starfield() {
@@ -38,43 +34,31 @@ export function Starfield() {
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
-    let animId: number;
+    const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    let animationFrame = 0;
     let width = 0;
     let height = 0;
-
-    let mouseX = 0;
-    let mouseY = 0;
-    let targetMouseX = 0;
-    let targetMouseY = 0;
-
-    const handleMouseMove = (e: MouseEvent) => {
-      targetMouseX = (e.clientX / window.innerWidth - 0.5) * 25;
-      targetMouseY = (e.clientY / window.innerHeight - 0.5) * 25;
-    };
-
-    window.addEventListener("mousemove", handleMouseMove, { passive: true });
-
     let stars: Star[] = [];
 
     const initStars = (w: number, h: number) => {
-      const count = Math.floor(Math.max(90, (w * h) / 6500));
+      const count = prefersReducedMotion
+        ? 16
+        : Math.min(28, Math.max(14, Math.floor((w * h) / 26000)));
+
       stars = Array.from({ length: count }, () => {
-        const depth = Math.random() * 0.8 + 0.2; // 0.2 to 1.0 depth
         const rgb = STAR_PALETTE[Math.floor(Math.random() * STAR_PALETTE.length)];
         return {
           x: Math.random() * w,
           y: Math.random() * h,
-          size: (Math.random() * 1.5 + 0.6) * depth,
-          speedY: (Math.random() * 0.4 + 0.15) * depth,
-          driftAmp: Math.random() * 10 + 2,
-          driftFreq: Math.random() * 0.006 + 0.002,
+          size: Math.random() * 1.6 + 0.7,
+          speedY: Math.random() * 0.45 + 0.12,
+          driftAmp: Math.random() * 8 + 1.5,
+          driftFreq: Math.random() * 0.01 + 0.003,
           driftOffset: Math.random() * Math.PI * 2,
-          opacity: 0,
-          baseOpacity: Math.random() * 0.4 + 0.4,
-          twinkleSpeed: Math.random() * 0.025 + 0.008,
+          baseOpacity: Math.random() * 0.45 + 0.35,
+          twinkleSpeed: Math.random() * 0.02 + 0.008,
           twinkleOffset: Math.random() * Math.PI * 2,
           color: rgb,
-          depth,
         };
       });
     };
@@ -87,76 +71,47 @@ export function Starfield() {
     };
 
     resize();
+    const handleResize = () => resize();
+    window.addEventListener("resize", handleResize, { passive: true });
 
-    const resizeObserver = new ResizeObserver(() => {
-      resize();
-    });
-    if (canvas.parentElement) {
-      resizeObserver.observe(canvas.parentElement);
+    if (prefersReducedMotion) {
+      return () => {
+        cancelAnimationFrame(animationFrame);
+        window.removeEventListener("resize", handleResize);
+      };
     }
 
     let frame = 0;
     const render = () => {
-      frame++;
+      frame += 1;
       ctx.clearRect(0, 0, width, height);
 
-      // Smooth mouse parallax interpolation
-      mouseX += (targetMouseX - mouseX) * 0.05;
-      mouseY += (targetMouseY - mouseY) * 0.05;
-
       for (const s of stars) {
-        // Move star UPWARDS
         s.y -= s.speedY;
 
-        // Wrap seamlessly around top boundary to bottom
-        if (s.y < -15) {
-          s.y = height + 15;
+        if (s.y < -16) {
+          s.y = height + 16;
           s.x = Math.random() * width;
         }
 
-        // Horizontal wave drift
         const drift = Math.sin(frame * s.driftFreq + s.driftOffset) * s.driftAmp;
+        const twinkle = 0.72 + 0.28 * Math.sin(frame * s.twinkleSpeed + s.twinkleOffset);
+        const opacity = Math.min(1, s.baseOpacity * twinkle);
 
-        // Twinkle luminance factor
-        const twinkle = 0.6 + 0.4 * Math.sin(frame * s.twinkleSpeed + s.twinkleOffset);
-        const currentOpacity = Math.min(1, s.baseOpacity * twinkle);
-
-        // Position with mouse parallax
-        const drawX = s.x + drift + mouseX * s.depth;
-        const drawY = s.y + mouseY * s.depth;
-
-        // Draw clean round star dot
         ctx.beginPath();
-        ctx.arc(drawX, drawY, s.size, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(${s.color}, ${currentOpacity.toFixed(3)})`;
+        ctx.arc(s.x + drift, s.y, s.size, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(${s.color}, ${opacity.toFixed(3)})`;
         ctx.fill();
-
-        // Subtle soft glow ONLY for slightly larger stars
-        if (s.size > 1.2) {
-          const glowRadius = s.size * 2.5;
-          const gradient = ctx.createRadialGradient(
-            drawX, drawY, 0,
-            drawX, drawY, glowRadius
-          );
-          gradient.addColorStop(0, `rgba(${s.color}, ${(currentOpacity * 0.4).toFixed(3)})`);
-          gradient.addColorStop(1, `rgba(${s.color}, 0)`);
-
-          ctx.beginPath();
-          ctx.arc(drawX, drawY, glowRadius, 0, Math.PI * 2);
-          ctx.fillStyle = gradient;
-          ctx.fill();
-        }
       }
 
-      animId = requestAnimationFrame(render);
+      animationFrame = window.requestAnimationFrame(render);
     };
 
     render();
 
     return () => {
-      cancelAnimationFrame(animId);
-      window.removeEventListener("mousemove", handleMouseMove);
-      resizeObserver.disconnect();
+      cancelAnimationFrame(animationFrame);
+      window.removeEventListener("resize", handleResize);
     };
   }, []);
 
