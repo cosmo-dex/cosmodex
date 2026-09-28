@@ -306,13 +306,12 @@ export default function MatchmakingPanel({ socket, userId, username, onMatchFoun
 
 
   const joinQueue = () => {
-    if (!socket) {
     if (cancelTimeoutRef.current) {
       clearTimeout(cancelTimeoutRef.current);
       cancelTimeoutRef.current = null;
     }
     setCancelledByOpponent(false);
-    if (!socket?.connected) {
+    if (!socket) {
       setError("Not connected to arena. Reconnecting...");
       return;
     }
@@ -335,15 +334,13 @@ export default function MatchmakingPanel({ socket, userId, username, onMatchFoun
   };
 
   const leaveQueue = () => {
-    if (!socket) {
-      return;
     if (cancelTimeoutRef.current) {
       clearTimeout(cancelTimeoutRef.current);
       cancelTimeoutRef.current = null;
     }
     const currentPayload = matchPayloadRef.current;
-    if (currentPayload) {
-      socket?.emit("leave_match", { roomId: currentPayload.roomId });
+    if (currentPayload && socket) {
+      socket.emit("leave_match", { roomId: currentPayload.roomId });
     }
     setQueueState("idle");
     setPhase("SEARCHING");
@@ -352,10 +349,11 @@ export default function MatchmakingPanel({ socket, userId, username, onMatchFoun
     matchPayloadRef.current = null;
     setIsReady(false);
     setOpponentReady(false);
-    socket.emit("leave_queue", { userId });
     setCancelledByOpponent(false);
     hasTransitionedRef.current = false;
-    socket?.emit("leave_queue", { userId });
+    if (socket) {
+      socket.emit("leave_queue", { userId });
+    }
   };
 
   const handleEnterBattle = () => {
