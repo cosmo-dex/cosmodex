@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { motion } from "framer-motion";
 import Link from "next/link";
 import Navbar from "@/components/navbar/Navbar";
@@ -31,7 +31,11 @@ export default function TheoryExerciseClientView({
   const [isCompleted, setIsCompleted] = useState<boolean>(() => {
     if (typeof window !== "undefined") {
       try {
-        return localStorage.getItem(`station_completed_${exercise.id}`) === "true";
+        const cCode = (exercise.courseId || "python").toLowerCase();
+        return (
+          localStorage.getItem(`station_completed_${cCode}_${exercise.id}`) === "true" ||
+          localStorage.getItem(`station_completed_${exercise.id}`) === "true"
+        );
       } catch {
         return false;
       }
@@ -39,15 +43,19 @@ export default function TheoryExerciseClientView({
     return false;
   });
 
+  const [isLocked, setIsLocked] = useState<boolean>(false);
+
   useEffect(() => {
     let active = true;
 
-    fetch("/api/learning/progress?course=python")
+    const courseCode = exercise.courseId || "python";
+    fetch(`/api/learning/progress?course=${courseCode}`)
       .then((res) => (res.ok ? res.json() : null))
       .then((data) => {
         if (!active || !data?.progress) return;
         const prog = data.progress;
         const stationNum = parseInt(exercise.chapterNumber || "1", 10);
+
         const isDone =
           (Array.isArray(prog.completedStationSlugs) && (
             prog.completedStationSlugs.includes(exercise.id) ||
@@ -61,24 +69,50 @@ export default function TheoryExerciseClientView({
         if (isDone) {
           setIsCompleted(true);
         }
+
+        if (stationNum > 1 && data.authenticated) {
+          const prevNum = stationNum - 1;
+          const prevCompleted =
+            (Array.isArray(prog.completedStationNumbers) && prog.completedStationNumbers.includes(prevNum)) ||
+            (Array.isArray(prog.completedStationSlugs) && (
+              prog.completedStationSlugs.includes(String(prevNum)) ||
+              prog.completedStationSlugs.includes(`ch-${prevNum}`)
+            ));
+          if (!prevCompleted) {
+            setIsLocked(true);
+          }
+        }
       })
-      .catch(() => { });
+      .catch(() => {});
 
     return () => {
       active = false;
     };
-  }, [exercise.id, exercise.chapterNumber]);
+  }, [exercise.id, exercise.chapterNumber, exercise.courseId]);
+
+  const fileExt = useMemo(() => {
+    const cid = (exercise.courseId || "").toLowerCase();
+    if (cid.includes("html") || cid.includes("web")) return "html";
+    if (cid.includes("css")) return "css";
+    if (cid.includes("js") || cid.includes("javascript") || cid.includes("react")) return "js";
+    if (cid.includes("java")) return "java";
+    if (cid.includes("cpp") || cid.includes("c++")) return "cpp";
+    return "py";
+  }, [exercise.courseId]);
 
   const handleToggleComplete = async () => {
     const nextState = !isCompleted;
     setIsCompleted(nextState);
+    const cCode = (exercise.courseId || "python").toLowerCase();
     try {
+      localStorage.setItem(`station_completed_${cCode}_${exercise.id}`, String(nextState));
       localStorage.setItem(`station_completed_${exercise.id}`, String(nextState));
       await fetch('/api/learning/progress', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           moduleId: exercise.id,
+          courseCode: exercise.courseId || 'python',
           isStationComplete: nextState,
           xpEarned: 0,
         }),
@@ -88,22 +122,14 @@ export default function TheoryExerciseClientView({
     }
   };
 
-  const handleQuizCompleted = async () => {
+  const handleQuizCompleted = async (score: number, total: number, passed: boolean) => {
+    if (!passed) return;
     setIsCompleted(true);
+    const cCode = (exercise.courseId || "python").toLowerCase();
     try {
+      localStorage.setItem(`station_completed_${cCode}_${exercise.id}`, "true");
       localStorage.setItem(`station_completed_${exercise.id}`, "true");
-      await fetch('/api/learning/progress', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          moduleId: exercise.id,
-          isStationComplete: true,
-          xpEarned: 0,
-        }),
-      });
-    } catch (err) {
-      console.warn('Failed to save quiz progress to server', err);
-    }
+    } catch {}
   };
 
   const renderFormattedText = (text: string) => {
@@ -131,14 +157,39 @@ export default function TheoryExerciseClientView({
   };
 
   const parseCodeBlockFromContent = (text: string) => {
-    const codeBlockMatch = text.match(/```(?:python)?\s*([\s\S]*?)```/);
+    const codeBlockMatch = text.match(/```(?:[a-zA-Z0-9_\-#+]+)?\s*([\s\S]*?)```/);
     if (codeBlockMatch) {
       const code = codeBlockMatch[1].trim();
-      const nonCode = text.replace(/```(?:python)?\s*[\s\S]*?```/, "").trim();
+      const nonCode = text.replace(/```(?:[a-zA-Z0-9_\-#+]+)?\s*[\s\S]*?```/, "").trim();
       return { code, nonCode };
     }
     return null;
   };
+
+  if (isLocked) {
+    const courseLink = exercise.courseId === "py-1" ? "/learn/python" : `/learn/${exercise.courseId}`;
+    return (
+      <div className="min-h-screen bg-[#07080f] text-white flex flex-col items-center justify-center gap-6 px-4">
+        <Navbar />
+        <div className="flex flex-col items-center gap-4 text-center max-w-md">
+          <div className="w-16 h-16 rounded-2xl bg-[#0d0f1a] border border-white/10 flex items-center justify-center">
+            <Sparkles size={28} className="text-white/20" />
+          </div>
+          <h1 className="text-2xl font-black text-white font-mono uppercase tracking-wider">Station Locked</h1>
+          <p className="text-sm text-white/50 font-sans leading-relaxed">
+            You need to complete the previous station and pass its quiz with at least 3/5 correct answers before accessing this one.
+          </p>
+          <Link
+            href={courseLink}
+            className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-[#E873C3] to-[#9E00F6] text-white text-xs font-mono font-bold uppercase tracking-wider hover:opacity-90 transition-all"
+          >
+            <Rocket size={14} />
+            <span>Back to Galaxy Map</span>
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#07080f] text-white relative flex flex-col font-sans overflow-x-hidden">
@@ -181,7 +232,7 @@ export default function TheoryExerciseClientView({
       />
 
       {/* ── Main Content ── */}
-      <main className="relative z-10 flex-1 w-full max-w-[860px] mx-auto px-4 sm:px-8 pt-36 pb-40">
+      <main className="relative z-10 flex-1 w-full max-w-[1240px] mx-auto px-4 sm:px-8 pt-36 pb-40">
         <article className="space-y-14">
 
           {/* ── Hero Header ── */}
@@ -245,6 +296,7 @@ export default function TheoryExerciseClientView({
                           inputCode={parsedBlock.code}
                           outputCode="[Program executed with exit code 0]"
                           explanation="Study the code structure and indentation."
+                          fileName={`syntax.${fileExt}`}
                         />
                       </div>
                     );
@@ -317,7 +369,7 @@ export default function TheoryExerciseClientView({
                     inputCode={ex.input}
                     outputCode={ex.output}
                     explanation={ex.explanation}
-                    fileName={`example_${idx + 1}.py`}
+                    fileName={`example_${idx + 1}.${fileExt}`}
                   />
                 ))}
               </div>
@@ -350,7 +402,7 @@ export default function TheoryExerciseClientView({
                   inputCode={exercise.practiceQuestion.input}
                   outputCode={exercise.practiceQuestion.output}
                   explanation={exercise.practiceQuestion.explanation}
-                  fileName="challenge.py"
+                  fileName={`challenge.${fileExt}`}
                 />
               </div>
             </section>
@@ -362,30 +414,15 @@ export default function TheoryExerciseClientView({
               <ConceptKnowledgeQuiz
                 questions={exercise.mcqs}
                 chapterTitle={exercise.title}
+                moduleId={exercise.id}
+                courseId={exercise.courseId}
+                nextLessonId={exercise.nextLessonId}
                 onCompleteQuiz={handleQuizCompleted}
               />
             </section>
           )}
 
-          {/* ── Bottom Navigation Card ── */}
-          <div className="rounded-2xl border border-white/[0.08] bg-[#0d0f1a] p-5 sm:p-6 flex flex-col sm:flex-row items-center justify-between gap-4">
-            <div>
-              <h4 className="text-base font-black text-white flex items-center gap-2">
-                Station {exercise.chapterNumber} Mastered?
-                <Sparkles size={14} className="text-[#00FFE9]" />
-              </h4>
-              <p className="text-xs text-white/45 font-sans mt-1">
-                Head back to the {exercise.courseTitle || "Course"} Galaxy map to explore the next station.
-              </p>
-            </div>
-            <Link
-              href={exercise.courseId === "py-1" ? "/learn/python" : `/learn/${exercise.courseId}`}
-              className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-[#E873C3] to-[#9E00F6] text-white text-xs font-mono font-bold uppercase tracking-wider transition-all hover:opacity-90 shadow-[0_0_20px_rgba(158,0,246,0.3)] shrink-0"
-            >
-              <Rocket size={14} />
-              <span>Back to Galaxy Map</span>
-            </Link>
-          </div>
+          {/* MCQ Quiz Component manages its own unified result and next action */}
         </article>
       </main>
 

@@ -114,7 +114,7 @@ export default function Footer() {
               { label: "Blog & News", href: "/blog" },
               { label: "Discord", href: "https://discord.gg", external: true },
               { label: "Forum", href: "/events" },
-              { label: "Support", href: "/onboarding?mode=login" },
+              { label: "Support", href: "/support" },
             ]}
           />
 
@@ -122,9 +122,8 @@ export default function Footer() {
           <FooterColumn
             title="Legal"
             links={[
-              { label: "Privacy Policy", href: "/events" },
-              { label: "Terms of Service", href: "/events" },
-              { label: "Cookie Policy", href: "/events" },
+              { label: "Terms of Service", href: "/terms" },
+              { label: "Cookie Policy", href: "/cookies" },
             ]}
           />
         </div>

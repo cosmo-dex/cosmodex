@@ -1,7 +1,9 @@
 "use client";
 
 import { useRef, useState, useEffect } from "react";
+import Link from "next/link";
 import { motion } from "framer-motion";
+import { Award, Lock, ArrowRight } from "lucide-react";
 import { Chapter } from "./pythonData";
 import PixelPlanet from "./PixelPlanet";
 
@@ -12,19 +14,20 @@ interface GalaxyPathMapProps {
   selectedChapterId: string;
   onSelectChapter: (chapter: Chapter) => void;
   courseTitle?: string;
+  courseId?: string;
 }
 
 const PLANET_X_POSITIONS = [
-  20,
-  52,
-  82,
-  68,
-  45,
   22,
+  46,
+  62,
+  50,
   36,
-  78,
-  30,
-  56,
+  20,
+  34,
+  60,
+  26,
+  48,
 ];
 
 export default function GalaxyPathMap({
@@ -32,9 +35,14 @@ export default function GalaxyPathMap({
   selectedChapterId,
   onSelectChapter,
   courseTitle,
+  courseId,
 }: GalaxyPathMapProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [svgPathD, setSvgPathD] = useState<string>("");
+
+  const isAllCompleted =
+    chapters.length > 0 && chapters.every((c) => Boolean(c.isCompleted));
+  const trackSlug = (courseId || (courseTitle || "python")).toLowerCase();
 
   // Calculate SVG path D attribute between exact planet centers
   useEffect(() => {
@@ -84,10 +92,13 @@ export default function GalaxyPathMap({
     };
   }, [chapters]);
 
+  const completedCount = chapters.filter((c) => Boolean(c.isCompleted)).length;
+  const totalCount = chapters.length;
+
   return (
     <div className="flex flex-col w-full relative">
       {/* ── Galaxy Map Header Row ── */}
-      <div className="flex flex-wrap items-center justify-between gap-4 mb-8">
+      <div className="flex flex-wrap items-center justify-between gap-4 mb-4">
         <h2 className="text-xl md:text-2xl font-bold font-mono text-white tracking-wider flex items-center gap-2">
           THE {(courseTitle || "PYTHON").toUpperCase()} GALAXY
         </h2>
@@ -95,6 +106,7 @@ export default function GalaxyPathMap({
           Tap a planet to view its theory &amp; MCQs
         </span>
       </div>
+
 
       {/* ── Galaxy Canvas Container (Seamless space canvas) ── */}
       <div
@@ -128,7 +140,7 @@ export default function GalaxyPathMap({
         </svg>
 
         {/* ── Planets List Grid/Node Map ── */}
-        <div className="relative z-10 flex flex-col gap-24 py-6">
+        <div className="relative z-10 flex flex-col gap-36 sm:gap-40 py-6">
           {chapters.map((chapter, index) => {
             const xPercent = PLANET_X_POSITIONS[index % PLANET_X_POSITIONS.length];
             const isSelected = selectedChapterId === chapter.id;
@@ -166,6 +178,67 @@ export default function GalaxyPathMap({
               </motion.div>
             );
           })}
+
+          {/* ── Certificate Station (Locked / Unlocked at End of Galaxy) ── */}
+          <motion.div
+            id="certificate-station"
+            data-planet-index={chapters.length}
+            initial={{ opacity: 0, y: 20, scale: 0.95 }}
+            whileInView={{ opacity: 1, y: 0, scale: 1 }}
+            viewport={{ once: true, margin: "-40px" }}
+            transition={{ duration: 0.6 }}
+            className="relative flex items-center justify-center my-6"
+            style={{
+              left: "50%",
+              transform: "translateX(-50%)",
+              width: "max-content",
+            }}
+          >
+            <div data-planet-center className="relative group">
+              {isAllCompleted ? (
+                <Link
+                  href={`/learn/${trackSlug}/certificate`}
+                  className="flex flex-col items-center gap-3 p-5 rounded-3xl border-2 border-yellow-400 bg-gradient-to-b from-[#1c1404] via-[#0d091a] to-[#05040f] shadow-[0_0_50px_rgba(255,215,0,0.35)] hover:scale-105 transition-all duration-300 cursor-pointer text-center max-w-xs"
+                >
+                  <div className="w-16 h-16 rounded-2xl bg-yellow-500/20 border border-yellow-400 flex items-center justify-center text-yellow-300 shadow-[0_0_20px_rgba(255,215,0,0.5)] animate-bounce">
+                    <Award size={36} />
+                  </div>
+                  <div>
+                    <span className="text-[10px] font-mono uppercase tracking-[0.2em] text-yellow-400 font-bold block">
+                      FINAL DESTINATION
+                    </span>
+                    <h4 className="text-base font-black font-mono text-white tracking-wider uppercase">
+                      Claim Certificate 🚀
+                    </h4>
+                    <p className="text-[11px] font-sans text-white/70 mt-1">
+                      Conquered all {totalCount} stations!
+                    </p>
+                  </div>
+                  <span className="inline-flex items-center gap-1 text-xs font-mono font-bold text-black bg-yellow-400 px-3 py-1 rounded-full">
+                    <span>View &amp; Mint</span>
+                    <ArrowRight size={12} />
+                  </span>
+                </Link>
+              ) : (
+                <div className="flex flex-col items-center gap-2.5 p-5 rounded-3xl border border-white/10 bg-[#0a0818]/90 text-center max-w-xs shadow-xl backdrop-blur-md opacity-75">
+                  <div className="w-14 h-14 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center text-white/40">
+                    <Lock size={26} />
+                  </div>
+                  <div>
+                    <span className="text-[10px] font-mono uppercase tracking-[0.2em] text-amber-400/80 font-bold block">
+                      FINAL DESTINATION
+                    </span>
+                    <h4 className="text-sm font-black font-mono text-white/60 tracking-wider uppercase">
+                      Certificate Station (Locked)
+                    </h4>
+                    <p className="text-[11px] font-sans text-white/40 mt-1">
+                      {completedCount} / {totalCount} Stations Completed
+                    </p>
+                  </div>
+                </div>
+              )}
+            </div>
+          </motion.div>
         </div>
       </div>
     </div>

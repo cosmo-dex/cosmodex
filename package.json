@@ -12,6 +12,8 @@
     "db:generate": "prisma generate",
     "db:seed": "tsx prisma/seed.ts",
     "seed": "tsx prisma/seed.ts",
+    "seed:mcqs": "node prisma/seed-mcqs.mjs",
+    "complete:courses": "node prisma/complete-courses.mjs",
     "test:lint": "pnpm run lint",
     "test:types": "pnpm run typecheck",
     "test:ci": "pnpm run db:generate && pnpm run lint && pnpm run typecheck",
