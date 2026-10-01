@@ -19,7 +19,7 @@
     "test:ci": "pnpm run db:generate && pnpm run lint && pnpm run typecheck",
     "test": "pnpm run db:generate && pnpm run lint && pnpm run typecheck",
     "test:all": "pnpm run db:generate && pnpm run lint && pnpm run typecheck && pnpm run build",
-    "prepare": "husky"
+    "prepare": "husky || true"
   },
   "dependencies": {
     "@dotlottie/react-player": "^1.6.19",
