@@ -43,7 +43,8 @@
     "react": "19.2.4",
     "react-dom": "19.2.4",
     "tailwind-merge": "^2.4.0",
-    "zustand": "^5.0.14"
+    "zustand": "^5.0.14",
+    "prisma": "^6.19.3"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
@@ -57,7 +58,6 @@
     "eslint-config-next": "16.2.6",
     "husky": "^9.1.7",
     "lint-staged": "^15.5.2",
-    "prisma": "^6.19.3",
     "tailwindcss": "^4",
     "tsx": "^4.23.13",
     "typescript": "^5"
