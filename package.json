@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev --webpack",
-    "build": "next build",
+    "build": "prisma generate && next build",
     "start": "next start",
     "lint": "eslint",
     "lint:fix": "eslint --fix",
@@ -19,8 +19,7 @@
     "test:ci": "pnpm run db:generate && pnpm run lint && pnpm run typecheck",
     "test": "pnpm run db:generate && pnpm run lint && pnpm run typecheck",
     "test:all": "pnpm run db:generate && pnpm run lint && pnpm run typecheck && pnpm run build",
-    "prepare": "husky",
-    "postinstall": "prisma generate"
+    "prepare": "husky"
   },
   "dependencies": {
     "@dotlottie/react-player": "^1.6.19",
