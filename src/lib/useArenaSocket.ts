@@ -83,7 +83,7 @@ export function useArenaSocket(token: string | null) {
   useEffect(() => {
     if (!token) return;
 
-    const BACKEND_URL = process.env.NEXT_PUBLIC_BATTLE_ARENA_URL || (process.env.NODE_ENV === "development" ? "http://localhost:3001" : "");
+    const BACKEND_URL = "wss://battle-arena-golang-316713590727.us-central1.run.app";
     const newSocket = createArenaSocket(BACKEND_URL, { auth: { token } });
     socketRef.current = newSocket;
     // eslint-disable-next-line react-hooks/set-state-in-effect
