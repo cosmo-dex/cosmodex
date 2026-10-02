@@ -14,19 +14,22 @@ export interface SessionPayload {
   exp?: number;
 }
 
-const SECRET_KEY = (() => {
+function getSecretKey(): string {
   const key =
     process.env.SESSION_SECRET ||
     process.env.NEXTAUTH_SECRET ||
     process.env.AUTH_SECRET;
   if (!key) {
     if (process.env.NODE_ENV === 'production') {
+      if (process.env.NEXT_PHASE === 'phase-production-build') {
+        return 'cosmodex-build-time-fallback-secret-minimum-32-chars!!';
+      }
       throw new Error('SESSION_SECRET, NEXTAUTH_SECRET, or AUTH_SECRET must be set in production');
     }
     return 'cosmodex-dev-only-fallback-key-not-for-production!!';
   }
   return key;
-})();
+}
 
 const textEncoder = new TextEncoder();
 const textDecoder = new TextDecoder();
@@ -69,9 +72,10 @@ let cachedCryptoKeyPromise: Promise<CryptoKey> | null = null;
 
 async function getCryptoKey(): Promise<CryptoKey> {
   if (!cachedCryptoKeyPromise) {
+    const secretKey = getSecretKey();
     cachedCryptoKeyPromise = crypto.subtle.importKey(
       'raw',
-      textEncoder.encode(SECRET_KEY),
+      textEncoder.encode(secretKey),
       { name: 'HMAC', hash: 'SHA-256' },
       false,
       ['sign', 'verify']
