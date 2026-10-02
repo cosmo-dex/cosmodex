@@ -21,11 +21,7 @@ COPY . .
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV NODE_ENV=production
 
-# ARG lets you override at build-time:
-#   docker build --build-arg BATTLE_ARENA_URL=https://your-url.run.app .
-ARG BATTLE_ARENA_URL=https://battle-arena-golang-316713590727.us-central1.run.app
-ENV NEXT_PUBLIC_BATTLE_ARENA_URL=${BATTLE_ARENA_URL}
-
+# NEXT_PUBLIC_BATTLE_ARENA_URL is read from .env.production during build
 RUN npx prisma generate
 RUN pnpm run build
 
