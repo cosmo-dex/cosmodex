@@ -124,7 +124,8 @@ export default function MatchmakingPanel({ socket, userId, username, onMatchFoun
   }, [matchPayload]);
 
   const fetchStats = useCallback(() => {
-    fetch("/api/user/stats", { cache: "no-store" })
+    if (typeof document !== "undefined" && document.visibilityState !== "visible") return;
+    fetch("/api/user/stats")
       .then((res) => {
         if (!res.ok) return null;
         return res.json();
@@ -137,20 +138,39 @@ export default function MatchmakingPanel({ socket, userId, username, onMatchFoun
 
   useEffect(() => {
     fetchStats();
-    const interval = setInterval(fetchStats, 10000);
-    return () => clearInterval(interval);
+    const interval = setInterval(fetchStats, 30000);
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        fetchStats();
+      }
+    };
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    return () => {
+      clearInterval(interval);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
   }, [fetchStats]);
 
   useEffect(() => {
     const fetchLeaderboard = () => {
+      if (typeof document !== "undefined" && document.visibilityState !== "visible") return;
       fetch(`/api/battle/leaderboard?mode=${mode}`)
         .then((res) => (res.ok ? res.json() : []))
         .then((data) => setLeaderboard(data))
         .catch(() => setLeaderboard([]));
     };
     fetchLeaderboard();
-    const interval = setInterval(fetchLeaderboard, 5000);
-    return () => clearInterval(interval);
+    const interval = setInterval(fetchLeaderboard, 60000);
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        fetchLeaderboard();
+      }
+    };
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    return () => {
+      clearInterval(interval);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
   }, [mode]);
 
   useEffect(() => {

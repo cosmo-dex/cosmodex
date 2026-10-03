@@ -61,7 +61,7 @@ export async function GET(req: NextRequest) {
       }, {
         status: userId ? 200 : 401,
         headers: {
-          'Cache-Control': 'no-store, no-cache, must-revalidate',
+          'Cache-Control': 'private, max-age=30, stale-while-revalidate=60',
         },
       });
     }
@@ -399,7 +399,7 @@ export async function GET(req: NextRequest) {
       })),
     }, {
       headers: {
-        'Cache-Control': 'no-store, no-cache, must-revalidate',
+        'Cache-Control': 'private, max-age=30, stale-while-revalidate=60',
       },
     });
   } catch (err) {

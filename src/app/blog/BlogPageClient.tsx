@@ -111,7 +111,7 @@ export default function BlogPageClient({ initialPosts }: BlogPageClientProps) {
               FEATURED DISPATCH
             </span>
 
-            <Link href={`/blog/${featuredPost.slug}`} className="block group">
+            <Link href={`/blog/${featuredPost.slug}`} prefetch={false} className="block group">
               <motion.div
                 whileHover={{ y: -6 }}
                 transition={{ duration: 0.15, ease: "easeOut" }}
@@ -261,7 +261,7 @@ export default function BlogPageClient({ initialPosts }: BlogPageClientProps) {
                     whileHover={{ y: -8 }}
                     transition={{ duration: 0.15, ease: "easeOut" }}
                   >
-                    <Link href={`/blog/${post.slug}`} className="block group h-full">
+                    <Link href={`/blog/${post.slug}`} prefetch={false} className="block group h-full">
                       <article className="group relative flex flex-col h-full overflow-hidden bg-[#090e1a] border border-white/80 border-l-3 border-b-3 rounded-[8px] cursor-pointer transition-colors duration-150 shadow-md">
                         <div className="absolute inset-0 bg-white/5 opacity-0 group-hover:opacity-100 transition-opacity duration-150 pointer-events-none z-30" />
 
@@ -270,6 +270,7 @@ export default function BlogPageClient({ initialPosts }: BlogPageClientProps) {
                             src={getValidImageUrl(post.coverImage)}
                             alt={post.title}
                             fill
+                            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                             className="object-cover pointer-events-none group-hover:scale-105 transition-transform duration-300"
                           />
                           <div className="absolute inset-0 bg-gradient-to-t from-[#090e1a] via-transparent to-transparent opacity-50" />

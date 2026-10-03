@@ -44,7 +44,7 @@ import {
 export const displayFont = localFont({
   src: [
     {
-      path: "../public/fonts/Hitchcut Font/Hitchcut-typeface/Hitchcut-Regular.ttf",
+      path: "../public/fonts/Hitchcut Font/Hitchcut-typeface/Hitchcut-Regular.otf",
       weight: "400",
       style: "normal",
     },
@@ -59,7 +59,7 @@ export const displayFont = localFont({
 export const bodyFont = BodyFont({
   variable: "--font-body",
   subsets: ["latin"],
-  weight: ["300", "400", "500", "600", "700"],
+  weight: ["400", "500", "600"],
 });
 
 // ── Mono ─────────────────────────────────────────────────────────────────────
