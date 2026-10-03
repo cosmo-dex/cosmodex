@@ -1,0 +1,66 @@
+name: CI Quality Gate
+
+on:
+  push:
+    branches: [ "main", "checks" ]
+  pull_request:
+    types: [opened, closed, synchronize]
+    branches: [ "main" ]
+
+jobs:
+  lint-and-typecheck:
+    name: Lint & Type Check
+    runs-on: ubuntu-latest
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      # --- NOTIFICATION: PR OPENED ---
+      - name: Discord Alert - PR Opened
+        if: github.event_name == 'pull_request' && github.event.action == 'opened'
+        continue-on-error: true
+        env:
+          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
+        run: |
+          if [ -n "$DISCORD_WEBHOOK" ]; then
+            MSG="🔔 **New Pull Request!** \n**Author:** ${{ github.actor }}\n**Title:** ${{ github.event.pull_request.title }}\n**Link:** ${{ github.event.pull_request.html_url }}"
+            curl -H "Content-Type: application/json" -d "{\"content\": \"$MSG\"}" "$DISCORD_WEBHOOK" || true
+          fi
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v3
+        with:
+          version: 9
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'pnpm'
+
+      - name: Install Dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Generate Prisma Client
+        run: pnpm exec prisma generate
+
+      - name: Run ESLint
+        run: pnpm run lint
+
+      - name: Run TypeScript Type Check
+        run: pnpm exec tsc --noEmit
+
+      # --- NOTIFICATION: BUILD FAILED ---
+      - name: Discord Alert - Quality Gate Failed
+        if: failure()
+        continue-on-error: true
+        env:
+          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
+        run: |
+          if [ -n "$DISCORD_WEBHOOK" ]; then
+            MSG="🚨 **CRITICAL: Quality Gate Failed!**\nCode from **${{ github.actor }}** failed linting or type-checking.\n**Check logs:** https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+            curl -H "Content-Type: application/json" -d "{\"content\": \"$MSG\"}" "$DISCORD_WEBHOOK" || true
+          fi
