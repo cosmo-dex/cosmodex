@@ -32,7 +32,7 @@ export default function Footer() {
         >
           {/* Brand info — spans 2 columns */}
           <div className="lg:col-span-2" style={{ maxWidth: "340px" }}>
-            <Link
+            <Link prefetch={false}
               href="/"
               style={{
                 display: "inline-flex",
@@ -221,7 +221,7 @@ function FooterColumn({ title, links }: { title: string; links: FooterLinkItem[]
         {title}
       </div>
       {links.map((link) => (
-        <Link
+        <Link prefetch={false}
           key={link.label}
           href={link.href}
           target={link.external ? "_blank" : undefined}

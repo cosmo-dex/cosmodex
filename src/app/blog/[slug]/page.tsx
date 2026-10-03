@@ -121,7 +121,7 @@ function renderMarkdown(content: string) {
 }
 
 export const dynamicParams = true;
-export const revalidate = 0;
+export const revalidate = 300;
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const resolvedParams = await params;

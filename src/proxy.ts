@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { verifySession, SESSION_COOKIE, type SessionPayload } from '@/lib/session';
+import { checkRateLimit } from '@/lib/rateLimit';
 
 const ADMIN_ROLE_ROUTES: Record<string, string[]> = {
   '/super-admin': ['super_admin'],
@@ -48,6 +49,25 @@ export async function proxy(request: NextRequest) {
   // Never redirect search engine crawlers (Googlebot, Bingbot, etc.)
   if (isSearchEngineBot(userAgent)) {
     return NextResponse.next();
+  }
+
+  // Rate limit authentication endpoints to prevent brute-force attacks and function drains
+  if (pathname.startsWith('/api/auth/')) {
+    const forwardedFor = request.headers.get('x-forwarded-for');
+    const clientIp = forwardedFor ? forwardedFor.split(',')[0].trim() : '127.0.0.1';
+    const rateLimitKey = `auth:${clientIp}`;
+    const { success, resetInSeconds } = checkRateLimit(rateLimitKey, 20, 60 * 1000);
+    if (!success) {
+      return NextResponse.json(
+        { error: 'Too many requests. Please try again later.' },
+        {
+          status: 429,
+          headers: {
+            'Retry-After': String(resetInSeconds),
+          },
+        }
+      );
+    }
   }
 
   const sessionCookie = request.cookies.get(SESSION_COOKIE);
