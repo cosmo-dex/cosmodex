@@ -98,8 +98,13 @@ export function useArenaSocket(token: string | null) {
     });
 
     newSocket.on("match_found", (d: MatchFoundData) => {
+      newSocket.setInMatch(true);
       setMatchData(d);
       setQueueState(null);
+    });
+
+    newSocket.on("mcq_match_start", () => {
+      newSocket.setInMatch(true);
     });
 
     newSocket.on("room_state_update", (state: GameStateData) => {
@@ -148,9 +153,14 @@ export function useArenaSocket(token: string | null) {
     });
 
     newSocket.on("match_ended", (d: MatchEndedData) => {
+      newSocket.setInMatch(false);
       setWaitingForOpponent(null);
       setOpponentCompleted(null);
       setMatchEnded(d);
+    });
+
+    newSocket.on("mcq_match_ended", () => {
+      newSocket.setInMatch(false);
     });
 
     newSocket.on("error", (e: SocketError) => {
