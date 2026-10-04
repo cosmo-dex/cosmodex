@@ -62,7 +62,6 @@ const companyLinks2: LinkItem[] = [
   { title: "Terms of Service", href: "#", icon: FileText  },
   { title: "Privacy Policy",   href: "#", icon: Shield    },
   { title: "Refund Policy",    href: "#", icon: RotateCcw },
-  { title: "Blog",             href: "#", icon: Leaf      },
   { title: "Help Center",      href: "#", icon: HelpCircle },
 ];
 

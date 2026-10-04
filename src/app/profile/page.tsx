@@ -1,8 +1,8 @@
 import type { Metadata } from 'next';
 import { cookies } from 'next/headers';
-import prisma from '@/lib/prisma';
 import ProfileContent from './ProfileContent';
 import { verifySession, SESSION_COOKIE } from '@/lib/session';
+import { getUserProfileData } from '@/lib/userService';
 
 export const metadata: Metadata = {
   title: "Profile | CosmoDex",
@@ -49,65 +49,40 @@ export default async function ProfilePage() {
     avatarUrl = parsed.avatarId || avatarUrl;
   }
 
-  // Fetch live data from DB
+  // Fetch optimized data from cache-enabled service
   if (userId) {
     try {
-      const [dbUser, arenaStats, battleStats, userBadges] = await Promise.all([
-        prisma.users.findUnique({
-          where: { id: userId },
-          select: {
-            username: true,
-            email: true,
-            avatar_url: true,
-            interests: true,
-            xp_total: true,
-            level: true,
-            experience_level: true,
-            created_at: true,
-          },
-        }),
-        prisma.arena_stats.findUnique({
-          where: { user_id: userId },
-          select: { current_streak: true },
-        }),
-        prisma.battle_user_stats.findUnique({
-          where: { user_id: userId },
-          select: { wins: true, losses: true, draws: true, elo_rating: true, mcq_elo_rating: true },
-        }),
-        prisma.user_badges.findMany({
-          where: { user_id: userId },
-          include: { badges: { select: { name: true, description: true } } },
-          orderBy: { earned_at: 'desc' },
-          take: 20,
-        }),
-      ]);
-
-      if (dbUser) {
-        username = dbUser.username;
-        email = dbUser.email;
-        avatarUrl = dbUser.avatar_url || avatarUrl;
-        interests = dbUser.interests ?? [];
-        xpTotal = dbUser.xp_total ?? 0;
-        level = dbUser.level ?? 1;
-        experienceLevel = dbUser.experience_level || experienceLevel;
-        createdAt = dbUser.created_at?.toISOString() ?? createdAt;
+      const userData = await getUserProfileData(userId);
+      
+      if (userData.profile) {
+        username = userData.profile.username;
+        email = userData.profile.email;
+        avatarUrl = userData.profile.avatar_url || avatarUrl;
+        interests = userData.profile.interests ?? [];
+        xpTotal = userData.profile.xp_total ?? 0;
+        level = userData.profile.level ?? 1;
+        experienceLevel = userData.profile.experience_level || experienceLevel;
+        createdAt = userData.profile.created_at?.toISOString() ?? createdAt;
       }
 
-      streak = arenaStats?.current_streak ?? 0;
-      arenaWins = battleStats?.wins ?? 0;
-      arenaLosses = battleStats?.losses ?? 0;
-      arenaDraws = battleStats?.draws ?? 0;
-      codeElo = battleStats?.elo_rating ?? 1000;
-      mcqElo = battleStats?.mcq_elo_rating ?? 1000;
-      badgeCount = userBadges.length;
-      badges = userBadges.map((ub) => ({
-        id: ub.id,
-        name: ub.badges.name,
-        description: ub.badges.description ?? null,
-        earnedAt: ub.earned_at?.toISOString() ?? null,
+      if (userData.stats) {
+        streak = userData.stats.arenaStats?.current_streak ?? 0;
+        arenaWins = userData.stats.battleStats?.wins ?? 0;
+        arenaLosses = userData.stats.battleStats?.losses ?? 0;
+        arenaDraws = userData.stats.battleStats?.draws ?? 0;
+        codeElo = userData.stats.battleStats?.elo_rating ?? 1000;
+        mcqElo = userData.stats.battleStats?.mcq_elo_rating ?? 1000;
+      }
+
+      badgeCount = userData.badges.length;
+      badges = userData.badges.map((badge) => ({
+        id: badge.id,
+        name: badge.name,
+        description: badge.description,
+        earnedAt: badge.earnedAt,
       }));
     } catch (e) {
-      console.error('[profile] Failed to fetch DB data:', e);
+      console.error('[profile] Failed to fetch optimized data:', e);
     }
   }
 

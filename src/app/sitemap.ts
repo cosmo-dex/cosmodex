@@ -1,5 +1,4 @@
 import { MetadataRoute } from 'next';
-import { getAllBlogs } from '@/lib/blogs';
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://www.cosmodex.in';
@@ -43,21 +42,18 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.8,
     },
     {
-      url: `${baseUrl}/blog`,
+      url: `${baseUrl}/dashboard`,
       lastModified: currentDate,
       changeFrequency: 'daily',
-      priority: 0.9,
+      priority: 0.8,
+    },
+    {
+      url: `${baseUrl}/profile`,
+      lastModified: currentDate,
+      changeFrequency: 'weekly',
+      priority: 0.7,
     },
   ];
 
-  // Dynamic blog articles
-  const allBlogs = await getAllBlogs();
-  const blogRoutes: MetadataRoute.Sitemap = allBlogs.map((post) => ({
-    url: `${baseUrl}/blog/${post.slug}`,
-    lastModified: new Date(post.publishedAt),
-    changeFrequency: 'monthly',
-    priority: 0.8,
-  }));
-
-  return [...staticRoutes, ...blogRoutes];
+  return staticRoutes;
 }
