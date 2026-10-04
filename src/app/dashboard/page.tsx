@@ -45,7 +45,8 @@ export default async function DashboardPage() {
     completedModules: number;
   }> = [];
 
-  if (userId) {
+  // COST OPTIMIZATION: Comment out expensive DB queries, use session data mainly
+  if (userId && false) { // Temporarily disabled for cost optimization
     try {
       // First fetch enrollments to get language IDs
       const userEnrollments = await prisma.enrollments.findMany({

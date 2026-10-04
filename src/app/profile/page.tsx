@@ -49,8 +49,8 @@ export default async function ProfilePage() {
     avatarUrl = parsed.avatarId || avatarUrl;
   }
 
-  // Fetch live data from DB
-  if (userId) {
+  // COST OPTIMIZATION: Comment out expensive DB queries, use session data only
+  if (userId && false) { // Temporarily disabled for cost optimization
     try {
       const [dbUser, arenaStats, battleStats, userBadges] = await Promise.all([
         prisma.users.findUnique({
