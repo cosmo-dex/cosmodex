@@ -3,7 +3,6 @@ import Script from "next/script";
 import { displayFont, bodyFont, monoFont, interFont } from "@/fonts";
 import "./globals.css";
 import SmoothScroll from "@/components/landing/SmoothScroll";
-import Mascot from "@/features/mascot/Mascot";
 import Providers from "@/components/providers/Providers";
 
 const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://www.cosmodex.in";
@@ -15,22 +14,83 @@ export const metadata: Metadata = {
     template: "%s | CosmoDex",
   },
   description:
-    "CosmoDex is a gamified coding platform for students to learn programming, practice Python & SQL, solve challenges, compete in 1v1 Space Battles, level up skills, and earn rewards.",
+    "CosmoDex is a gamified coding platform and LeetCode/Codédex alternative for students to learn programming, practice Python & SQL, solve challenges, compete in 1v1 Space Battles, and level up skills.",
   keywords: [
     "CosmoDex",
+    // Landing / Comparison Page keywords
+    "leetcode alternative",
+    "leetcode alternative for students",
+    "hackerrank alternative",
+    "codechef alternative",
+    "codewars alternative",
+    "codedex alternative",
+    "coding ninjas alternative",
+    "codingame alternative",
     "gamified coding platform",
-    "coding for students",
+    "gamified learning platform for coding",
+    "coding platform for students",
+    "free coding practice sites",
+    "best coding practice website",
+    "learn to code by playing games",
+    "coding games for students",
+    "coding games online",
     "1v1 coding battle",
+    "code duel multiplayer",
+    "real-time multiplayer coding",
+    "live coding battle",
+    "speed coding challenge",
+    "coding streak tracker",
+    "coding leaderboard",
+    "coding league ranks",
+    "xp points for coding",
+    "coding contest for college students",
+    "competitive coding for beginners",
+    "online coding arena",
+    "coding quiz game",
+    "learn python by playing",
+    "python coding game",
+    "sql practice game",
+    "interactive programming practice",
+    "vibe coding platform",
+    "ai coding practice platform",
+    "coding battle royale",
+    // Landing Page keywords
+    "free coding platform for students",
+    "coding practice for engineering students",
+    "college coding contest platform",
+    "campus placement coding practice",
+    "SIH hackathon coding practice",
+    "DSA sheet for placement",
+    "placement preparation website",
+    "coding bootcamp online free",
+    "GATE CS coding practice",
+    "best site to learn python for beginners",
+    "best site to learn sql for beginners",
+    "coding for computer science students",
+    "online judge for students",
+    "coding platform for college students",
+    "free python course for students",
+    "free sql course for students",
+    "beginner dsa practice website",
+    "coding practice with certificate",
+    "student coding community",
+    "project based learning coding",
+    // General
+    "coding platform",
+    "coding website",
+    "free coding",
+    "coding practice",
+    "online coding",
+    "coding game",
+    "python coding",
+    "java coding",
+    "how to learn coding",
+    "coding course",
     "learn programming",
     "python practice",
     "sql practice",
-    "coding games for students",
-    "space battle coding",
-    "competitive coding for beginners",
-    "leetCode alternative for students",
-    "hackerRank alternative",
-    "codédex alternative",
-    "interactive programming practice",
+    "beginner dsa practice",
+    "daily coding streak",
   ],
   applicationName: "CosmoDex",
   authors: [{ name: "CosmoDex Team", url: appUrl }],
@@ -178,6 +238,30 @@ const jsonLdData = {
             text: "Unlike traditional problem sets, CosmoDex is student-focused and combines gamified level progression (XP, streaks, ranks) with real-time 1v1 Space Coding Battles and tangible rewards.",
           },
         },
+        {
+          "@type": "Question",
+          name: "Is CosmoDex a good alternative to Codédex and LeetCode?",
+          acceptedAnswer: {
+            "@type": "Answer",
+            text: "Yes. CosmoDex provides beginner-friendly gamified quests and interactive courses like Codédex, but introduces real-time multiplayer 1v1 coding duels, college hackathons, and Elo ratings to prepare students for real-world technical assessments.",
+          },
+        },
+        {
+          "@type": "Question",
+          name: "Where can I find free coding practice sites to learn Python and Java?",
+          acceptedAnswer: {
+            "@type": "Answer",
+            text: "CosmoDex is a free coding platform where students can practice Python, Java, SQL, and data structures with interactive courses, real-time code challenges, and instant automated feedback.",
+          },
+        },
+        {
+          "@type": "Question",
+          name: "What makes CosmoDex a fun coding game for students?",
+          acceptedAnswer: {
+            "@type": "Answer",
+            text: "CosmoDex combines programming education with multiplayer gaming mechanics: earn XP, maintain streaks, climb 6 cosmic league ranks, and compete in live 1v1 Space Battles.",
+          },
+        },
       ],
     },
   ],
@@ -201,17 +285,6 @@ export default function RootLayout({
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLdData) }}
         />
-        {/* Google Tag Manager (head) */}
-        {/* eslint-disable-next-line @next/next/next-script-for-ga */}
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
-new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
-j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
-'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
-})(window,document,'script','dataLayer','GTM-MTZR6TH8');`,
-          }}
-        />
       </head>
       <body
         className={`${displayFont.variable} ${bodyFont.variable} ${monoFont.variable} ${interFont.variable} antialiased`}
@@ -227,6 +300,75 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
             style={{ display: "none", visibility: "hidden" }}
           />
         </noscript>
+
+        <Script
+          id="gtm-init"
+          strategy="afterInteractive"
+          dangerouslySetInnerHTML={{
+            __html: `(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src='https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);})(window,document,'script','dataLayer','GTM-MTZR6TH8');`,
+          }}
+        />
+        <Script
+          id="ad-prn-head"
+          src="https://pl31257884.profitableratecpmnetwork.com/59/2e/c7/592ec7429696819bdbed6840e82ee112.js"
+          strategy="lazyOnload"
+        />
+        {/* Ad Network — body scripts */}
+        <Script
+          src="https://pl31257885.profitableratecpmnetwork.com/ba6cbf6be7b27882ce717d652ad0acb8/invoke.js"
+          data-cfasync="false"
+          strategy="lazyOnload"
+        />
+        <div id="container-ba6cbf6be7b27882ce717d652ad0acb8" />
+        <Script
+          src="https://pl31257886.profitableratecpmnetwork.com/71/76/42/7176422c6fb28d171c63bd88c8439c95.js"
+          strategy="lazyOnload"
+        />
+
+        {/* highrevenueformat — 468x60 banner */}
+        <Script id="ad-hr-1" strategy="lazyOnload">
+          {`atOptions = { 'key': 'd539f5aaa7b22bda531b299161a0c850', 'format': 'iframe', 'height': 60, 'width': 468, 'params': {} };`}
+        </Script>
+        <Script
+          src="https://www.highrevenueformat.com/d539f5aaa7b22bda531b299161a0c850/invoke.js"
+          strategy="lazyOnload"
+        />
+
+        {/* highrevenueformat — 300x250 banner */}
+        <Script id="ad-hr-2" strategy="lazyOnload">
+          {`atOptions = { 'key': 'f2ee77db0d55d16f49153c92557d2335', 'format': 'iframe', 'height': 250, 'width': 300, 'params': {} };`}
+        </Script>
+        <Script
+          src="https://www.highrevenueformat.com/f2ee77db0d55d16f49153c92557d2335/invoke.js"
+          strategy="lazyOnload"
+        />
+
+        {/* highrevenueformat — 160x300 banner */}
+        <Script id="ad-hr-3" strategy="lazyOnload">
+          {`atOptions = { 'key': '92f110926312f17cb4aa68de007cabbf', 'format': 'iframe', 'height': 300, 'width': 160, 'params': {} };`}
+        </Script>
+        <Script
+          src="https://www.highrevenueformat.com/92f110926312f17cb4aa68de007cabbf/invoke.js"
+          strategy="lazyOnload"
+        />
+
+        {/* highrevenueformat — 320x50 banner */}
+        <Script id="ad-hr-4" strategy="lazyOnload">
+          {`atOptions = { 'key': '727d83ce8b8c81b2bfba7f3004b874db', 'format': 'iframe', 'height': 50, 'width': 320, 'params': {} };`}
+        </Script>
+        <Script
+          src="https://www.highrevenueformat.com/727d83ce8b8c81b2bfba7f3004b874db/invoke.js"
+          strategy="lazyOnload"
+        />
+
+        {/* highrevenueformat — 728x90 leaderboard */}
+        <Script id="ad-hr-5" strategy="lazyOnload">
+          {`atOptions = { 'key': '72aa18b347c03cdf69f297374fe51641', 'format': 'iframe', 'height': 90, 'width': 728, 'params': {} };`}
+        </Script>
+        <Script
+          src="https://www.highrevenueformat.com/72aa18b347c03cdf69f297374fe51641/invoke.js"
+          strategy="lazyOnload"
+        />
 
         {/* Google tag (gtag.js) - Added just after head end */}
         <Script
@@ -247,7 +389,6 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
           {/* Noise overlay for texture */}
           <div className="noise-overlay" aria-hidden="true" />
           {children}
-          <Mascot />
         </Providers>
       </body>
     </html>

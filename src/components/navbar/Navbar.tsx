@@ -182,7 +182,7 @@ export default function Navbar() {
                       <Link
                         href="/learn/python"
                         onClick={closeMenus}
-                        className="group mt-5 flex gap-4 rounded-lg p-2 transition-colors hover:bg-white/[0.04]"
+                        className="group mt-4 flex gap-4 rounded-lg p-2 transition-colors hover:bg-white/[0.04]"
                       >
                         <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg border border-[#8b5cf6]/30 bg-[#2e1065]/50">
                           <BookOpen
@@ -199,6 +199,29 @@ export default function Navbar() {
                           <p className="mt-1 text-xs leading-relaxed text-white/55">
                             Learn programming fundamentals with
                             beginner-friendly exercises.
+                          </p>
+                        </div>
+                      </Link>
+
+                      <Link
+                        href="/learn/html"
+                        onClick={closeMenus}
+                        className="group mt-2 flex gap-4 rounded-lg p-2 transition-colors hover:bg-white/[0.04]"
+                      >
+                        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg border border-[#ea580c]/30 bg-[#ea580c]/10">
+                          <BookOpen
+                            size={22}
+                            className="text-[#ea580c]"
+                          />
+                        </div>
+
+                        <div>
+                          <h5 className="text-sm font-bold text-white group-hover:text-[#E873C3]">
+                            HTML
+                          </h5>
+
+                          <p className="mt-1 text-xs leading-relaxed text-white/55">
+                            Master document structure &amp; semantic tags with interactive labs.
                           </p>
                         </div>
                       </Link>

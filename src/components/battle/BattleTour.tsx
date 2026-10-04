@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { X, ChevronRight, Swords, ListChecks, BarChart3, Zap, Sparkles, Terminal } from 'lucide-react';
+import { X, ChevronRight, Swords, ListChecks, Zap, Terminal } from 'lucide-react';
 
 const STORAGE_KEY = 'cosmodex_battle_tour_complete';
 
@@ -191,22 +191,16 @@ export default function BattleTour() {
 
   useEffect(() => {
     if (!isVisible) return;
-    updatePosition();
-    window.addEventListener('resize', updatePosition);
-    window.addEventListener('scroll', updatePosition, true);
-    return () => {
-      window.removeEventListener('resize', updatePosition);
-      window.removeEventListener('scroll', updatePosition, true);
-    };
-  }, [isVisible, currentStep, updatePosition]);
-
-  // Re-measure after tooltip renders
-  useEffect(() => {
-    if (!isVisible) return;
     const frame = requestAnimationFrame(() => {
       updatePosition();
     });
-    return () => cancelAnimationFrame(frame);
+    window.addEventListener('resize', updatePosition);
+    window.addEventListener('scroll', updatePosition, true);
+    return () => {
+      cancelAnimationFrame(frame);
+      window.removeEventListener('resize', updatePosition);
+      window.removeEventListener('scroll', updatePosition, true);
+    };
   }, [isVisible, currentStep, updatePosition]);
 
   const handleNext = () => {

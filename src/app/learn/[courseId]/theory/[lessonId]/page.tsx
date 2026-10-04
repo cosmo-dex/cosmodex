@@ -2,8 +2,8 @@ import { getTheoryExercise } from "@/lib/learningService";
 import TheoryExerciseClientView from "@/components/learn/TheoryExerciseClientView";
 import NoExercisesView from "@/components/learn/NoExercisesView";
 
-export const dynamic = 'force-dynamic';
-export const revalidate = 0;
+export const dynamicParams = true;
+export const revalidate = 3600;
 
 interface TheoryPageProps {
   params: Promise<{

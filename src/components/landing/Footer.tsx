@@ -32,7 +32,7 @@ export default function Footer() {
         >
           {/* Brand info — spans 2 columns */}
           <div className="lg:col-span-2" style={{ maxWidth: "340px" }}>
-            <Link
+            <Link prefetch={false}
               href="/"
               style={{
                 display: "inline-flex",
@@ -113,7 +113,7 @@ export default function Footer() {
               { label: "Join the Crew", href: "/onboarding" },
               { label: "Discord", href: "https://discord.gg", external: true },
               { label: "Forum", href: "/events" },
-              { label: "Support", href: "/onboarding?mode=login" },
+              { label: "Support", href: "/support" },
             ]}
           />
 
@@ -121,9 +121,8 @@ export default function Footer() {
           <FooterColumn
             title="Legal"
             links={[
-              { label: "Privacy Policy", href: "/events" },
-              { label: "Terms of Service", href: "/events" },
-              { label: "Cookie Policy", href: "/events" },
+              { label: "Terms of Service", href: "/terms" },
+              { label: "Cookie Policy", href: "/cookies" },
             ]}
           />
         </div>
@@ -221,7 +220,7 @@ function FooterColumn({ title, links }: { title: string; links: FooterLinkItem[]
         {title}
       </div>
       {links.map((link) => (
-        <Link
+        <Link prefetch={false}
           key={link.label}
           href={link.href}
           target={link.external ? "_blank" : undefined}

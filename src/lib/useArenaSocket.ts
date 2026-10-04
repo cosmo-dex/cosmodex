@@ -83,7 +83,7 @@ export function useArenaSocket(token: string | null) {
   useEffect(() => {
     if (!token) return;
 
-    const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:3001";
+    const BACKEND_URL = "wss://battle-arena-golang-316713590727.us-central1.run.app";
     const newSocket = createArenaSocket(BACKEND_URL, { auth: { token } });
     socketRef.current = newSocket;
     // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -98,8 +98,13 @@ export function useArenaSocket(token: string | null) {
     });
 
     newSocket.on("match_found", (d: MatchFoundData) => {
+      newSocket.setInMatch(true);
       setMatchData(d);
       setQueueState(null);
+    });
+
+    newSocket.on("mcq_match_start", () => {
+      newSocket.setInMatch(true);
     });
 
     newSocket.on("room_state_update", (state: GameStateData) => {
@@ -148,9 +153,14 @@ export function useArenaSocket(token: string | null) {
     });
 
     newSocket.on("match_ended", (d: MatchEndedData) => {
+      newSocket.setInMatch(false);
       setWaitingForOpponent(null);
       setOpponentCompleted(null);
       setMatchEnded(d);
+    });
+
+    newSocket.on("mcq_match_ended", () => {
+      newSocket.setInMatch(false);
     });
 
     newSocket.on("error", (e: SocketError) => {

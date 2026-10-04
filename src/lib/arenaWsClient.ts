@@ -19,6 +19,8 @@ export class ArenaSocket {
   private maxReconnectAttempts = 10;
   private reconnectDelay = 1000;
   private reconnectTimer: NodeJS.Timeout | null = null;
+  private hiddenDisconnectTimer: NodeJS.Timeout | null = null;
+  private inMatch = false;
   public connected = false;
 
   constructor(baseUrl: string, options?: ArenaSocketOptions) {
@@ -39,8 +41,43 @@ export class ArenaSocket {
     }
 
     this.url = wsUrl;
+
+    if (typeof document !== "undefined") {
+      document.addEventListener("visibilitychange", this.handleVisibilityChange);
+    }
+
     this.connect();
   }
+
+  public setInMatch(inMatch: boolean) {
+    this.inMatch = inMatch;
+    if (inMatch && this.hiddenDisconnectTimer) {
+      clearTimeout(this.hiddenDisconnectTimer);
+      this.hiddenDisconnectTimer = null;
+    }
+  }
+
+  private handleVisibilityChange = () => {
+    if (typeof document === "undefined") return;
+
+    if (document.visibilityState === "hidden") {
+      if (!this.inMatch && this.connected) {
+        this.hiddenDisconnectTimer = setTimeout(() => {
+          if (document.visibilityState === "hidden" && !this.inMatch) {
+            this.disconnectSocketOnly();
+          }
+        }, 120000);
+      }
+    } else if (document.visibilityState === "visible") {
+      if (this.hiddenDisconnectTimer) {
+        clearTimeout(this.hiddenDisconnectTimer);
+        this.hiddenDisconnectTimer = null;
+      }
+      if (!this.connected && !this.isExplicitlyClosed) {
+        this.connect();
+      }
+    }
+  };
 
   private connect() {
     if (typeof window === "undefined") return;
@@ -141,9 +178,28 @@ export class ArenaSocket {
     }
   }
 
+  private disconnectSocketOnly() {
+    this.connected = false;
+    if (this.reconnectTimer) {
+      clearTimeout(this.reconnectTimer);
+      this.reconnectTimer = null;
+    }
+    if (this.ws) {
+      this.ws.close();
+      this.ws = null;
+    }
+  }
+
   public disconnect() {
     this.isExplicitlyClosed = true;
     this.connected = false;
+    if (typeof document !== "undefined") {
+      document.removeEventListener("visibilitychange", this.handleVisibilityChange);
+    }
+    if (this.hiddenDisconnectTimer) {
+      clearTimeout(this.hiddenDisconnectTimer);
+      this.hiddenDisconnectTimer = null;
+    }
     if (this.reconnectTimer) {
       clearTimeout(this.reconnectTimer);
       this.reconnectTimer = null;

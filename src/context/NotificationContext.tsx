@@ -60,7 +60,7 @@ export function NotificationProvider({
 }: {
   children: React.ReactNode;
 }) {
-  const { user, isAuthenticated } = useAuth();
+  const { isAuthenticated } = useAuth();
   const [notifications, setNotificationsState] = useState<NotificationItem[]>(
     () => {
       if (typeof window !== "undefined") {
@@ -120,7 +120,16 @@ export function NotificationProvider({
           if (res.ok) {
             const data = await res.json();
             if (Array.isArray(data.notifications)) {
-              setNotifications(data.notifications);
+              const formatted = data.notifications.map((n: NotificationItem) => ({
+                ...n,
+                time: n.time || formatRelativeTime(n.created_at),
+              }));
+              setNotifications(formatted);
+              const hasUnread = formatted.some((n: NotificationItem) => !n.read);
+              if (hasUnread) {
+                setIsPulsing(true);
+                setTimeout(() => setIsPulsing(false), 3000);
+              }
             }
           }
         } catch {
@@ -167,83 +176,27 @@ export function NotificationProvider({
   useEffect(() => {
     if (!isAuthenticated) return;
 
-    let eventSource: EventSource | null = null;
-    let fallbackInterval: NodeJS.Timeout | null = null;
-
-    try {
-      eventSource = new EventSource("/api/notifications/stream", {
-        withCredentials: true,
-      });
-
-      eventSource.addEventListener("notification", (event) => {
-        try {
-          const payload = JSON.parse(event.data);
-          if (payload.type === "notification:created" && payload.notification) {
-            const newNotif: NotificationItem = {
-              ...payload.notification,
-              time: formatRelativeTime(payload.notification.created_at),
-              read: false,
-            };
-
-            setNotifications((prev) => {
-              if (prev.some((n) => n.id === newNotif.id)) return prev;
-              return [newNotif, ...prev];
-            });
-
-            setIsPulsing(true);
-            setTimeout(() => setIsPulsing(false), 3000);
-          } else if (
-            payload.type === "notification:updated" &&
-            payload.notification
-          ) {
-            setNotifications((prev) =>
-              prev.map((n) =>
-                n.id === payload.notification.id
-                  ? {
-                    ...n,
-                    ...payload.notification,
-                    time: formatRelativeTime(
-                      payload.notification.created_at
-                    ),
-                  }
-                  : n
-              )
-            );
-          } else if (
-            payload.type === "notification:deleted" &&
-            payload.notificationId
-          ) {
-            setNotifications((prev) =>
-              prev.filter((n) => n.id !== payload.notificationId)
-            );
-          }
-        } catch {
-          // Ignore parsing errors
-        }
-      });
-
-      eventSource.onerror = () => {
-        if (!fallbackInterval) {
-          fallbackInterval = setInterval(() => {
-            fetchNotifications(true);
-          }, 30000);
-        }
-      };
-    } catch {
-      fallbackInterval = setInterval(() => {
+    // Lightweight visibility-aware polling every 60s instead of long-lived SSE streams
+    // to eliminate continuous Vercel Serverless Function duration burn.
+    const pollInterval = setInterval(() => {
+      if (document.visibilityState === "visible") {
         fetchNotifications(true);
-      }, 30000);
-    }
-
-    return () => {
-      if (eventSource) {
-        eventSource.close();
       }
-      if (fallbackInterval) {
-        clearInterval(fallbackInterval);
+    }, 60000);
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        fetchNotifications(true);
       }
     };
-  }, [isAuthenticated, user?.userId, fetchNotifications, setNotifications]);
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    return () => {
+      clearInterval(pollInterval);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+  }, [isAuthenticated, fetchNotifications]);
 
   const markAsRead = useCallback(
     async (id: string) => {

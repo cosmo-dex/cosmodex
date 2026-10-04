@@ -15,6 +15,22 @@ import {
   UserProgressData,
 } from "@/components/learn/pythonData";
 
+interface ProgressApiResponse {
+  completedStationSlugs?: string[];
+  completedModuleIds?: string[];
+  completedStationNumbers?: number[];
+  totalCompletedExercises?: number;
+  totalExercises?: number;
+  completedMilestoneProjects?: number;
+  totalMilestoneProjects?: number;
+  user?: {
+    username?: string;
+    avatarUrl?: string;
+    level?: number;
+    xpTotal?: number;
+  };
+}
+
 function getCourseSlugFromUrl(): string {
   if (typeof window !== "undefined") {
     const segments = window.location.pathname.split("/").filter(Boolean);
@@ -139,56 +155,135 @@ export default function PythonCoursePage() {
   }, [pathname]);
 
   useEffect(() => {
-    async function fetchUserSession() {
+    let active = true;
+
+    async function initCourseData() {
       try {
-        const res = await fetch("/api/auth/session", { credentials: "include" });
-        if (res.ok) {
-          const data = await res.json();
-          if (data?.user?.username) {
+        const [sessionRes, tracksRes, progressRes] = await Promise.allSettled([
+          fetch("/api/auth/session", { credentials: "include" }),
+          fetch(`/api/learning/tracks/${courseCode}`),
+          fetch(`/api/learning/progress?course=${courseCode}`),
+        ]);
+
+        if (!active) return;
+
+        // 1. Session user
+        let isAuthenticated = false;
+        if (sessionRes.status === "fulfilled" && sessionRes.value.ok) {
+          const sessionData = await sessionRes.value.json();
+          if (sessionData?.user?.username) {
+            isAuthenticated = true;
             setUserProgress((prev) => ({
               ...prev,
-              username: data.user.username,
-              avatarUrl: data.user.avatarId || data.user.avatar_url || prev.avatarUrl,
-              level: data.user.level || prev.level,
+              username: sessionData.user.username,
+              avatarUrl: sessionData.user.avatarId || sessionData.user.avatar_url || prev.avatarUrl,
+              level: sessionData.user.level || prev.level,
             }));
           }
         }
-      } catch {
-      }
-    }
-    fetchUserSession();
-  }, []);
 
+        // 2. Track chapters
+        let loadedChapters: Chapter[] = [];
+        if (tracksRes.status === "fulfilled" && tracksRes.value.ok) {
+          const trackData = await tracksRes.value.json();
+          loadedChapters = Array.isArray(trackData?.chapters) ? trackData.chapters : [];
+        }
 
-  useEffect(() => {
-    let active = true;
+        // 3. Student progress
+        let progData: ProgressApiResponse | null = null;
+        if (progressRes.status === "fulfilled" && progressRes.value.ok) {
+          const pJson = await progressRes.value.json();
+          progData = pJson?.progress as ProgressApiResponse;
+        }
 
-    async function loadCurriculum() {
-      try {
-        const res = await fetch(`/api/learning/tracks/${courseCode}`, {
-          cache: "no-store",
-          headers: { "Cache-Control": "no-cache" },
-        });
-        if (res.ok && active) {
-          const data = await res.json();
-          const incomingChapters: Chapter[] = Array.isArray(data?.chapters) ? data.chapters : [];
-          setChapters(incomingChapters);
-          try {
-            if (typeof window !== "undefined" && incomingChapters.length > 0) {
-              sessionStorage.setItem(storageKey, JSON.stringify(incomingChapters));
+        const guestCompleted = new Set<string>();
+        try {
+          if (typeof window !== "undefined") {
+            const coursePrefix = `station_completed_${courseCode}_`;
+            for (let i = 0; i < localStorage.length; i++) {
+              const key = localStorage.key(i);
+              if (key && key.startsWith(coursePrefix) && localStorage.getItem(key) === "true") {
+                guestCompleted.add(key.replace(coursePrefix, ""));
+              }
             }
-          } catch {}
-          setSelectedChapterId((prev) => {
-            if (prev && incomingChapters.some((c) => c.id === prev)) {
-              return prev;
-            }
-            return incomingChapters[0]?.id || "";
+          }
+        } catch {}
+
+        const completedSlugs = new Set(progData?.completedStationSlugs || []);
+        const completedIds = new Set(progData?.completedModuleIds || []);
+        const completedNums = new Set(progData?.completedStationNumbers || []);
+
+        setChapters((prevChapters) => {
+          const baseChapters = loadedChapters.length > 0 ? loadedChapters : prevChapters;
+
+          const completionMap = new Map<number, boolean>();
+          baseChapters.forEach((ch, index) => {
+            const isCleared = isAuthenticated
+              ? (completedIds.has(ch.id) ||
+                 completedSlugs.has(ch.id) ||
+                 (ch.theoryLessonId ? completedSlugs.has(ch.theoryLessonId) : false) ||
+                 completedNums.has(ch.number))
+              : (guestCompleted.has(ch.id) ||
+                 (ch.theoryLessonId ? guestCompleted.has(ch.theoryLessonId) : false));
+
+            completionMap.set(index, Boolean(isCleared));
           });
+
+          const merged = baseChapters.map((ch, index) => {
+            const isCompleted = Boolean(completionMap.get(index));
+            const prevIsCompleted = index === 0 ? true : Boolean(completionMap.get(index - 1));
+            const isUnlocked = index === 0 || prevIsCompleted;
+
+            return {
+              ...ch,
+              isCompleted,
+              isUnlocked,
+              exercises: (ch.exercises || []).map((ex) => ({
+                ...ex,
+                isUnlocked: isUnlocked,
+                isCompleted: Boolean(
+                  isCompleted ||
+                  completedIds.has(ex.id) ||
+                  completedSlugs.has(ex.id) ||
+                  (!isAuthenticated && guestCompleted.has(ex.id))
+                ),
+              })),
+            };
+          });
+
+          if (loadedChapters.length > 0) {
+            try {
+              if (typeof window !== "undefined") {
+                sessionStorage.setItem(storageKey, JSON.stringify(merged));
+              }
+            } catch {}
+            setSelectedChapterId((prev) => {
+              if (prev && merged.some((c) => c.id === prev)) {
+                return prev;
+              }
+              return merged[0]?.id || "";
+            });
+          }
+
+          return merged;
+        });
+
+        if (progData) {
+          const safeProg = progData;
+          setUserProgress((prev) => ({
+            ...prev,
+            username: safeProg.user?.username || prev.username,
+            avatarUrl: safeProg.user?.avatarUrl || prev.avatarUrl,
+            level: safeProg.user?.level || prev.level,
+            exercisesCompleted: safeProg.totalCompletedExercises ?? prev.exercisesCompleted,
+            totalExercises: safeProg.totalExercises || prev.totalExercises,
+            projectsCompleted: safeProg.completedMilestoneProjects ?? prev.projectsCompleted,
+            totalProjects: safeProg.totalMilestoneProjects || prev.totalProjects,
+            xpEarned: safeProg.user?.xpTotal ?? prev.xpEarned,
+          }));
         }
-      } catch {
-        if (active) {
-          setChapters([]);
-        }
+      } catch (err) {
+        console.warn("Failed to load course data in parallel", err);
       } finally {
         if (active) {
           setLoadingChapters(false);
@@ -196,94 +291,12 @@ export default function PythonCoursePage() {
       }
     }
 
-    loadCurriculum();
-
-    const onFocus = () => {
-      loadCurriculum();
-    };
-
-    window.addEventListener("focus", onFocus);
+    initCourseData();
 
     return () => {
       active = false;
-      window.removeEventListener("focus", onFocus);
     };
   }, [courseCode, storageKey]);
-
-  useEffect(() => {
-    let active = true;
-
-    fetch(`/api/learning/progress?course=${courseCode}`, { cache: "no-store" })
-      .then((res) => (res.ok ? res.json() : null))
-      .then((data) => {
-        if (!active || !data?.progress) return;
-        const prog = data.progress;
-
-        const guestCompleted = new Set<string>();
-        try {
-          if (typeof window !== "undefined") {
-            for (let i = 0; i < localStorage.length; i++) {
-              const key = localStorage.key(i);
-              if (key && key.startsWith("station_completed_") && localStorage.getItem(key) === "true") {
-                guestCompleted.add(key.replace("station_completed_", ""));
-              }
-            }
-          }
-        } catch {
-        }
-
-        if (Array.isArray(prog.completedModuleIds) || Array.isArray(prog.completedStationSlugs)) {
-          const completedSlugs = new Set(prog.completedStationSlugs || []);
-          const completedIds = new Set(prog.completedModuleIds || []);
-          const completedNums = new Set(prog.completedStationNumbers || []);
-
-          setChapters((prev) =>
-            prev.map((ch) => {
-              const isCleared =
-                completedIds.has(ch.id) ||
-                completedSlugs.has(ch.id) ||
-                completedSlugs.has(ch.theoryLessonId || "") ||
-                completedNums.has(ch.number) ||
-                guestCompleted.has(ch.id) ||
-                guestCompleted.has(ch.theoryLessonId || "");
-              return {
-                ...ch,
-                isCompleted: Boolean(isCleared || ch.isCompleted),
-                isUnlocked: true,
-                exercises: (ch.exercises || []).map((ex) => ({
-                  ...ex,
-                  isUnlocked: true,
-                  isCompleted: Boolean(
-                    isCleared ||
-                    completedIds.has(ex.id) ||
-                    completedSlugs.has(ex.id) ||
-                    guestCompleted.has(ex.id) ||
-                    ex.isCompleted
-                  ),
-                })),
-              };
-            })
-          );
-        }
-
-        setUserProgress((prev) => ({
-          ...prev,
-          username: prog.user?.username || prev.username,
-          avatarUrl: prog.user?.avatarUrl || prev.avatarUrl,
-          level: prog.user?.level || prev.level,
-          exercisesCompleted: prog.totalCompletedExercises ?? prev.exercisesCompleted,
-          totalExercises: prog.totalExercises || prev.totalExercises,
-          projectsCompleted: prog.completedMilestoneProjects ?? prev.projectsCompleted,
-          totalProjects: prog.totalMilestoneProjects || prev.totalProjects,
-          xpEarned: prog.user?.xpTotal ?? prev.xpEarned,
-        }));
-      })
-      .catch(() => {});
-
-    return () => {
-      active = false;
-    };
-  }, [courseCode]);
 
   const effectiveUserProgress = useMemo(() => {
     const totalEx = chapters.reduce(
@@ -390,6 +403,26 @@ export default function PythonCoursePage() {
               Loading Live Curriculum Stations...
             </p>
           </div>
+        ) : courseCode !== "python" && courseCode !== "html" ? (
+          <div className="bg-[#0c0920]/80 border border-purple-500/30 rounded-3xl p-12 text-center space-y-6 max-w-lg mx-auto backdrop-blur-xl shadow-[0_0_50px_rgba(168,85,247,0.15)]">
+            <div className="w-16 h-16 rounded-2xl bg-purple-500/10 border border-purple-500/30 flex items-center justify-center mx-auto text-purple-300">
+              <Sparkles size={28} />
+            </div>
+            <div className="space-y-2">
+              <h3 className="text-2xl font-bold font-mono text-white uppercase tracking-wider">
+                {courseDisplayName} Galaxy Launching Soon
+              </h3>
+              <p className="text-xs sm:text-sm font-sans text-white/60 leading-relaxed">
+                This curriculum is currently in development. Explore our live <strong className="text-cyan-300">Python</strong> and <strong className="text-amber-300">HTML</strong> masterclasses now!
+              </p>
+            </div>
+            <Link
+              href="/learn"
+              className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-[#E873C3] to-[#9E00F6] text-white font-mono font-bold text-xs uppercase tracking-wider hover:opacity-90 transition-all shadow-[0_0_20px_rgba(232,115,195,0.3)]"
+            >
+              <span>Explore Live Courses</span>
+            </Link>
+          </div>
         ) : chapters.length === 0 ? (
           <div className="bg-[#0c0920]/80 border border-white/10 rounded-3xl p-12 text-center space-y-4 max-w-lg mx-auto backdrop-blur-xl">
             <div className="w-14 h-14 rounded-full bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center mx-auto text-cyan-300">
@@ -408,17 +441,27 @@ export default function PythonCoursePage() {
               <GalaxyPathMap
                 chapters={chapters}
                 selectedChapterId={selectedChapter?.id || ""}
-                onSelectChapter={(chapter) => setSelectedChapterId(chapter.id)}
+                onSelectChapter={(chapter) => {
+                  setSelectedChapterId(chapter.id);
+                  if (typeof window !== "undefined" && window.innerWidth < 1024) {
+                    const sidebar = document.getElementById("station-detail-sidebar");
+                    if (sidebar) {
+                      sidebar.scrollIntoView({ behavior: "smooth", block: "center" });
+                    }
+                  }
+                }}
                 courseTitle={courseDisplayName}
+                courseId={courseCode}
               />
             </div>
 
-            <div className="lg:col-span-5 w-full">
+            <div id="station-detail-sidebar" className="lg:col-span-5 w-full lg:sticky lg:top-28 z-20 transition-all duration-300">
               {selectedChapter && (
                 <ProgressSidebar
                   selectedChapter={selectedChapter}
                   userProgress={effectiveUserProgress}
                   courseId={courseCode}
+                  allChapters={chapters}
                 />
               )}
             </div>

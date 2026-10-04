@@ -1,16 +1,13 @@
-name: CI/CD Pipeline
+name: CI Quality Gate
 
 on:
   push:
-    branches: [ "main" ]
+    branches: [ "main", "checks" ]
   pull_request:
-    types: [opened, closed, synchronize] # Listen for opening, closing (merging), and updating PRs
+    types: [opened, closed, synchronize]
     branches: [ "main" ]
 
 jobs:
-  # ---------------------------------------------------------
-  # JOB 1: The Quality Gate
-  # ---------------------------------------------------------
   lint-and-typecheck:
     name: Lint & Type Check
     runs-on: ubuntu-latest
@@ -21,12 +18,16 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      # --- NOTIFICATION: PR OPENED ---
       - name: Discord Alert - PR Opened
         if: github.event_name == 'pull_request' && github.event.action == 'opened'
+        continue-on-error: true
+        env:
+          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
         run: |
-          MSG="🚀 **New Pull Request!** \n**Author:** ${{ github.actor }}\n**Title:** ${{ github.event.pull_request.title }}\n**Link:** ${{ github.event.pull_request.html_url }}"
-          curl -H "Content-Type: application/json" -d "{\"content\": \"$MSG\"}" ${{ secrets.DISCORD_WEBHOOK }}
+          if [ -n "$DISCORD_WEBHOOK" ]; then
+            MSG="🔔 **New Pull Request!** \n**Author:** ${{ github.actor }}\n**Title:** ${{ github.event.pull_request.title }}\n**Link:** ${{ github.event.pull_request.html_url }}"
+            curl -H "Content-Type: application/json" -d "{\"content\": \"$MSG\"}" "$DISCORD_WEBHOOK" || true
+          fi
 
       - name: Install pnpm
         uses: pnpm/action-setup@v3
@@ -51,73 +52,13 @@ jobs:
       - name: Run TypeScript Type Check
         run: pnpm exec tsc --noEmit
 
-      # --- NOTIFICATION: BUILD FAILED ---
       - name: Discord Alert - Quality Gate Failed
-        if: failure() 
-        run: |
-          MSG="🚨 **CRITICAL: Quality Gate Failed!**\nCode from **${{ github.actor }}** failed linting or type-checking. Deployment blocked.\n**Check logs:** https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
-          curl -H "Content-Type: application/json" -d "{\"content\": \"$MSG\"}" ${{ secrets.DISCORD_WEBHOOK }}
-
-  # ---------------------------------------------------------
-  # JOB 2: Vercel Production Deployment
-  # ---------------------------------------------------------
-  deploy-production:
-    name: Deploy to Vercel
-    needs: lint-and-typecheck
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    runs-on: ubuntu-latest
-    
-    env:
-      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
-      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
-
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
-
-      # --- NOTIFICATION: PR MERGED / DEPLOY STARTING ---
-      - name: Discord Alert - Merge & Deploy Started
-        run: |
-          MSG="✅ **Code Merged to Main!**\nStarting Vercel Production Deployment for **${{ github.repository }}**..."
-          curl -H "Content-Type: application/json" -d "{\"content\": \"$MSG\"}" ${{ secrets.DISCORD_WEBHOOK }}
-
-      - name: Install pnpm
-        uses: pnpm/action-setup@v3
-        with:
-          version: 9
-
-      - name: Install Vercel CLI
-        run: pnpm add -g vercel@latest
-
-      - name: Pull Vercel Environment Information
-        run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
-
-      - name: Build Project Artifacts
-        run: vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
-        env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
-          DIRECT_URL: ${{ secrets.DIRECT_URL }}
-          AUTH_SECRET: ${{ secrets.AUTH_SECRET }}
-          NEXTAUTH_URL: ${{ secrets.NEXTAUTH_URL }}
-          AUTH_GITHUB_ID: ${{ secrets.AUTH_GITHUB_ID }}
-          AUTH_GITHUB_SECRET: ${{ secrets.AUTH_GITHUB_SECRET }}
-          AUTH_GOOGLE_ID: ${{ secrets.AUTH_GOOGLE_ID }}
-          AUTH_GOOGLE_SECRET: ${{ secrets.AUTH_GOOGLE_SECRET }}
-
-      - name: Deploy Project Artifacts to Vercel
-        run: vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }}
-
-      # --- NOTIFICATION: DEPLOY SUCCESS ---
-      - name: Discord Alert - Deploy Success
-        if: success()
-        run: |
-          MSG="🎉 **Deployment Successful!**\nYour latest code is now live in production."
-          curl -H "Content-Type: application/json" -d "{\"content\": \"$MSG\"}" ${{ secrets.DISCORD_WEBHOOK }}
-
-      # --- NOTIFICATION: DEPLOY FAILED ---
-      - name: Discord Alert - Deploy Failed
         if: failure()
+        continue-on-error: true
+        env:
+          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
         run: |
-          MSG="🔥 **URGENT: Deployment Failed!**\nThe Vercel build crashed during deployment.\n**Check Vercel Logs:** https://vercel.com/${{ secrets.VERCEL_ORG_ID }}"
-          curl -H "Content-Type: application/json" -d "{\"content\": \"$MSG\"}" ${{ secrets.DISCORD_WEBHOOK }}
+          if [ -n "$DISCORD_WEBHOOK" ]; then
+            MSG="🚨 **CRITICAL: Quality Gate Failed!**\nCode from **${{ github.actor }}** failed linting or type-checking.\n**Check logs:** https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+            curl -H "Content-Type: application/json" -d "{\"content\": \"$MSG\"}" "$DISCORD_WEBHOOK" || true
+          fi

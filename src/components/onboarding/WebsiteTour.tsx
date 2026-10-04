@@ -1,16 +1,11 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import {
-  BookOpen,
-  Swords,
-  Trophy,
   Rocket,
-  UserCircle,
-  Sparkles,
+  Swords,
   ChevronRight,
-  X,
 } from "lucide-react";
 
 /* ───────────────────── Tour Step Data ───────────────────── */

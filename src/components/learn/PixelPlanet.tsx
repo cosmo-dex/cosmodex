@@ -1,9 +1,8 @@
 "use client";
 
 import React, { useState, useId } from "react";
-import { Target } from "lucide-react";
+import { Target, Lock } from "lucide-react";
 import { PlanetType } from "./pythonData";
-import ThreeRocket from "./ThreeRocket";
 
 interface PixelPlanetProps {
   type: PlanetType;
@@ -36,6 +35,7 @@ export default function PixelPlanet({
   const isColored = isSelected || isHovered;
 
   const handlePlanetClick = () => {
+    if (!isUnlocked) return;
     setIsRippling(true);
     setTimeout(() => setIsRippling(false), 1400);
     if (onClick) onClick();
@@ -265,10 +265,11 @@ export default function PixelPlanet({
 
   return (
     <div
-      className="flex flex-col items-center select-none group cursor-pointer"
+      className={`flex flex-col items-center select-none group ${isUnlocked ? "cursor-pointer" : "cursor-not-allowed"}`}
       onClick={handlePlanetClick}
-      onMouseEnter={() => setIsHovered(true)}
+      onMouseEnter={() => { if (isUnlocked) setIsHovered(true); }}
       onMouseLeave={() => setIsHovered(false)}
+      title={isUnlocked ? title : "Complete the previous station to unlock"}
     >
       {/* ── Planet Wrapper Container ── */}
       <div data-planet-center className="relative flex items-center justify-center">
@@ -311,16 +312,32 @@ export default function PixelPlanet({
         {/* Outer 3D Sphere Container */}
         <div
           style={{ width: size, height: size }}
-          className={`rounded-full bg-[#070414] shadow-[inset_-12px_-12px_25px_rgba(0,0,0,0.85),_0_10px_25px_rgba(0,0,0,0.7)] flex items-center justify-center transition-all duration-500 cubic-bezier(0.34, 1.45, 0.64, 1) transform group-hover:scale-110 group-hover:-translate-y-1 z-10 ${
-            isCurrent
-              ? "scale-105"
-              : isColored
-              ? "opacity-100"
-              : "opacity-90"
+          className={`rounded-full bg-[#070414] shadow-[inset_-12px_-12px_25px_rgba(0,0,0,0.85),_0_10px_25px_rgba(0,0,0,0.7)] flex items-center justify-center transition-all duration-500 cubic-bezier(0.34, 1.45, 0.64, 1) z-10 ${
+            !isUnlocked
+              ? "filter grayscale opacity-35"
+              : `transform group-hover:scale-110 group-hover:-translate-y-1 ${
+                isCurrent
+                  ? "scale-105"
+                  : isColored
+                  ? "opacity-100"
+                  : "opacity-90"
+                }`
           }`}
         >
           {renderPlanetGraphic()}
         </div>
+
+        {/* Lock overlay for locked planets */}
+        {!isUnlocked && (
+          <div
+            className="absolute inset-0 flex items-center justify-center z-20 rounded-full"
+            style={{ width: size, height: size }}
+          >
+            <div className="flex flex-col items-center justify-center bg-[#05040d]/70 rounded-full w-full h-full">
+              <Lock size={Math.round(size * 0.28)} className="text-white/50" />
+            </div>
+          </div>
+        )}
 
         {/* ── Top-Left Badge Bubble (Number or Milestone Icon) ── */}
         <div
@@ -339,9 +356,9 @@ export default function PixelPlanet({
       </div>
 
       {/* ── Planet Title & Sublabels Below ── */}
-      <div className="flex flex-col items-center mt-3.5 text-center">
+      <div className="flex flex-col items-center mt-3 text-center max-w-[210px] sm:max-w-[240px]">
         <span
-          className={`text-xs md:text-sm font-bold font-mono tracking-wider transition-all duration-500 ease-out ${
+          className={`text-xs md:text-sm font-bold font-mono tracking-wider leading-snug transition-all duration-500 ease-out ${
             isCurrent
               ? "text-[#00FFE9] drop-shadow-[0_0_8px_rgba(0,255,233,0.4)]"
               : isSelected || isHovered
@@ -352,12 +369,10 @@ export default function PixelPlanet({
           {title}
         </span>
 
-        {/* "YOU ARE HERE" label with 3D Rocket */}
+        {/* "YOU ARE HERE" label */}
         {isCurrent && (
-          <div className="flex items-center gap-1.5 mt-1 text-[11px] font-mono font-bold text-[#00FFE9] tracking-widest uppercase bg-[#00FFE9]/10 px-2.5 py-0.5 rounded-full border border-[#00FFE9]/40 shadow-[0_0_12px_rgba(0,255,233,0.3)]">
-            <div className="w-5 h-5 flex items-center justify-center shrink-0">
-              <ThreeRocket />
-            </div>
+          <div className="flex items-center gap-1.5 mt-1.5 text-[10px] sm:text-[11px] font-mono font-bold text-[#00FFE9] tracking-widest uppercase bg-[#00FFE9]/10 px-2.5 py-1 rounded-full border border-[#00FFE9]/40 shadow-[0_0_12px_rgba(0,255,233,0.3)]">
+            <span className="w-2 h-2 rounded-full bg-[#00FFE9] animate-pulse shrink-0" />
             <span>YOU ARE HERE</span>
           </div>
         )}

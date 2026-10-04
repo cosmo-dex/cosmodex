@@ -237,6 +237,7 @@ const WEBDEV_COURSES: CourseData[] = [
     level: "BEGINNER",
     thumbnail: "",
     pixelArtBanner: <HTMLPixelBanner />,
+    isLive: true,
   },
   {
     id: "web-2",
@@ -247,6 +248,7 @@ const WEBDEV_COURSES: CourseData[] = [
     level: "BEGINNER",
     thumbnail: "",
     pixelArtBanner: <CSSPixelBanner />,
+    isLive: false,
   },
   {
     id: "web-3",
@@ -257,6 +259,7 @@ const WEBDEV_COURSES: CourseData[] = [
     level: "INTERMEDIATE",
     thumbnail: "",
     pixelArtBanner: <JSPixelBanner />,
+    isLive: false,
   },
   {
     id: "web-4",
@@ -267,6 +270,7 @@ const WEBDEV_COURSES: CourseData[] = [
     level: "INTERMEDIATE",
     thumbnail: "",
     pixelArtBanner: <ReactPixelBanner />,
+    isLive: false,
   },
 ];
 
@@ -280,6 +284,7 @@ const PYTHON_COURSES: CourseData[] = [
     level: "BEGINNER",
     thumbnail: "",
     pixelArtBanner: <PythonPixelBanner />,
+    isLive: true,
   },
   {
     id: "py-2",
@@ -290,6 +295,7 @@ const PYTHON_COURSES: CourseData[] = [
     level: "INTERMEDIATE",
     thumbnail: "",
     pixelArtBanner: <IntermediatePythonPixelBanner />,
+    isLive: false,
   },
   {
     id: "py-3",
@@ -300,6 +306,7 @@ const PYTHON_COURSES: CourseData[] = [
     level: "INTERMEDIATE",
     thumbnail: "",
     pixelArtBanner: <NumPyPixelBanner />,
+    isLive: false,
   },
 ];
 
@@ -313,6 +320,7 @@ const OOP_COURSES: CourseData[] = [
     level: "BEGINNER",
     thumbnail: "",
     pixelArtBanner: <JavaPixelBanner />,
+    isLive: false,
   },
   {
     id: "oop-2",
@@ -323,6 +331,7 @@ const OOP_COURSES: CourseData[] = [
     level: "INTERMEDIATE",
     thumbnail: "",
     pixelArtBanner: <CppPixelBanner />,
+    isLive: false,
   },
 ];
 

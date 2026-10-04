@@ -7,15 +7,21 @@ interface ProgressSidebarProps {
   selectedChapter: Chapter;
   userProgress?: UserProgressData;
   courseId?: string;
+  allChapters?: Chapter[];
 }
 
 export default function ProgressSidebar({
   selectedChapter,
   courseId,
+  allChapters = [],
 }: ProgressSidebarProps) {
   return (
-    <aside className="w-full sticky top-24">
-      <StationCard chapter={selectedChapter} courseId={courseId} />
+    <aside className="w-full">
+      <StationCard
+        chapter={selectedChapter}
+        courseId={courseId}
+        allChapters={allChapters}
+      />
     </aside>
   );
 }

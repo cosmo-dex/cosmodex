@@ -24,6 +24,23 @@ const courses = [
     ),
   },
   {
+    id: "html",
+    title: "HTML5 & Web Semantics",
+    description: "Build semantic, accessible, SEO-ready web documents and responsive page architectures.",
+    level: "Beginner",
+    lessons: 7,
+    xp: 500,
+    color: "#ea580c",
+    rgb: "234,88,12",
+    category: "Popular",
+    href: "/learn/html",
+    icon: (
+      <svg width="28" height="28" viewBox="0 0 32 32" fill="none" aria-hidden="true">
+        <path d="M5 3l2 22 9 3 9-3 2-22H5zm18 5l-.5 4.5H11.5l.3 3.5h10.4l-1 10.5-5.2 1.7-5.2-1.7-.3-4h3.5l.2 1.8 1.8.5 1.8-.5.2-2.3H8l-.7-8.5H23.5L23 8z" fill="currentColor" opacity="0.9"/>
+      </svg>
+    ),
+  },
+  {
     id: "cpp",
     title: "C++",
     description: "Build fast, powerful software with systems-level programming and memory management.",

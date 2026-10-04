@@ -52,7 +52,7 @@ export default function Footer() {
           
           {/* Brand Info */}
           <div className="md:col-span-1 flex flex-col gap-3">
-            <Link href="/" className="flex items-center gap-3 w-fit hover:opacity-80 transition-opacity">
+            <Link prefetch={false} href="/" className="flex items-center gap-3 w-fit hover:opacity-80 transition-opacity">
               <Image
                 src="/images/logo.webp"
                 alt="CosmoDex Logo"
@@ -70,16 +70,16 @@ export default function Footer() {
           {/* Column 1: Platform */}
           <div className="flex flex-col gap-2.5">
             <h4 className="text-white/40 text-[11px] font-bold tracking-widest uppercase mb-1 font-mono">Platform</h4>
-            <Link href="/learn" className="text-white/70 hover:text-white hover:translate-x-1 text-xs font-medium transition-all w-fit cursor-pointer">
+            <Link prefetch={false} href="/learn" className="text-white/70 hover:text-white hover:translate-x-1 text-xs font-medium transition-all w-fit cursor-pointer">
               Courses
             </Link>
-            <Link href="/battle" className="text-white/70 hover:text-white hover:translate-x-1 text-xs font-medium transition-all w-fit cursor-pointer">
+            <Link prefetch={false} href="/battle" className="text-white/70 hover:text-white hover:translate-x-1 text-xs font-medium transition-all w-fit cursor-pointer">
               Battle Arena
             </Link>
-            <Link href="/leaderboard" className="text-white/70 hover:text-white hover:translate-x-1 text-xs font-medium transition-all w-fit cursor-pointer">
+            <Link prefetch={false} href="/leaderboard" className="text-white/70 hover:text-white hover:translate-x-1 text-xs font-medium transition-all w-fit cursor-pointer">
               Leaderboard
             </Link>
-            <Link href="/events" className="text-white/70 hover:text-white hover:translate-x-1 text-xs font-medium transition-all w-fit cursor-pointer">
+            <Link prefetch={false} href="/events" className="text-white/70 hover:text-white hover:translate-x-1 text-xs font-medium transition-all w-fit cursor-pointer">
               Events & Hackathons
             </Link>
           </div>
@@ -87,13 +87,13 @@ export default function Footer() {
           {/* Column 2: Community */}
           <div className="flex flex-col gap-2.5">
             <h4 className="text-white/40 text-[11px] font-bold tracking-widest uppercase mb-1 font-mono">Community</h4>
-            <Link href="/onboarding" className="text-white/70 hover:text-white hover:translate-x-1 text-xs font-medium transition-all w-fit cursor-pointer">
+            <Link prefetch={false} href="/onboarding" className="text-white/70 hover:text-white hover:translate-x-1 text-xs font-medium transition-all w-fit cursor-pointer">
               Join the Crew
             </Link>
             <a href="https://discord.gg" target="_blank" rel="noopener noreferrer" className="text-white/70 hover:text-white hover:translate-x-1 text-xs font-medium transition-all w-fit cursor-pointer">
               Discord Server
             </a>
-            <Link href="/onboarding?mode=login" className="text-white/70 hover:text-white hover:translate-x-1 text-xs font-medium transition-all w-fit cursor-pointer">
+            <Link prefetch={false} href="/support" className="text-white/70 hover:text-white hover:translate-x-1 text-xs font-medium transition-all w-fit cursor-pointer">
               Support & FAQ
             </Link>
           </div>
@@ -101,13 +101,10 @@ export default function Footer() {
           {/* Column 3: Legal */}
           <div className="flex flex-col gap-2.5">
             <h4 className="text-white/40 text-[11px] font-bold tracking-widest uppercase mb-1 font-mono">Legal</h4>
-            <Link href="/events" className="text-white/70 hover:text-white hover:translate-x-1 text-xs font-medium transition-all w-fit cursor-pointer">
+            <Link prefetch={false} href="/terms" className="text-white/70 hover:text-white hover:translate-x-1 text-xs font-medium transition-all w-fit cursor-pointer">
               Terms of Service
             </Link>
-            <Link href="/events" className="text-white/70 hover:text-white hover:translate-x-1 text-xs font-medium transition-all w-fit cursor-pointer">
-              Privacy Policy
-            </Link>
-            <Link href="/events" className="text-white/70 hover:text-white hover:translate-x-1 text-xs font-medium transition-all w-fit cursor-pointer">
+            <Link prefetch={false} href="/cookies" className="text-white/70 hover:text-white hover:translate-x-1 text-xs font-medium transition-all w-fit cursor-pointer">
               Cookie Policy
             </Link>
           </div>

@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev --webpack",
-    "build": "next build",
+    "build": "prisma generate && next build",
     "start": "next start",
     "lint": "eslint",
     "lint:fix": "eslint --fix",
@@ -12,13 +12,14 @@
     "db:generate": "prisma generate",
     "db:seed": "tsx prisma/seed.ts",
     "seed": "tsx prisma/seed.ts",
+    "seed:mcqs": "node prisma/seed-mcqs.mjs",
+    "complete:courses": "node prisma/complete-courses.mjs",
     "test:lint": "pnpm run lint",
     "test:types": "pnpm run typecheck",
     "test:ci": "pnpm run db:generate && pnpm run lint && pnpm run typecheck",
     "test": "pnpm run db:generate && pnpm run lint && pnpm run typecheck",
     "test:all": "pnpm run db:generate && pnpm run lint && pnpm run typecheck && pnpm run build",
-    "prepare": "husky",
-    "postinstall": "prisma generate"
+    "prepare": "husky || true"
   },
   "dependencies": {
     "@dotlottie/react-player": "^1.6.19",
@@ -41,7 +42,8 @@
     "react": "19.2.4",
     "react-dom": "19.2.4",
     "tailwind-merge": "^2.4.0",
-    "zustand": "^5.0.14"
+    "zustand": "^5.0.14",
+    "prisma": "^6.19.3"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
@@ -55,7 +57,6 @@
     "eslint-config-next": "16.2.6",
     "husky": "^9.1.7",
     "lint-staged": "^15.5.2",
-    "prisma": "^6.19.3",
     "tailwindcss": "^4",
     "tsx": "^4.23.13",
     "typescript": "^5"
@@ -67,5 +68,6 @@
     "esbuild",
     "sharp",
     "unrs-resolver"
-  ]
+  ],
+  "packageManager": "pnpm@9.15.0"
 }

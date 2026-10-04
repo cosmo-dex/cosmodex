@@ -6,7 +6,6 @@ import CourseSuggestions from "@/components/dashboard/CourseSuggestions";
 import Achievements from "@/components/dashboard/Achievements";
 import ProfileCard from "@/components/dashboard/ProfileCard";
 import Footer from "@/components/dashboard/Footer";
-import DailyStreakModal from "@/components/streak/DailyStreakModal";
 import { verifySession, SESSION_COOKIE } from '@/lib/session';
 import { getUserDashboardData } from '@/lib/userService';
 
@@ -112,7 +111,6 @@ export default async function DashboardPage() {
       </main>
 
       <Footer />
-      <DailyStreakModal />
     </div>
   );
 }
