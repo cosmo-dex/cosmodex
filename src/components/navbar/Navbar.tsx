@@ -44,6 +44,11 @@ const navItems = [
     href: "/events",
   },
   {
+    label: "Blog",
+    icon: CalendarDays,
+    href: "/blog",
+  },
+  {
     label: "Leaderboard",
     icon: Users,
     href: "/leaderboard",
