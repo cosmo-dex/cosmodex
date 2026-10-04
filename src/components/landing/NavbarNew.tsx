@@ -23,7 +23,6 @@ import {
   Shield,
   RotateCcw,
   Handshake,
-  Leaf,
   HelpCircle,
   BarChart,
   PlugIcon,

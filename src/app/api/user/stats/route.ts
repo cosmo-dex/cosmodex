@@ -2,8 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { verifySession, SESSION_COOKIE } from '@/lib/session';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
-import { getUserDashboardData, getUserProfileData } from '@/lib/userService';
-import { withCache, CacheKeys, CacheTTL } from '@/lib/cache';
+import { getUserDashboardData } from '@/lib/userService';
+import { withCache } from '@/lib/cache';
 import prisma from '@/lib/prisma';
 
 export async function GET(req: NextRequest) {
@@ -161,7 +161,14 @@ export async function GET(req: NextRequest) {
 
     // Build mode statistics efficiently
     const buildModeStats = (
-      matches: any[],
+      matches: Array<{
+        id: string;
+        player1_id: string;
+        player2_id: string;
+        winner_id: string | null;
+        started_at: Date | null;
+        ended_at: Date | null;
+      }>,
       modeType: 'code' | 'mcq',
       userRating: number
     ) => {

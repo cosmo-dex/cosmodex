@@ -10,7 +10,7 @@ interface CacheItem<T> {
 }
 
 class MemoryCache {
-  private cache = new Map<string, CacheItem<any>>();
+  private cache = new Map<string, CacheItem<unknown>>();
   private cleanupInterval: NodeJS.Timeout;
 
   constructor(cleanupIntervalMs = 60000) { // Cleanup every minute
