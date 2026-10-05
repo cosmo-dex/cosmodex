@@ -308,67 +308,6 @@ export default function RootLayout({
             __html: `(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src='https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);})(window,document,'script','dataLayer','GTM-MTZR6TH8');`,
           }}
         />
-        <Script
-          id="ad-prn-head"
-          src="https://pl31257884.profitableratecpmnetwork.com/59/2e/c7/592ec7429696819bdbed6840e82ee112.js"
-          strategy="lazyOnload"
-        />
-        {/* Ad Network — body scripts */}
-        <Script
-          src="https://pl31257885.profitableratecpmnetwork.com/ba6cbf6be7b27882ce717d652ad0acb8/invoke.js"
-          data-cfasync="false"
-          strategy="lazyOnload"
-        />
-        <div id="container-ba6cbf6be7b27882ce717d652ad0acb8" />
-        <Script
-          src="https://pl31257886.profitableratecpmnetwork.com/71/76/42/7176422c6fb28d171c63bd88c8439c95.js"
-          strategy="lazyOnload"
-        />
-
-        {/* highrevenueformat — 468x60 banner */}
-        <Script id="ad-hr-1" strategy="lazyOnload">
-          {`atOptions = { 'key': 'd539f5aaa7b22bda531b299161a0c850', 'format': 'iframe', 'height': 60, 'width': 468, 'params': {} };`}
-        </Script>
-        <Script
-          src="https://www.highrevenueformat.com/d539f5aaa7b22bda531b299161a0c850/invoke.js"
-          strategy="lazyOnload"
-        />
-
-        {/* highrevenueformat — 300x250 banner */}
-        <Script id="ad-hr-2" strategy="lazyOnload">
-          {`atOptions = { 'key': 'f2ee77db0d55d16f49153c92557d2335', 'format': 'iframe', 'height': 250, 'width': 300, 'params': {} };`}
-        </Script>
-        <Script
-          src="https://www.highrevenueformat.com/f2ee77db0d55d16f49153c92557d2335/invoke.js"
-          strategy="lazyOnload"
-        />
-
-        {/* highrevenueformat — 160x300 banner */}
-        <Script id="ad-hr-3" strategy="lazyOnload">
-          {`atOptions = { 'key': '92f110926312f17cb4aa68de007cabbf', 'format': 'iframe', 'height': 300, 'width': 160, 'params': {} };`}
-        </Script>
-        <Script
-          src="https://www.highrevenueformat.com/92f110926312f17cb4aa68de007cabbf/invoke.js"
-          strategy="lazyOnload"
-        />
-
-        {/* highrevenueformat — 320x50 banner */}
-        <Script id="ad-hr-4" strategy="lazyOnload">
-          {`atOptions = { 'key': '727d83ce8b8c81b2bfba7f3004b874db', 'format': 'iframe', 'height': 50, 'width': 320, 'params': {} };`}
-        </Script>
-        <Script
-          src="https://www.highrevenueformat.com/727d83ce8b8c81b2bfba7f3004b874db/invoke.js"
-          strategy="lazyOnload"
-        />
-
-        {/* highrevenueformat — 728x90 leaderboard */}
-        <Script id="ad-hr-5" strategy="lazyOnload">
-          {`atOptions = { 'key': '72aa18b347c03cdf69f297374fe51641', 'format': 'iframe', 'height': 90, 'width': 728, 'params': {} };`}
-        </Script>
-        <Script
-          src="https://www.highrevenueformat.com/72aa18b347c03cdf69f297374fe51641/invoke.js"
-          strategy="lazyOnload"
-        />
 
         {/* Google tag (gtag.js) - Added just after head end */}
         <Script
