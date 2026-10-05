@@ -195,6 +195,7 @@ export default function ProfileContent({
     error: string | null;
   }>({ checking: false, taken: null, error: null });
 
+  // OPTIMIZATION: Increase debounce time for username availability check to reduce API calls
   useEffect(() => {
     if (!isEditing || formatError || isSelf) return;
 
@@ -220,7 +221,7 @@ export default function ProfileContent({
           setAsyncAvailability({ checking: false, taken: null, error: null });
         }
       }
-    }, 400);
+    }, 1000); // OPTIMIZATION: Increased from 400ms to 1000ms to reduce API calls
 
     return () => {
       clearTimeout(timer);
@@ -233,6 +234,7 @@ export default function ProfileContent({
   const isAvailable = !formatError && !isSelf && asyncAvailability.taken === false;
   const usernameError = formatError || (isNameTaken ? asyncAvailability.error || 'This name is already taken.' : null);
 
+  // OPTIMIZATION: Batch profile updates to reduce API calls
   const handleSaveProfile = () => {
     if (formatError) {
       setSaveError(formatError);
@@ -247,14 +249,44 @@ export default function ProfileContent({
     setSaveError(null);
     startTransition(async () => {
       try {
+        // OPTIMIZATION: Only send data that has actually changed
+        const updates: Record<string, string | string[]> = {};
+        
+        if (trimmed !== profile.username) {
+          updates.username = trimmed;
+        }
+        
+        if (JSON.stringify(editData.skills) !== JSON.stringify(profile.skills)) {
+          updates.interests = editData.skills;
+        }
+        
+        if (editData.avatarUrl !== profile.avatarUrl) {
+          updates.avatarUrl = editData.avatarUrl;
+        }
+
+        // Only make API call if there are actual changes
+        if (Object.keys(updates).length === 0) {
+          // OPTIMIZATION: No changes detected, just update local state and exit
+          if (typeof window !== 'undefined') {
+            try {
+              localStorage.setItem('cosmodex_user_bio', editData.bio);
+            } catch {
+              // ignore
+            }
+          }
+          setProfile({
+            ...editData,
+            username: trimmed,
+            name: editData.name?.trim() || trimmed,
+          });
+          setIsEditing(false);
+          return;
+        }
+
         const res = await fetch('/api/user/profile', {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            username: trimmed,
-            interests: editData.skills,
-            avatarUrl: editData.avatarUrl,
-          }),
+          body: JSON.stringify(updates),
         });
 
         const data = await res.json();
@@ -306,7 +338,14 @@ export default function ProfileContent({
     }
   };
 
+  // OPTIMIZATION: Batch skills update to reduce API calls
   const handleSaveSkills = () => {
+    // OPTIMIZATION: Only update if skills actually changed
+    if (JSON.stringify(tempSkills) === JSON.stringify(profile.skills)) {
+      setIsAddingSkill(false);
+      return;
+    }
+
     setIsSavingSkills(true);
     startTransition(async () => {
       try {
