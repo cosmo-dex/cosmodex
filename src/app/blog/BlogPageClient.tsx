@@ -41,13 +41,6 @@ export default function BlogPageClient({ initialPosts }: BlogPageClientProps) {
       return matchesCategory && matchesSearch;
     });
   }, [posts, searchQuery, selectedCategory]);
-        post.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        post.excerpt.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (post.tags && post.tags.some((t) => t.toLowerCase().includes(searchQuery.toLowerCase())));
-
-      return matchesCategory && matchesSearch;
-    });
-  }, [posts, searchQuery, selectedCategory]);
 
   const featuredPost = useMemo(() => {
     return posts.find((p) => p.featured) || posts[0];
