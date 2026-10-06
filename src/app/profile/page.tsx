@@ -49,12 +49,12 @@ export default async function ProfilePage() {
     avatarUrl = parsed.avatarId || avatarUrl;
   }
 
-  // Fetch live data from DB
-  if (userId) {
+  // COST OPTIMIZATION: Comment out expensive DB queries, use session data only
+  if (userId && false) { // Temporarily disabled for cost optimization
     try {
       const [dbUser, arenaStats, battleStats, userBadges] = await Promise.all([
         prisma.users.findUnique({
-          where: { id: userId },
+          where: { id: userId! },
           select: {
             username: true,
             email: true,
@@ -67,15 +67,15 @@ export default async function ProfilePage() {
           },
         }),
         prisma.arena_stats.findUnique({
-          where: { user_id: userId },
+          where: { user_id: userId! },
           select: { current_streak: true },
         }),
         prisma.battle_user_stats.findUnique({
-          where: { user_id: userId },
+          where: { user_id: userId! },
           select: { wins: true, losses: true, draws: true, elo_rating: true, mcq_elo_rating: true },
         }),
         prisma.user_badges.findMany({
-          where: { user_id: userId },
+          where: { user_id: userId! },
           include: { badges: { select: { name: true, description: true } } },
           orderBy: { earned_at: 'desc' },
           take: 20,
@@ -83,14 +83,14 @@ export default async function ProfilePage() {
       ]);
 
       if (dbUser) {
-        username = dbUser.username;
-        email = dbUser.email;
-        avatarUrl = dbUser.avatar_url || avatarUrl;
-        interests = dbUser.interests ?? [];
-        xpTotal = dbUser.xp_total ?? 0;
-        level = dbUser.level ?? 1;
-        experienceLevel = dbUser.experience_level || experienceLevel;
-        createdAt = dbUser.created_at?.toISOString() ?? createdAt;
+        username = dbUser!.username || username;
+        email = dbUser!.email || email;
+        avatarUrl = dbUser!.avatar_url || avatarUrl;
+        interests = dbUser!.interests ?? [];
+        xpTotal = (dbUser!.xp_total as number) ?? 0;
+        level = (dbUser!.level as number) ?? 1;
+        experienceLevel = dbUser!.experience_level || experienceLevel;
+        createdAt = dbUser!.created_at?.toISOString() ?? createdAt;
       }
 
       streak = arenaStats?.current_streak ?? 0;
@@ -102,8 +102,8 @@ export default async function ProfilePage() {
       badgeCount = userBadges.length;
       badges = userBadges.map((ub) => ({
         id: ub.id,
-        name: ub.badges.name,
-        description: ub.badges.description ?? null,
+        name: (ub as { badges: { name: string } }).badges?.name || 'Unknown Badge',
+        description: (ub as { badges: { description?: string } }).badges?.description ?? null,
         earnedAt: ub.earned_at?.toISOString() ?? null,
       }));
     } catch (e) {

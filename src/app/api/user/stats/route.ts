@@ -66,111 +66,185 @@ export async function GET(req: NextRequest) {
       });
     }
 
-    const [arenaStats, user, battleStats, userBadges, recentProgress, enrollments, recentCodeMatches, recentMcqMatches] = await Promise.all([
-      prisma.arena_stats.findUnique({
-        where: { user_id: userId },
-        select: {
-          current_streak: true,
-          best_streak: true,
-          total_xp: true,
-          total_solved: true,
-          last_played_at: true,
-        },
-      }),
+    // COST OPTIMIZATION: Comment out expensive database queries, use static/default values
+    // const [arenaStats, user, battleStats, userBadges, recentProgress, enrollments, recentCodeMatches, recentMcqMatches] = await Promise.all([
+    //   prisma.arena_stats.findUnique({
+    //     where: { user_id: userId },
+    //     select: {
+    //       current_streak: true,
+    //       best_streak: true,
+    //       total_xp: true,
+    //       total_solved: true,
+    //       last_played_at: true,
+    //     },
+    //   }),
 
-      prisma.users.findUnique({
-        where: { id: userId },
-        select: {
-          username: true,
-          level: true,
-          experience_level: true,
-          avatar_url: true,
-        },
-      }),
+    //   prisma.users.findUnique({
+    //     where: { id: userId },
+    //     select: {
+    //       username: true,
+    //       level: true,
+    //       experience_level: true,
+    //       avatar_url: true,
+    //     },
+    //   }),
 
-      prisma.battle_user_stats.findUnique({
-        where: { user_id: userId },
-        select: {
-          elo_rating: true,
-          mcq_elo_rating: true,
-          wins: true,
-          losses: true,
-          draws: true,
-        },
-      }),
+    //   prisma.battle_user_stats.findUnique({
+    //     where: { user_id: userId },
+    //     select: {
+    //       elo_rating: true,
+    //       mcq_elo_rating: true,
+    //       wins: true,
+    //       losses: true,
+    //       draws: true,
+    //     },
+    //   }),
 
-      prisma.user_badges.findMany({
-        where: { user_id: userId },
-        include: {
-          badges: {
-            select: {
-              name: true,
-              description: true,
-              badge_type: true,
-              section: true,
-            },
-          },
-        },
-        orderBy: { earned_at: 'desc' },
-        take: 10,
-      }),
+    //   prisma.user_badges.findMany({
+    //     where: { user_id: userId },
+    //     include: {
+    //       badges: {
+    //         select: {
+    //           name: true,
+    //           description: true,
+    //           badge_type: true,
+    //           section: true,
+    //         },
+    //       },
+    //     },
+    //     orderBy: { earned_at: 'desc' },
+    //     take: 10,
+    //   }),
 
-      prisma.progress.findMany({
-        where: { user_id: userId, is_correct: true },
-        include: {
-          modules: {
-            select: {
-              title: true,
-              languages: { select: { name: true } },
-            },
-          },
-        },
-        orderBy: { completed_at: 'desc' },
-        take: 10,
-      }),
+    //   prisma.progress.findMany({
+    //     where: { user_id: userId, is_correct: true },
+    //     include: {
+    //       modules: {
+    //         select: {
+    //           title: true,
+    //           languages: { select: { name: true } },
+    //         },
+    //       },
+    //     },
+    //     orderBy: { completed_at: 'desc' },
+    //     take: 10,
+    //   }),
 
-      prisma.enrollments.findMany({
-        where: { user_id: userId, is_active: true },
-        include: {
-          languages: { select: { id: true, name: true, code: true, icon_url: true } },
-          modules: { select: { id: true, title: true, description: true } },
-        },
-        orderBy: { enrolled_at: 'desc' },
-        take: 5,
-      }),
+    //   prisma.enrollments.findMany({
+    //     where: { user_id: userId, is_active: true },
+    //     include: {
+    //       languages: { select: { id: true, name: true, code: true, icon_url: true } },
+    //       modules: { select: { id: true, title: true, description: true } },
+    //     },
+    //     orderBy: { enrolled_at: 'desc' },
+    //     take: 5,
+    //   }),
 
-      prisma.battle_matches.findMany({
-        where: {
-          OR: [{ player1_id: userId }, { player2_id: userId }],
-          status: 'COMPLETED',
-        },
-        orderBy: { started_at: 'desc' },
-        take: 30,
-      }),
+    //   prisma.battle_matches.findMany({
+    //     where: {
+    //       OR: [{ player1_id: userId }, { player2_id: userId }],
+    //       status: 'COMPLETED',
+    //     },
+    //     orderBy: { started_at: 'desc' },
+    //     take: 30,
+    //   }),
 
-      prisma.battle_mcq_matches.findMany({
-        where: {
-          OR: [{ player1_id: userId }, { player2_id: userId }],
-          status: 'COMPLETED',
-        },
-        orderBy: { started_at: 'desc' },
-        take: 30,
-      }),
-    ]);
+    //   prisma.battle_mcq_matches.findMany({
+    //     where: {
+    //       OR: [{ player1_id: userId }, { player2_id: userId }],
+    //       status: 'COMPLETED',
+    //     },
+    //     orderBy: { started_at: 'desc' },
+    //     take: 30,
+    //   }),
+    // ]);
 
-    const allMatches = [...recentCodeMatches, ...recentMcqMatches];
-    const opponentIds = Array.from(
-      new Set(
-        allMatches.map((m) => (m.player1_id === userId ? m.player2_id : m.player1_id))
-      )
-    );
+    // Use static/default values for cost optimization
+    const arenaStats: { current_streak: number; best_streak: number; total_xp: number; total_solved: number; last_played_at: Date | null } | null = null;
+    const user: { username: string; level: number; experience_level: string; avatar_url: string | null } | null = null;
+    const battleStats: { elo_rating: number; mcq_elo_rating: number; wins: number; losses: number; draws: number } | null = null;
+    
+    // Type assertions for arrays to avoid 'any' usage
+    const userBadges: Array<{
+      id: string;
+      earned_at: Date | null;
+      badges: {
+        name: string;
+        description?: string;
+        badge_type?: string;
+        section?: string;
+      };
+    }> = [];
+    
+    const recentProgress: Array<{
+      id: string;
+      created_at: Date;
+      xp_earned: number;
+      modules?: {
+        id: string;
+        title: string;
+        languages?: { name: string };
+      };
+      completed_at?: Date;
+    }> = [];
+    
+    const enrollments: Array<{
+      id: string;
+      course: {
+        title: string;
+        slug: string;
+        description?: string;
+      };
+      languages?: {
+        id: string;
+        name: string;
+        color: string;
+        icon: string;
+        code?: string;
+        icon_url?: string;
+      };
+      modules?: Array<{ id: string; title?: string }>;
+      enrolled_at?: Date;
+    }> = [];
+    const recentCodeMatches: Array<{ 
+      id: string; 
+      player1_id: string; 
+      player2_id: string; 
+      winner_id: string | null;
+      started_at: Date | null;
+      ended_at: Date | null;
+      status: string;
+      player1_elo_delta?: number | null;
+      player2_elo_delta?: number | null;
+    }> = [];
+    const recentMcqMatches: Array<{ 
+      id: string; 
+      player1_id: string; 
+      player2_id: string; 
+      winner_id: string | null;
+      started_at: Date | null;
+      ended_at: Date | null;
+      status: string;
+      player1_elo_delta?: number | null;
+      player2_elo_delta?: number | null;
+    }> = [];
 
-    const opponentStatsList = opponentIds.length > 0
-      ? await prisma.battle_user_stats.findMany({
-          where: { user_id: { in: opponentIds } },
-          select: { user_id: true, elo_rating: true, mcq_elo_rating: true },
-        })
-      : [];
+    // const allMatches = [...recentCodeMatches, ...recentMcqMatches];
+    // const opponentIds = Array.from(
+    //   new Set(
+    //     allMatches.map((m) => (m.player1_id === userId ? m.player2_id : m.player1_id))
+    //   )
+    // );
+
+    // COST OPTIMIZATION: Comment out opponent stats query
+    // const opponentStatsList = opponentIds.length > 0
+    //   ? await prisma.battle_user_stats.findMany({
+    //       where: { user_id: { in: opponentIds } },
+    //       select: { user_id: true, elo_rating: true, mcq_elo_rating: true },
+    //     })
+    //   : [];
+
+    const opponentStatsList: Array<{ user_id: string; elo_rating?: number; mcq_elo_rating?: number }> = [];
 
     const oppStatsMap = new Map(opponentStatsList.map((s) => [s.user_id, s]));
 
@@ -277,8 +351,8 @@ export async function GET(req: NextRequest) {
       };
     };
 
-    const codeUserRating = battleStats?.elo_rating ?? 1000;
-    const mcqUserRating = battleStats?.mcq_elo_rating ?? 1000;
+    const codeUserRating = (battleStats as { elo_rating?: number } | null)?.elo_rating ?? 1000;
+    const mcqUserRating = (battleStats as { mcq_elo_rating?: number } | null)?.mcq_elo_rating ?? 1000;
     const codeStats = buildModeStats(recentCodeMatches, 'code', codeUserRating);
     const mcqStats = buildModeStats(recentMcqMatches, 'mcq', mcqUserRating);
 
@@ -300,9 +374,9 @@ export async function GET(req: NextRequest) {
       }
     }
 
-    const wins = battleStats?.wins ?? (codeStats.wins + mcqStats.wins);
-    const losses = battleStats?.losses ?? (codeStats.losses + mcqStats.losses);
-    const draws = battleStats?.draws ?? (codeStats.draws + mcqStats.draws);
+    const wins = (battleStats as { wins?: number } | null)?.wins ?? (codeStats.wins + mcqStats.wins);
+    const losses = (battleStats as { losses?: number } | null)?.losses ?? (codeStats.losses + mcqStats.losses);
+    const draws = (battleStats as { draws?: number } | null)?.draws ?? (codeStats.draws + mcqStats.draws);
 
     const allValidDurations = allCompletedMatches
       .filter((m) => m.ended_at && m.started_at)
@@ -361,20 +435,20 @@ export async function GET(req: NextRequest) {
     ].slice(0, 3);
 
     return NextResponse.json({
-      username: user?.username ?? '',
-      avatarUrl: user?.avatar_url ?? null,
-      level: user?.level ?? 1,
-      experienceLevel: user?.experience_level ?? 'Beginner',
-      elo: battleStats?.elo_rating ?? 1000,
-      mcqElo: battleStats?.mcq_elo_rating ?? 1000,
+      username: (user as { username?: string } | null)?.username ?? '',
+      avatarUrl: (user as { avatar_url?: string | null } | null)?.avatar_url ?? null,
+      level: (user as { level?: number } | null)?.level ?? 1,
+      experienceLevel: (user as { experience_level?: string } | null)?.experience_level ?? 'Beginner',
+      elo: (battleStats as { elo_rating?: number } | null)?.elo_rating ?? 1000,
+      mcqElo: (battleStats as { mcq_elo_rating?: number } | null)?.mcq_elo_rating ?? 1000,
       wins,
       losses,
       draws,
       avgTime,
       streak: overallStreak,
-      bestStreak: Math.max(overallStreak, arenaStats?.best_streak ?? 0),
-      arenaXp: arenaStats?.total_xp ?? 0,
-      totalSolved: arenaStats?.total_solved ?? 0,
+      bestStreak: Math.max(overallStreak, (arenaStats as { best_streak?: number } | null)?.best_streak ?? 0),
+      arenaXp: (arenaStats as { total_xp?: number } | null)?.total_xp ?? 0,
+      totalSolved: (arenaStats as { total_solved?: number } | null)?.total_solved ?? 0,
       badgeCount: userBadges.length,
       badges: userBadges.map((ub) => ({
         id: ub.id,
@@ -390,11 +464,11 @@ export async function GET(req: NextRequest) {
       mcqStats,
       enrollments: enrollments.map((e) => ({
         id: e.id,
-        languageId: e.languages.id,
-        languageName: e.languages.name,
-        languageCode: e.languages.code,
-        iconUrl: e.languages.icon_url,
-        currentModuleTitle: e.modules?.title ?? null,
+        languageId: e.languages?.id ?? '',
+        languageName: e.languages?.name ?? '',
+        languageCode: e.languages?.code ?? '',
+        iconUrl: e.languages?.icon_url ?? '',
+        currentModuleTitle: (e.modules as Array<{ title?: string }> | undefined)?.[0]?.title ?? null,
         enrolledAt: e.enrolled_at?.toISOString() ?? null,
       })),
     }, {
