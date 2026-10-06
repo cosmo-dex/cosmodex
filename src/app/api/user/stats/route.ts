@@ -163,9 +163,49 @@ export async function GET(req: NextRequest) {
     const arenaStats: { current_streak: number; best_streak: number; total_xp: number; total_solved: number; last_played_at: Date | null } | null = null;
     const user: { username: string; level: number; experience_level: string; avatar_url: string | null } | null = null;
     const battleStats: { elo_rating: number; mcq_elo_rating: number; wins: number; losses: number; draws: number } | null = null;
-    const userBadges: any[] = [];
-    const recentProgress: any[] = [];
-    const enrollments: any[] = [];
+    
+    // Type assertions for arrays to avoid 'any' usage
+    const userBadges: Array<{
+      id: string;
+      earned_at: Date | null;
+      badges: {
+        name: string;
+        description?: string;
+        badge_type?: string;
+        section?: string;
+      };
+    }> = [];
+    
+    const recentProgress: Array<{
+      id: string;
+      created_at: Date;
+      xp_earned: number;
+      modules?: {
+        id: string;
+        title: string;
+        languages?: { name: string };
+      };
+      completed_at?: Date;
+    }> = [];
+    
+    const enrollments: Array<{
+      id: string;
+      course: {
+        title: string;
+        slug: string;
+        description?: string;
+      };
+      languages?: {
+        id: string;
+        name: string;
+        color: string;
+        icon: string;
+        code?: string;
+        icon_url?: string;
+      };
+      modules?: Array<{ id: string; title?: string }>;
+      enrolled_at?: Date;
+    }> = [];
     const recentCodeMatches: Array<{ 
       id: string; 
       player1_id: string; 
@@ -189,12 +229,12 @@ export async function GET(req: NextRequest) {
       player2_elo_delta?: number | null;
     }> = [];
 
-    const allMatches = [...recentCodeMatches, ...recentMcqMatches];
-    const opponentIds = Array.from(
-      new Set(
-        allMatches.map((m) => (m.player1_id === userId ? m.player2_id : m.player1_id))
-      )
-    );
+    // const allMatches = [...recentCodeMatches, ...recentMcqMatches];
+    // const opponentIds = Array.from(
+    //   new Set(
+    //     allMatches.map((m) => (m.player1_id === userId ? m.player2_id : m.player1_id))
+    //   )
+    // );
 
     // COST OPTIMIZATION: Comment out opponent stats query
     // const opponentStatsList = opponentIds.length > 0
@@ -204,7 +244,7 @@ export async function GET(req: NextRequest) {
     //     })
     //   : [];
 
-    const opponentStatsList: any[] = [];
+    const opponentStatsList: Array<{ user_id: string; elo_rating?: number; mcq_elo_rating?: number }> = [];
 
     const oppStatsMap = new Map(opponentStatsList.map((s) => [s.user_id, s]));
 
@@ -311,8 +351,8 @@ export async function GET(req: NextRequest) {
       };
     };
 
-    const codeUserRating = (battleStats as any)?.elo_rating ?? 1000;
-    const mcqUserRating = (battleStats as any)?.mcq_elo_rating ?? 1000;
+    const codeUserRating = (battleStats as { elo_rating?: number } | null)?.elo_rating ?? 1000;
+    const mcqUserRating = (battleStats as { mcq_elo_rating?: number } | null)?.mcq_elo_rating ?? 1000;
     const codeStats = buildModeStats(recentCodeMatches, 'code', codeUserRating);
     const mcqStats = buildModeStats(recentMcqMatches, 'mcq', mcqUserRating);
 
@@ -334,9 +374,9 @@ export async function GET(req: NextRequest) {
       }
     }
 
-    const wins = (battleStats as any)?.wins ?? (codeStats.wins + mcqStats.wins);
-    const losses = (battleStats as any)?.losses ?? (codeStats.losses + mcqStats.losses);
-    const draws = (battleStats as any)?.draws ?? (codeStats.draws + mcqStats.draws);
+    const wins = (battleStats as { wins?: number } | null)?.wins ?? (codeStats.wins + mcqStats.wins);
+    const losses = (battleStats as { losses?: number } | null)?.losses ?? (codeStats.losses + mcqStats.losses);
+    const draws = (battleStats as { draws?: number } | null)?.draws ?? (codeStats.draws + mcqStats.draws);
 
     const allValidDurations = allCompletedMatches
       .filter((m) => m.ended_at && m.started_at)
@@ -395,20 +435,20 @@ export async function GET(req: NextRequest) {
     ].slice(0, 3);
 
     return NextResponse.json({
-      username: (user as any)?.username ?? '',
-      avatarUrl: (user as any)?.avatar_url ?? null,
-      level: (user as any)?.level ?? 1,
-      experienceLevel: (user as any)?.experience_level ?? 'Beginner',
-      elo: (battleStats as any)?.elo_rating ?? 1000,
-      mcqElo: (battleStats as any)?.mcq_elo_rating ?? 1000,
+      username: (user as { username?: string } | null)?.username ?? '',
+      avatarUrl: (user as { avatar_url?: string | null } | null)?.avatar_url ?? null,
+      level: (user as { level?: number } | null)?.level ?? 1,
+      experienceLevel: (user as { experience_level?: string } | null)?.experience_level ?? 'Beginner',
+      elo: (battleStats as { elo_rating?: number } | null)?.elo_rating ?? 1000,
+      mcqElo: (battleStats as { mcq_elo_rating?: number } | null)?.mcq_elo_rating ?? 1000,
       wins,
       losses,
       draws,
       avgTime,
       streak: overallStreak,
-      bestStreak: Math.max(overallStreak, (arenaStats as any)?.best_streak ?? 0),
-      arenaXp: (arenaStats as any)?.total_xp ?? 0,
-      totalSolved: (arenaStats as any)?.total_solved ?? 0,
+      bestStreak: Math.max(overallStreak, (arenaStats as { best_streak?: number } | null)?.best_streak ?? 0),
+      arenaXp: (arenaStats as { total_xp?: number } | null)?.total_xp ?? 0,
+      totalSolved: (arenaStats as { total_solved?: number } | null)?.total_solved ?? 0,
       badgeCount: userBadges.length,
       badges: userBadges.map((ub) => ({
         id: ub.id,
@@ -424,11 +464,11 @@ export async function GET(req: NextRequest) {
       mcqStats,
       enrollments: enrollments.map((e) => ({
         id: e.id,
-        languageId: e.languages.id,
-        languageName: e.languages.name,
-        languageCode: e.languages.code,
-        iconUrl: e.languages.icon_url,
-        currentModuleTitle: e.modules?.title ?? null,
+        languageId: e.languages?.id ?? '',
+        languageName: e.languages?.name ?? '',
+        languageCode: e.languages?.code ?? '',
+        iconUrl: e.languages?.icon_url ?? '',
+        currentModuleTitle: (e.modules as Array<{ title?: string }> | undefined)?.[0]?.title ?? null,
         enrolledAt: e.enrolled_at?.toISOString() ?? null,
       })),
     }, {

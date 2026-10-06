@@ -50,7 +50,7 @@ export default async function DashboardPage() {
     try {
       // First fetch enrollments to get language IDs
       const userEnrollments = await prisma.enrollments.findMany({
-        where: { user_id: userId, is_active: true },
+        where: { user_id: userId!, is_active: true },
         include: {
           languages: { select: { id: true, name: true, code: true, icon_url: true } },
           modules: { select: { title: true } },
@@ -64,19 +64,19 @@ export default async function DashboardPage() {
       // Then fetch other data in parallel
       const [dbUser, arenaStats, battleStats, userBadges, languageModules, userModuleCompletions] = await Promise.all([
         prisma.users.findUnique({
-          where: { id: userId },
+          where: { id: userId! },
           select: { avatar_url: true, username: true, experience_level: true, level: true, xp_total: true },
         }),
         prisma.arena_stats.findUnique({
-          where: { user_id: userId },
+          where: { user_id: userId! },
           select: { current_streak: true, total_xp: true, total_solved: true },
         }),
         prisma.battle_user_stats.findUnique({
-          where: { user_id: userId },
+          where: { user_id: userId! },
           select: { elo_rating: true },
         }),
         prisma.user_badges.findMany({
-          where: { user_id: userId },
+          where: { user_id: userId! },
           include: {
             badges: { select: { name: true, description: true, badge_type: true } },
           },
@@ -94,7 +94,7 @@ export default async function DashboardPage() {
         // Fetch user's completed modules for enrolled languages
         prisma.module_completions.findMany({
           where: {
-            user_id: userId,
+            user_id: userId!,
             modules: {
               language_id: { in: languageIds },
             },
@@ -104,11 +104,11 @@ export default async function DashboardPage() {
       ]);
 
       if (dbUser) {
-        if (dbUser.avatar_url) avatarId = dbUser.avatar_url;
-        if (dbUser.username) username = dbUser.username;
-        if (dbUser.level) level = dbUser.level;
-        if (dbUser.xp_total !== null && dbUser.xp_total !== undefined) xpTotal = dbUser.xp_total;
-        if (dbUser.experience_level) experienceLevel = dbUser.experience_level;
+        avatarId = dbUser!.avatar_url || avatarId;
+        username = dbUser!.username || username;
+        level = (dbUser!.level as number) || level;
+        xpTotal = (dbUser!.xp_total as number) || xpTotal;
+        experienceLevel = dbUser!.experience_level || experienceLevel;
       }
 
       streak = arenaStats?.current_streak ?? 0;
@@ -117,8 +117,8 @@ export default async function DashboardPage() {
 
       badges = userBadges.map((ub) => ({
         id: ub.id,
-        name: ub.badges.name,
-        description: ub.badges.description ?? null,
+        name: (ub as { badges: { name: string } }).badges?.name || 'Unknown Badge',
+        description: (ub as { badges: { description?: string } }).badges?.description ?? null,
         earnedAt: ub.earned_at?.toISOString() ?? null,
       }));
 
@@ -130,18 +130,18 @@ export default async function DashboardPage() {
 
       const userCompletedByLanguage = new Map<string, number>();
       for (const mc of userModuleCompletions) {
-        const langId = mc.modules?.language_id;
+        const langId = (mc as { modules?: { language_id: string } }).modules?.language_id;
         if (langId) {
-          userCompletedByLanguage.set(langId, (userCompletedByLanguage.get(langId) ?? 0) + 1);
+          userCompletedByLanguage.set(langId!, (userCompletedByLanguage.get(langId!) ?? 0) + 1);
         }
       }
 
       enrollments = userEnrollments.map((e) => ({
         id: e.id,
-        languageName: e.languages.name,
-        languageCode: e.languages.code,
-        iconUrl: e.languages.icon_url ?? null,
-        currentModuleTitle: e.modules?.title ?? null,
+        languageName: (e as { languages?: { name: string } }).languages?.name || 'Unknown',
+        languageCode: (e as { languages?: { code: string } }).languages?.code || 'unknown',
+        iconUrl: (e as { languages?: { icon_url?: string } }).languages?.icon_url ?? null,
+        currentModuleTitle: (e as { modules?: { title?: string } }).modules?.title ?? null,
         totalModules: languageModuleCounts.get(e.language_id) ?? 0,
         completedModules: userCompletedByLanguage.get(e.language_id) ?? 0,
       }));
