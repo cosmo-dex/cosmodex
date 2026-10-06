@@ -22,25 +22,6 @@ export interface BlogPostItem {
   updatedAt?: string;
 }
 
-interface RawDbBlog {
-  id: string;
-  slug: string;
-  title: string;
-  excerpt: string;
-  content: string;
-  category: string;
-  author_name: string;
-  author_role: string;
-  author_avatar: string;
-  cover_image: string;
-  read_time: string;
-  published_at: string;
-  featured: boolean;
-  tags: string[];
-  created_at?: Date;
-  updated_at?: Date;
-}
-
 // STATIC DATA for cost optimization - replace with database when needed
 const STATIC_BLOG_POSTS: BlogPostItem[] = [
   {
@@ -189,34 +170,16 @@ export function getValidImageUrl(
   return fallback;
 }
 
-function mapDbToBlogPost(row: RawDbBlog): BlogPostItem {
-  return {
-    id: row.id,
-    slug: row.slug,
-    title: row.title,
-    excerpt: row.excerpt,
-    content: row.content,
-    category: row.category,
-    author: {
-      name: row.author_name,
-      role: row.author_role,
-      avatar: getValidImageUrl(row.author_avatar, '/images/avatars/nebula.webp'),
-    },
-    coverImage: getValidImageUrl(row.cover_image),
-    readTime: row.read_time,
-    publishedAt: row.published_at,
-    featured: Boolean(row.featured),
-    tags: Array.isArray(row.tags) ? row.tags : [],
-    createdAt: row.created_at ? new Date(row.created_at).toISOString() : undefined,
-    updatedAt: row.updated_at ? new Date(row.updated_at).toISOString() : undefined,
-  };
-}
+// Remove unused functions to fix linting
+// function mapDbToBlogPost(row: RawDbBlog): BlogPostItem { ... }
 
-let tableEnsured = false;
+// Remove unused variable
+// let tableEnsured = false;
 
 export async function ensureTableAndSeed() {
   // COST OPTIMIZATION: Commented out database table creation
   /*
+  const tableEnsured = false;
   if (tableEnsured) return;
   try {
     await prisma.$executeRawUnsafe(`
@@ -239,7 +202,6 @@ export async function ensureTableAndSeed() {
         updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
       );
     `);
-    tableEnsured = true;
   } catch (err) {
     console.error('[blogs] ensureTable error:', err);
   }
