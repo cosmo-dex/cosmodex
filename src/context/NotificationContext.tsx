@@ -190,11 +190,19 @@ export function NotificationProvider({
       }
     };
 
+    const handleFocus = () => {
+      if (document.visibilityState === "visible") {
+        fetchNotifications(true);
+      }
+    };
+
     document.addEventListener("visibilitychange", handleVisibilityChange);
+    window.addEventListener("focus", handleFocus);
 
     return () => {
       clearInterval(pollInterval);
       document.removeEventListener("visibilitychange", handleVisibilityChange);
+      window.removeEventListener("focus", handleFocus);
     };
   }, [isAuthenticated, fetchNotifications]);
 
