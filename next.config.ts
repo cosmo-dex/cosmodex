@@ -8,6 +8,9 @@ const nextConfig: NextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
   compress: true,
+  experimental: {
+    optimizePackageImports: ['lucide-react', 'framer-motion', '@monaco-editor/react'],
+  },
   images: {
     // Serve static files as-is. Avoids Vercel Image Optimization quota
     // (exhausted transformations take the site down with 402s).
