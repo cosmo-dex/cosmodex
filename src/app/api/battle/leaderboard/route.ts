@@ -42,7 +42,7 @@ export async function GET(req: NextRequest) {
         orderBy: mode === 'mcq' 
           ? [{ mcq_elo_rating: 'desc' }, { wins: 'desc' }]
           : [{ elo_rating: 'desc' }, { mcq_elo_rating: 'desc' }, { wins: 'desc' }],
-        take: 50,
+        take: 500,
         select: {
           user_id: true,
           elo_rating: true,
