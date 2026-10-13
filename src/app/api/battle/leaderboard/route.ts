@@ -35,7 +35,7 @@ export async function GET(req: NextRequest) {
         where: {
           users: {
             is_active: true,
-            role: { notIn: ['admin', 'super_admin', 'learning_admin', 'arena_admin'] },
+            role: { notIn: ['bot', 'admin', 'super_admin', 'learning_admin', 'arena_admin'] },
             email: { notIn: ['cosmodex_admin@admin.com', 'learning_admin@admin.com', 'arena_admin@admin.com', 'admin@cosmodex.com', 'learning@cosmodex.com', 'arena@cosmodex.com'] },
           },
         },
