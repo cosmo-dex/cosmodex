@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { razorpay } from '@/lib/razorpay';
 
+export const dynamic = 'force-dynamic';
+
 // Define your subscription plans
 const PLANS: Record<string, { amountInPaise: number; name: string; durationDays: number }> = {
   pro_monthly: {
