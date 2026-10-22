@@ -35,8 +35,18 @@ export async function GET(req: NextRequest) {
         where: {
           users: {
             is_active: true,
-            role: { notIn: ['admin', 'super_admin', 'learning_admin', 'arena_admin'] },
-            email: { notIn: ['cosmodex_admin@admin.com', 'learning_admin@admin.com', 'arena_admin@admin.com', 'admin@cosmodex.com', 'learning@cosmodex.com', 'arena@cosmodex.com'] },
+            role: { notIn: ['bot', 'admin', 'super_admin', 'learning_admin', 'arena_admin'] },
+            email: {
+              notIn: ['cosmodex_admin@admin.com', 'learning_admin@admin.com', 'arena_admin@admin.com', 'admin@cosmodex.com', 'learning@cosmodex.com', 'arena@cosmodex.com'],
+              not: {
+                endsWith: '@cosmodex.ai',
+              },
+            },
+            NOT: [
+              { email: { startsWith: 'bot_' } },
+              { username: { startsWith: 'bot_' } },
+              { username: { startsWith: 'Bot_' } },
+            ],
           },
         },
         orderBy: mode === 'mcq' 
@@ -59,7 +69,11 @@ export async function GET(req: NextRequest) {
       });
 
       if (stats && stats.length > 0) {
-        const mapped = stats.map((item) => {
+        const filtered = stats.filter((item) => {
+          const uname = item.users?.username?.toLowerCase() ?? '';
+          return !uname.startsWith('bot_') && !uname.startsWith('bot-') && uname !== 'bot';
+        });
+        const mapped = filtered.map((item) => {
           const codeElo = item.elo_rating ?? 1000;
           const mcqElo = item.mcq_elo_rating ?? 1000;
           let effectiveElo = codeElo;
