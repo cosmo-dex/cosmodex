@@ -11,6 +11,10 @@ export async function POST(
 
   try {
     const authHeaders = await getEventAuthHeaders(req);
+    const unlockToken = req.headers.get('x-unlock-token');
+    if (unlockToken) {
+      authHeaders['x-unlock-token'] = unlockToken;
+    }
     const body = await req.json().catch(() => ({}));
     const targetUrl = `${EVENT_BACKEND_URL}/api/events/${encodeURIComponent(id)}/register`;
 
@@ -23,7 +27,14 @@ export async function POST(
       body: JSON.stringify(body),
     });
 
-    const data = await res.json();
+    const rawText = await res.text();
+    let data: unknown;
+    try {
+      data = JSON.parse(rawText);
+    } catch {
+      data = { error: rawText || res.statusText };
+    }
+
     return NextResponse.json(data, { status: res.status });
   } catch (err) {
     console.error(`[POST /api/events/${id}/register proxy] Error:`, err);
@@ -46,7 +57,14 @@ export async function DELETE(
       headers: authHeaders,
     });
 
-    const data = await res.json();
+    const rawText = await res.text();
+    let data: unknown;
+    try {
+      data = JSON.parse(rawText);
+    } catch {
+      data = { error: rawText || res.statusText };
+    }
+
     return NextResponse.json(data, { status: res.status });
   } catch (err) {
     console.error(`[DELETE /api/events/${id}/register proxy] Error:`, err);

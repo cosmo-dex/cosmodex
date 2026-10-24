@@ -8,17 +8,24 @@ export async function GET(req: NextRequest) {
     const targetUrl = `${EVENT_BACKEND_URL}/api/events${searchParams ? `?${searchParams}` : ''}`;
 
     const res = await fetch(targetUrl, {
-      next: { revalidate: 10 },
+      cache: 'no-store',
       headers: {
         'Accept': 'application/json',
       },
     });
 
-    const data = await res.json();
+    const rawText = await res.text();
+    let data: unknown;
+    try {
+      data = JSON.parse(rawText);
+    } catch {
+      data = { events: [], total: 0, error: rawText || res.statusText };
+    }
+
     return NextResponse.json(data, {
       status: res.status,
       headers: {
-        'Cache-Control': 'public, s-maxage=10, stale-while-revalidate=30',
+        'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
       },
     });
   } catch (err) {
