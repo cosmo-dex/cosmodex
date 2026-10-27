@@ -290,9 +290,6 @@ export default function RootLayout({
         <Script src="https://abscloud.org/1/592ec7429696819bdbed6840e82ee112" strategy="beforeInteractive" data-cfasync="false" />
       </head>
 
-      {/* for ads */}
-      <Script src="https://bauval.org/14/7176422c6fb28d171c63bd88c8439c95" strategy="beforeInteractive" data-cfasync="false" />
-
       <body
         className={`${displayFont.variable} ${bodyFont.variable} ${monoFont.variable} ${interFont.variable} antialiased`}
         style={{ background: "#08040f", color: "#f0e6ff" }}
