@@ -4,37 +4,30 @@ import BreadcrumbSchema from "@/components/seo/BreadcrumbSchema";
 const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://www.cosmodex.in";
 
 export const metadata: Metadata = {
-  title: "Coding Events, Hackathons & Programming Competitions",
+  title: "Coding Events & Competitions for Students",
   description:
-    "Browse upcoming student hackathons, coding contests, and programming challenges on CosmoDex. Compete with peers, win prizes, and level up your skills.",
+    "Explore coding events, student hackathons, and online challenges designed for learners who want to practice, compete, and grow.",
   keywords: [
-    "coding events",
-    "college coding contest",
-    "student hackathons",
-    "hackathons 2025",
-    "online coding competition",
-    "programming contests",
-    "coding challenges with prizes",
-    "competitive programming contests",
-    "free coding competitions",
-    "developer hackathon",
+    "coding battle",
+    "coding challenges online",
+    "coding learning platform",
   ],
   alternates: {
     canonical: `${appUrl}/events`,
   },
   openGraph: {
-    title: "Coding Events, Hackathons & Competitions | CosmoDex",
+    title: "Coding Events & Competitions | CosmoDex",
     description:
-      "Browse upcoming hackathons, coding contests, and programming challenges on CosmoDex. Compete, win prizes, and level up.",
+      "Explore coding events, student hackathons, and online challenges designed for learners who want to practice and compete.",
     url: `${appUrl}/events`,
     siteName: "CosmoDex",
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Coding Events, Hackathons & Competitions | CosmoDex",
+    title: "Coding Events & Competitions | CosmoDex",
     description:
-      "Browse upcoming hackathons, coding contests, and programming challenges on CosmoDex.",
+      "Explore coding events, student hackathons, and online challenges designed for learners who want to practice and compete.",
   },
   robots: {
     index: true,
