@@ -10,6 +10,8 @@ import { type Player, type Scope, type Timeframe } from "@/data/leaderboard";
 import { AVATARS } from "@/lib/avatar";
 import { cn } from "@/lib/utils";
 
+const IS_LEADERBOARD_LIVE = true;
+
 interface LeaderboardEntry {
   rank: number;
   userId: string;
@@ -203,36 +205,33 @@ export default function Leaderboard() {
         </div>
 
         {/* Leaderboard Podium and Table */}
-        {players.length === 0 ? (
-          <div className="mt-10 flex flex-col items-center justify-center p-8 sm:p-12 text-center rounded-3xl border border-white/10 bg-white/[0.03] backdrop-blur-md max-w-lg mx-auto shadow-2xl">
-            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-purple-500/20 to-transparent border border-white/15 flex items-center justify-center mb-4 shadow-[0_0_25px_rgba(168,85,247,0.25)]">
-              <Trophy className="w-8 h-8 text-amber-400" />
-            </div>
-            <h3 className="text-white font-display text-xl font-bold">No Ranked Gladiators Yet</h3>
-            <p className="text-white/60 text-xs sm:text-sm mt-2 max-w-sm leading-relaxed">
-              Be the first to enter the Battle Arena, duel other contenders, and take the #1 spot on the leaderboard!
-            </p>
-            <button
-              onClick={() => router.push('/battle')}
-              className="mt-6 px-7 py-3 rounded-xl bg-gradient-to-r from-[#E873C3] to-[#8D37D6] font-bold text-white text-xs sm:text-sm shadow-[0_0_25px_rgba(232,115,195,0.4)] hover:opacity-90 transition-opacity cursor-pointer flex items-center gap-2"
-            >
-              <Sparkles className="w-4 h-4" />
-              <span>Enter Battle Arena</span>
-            </button>
-          </div>
-        ) : (
-          <div key={`${scope}-${timeframe}`} className="w-full transition-opacity duration-200 ease-out">
-            <section className="mt-6 w-full md:mt-8" aria-label="Top three">
-              <Podium players={top3} />
-            </section>
+        <div key={`${scope}-${timeframe}`} className="w-full transition-opacity duration-200 ease-out">
+          {players.length > 0 ? (
+            <>
+              <section className="mt-6 w-full md:mt-8" aria-label="Top three">
+                <Podium players={top3} />
+              </section>
 
-            {rest.length > 0 && (
               <section className="mt-6 w-full" aria-label="Ranks four and below">
                 <RankTable players={rest} />
               </section>
-            )}
-          </div>
-        )}
+            </>
+          ) : (
+            <div className="mt-12 text-center p-12 rounded-3xl border border-white/10 bg-white/[0.02] backdrop-blur-md max-w-lg mx-auto">
+              <Trophy className="size-12 mx-auto text-yellow-500/50 mb-3" />
+              <h3 className="text-lg font-bold text-white mb-1">No Battle Rankings Yet</h3>
+              <p className="text-sm text-text-secondary mb-6">
+                Be the first gladiator to enter the arena and claim the #1 spot on the leaderboard!
+              </p>
+              <button
+                onClick={() => router.push('/battle')}
+                className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-purple-600 to-pink-600 text-white font-bold text-xs uppercase tracking-wider hover:opacity-90 transition-opacity cursor-pointer"
+              >
+                Enter Battle Arena
+              </button>
+            </div>
+          )}
+        </div>
       </div>
     </main>
   );
