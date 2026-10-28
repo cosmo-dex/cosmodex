@@ -11,6 +11,10 @@ export async function GET(
 
   try {
     const authHeaders = await getEventAuthHeaders(req);
+    const unlockToken = req.headers.get('x-unlock-token');
+    if (unlockToken) {
+      authHeaders['x-unlock-token'] = unlockToken;
+    }
     const targetUrl = `${EVENT_BACKEND_URL}/api/events/${encodeURIComponent(id)}`;
 
     const res = await fetch(targetUrl, {
@@ -18,11 +22,18 @@ export async function GET(
       cache: 'no-store',
     });
 
-    const data = await res.json();
+    const rawText = await res.text();
+    let data: unknown;
+    try {
+      data = JSON.parse(rawText);
+    } catch {
+      data = { error: rawText || res.statusText };
+    }
+
     return NextResponse.json(data, {
       status: res.status,
       headers: {
-        'Cache-Control': 'private, no-cache, no-transform',
+        'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
       },
     });
   } catch (err) {

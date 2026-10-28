@@ -49,8 +49,7 @@ export default async function ProfilePage() {
     avatarUrl = parsed.avatarId || avatarUrl;
   }
 
-  // COST OPTIMIZATION: Comment out expensive DB queries, use session data only
-  if (userId && false) { // Temporarily disabled for cost optimization
+  if (userId) {
     try {
       const [dbUser, arenaStats, battleStats, userBadges] = await Promise.all([
         prisma.users.findUnique({

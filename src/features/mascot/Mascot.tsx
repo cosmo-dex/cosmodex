@@ -175,16 +175,6 @@ export default function Mascot() {
           try {
             const parsed = JSON.parse(dataStr);
 
-            // Log which model/provider responded
-            if (parsed.provider || parsed.model) {
-              console.log(
-                `%c🤖 [Cosmo AI] Responding Provider: %c${parsed.provider || "Unknown"} %c| Model: %c${parsed.model || "Default"}`,
-                "color: #c084fc; font-weight: bold;",
-                "color: #38bdf8; font-weight: bold;",
-                "color: #94a3b8;",
-                "color: #4ade80; font-weight: bold;"
-              );
-            }
 
             if (parsed.token) {
               assistantText += parsed.token;

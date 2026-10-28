@@ -9,11 +9,13 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   Trophy, Users, Clock, ChevronDown, ChevronUp,
   Zap, Star, Hammer, BookOpen, CheckCircle, AlertCircle,
-  UserCheck, Wrench, ArrowLeft, ExternalLink,
+  UserCheck, ArrowLeft, ExternalLink,
   Flame, Award, ShieldCheck, Copy, Check, Send, Sparkles,
-  UsersRound, Globe, Medal, CheckCircle2, Lock, Eye, EyeOff, ShieldAlert, KeyRound
+  UsersRound, Globe, Medal, CheckCircle2, Lock, Eye, EyeOff, ShieldAlert, KeyRound, Code2
 } from 'lucide-react';
 import CosmoDexRegistrationModal, { CosmoDexRegistrationDetails, CosmoDexRegistrationFieldsConfig } from '@/components/events/CosmoDexRegistrationModal';
+import RisingStars from '@/components/RisingStar';
+import Footer from '@/components/landing/Footer';
 
 interface EventRound {
   id: string;
@@ -75,6 +77,7 @@ interface EventDetail {
     assessment_details?: {
       assessment_mode?: string;
       total_questions?: number;
+      duration_minutes?: number;
     };
   };
   is_private?: boolean;
@@ -94,7 +97,7 @@ interface UserRegistration {
   status: string;
   team_name: string | null;
   team_code: string | null;
-  team_members_json: { userId?: string; username: string; joinedAt?: string }[] | null;
+  team_members_json: { userId?: string; username?: string; email?: string; role?: string; joinedAt?: string }[] | null;
   submission_url: string | null;
   submission_details_json?: { demo_url?: string; video_url?: string; tech_stack?: string; description?: string; submitted_at?: string } | null;
 }
@@ -188,6 +191,7 @@ export default function EventDetailPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          secret: secretPassInput.trim(),
           secret_id: secretIdInput.trim() || event?.secret_id || "",
           secret_password: secretPassInput.trim(),
         }),
@@ -203,6 +207,9 @@ export default function EventDetailPage() {
           if (data.event_id && data.event_id !== eventId) {
             sessionStorage.setItem(`event_unlock_${data.event_id}`, data.unlock_token);
           }
+        }
+        if (data.event) {
+          setEvent(data.event);
         }
         setShowUnlockModal(false);
         setRegMsg("🔓 Event unlocked successfully! You can now register.");
@@ -223,7 +230,13 @@ export default function EventDetailPage() {
   };
 
   const fetchEvent = useCallback(() => {
-    fetch(`/api/events/${eventId}`)
+    const token = unlockToken || (typeof window !== 'undefined' ? sessionStorage.getItem(`event_unlock_${eventId}`) : '');
+    const headers: Record<string, string> = {};
+    if (token) {
+      headers['x-unlock-token'] = token;
+    }
+
+    fetch(`/api/events/${eventId}`, { headers })
       .then(r => r.json())
       .then(data => {
         if (data.event) {
@@ -234,7 +247,7 @@ export default function EventDetailPage() {
       })
       .catch(() => { })
       .finally(() => setLoading(false));
-  }, [eventId]);
+  }, [eventId, unlockToken]);
 
   useEffect(() => {
     fetchEvent();
@@ -361,60 +374,184 @@ export default function EventDetailPage() {
 
   const hasSubmitted = Boolean(userRegistration?.submission_url);
 
+  const modernHeadingStyle: React.CSSProperties = {
+    fontFamily: 'var(--font-display), "Hitchcut", sans-serif',
+    letterSpacing: '0.04em',
+  };
+
+  const formatPrize = (val: string | null | undefined): string => {
+    if (!val) return 'Rewards & Perks';
+    const trimmed = val.trim();
+    if (/^\d+$/.test(trimmed)) {
+      return '₹' + Number(trimmed).toLocaleString('en-IN');
+    }
+    return trimmed;
+  };
+
+
+  const formatDisplayDateTime = (val: string | null | undefined): string => {
+    if (!val) return 'TBA';
+    try {
+      const d = new Date(val);
+      if (isNaN(d.getTime())) return val;
+      const dateStr = d.toLocaleDateString('en-IN', {
+        day: 'numeric',
+        month: 'short',
+        year: 'numeric',
+      });
+      const hours = d.getHours();
+      const minutes = d.getMinutes();
+      if (hours !== 0 || minutes !== 0) {
+        const timeStr = d.toLocaleTimeString('en-IN', {
+          hour: '2-digit',
+          minute: '2-digit',
+          hour12: true,
+        });
+        return `${dateStr} • ${timeStr}`;
+      }
+      return dateStr;
+    } catch {
+      return val;
+    }
+  };
+
   return (
-    <div className="min-h-screen bg-[#06020f] text-white">
+    <div className="relative min-h-screen bg-[#050508] text-white flex flex-col font-sans overflow-x-hidden">
       <Navbar />
 
+      {/* ── Deep Space Cosmic Background FX ── */}
+      <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden bg-[#050508]">
+        <div className="absolute inset-0 bg-[#050508]" />
+        <div className="absolute -top-32 -left-32 w-[600px] h-[600px] bg-[radial-gradient(ellipse,rgba(124,58,237,0.22)_0%,transparent_70%)]" />
+        <div className="absolute bottom-0 right-0 w-[500px] h-[500px] bg-[radial-gradient(ellipse,rgba(232,115,195,0.12)_0%,transparent_70%)]" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[400px] bg-[radial-gradient(ellipse,rgba(141,55,214,0.08)_0%,transparent_70%)]" />
+
+        {/* Shooting Stars Animations */}
+        <motion.div
+          className="absolute h-[1px] bg-gradient-to-r from-transparent via-white to-transparent shadow-[0_0_8px_rgba(255,255,255,0.8)]"
+          style={{ width: '150px', rotate: -35, top: '10%', right: '-10%' }}
+          animate={{ x: [0, -1200], y: [0, 800], opacity: [0, 1, 0] }}
+          transition={{ duration: 2.5, repeat: Infinity, repeatDelay: 4, ease: 'linear' }}
+        />
+        <motion.div
+          className="absolute h-[1px] bg-gradient-to-r from-transparent via-[#00FFE9] to-transparent shadow-[0_0_10px_rgba(0,255,233,0.8)]"
+          style={{ width: '120px', rotate: -35, top: '35%', right: '-5%' }}
+          animate={{ x: [0, -1100], y: [0, 750], opacity: [0, 0.8, 0] }}
+          transition={{ duration: 2.2, repeat: Infinity, repeatDelay: 7, ease: 'linear' }}
+        />
+        <motion.div
+          className="absolute h-[1px] bg-gradient-to-r from-transparent via-[#E873C3] to-transparent shadow-[0_0_10px_rgba(232,115,195,0.9)]"
+          style={{ width: '180px', rotate: -35, top: '-5%', right: '25%' }}
+          animate={{ x: [0, -1400], y: [0, 950], opacity: [0, 1, 0] }}
+          transition={{ duration: 3, repeat: Infinity, repeatDelay: 10, ease: 'linear' }}
+        />
+        <RisingStars size={600} speed={1.8} />
+      </div>
+
       {/* Hero Banner */}
-      <div className="relative h-72 md:h-96 overflow-hidden pt-16">
+      <div className="relative z-10 w-full overflow-hidden pt-24 pb-8 sm:pt-28 sm:pb-12 border-b border-white/[0.06]">
         {event.banner_url ? (
-          <Image
-            src={event.banner_url}
-            alt={event.title}
-            fill
-            priority
-            sizes="100vw"
-            className="object-cover"
-          />
+          <div className="absolute inset-0 z-0">
+            <Image
+              src={event.banner_url}
+              alt={event.title}
+              fill
+              priority
+              sizes="100vw"
+              className="object-cover opacity-35"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-[#050508] via-[#050508]/85 to-[#050508]/45" />
+          </div>
         ) : (
-          <div className="absolute inset-0" style={{ background: `linear-gradient(135deg, ${typeMeta.color}25 0%, #8D37D625 50%, #06020f 100%)` }} />
+          <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none">
+            <div className="absolute inset-0 bg-gradient-to-b from-[#09041a] via-[#070314] to-[#050508]" />
+            <div
+              className="absolute -top-24 -left-24 w-[36rem] h-[36rem] rounded-full blur-[140px] opacity-30"
+              style={{ background: typeMeta.color }}
+            />
+            <div
+              className="absolute top-10 right-0 w-[32rem] h-[32rem] bg-gradient-to-br from-[#8D37D6]/25 via-[#E873C3]/15 to-transparent rounded-full blur-[140px]"
+            />
+            <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(255,255,255,0.06)_1px,transparent_1px)] [background-size:28px_28px] opacity-40" />
+          </div>
         )}
-        <div className="absolute inset-0 bg-gradient-to-t from-[#06020f] via-[#06020f]/70 to-transparent" />
 
-        {/* Back button */}
-        <div className="absolute top-20 left-6 sm:left-10 z-10">
-          <button onClick={() => router.push('/events')} className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-black/40 border border-white/10 text-white/70 hover:text-white text-xs font-bold transition-all backdrop-blur-md">
-            <ArrowLeft size={13} /> Back to Events
-          </button>
-        </div>
-
-        {/* Hero Content */}
-        <div className="absolute bottom-6 left-6 sm:left-10 right-6 sm:right-10 flex flex-col gap-3">
-          <div className="flex items-center gap-2 flex-wrap">
-            <span
-              className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold backdrop-blur-md"
-              style={{ color: typeMeta.color, background: `${typeMeta.color}20`, border: `1px solid ${typeMeta.color}40` }}
+        <div className="relative z-10 max-w-6xl mx-auto px-6 sm:px-10 flex flex-col gap-4">
+          {/* Breadcrumb / Back Navigation */}
+          <div className="flex items-center gap-2 text-xs font-semibold text-white/50 mb-1">
+            <button
+              onClick={() => router.push('/events')}
+              className="hover:text-white transition-colors flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/[0.04] border border-white/10 hover:border-white/20 backdrop-blur-md cursor-pointer"
             >
-              <TypeIcon size={12} />{typeMeta.label}
+              <ArrowLeft size={13} />
+              <span>Back to Events</span>
+            </button>
+            <span className="text-white/20">/</span>
+            <span className="text-white/60 truncate max-w-xs">{event.title}</span>
+          </div>
+
+          {/* Badges Bar */}
+          <div className="flex items-center gap-2.5 flex-wrap">
+            <span
+              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold backdrop-blur-md shadow-sm"
+              style={{ color: typeMeta.color, background: `${typeMeta.color}18`, border: `1px solid ${typeMeta.color}45` }}
+            >
+              <TypeIcon size={13} />
+              {typeMeta.label}
             </span>
-            <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase backdrop-blur-md ${isOngoing ? 'text-[#E873C3] bg-[#E873C3]/15 border border-[#E873C3]/40' :
-              isEnded ? 'text-white/40 bg-white/[0.06] border border-white/10' :
-                'text-[#3DCB7F] bg-[#3DCB7F]/15 border border-[#3DCB7F]/40'
-              }`}>
-              {isOngoing ? '🔴 LIVE NOW' : isEnded ? 'Ended' : '📋 Upcoming'}
+            <span
+              className={`px-3.5 py-1.5 rounded-full text-xs font-bold uppercase backdrop-blur-md flex items-center gap-1.5 ${
+                isOngoing
+                  ? 'text-[#E873C3] bg-[#E873C3]/15 border border-[#E873C3]/40 shadow-[0_0_12px_rgba(232,115,195,0.3)]'
+                  : isEnded
+                  ? 'text-white/40 bg-white/[0.06] border border-white/10'
+                  : 'text-[#3DCB7F] bg-[#3DCB7F]/15 border border-[#3DCB7F]/40'
+              }`}
+            >
+              <span className={`w-1.5 h-1.5 rounded-full ${isOngoing ? 'bg-[#E873C3] animate-ping' : isEnded ? 'bg-white/40' : 'bg-[#3DCB7F]'}`} />
+              {isOngoing ? 'Live Now' : isEnded ? 'Ended' : 'Upcoming'}
             </span>
-            {hasSubmitted && (
-              <span className="px-3 py-1 rounded-full text-xs font-bold bg-[#3DCB7F]/15 text-[#3DCB7F] border border-[#3DCB7F]/40 backdrop-blur-md flex items-center gap-1">
-                <CheckCircle2 size={12} /> Submitted
+            {event.is_private && (
+              <span className="px-3.5 py-1.5 rounded-full text-xs font-bold text-amber-300 bg-amber-500/15 border border-amber-500/40 backdrop-blur-md flex items-center gap-1.5 shadow-[0_0_12px_rgba(245,166,35,0.25)]">
+                <Lock size={12} className="text-amber-300" />
+                Private Event
               </span>
             )}
-            <span className="px-3 py-1 rounded-full text-xs font-bold text-white/60 bg-white/[0.05] border border-white/10 backdrop-blur-md flex items-center gap-1">
-              {isTeam ? <><UsersRound size={12} /> Team Event ({event.min_team_size || 1}-{event.max_team_size || 4} members)</> : <><UserCheck size={12} /> Individual Participation</>}
+            {hasSubmitted && (
+              <span className="px-3.5 py-1.5 rounded-full text-xs font-bold bg-[#3DCB7F]/15 text-[#3DCB7F] border border-[#3DCB7F]/40 backdrop-blur-md flex items-center gap-1.5">
+                <CheckCircle2 size={12} />
+                Submitted
+              </span>
+            )}
+            <span className="px-3.5 py-1.5 rounded-full text-xs font-bold text-white/75 bg-white/[0.05] border border-white/10 backdrop-blur-md flex items-center gap-1.5">
+              {isTeam ? (
+                <>
+                  <UsersRound size={13} className="text-purple-300" /> Team Event ({event.min_team_size || 1}-{event.max_team_size || 4} members)
+                </>
+              ) : (
+                <>
+                  <UserCheck size={13} className="text-cyan-300" /> Individual Participation
+                </>
+              )}
             </span>
           </div>
 
-          <h1 className="text-3xl md:text-5xl font-black text-white leading-tight">{event.title}</h1>
-          {event.tagline && <p className="text-white/60 text-sm md:text-base max-w-3xl">{event.tagline}</p>}
+          {/* Title */}
+          <h1
+            className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-black text-white leading-tight drop-shadow-xl"
+            style={modernHeadingStyle}
+          >
+            {event.title}
+          </h1>
+
+          {/* Tagline */}
+          {event.tagline ? (
+            <p className="text-white/75 text-sm md:text-base max-w-3xl leading-relaxed font-sans">{event.tagline}</p>
+          ) : (
+            <p className="text-white/50 text-xs sm:text-sm max-w-2xl font-sans">
+              Compete, learn, and test your skills in this official CosmoDex platform event.
+            </p>
+          )}
         </div>
       </div>
 
@@ -436,7 +573,7 @@ export default function EventDetailPage() {
               <div>
                 <div className="flex items-center gap-2 mb-1">
                   <span className="w-2.5 h-2.5 rounded-full bg-[#4ECDC4] animate-pulse" />
-                  <h3 className="font-black text-xl text-white">Contest is Live — Enter Contest Arena!</h3>
+                  <h3 className="font-black text-xl text-white" style={modernHeadingStyle}>Contest is Live — Enter Contest Arena!</h3>
                 </div>
                 <p className="text-sm text-white/80">You are registered. The coding environment is active. Solve MCQs & Coding Problems in CosmoDex IDE.</p>
               </div>
@@ -453,40 +590,65 @@ export default function EventDetailPage() {
         </div>
       )}
 
-      
       {/* 🔒 PRIVATE EVENT LOCKED ACCESS BANNER */}
       {event.is_private && !isRegistered && !isUnlocked && (
         <div className="max-w-6xl mx-auto px-6 sm:px-10 mt-6">
           <div
-            className="relative overflow-hidden rounded-2xl p-6 border flex flex-col md:flex-row items-center justify-between gap-6"
+            className="relative overflow-hidden rounded-3xl p-6 sm:p-7 border flex flex-col md:flex-row items-center justify-between gap-6 backdrop-blur-2xl group transition-all"
             style={{
-              background: 'linear-gradient(135deg, rgba(245,166,35,0.12), rgba(141,55,214,0.12))',
-              borderColor: 'rgba(245,166,35,0.4)',
-              boxShadow: '0 0 35px rgba(245,166,35,0.2)',
+              background: 'radial-gradient(ellipse at top left, rgba(245, 166, 35, 0.16) 0%, rgba(141, 55, 214, 0.12) 45%, rgba(10, 6, 24, 0.96) 100%)',
+              borderColor: 'rgba(245, 166, 35, 0.45)',
+              boxShadow: '0 16px 48px rgba(0, 0, 0, 0.7), 0 0 35px rgba(245, 166, 35, 0.18), inset 0 1px 0 rgba(255, 255, 255, 0.15)',
             }}
           >
-            <div className="flex items-center gap-4">
-              <div className="w-14 h-14 rounded-2xl bg-amber-500/20 border border-amber-500/40 flex items-center justify-center shrink-0">
-                <Lock size={28} className="text-amber-400 animate-pulse" />
-              </div>
-              <div>
-                <div className="flex items-center gap-2 mb-1">
-                  <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-amber-500/20 text-amber-300 border border-amber-500/40">
-                    Restricted Access
-                  </span>
-                  <h3 className="font-black text-xl text-white">Private Event Portal Locked</h3>
+            {/* Ambient cyber grid glow */}
+            <div className="absolute inset-0 bg-[radial-gradient(#F5A623_1px,transparent_1px)] [background-size:24px_24px] opacity-[0.06] pointer-events-none" />
+            <div className="absolute -top-24 -left-24 w-56 h-56 bg-amber-500/20 rounded-full blur-3xl pointer-events-none" />
+            <div className="absolute -bottom-24 -right-24 w-56 h-56 bg-purple-600/20 rounded-full blur-3xl pointer-events-none" />
+
+            <div className="flex items-center gap-5 relative z-10 w-full md:w-auto">
+              <div className="relative shrink-0">
+                <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-amber-500/25 to-purple-600/25 border border-amber-500/50 flex items-center justify-center text-amber-300 shadow-[0_0_25px_rgba(245,166,35,0.35)] backdrop-blur-md">
+                  <Lock size={28} className="text-amber-300 animate-pulse" />
                 </div>
-                <p className="text-sm text-white/80">
-                  This event is private and requires a Secret Access ID & Password to unlock registration and full access.
+                <span className="absolute -top-1 -right-1 flex h-3 w-3">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75" />
+                  <span className="relative inline-flex rounded-full h-3 w-3 bg-amber-500" />
+                </span>
+              </div>
+
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 mb-1.5 flex-wrap">
+                  <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-widest bg-amber-500/20 text-amber-300 border border-amber-500/40 shadow-[0_0_12px_rgba(245,166,35,0.2)]">
+                    <ShieldAlert size={11} /> Restricted Access
+                  </span>
+                  {event.secret_id && (
+                    <span className="text-[11px] text-amber-200/80 font-mono bg-white/[0.04] px-2 py-0.5 rounded border border-white/10">
+                      ID: {event.secret_id}
+                    </span>
+                  )}
+                </div>
+                <h2
+                  className="text-xl sm:text-2xl font-black text-white tracking-tight leading-snug"
+                  style={modernHeadingStyle}
+                >
+                  Private Event Portal Locked
+                </h2>
+                <p className="text-xs sm:text-sm text-white/70 mt-1 max-w-xl leading-relaxed font-sans">
+                  This contest is invite-only. Enter the <strong className="text-amber-300 font-semibold">Secret Access ID</strong> & <strong className="text-amber-300 font-semibold">Passcode</strong> provided by your host to unlock registration and the contest arena.
                 </p>
               </div>
             </div>
+
             <button
               onClick={() => setShowUnlockModal(true)}
-              className="px-6 py-3 rounded-xl font-black text-sm text-white flex items-center gap-2 shrink-0 transition-all shadow-lg hover:scale-105 cursor-pointer"
-              style={{ background: 'linear-gradient(135deg,#F5A623,#8D37D6)', boxShadow: '0 4px 20px rgba(245,166,35,0.4)' }}
+              className="relative z-10 w-full md:w-auto px-6 py-3.5 rounded-xl font-bold text-sm text-white flex items-center justify-center gap-2.5 shrink-0 transition-all shadow-xl hover:scale-105 active:scale-95 cursor-pointer group/btn"
+              style={{
+                background: 'linear-gradient(135deg, #F5A623 0%, #D95FD1 50%, #8D37D6 100%)',
+                boxShadow: '0 4px 25px rgba(245, 166, 35, 0.45), 0 0 15px rgba(217, 95, 209, 0.3)',
+              }}
             >
-              <KeyRound size={16} />
+              <KeyRound size={16} className="text-amber-200 group-hover/btn:rotate-12 transition-transform duration-300" />
               <span>Unlock Event With Passcode</span>
             </button>
           </div>
@@ -551,29 +713,38 @@ export default function EventDetailPage() {
               {activeTab === 'about' && (
                 <div className="flex flex-col gap-6">
                   {/* Highlights cards */}
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                    <div className="bg-white/[0.02] border border-white/[0.06] rounded-xl p-3.5">
-                      <p className="text-[10px] font-bold text-white/30 uppercase tracking-wider mb-1">Participation</p>
-                      <p className="text-sm font-bold text-white flex items-center gap-1">
-                        {isTeam ? <><UsersRound size={13} className="text-[#E873C3]" /> Team ({event.min_team_size || 1}-{event.max_team_size || 4})</> : <><UserCheck size={13} className="text-[#3DCB7F]" /> Individual</>}
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3.5">
+                    <div className="bg-gradient-to-b from-white/[0.05] to-white/[0.01] border border-white/[0.08] hover:border-white/20 transition-all rounded-2xl p-4 shadow-lg backdrop-blur-md">
+                      <p className="text-[10px] font-bold text-white/40 uppercase tracking-widest mb-1.5 flex items-center gap-1">
+                        Participation
+                      </p>
+                      <p className="text-sm font-bold text-white flex items-center gap-2">
+                        {isTeam ? (
+                          <><span className="p-1.5 rounded-lg bg-[#E873C3]/15 text-[#E873C3] shrink-0"><UsersRound size={14} /></span> Team ({event.min_team_size || 1}-{event.max_team_size || 4})</>
+                        ) : (
+                          <><span className="p-1.5 rounded-lg bg-[#3DCB7F]/15 text-[#3DCB7F] shrink-0"><UserCheck size={14} /></span> Individual</>
+                        )}
                       </p>
                     </div>
-                    <div className="bg-white/[0.02] border border-white/[0.06] rounded-xl p-3.5">
-                      <p className="text-[10px] font-bold text-white/30 uppercase tracking-wider mb-1">Eligibility</p>
-                      <p className="text-sm font-bold text-white flex items-center gap-1">
-                        <Globe size={13} className="text-[#4ECDC4]" /> {event.eligibility ?? 'Open to All'}
+                    <div className="bg-gradient-to-b from-white/[0.05] to-white/[0.01] border border-white/[0.08] hover:border-white/20 transition-all rounded-2xl p-4 shadow-lg backdrop-blur-md">
+                      <p className="text-[10px] font-bold text-white/40 uppercase tracking-widest mb-1.5">Eligibility</p>
+                      <p className="text-sm font-bold text-white flex items-center gap-2 truncate">
+                        <span className="p-1.5 rounded-lg bg-[#4ECDC4]/15 text-[#4ECDC4] shrink-0"><Globe size={14} /></span>
+                        <span className="truncate">{event.eligibility ?? 'Open to All'}</span>
                       </p>
                     </div>
-                    <div className="bg-white/[0.02] border border-white/[0.06] rounded-xl p-3.5">
-                      <p className="text-[10px] font-bold text-white/30 uppercase tracking-wider mb-1">Fee</p>
-                      <p className="text-sm font-bold text-[#3DCB7F] flex items-center gap-1">
-                        <ShieldCheck size={13} /> {event.registration_fee ?? 'Free'}
+                    <div className="bg-gradient-to-b from-white/[0.05] to-white/[0.01] border border-white/[0.08] hover:border-white/20 transition-all rounded-2xl p-4 shadow-lg backdrop-blur-md">
+                      <p className="text-[10px] font-bold text-white/40 uppercase tracking-widest mb-1.5">Fee</p>
+                      <p className="text-sm font-bold text-[#3DCB7F] flex items-center gap-2">
+                        <span className="p-1.5 rounded-lg bg-[#3DCB7F]/15 text-[#3DCB7F] shrink-0"><ShieldCheck size={14} /></span>
+                        {event.registration_fee ?? 'Free'}
                       </p>
                     </div>
-                    <div className="bg-white/[0.02] border border-white/[0.06] rounded-xl p-3.5">
-                      <p className="text-[10px] font-bold text-white/30 uppercase tracking-wider mb-1">Prize Pool</p>
-                      <p className="text-sm font-bold text-[#FFD700] flex items-center gap-1">
-                        <Trophy size={13} /> {event.prize_pool || 'Rewards & Perks'}
+                    <div className="bg-gradient-to-b from-white/[0.05] to-white/[0.01] border border-white/[0.08] hover:border-white/20 transition-all rounded-2xl p-4 shadow-lg backdrop-blur-md">
+                      <p className="text-[10px] font-bold text-white/40 uppercase tracking-widest mb-1.5">Prize Pool</p>
+                      <p className="text-sm font-black text-[#FFD700] flex items-center gap-2">
+                        <span className="p-1.5 rounded-lg bg-[#FFD700]/15 text-[#FFD700] shrink-0"><Trophy size={14} /></span>
+                        {formatPrize(event.prize_pool)}
                       </p>
                     </div>
                   </div>
@@ -581,7 +752,7 @@ export default function EventDetailPage() {
                   {/* Description */}
                   {event.description && (
                     <div className="bg-white/[0.02] border border-white/[0.06] rounded-2xl p-6 flex flex-col gap-3">
-                      <h2 className="text-xs font-bold text-white/30 uppercase tracking-widest">About the Event</h2>
+                      <h2 className="text-xs font-bold text-white/30 uppercase tracking-widest" style={modernHeadingStyle}>About the Event</h2>
                       <div className="text-sm text-white/80 leading-relaxed whitespace-pre-line">{event.description}</div>
                     </div>
                   )}
@@ -589,7 +760,7 @@ export default function EventDetailPage() {
                   {/* Hackathon Problem Statements / Tracks */}
                   {submissionConfig?.hackathon_details?.tracks && submissionConfig.hackathon_details.tracks.length > 0 && (
                     <div className="bg-white/[0.02] border border-white/[0.06] rounded-2xl p-6 flex flex-col gap-4">
-                      <h2 className="text-xs font-bold text-[#E873C3] uppercase tracking-widest flex items-center gap-2">
+                      <h2 className="text-xs font-bold text-[#E873C3] uppercase tracking-widest flex items-center gap-2" style={modernHeadingStyle}>
                         <Sparkles size={14} /> Hackathon Tracks & Challenges
                       </h2>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -609,7 +780,7 @@ export default function EventDetailPage() {
                   {/* Judging Rubrics */}
                   {event.submission_config?.hackathon_details?.judging_criteria && event.submission_config.hackathon_details.judging_criteria.length > 0 && (
                     <div className="bg-white/[0.02] border border-white/[0.06] rounded-2xl p-6 flex flex-col gap-4">
-                      <h3 className="text-xs font-bold text-[#4ECDC4] uppercase tracking-widest flex items-center gap-2">
+                      <h3 className="text-xs font-bold text-[#4ECDC4] uppercase tracking-widest flex items-center gap-2" style={modernHeadingStyle}>
                         <Award size={14} /> Judging Rubrics & Criteria
                       </h3>
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
@@ -628,17 +799,41 @@ export default function EventDetailPage() {
 
                   {/* Coding Contest Assessment Details */}
                   {event.event_type === 'coding_contest' && event.submission_config?.assessment_details && (
-                    <div className="bg-[#4ECDC4]/[0.04] border border-[#4ECDC4]/30 rounded-2xl p-6 flex flex-col gap-4">
-                      <div className="flex items-center justify-between">
-                        <h3 className="text-xs font-bold text-[#4ECDC4] uppercase tracking-widest flex items-center gap-2">
-                          <Wrench size={14} /> Contest Assessment Format
-                        </h3>
-                        <span className="text-xs font-bold text-[#4ECDC4] bg-[#4ECDC4]/10 px-3 py-1 rounded-full border border-[#4ECDC4]/30 uppercase">
-                          {event.submission_config.assessment_details.assessment_mode?.replace('_', ' ') || 'Coding & MCQ'}
-                        </span>
+                    <div className="relative overflow-hidden bg-gradient-to-br from-[#4ECDC4]/[0.08] via-purple-950/20 to-black/40 border border-[#4ECDC4]/30 rounded-2xl p-6 flex flex-col gap-3.5 shadow-xl backdrop-blur-md">
+                      <div className="flex items-center justify-between flex-wrap gap-2">
+                        <div className="flex items-center gap-2.5">
+                          <div className="w-8 h-8 rounded-lg bg-[#4ECDC4]/15 border border-[#4ECDC4]/30 flex items-center justify-center text-[#4ECDC4]">
+                            <Code2 size={16} />
+                          </div>
+                          <span
+                            className="text-sm font-bold text-[#4ECDC4] tracking-wide"
+                            style={modernHeadingStyle}
+                          >
+                            Contest Assessment Format
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          {event.submission_config.assessment_details.duration_minutes && (
+                            <span className="text-xs font-semibold text-white/70 bg-white/[0.05] px-2.5 py-1 rounded-full border border-white/10 flex items-center gap-1.5">
+                              <Clock size={12} className="text-[#4ECDC4]" />
+                              {event.submission_config.assessment_details.duration_minutes} Mins
+                            </span>
+                          )}
+                          <span className="text-xs font-bold text-[#4ECDC4] bg-[#4ECDC4]/15 px-3 py-1 rounded-full border border-[#4ECDC4]/40 uppercase tracking-wider">
+                            {event.submission_config.assessment_details.assessment_mode?.replace('_', ' ') || 'Coding & MCQ'}
+                          </span>
+                        </div>
                       </div>
-                      <p className="text-xs text-white/70 leading-relaxed">
-                        This contest will feature {event.submission_config.assessment_details.total_questions || 0} questions evaluated automatically in CosmoDex&apos;s online IDE.
+                      <p className="text-xs sm:text-sm text-white/80 leading-relaxed font-sans">
+                        {event.submission_config.assessment_details.total_questions && event.submission_config.assessment_details.total_questions > 0 ? (
+                          <>
+                            This contest features <strong className="text-white font-bold">{event.submission_config.assessment_details.total_questions} challenge{event.submission_config.assessment_details.total_questions > 1 ? 's' : ''}</strong> evaluated in real-time in CosmoDex&apos;s online IDE.
+                          </>
+                        ) : (
+                          <>
+                            This contest features interactive challenges evaluated in real-time in CosmoDex&apos;s online IDE. Specific problems and IDE environment will activate when the arena opens.
+                          </>
+                        )}
                       </p>
                     </div>
                   )}
@@ -676,16 +871,25 @@ export default function EventDetailPage() {
 
                       {userRegistration.team_members_json && userRegistration.team_members_json.length > 0 && (
                         <div className="flex flex-col gap-1.5 mt-1">
-                          <p className="text-xs font-bold text-white/40">Team Members ({userRegistration.team_members_json.length + 1}):</p>
+                          <p className="text-xs font-bold text-white/40">Team Members ({userRegistration.team_members_json.length}):</p>
                           <div className="flex flex-wrap gap-2">
-                            <span className="px-2.5 py-1 rounded-lg bg-white/10 border border-white/15 text-xs text-white font-bold flex items-center gap-1">
-                              👑 Leader (You)
-                            </span>
-                            {userRegistration.team_members_json.map((m, idx) => (
-                              <span key={idx} className="px-2.5 py-1 rounded-lg bg-white/[0.06] border border-white/10 text-xs text-white/70">
-                                {m.username}
-                              </span>
-                            ))}
+                            {userRegistration.team_members_json.map((m, idx) => {
+                              const isMe = m.email === userEmail || m.username === userName;
+                              const isLeader = m.role === 'leader' || idx === 0;
+                              return (
+                                <span
+                                  key={idx}
+                                  className={`px-2.5 py-1 rounded-lg text-xs font-bold flex items-center gap-1 ${
+                                    isLeader
+                                      ? 'bg-amber-500/15 border border-amber-500/30 text-amber-300'
+                                      : 'bg-white/[0.06] border border-white/10 text-white/80'
+                                  }`}
+                                >
+                                  {isLeader ? '👑' : '👤'} {m.username || m.email?.split('@')[0] || `Member ${idx + 1}`}
+                                  {isMe && ' (You)'}
+                                </span>
+                              );
+                            })}
                           </div>
                         </div>
                       )}
@@ -695,7 +899,7 @@ export default function EventDetailPage() {
                   {/* Sponsors */}
                   {event.sponsors_json && (event.sponsors_json as { name: string; tier: string }[]).length > 0 && (
                     <div className="bg-white/[0.02] border border-white/[0.06] rounded-2xl p-6">
-                      <h2 className="text-xs font-bold text-white/30 uppercase tracking-widest mb-4">Sponsors & Partners</h2>
+                      <h2 className="text-xs font-bold text-white/30 uppercase tracking-widest mb-4" style={modernHeadingStyle}>Sponsors & Partners</h2>
                       <div className="flex flex-wrap gap-3">
                         {(event.sponsors_json as { name: string; tier: string }[]).map((sp, i) => (
                           <div key={i} className="px-4 py-2.5 rounded-xl bg-white/[0.04] border border-white/[0.08] text-sm font-bold text-white/80">
@@ -714,7 +918,7 @@ export default function EventDetailPage() {
                 <div className="flex flex-col gap-6">
                   {event.rounds_json && event.rounds_json.length > 0 ? (
                     <div className="flex flex-col gap-4">
-                      <h2 className="text-xs font-bold text-white/30 uppercase tracking-widest">Event Rounds</h2>
+                      <h2 className="text-xs font-bold text-white/30 uppercase tracking-widest" style={modernHeadingStyle}>Event Rounds</h2>
                       <div className="flex flex-col gap-3">
                         {event.rounds_json.map((r, i) => (
                           <div key={r.id || i} className="bg-white/[0.02] border border-white/[0.06] rounded-2xl p-5 flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -723,7 +927,7 @@ export default function EventDetailPage() {
                                 R{i + 1}
                               </div>
                               <div>
-                                <h3 className="font-bold text-white text-base">{r.title}</h3>
+                                <h3 className="font-bold text-white text-base" style={modernHeadingStyle}>{r.title}</h3>
                                 <p className="text-xs text-white/60 mt-0.5">{r.description}</p>
                                 <span className="inline-block mt-2 px-2.5 py-0.5 rounded-md bg-white/[0.04] border border-white/10 text-[10px] uppercase font-bold text-white/50">
                                   Type: {r.type}
@@ -810,8 +1014,8 @@ export default function EventDetailPage() {
                             <div className="w-12 h-12 rounded-full flex items-center justify-center" style={{ background: `${meta.border}20`, border: `1px solid ${meta.border}60` }}>
                               <Icon size={24} style={{ color: meta.text }} />
                             </div>
-                            <h3 className="font-black text-lg text-white">{prize.rank}</h3>
-                            <p className="text-xl font-black" style={{ color: meta.text }}>{prize.prize}</p>
+                            <h3 className="font-black text-lg text-white" style={modernHeadingStyle}>{prize.rank}</h3>
+                            <p className="text-xl font-black font-mono" style={{ color: meta.text }}>{formatPrize(prize.prize)}</p>
                             {prize.perks && <p className="text-xs text-white/60 border-t border-white/10 pt-2 w-full">{prize.perks}</p>}
                             {prize.badge_name && (
                               <span className="text-[10px] font-bold uppercase px-2.5 py-1 rounded-full bg-white/10 text-white/70 border border-white/10">
@@ -825,8 +1029,8 @@ export default function EventDetailPage() {
                   ) : (
                     <div className="bg-white/[0.02] border border-white/[0.06] rounded-2xl p-6 text-center flex flex-col items-center gap-3">
                       <Trophy size={40} className="text-[#FFD700]" />
-                      <h3 className="font-black text-xl text-white">Prize Pool: {event.prize_pool || 'Perks & Badges'}</h3>
-                      <p className="text-xs text-white/50 max-w-md">Top performers will receive certificates, CosmoDex XP points, and platform badges upon completion.</p>
+                      <h3 className="font-black text-xl text-white" style={modernHeadingStyle}>Prize Pool: {formatPrize(event.prize_pool)}</h3>
+                      <p className="text-xs text-white/50 max-w-md font-sans">Top performers will receive certificates, CosmoDex XP points, and platform badges upon completion.</p>
                     </div>
                   )}
                 </div>
@@ -835,14 +1039,14 @@ export default function EventDetailPage() {
               {/* TAB 4: RULES */}
               {activeTab === 'rules' && (
                 <div className="bg-white/[0.02] border border-white/[0.06] rounded-2xl p-6">
-                  <h2 className="text-xs font-bold text-white/30 uppercase tracking-widest mb-4">Rules & Guidelines</h2>
+                  <h2 className="text-xs font-bold text-white/40 uppercase tracking-widest mb-4" style={modernHeadingStyle}>Rules & Guidelines</h2>
                   {!event.rules_json || (event.rules_json as string[]).length === 0 ? (
                     <p className="text-white/30 text-sm">Standard CosmoDex competition rules apply.</p>
                   ) : (
-                    <ol className="flex flex-col gap-3">
+                    <ol className="flex flex-col gap-3 font-sans">
                       {(event.rules_json as string[]).map((rule, i) => (
                         <li key={i} className="flex gap-3 text-sm text-white/70">
-                          <span className="text-[#E873C3] font-black shrink-0 w-6 text-right">{i + 1}.</span>
+                          <span className="text-[#E873C3] font-black shrink-0 w-6 text-right font-mono">{i + 1}.</span>
                           <span className="leading-relaxed">{rule}</span>
                         </li>
                       ))}
@@ -854,14 +1058,14 @@ export default function EventDetailPage() {
               {activeTab === 'leaderboard' && (
                 <div className="bg-white/[0.02] border border-white/[0.06] rounded-2xl overflow-hidden">
                   <div className="px-6 py-4 border-b border-white/[0.06] flex items-center justify-between">
-                    <h2 className="text-xs font-bold text-white/30 uppercase tracking-widest">Official Leaderboard</h2>
+                    <h2 className="text-xs font-bold text-white/40 uppercase tracking-widest" style={modernHeadingStyle}>Official Leaderboard</h2>
                     <span className="text-xs text-white/40">{leaderboard.length > 0 ? `${leaderboard.length} ranked entries` : 'Live Standings'}</span>
                   </div>
                   {leaderboard.length === 0 ? (
                     <div className="py-16 text-center flex flex-col items-center gap-3">
                       <Trophy size={36} className="text-white/20 mx-auto mb-1" />
-                      <h3 className="text-sm font-bold text-white/80">No Standings Recorded Yet</h3>
-                      <p className="text-white/40 text-xs max-w-sm">Participants and scores will appear on the leaderboard as soon as submissions are made.</p>
+                      <h3 className="text-sm font-bold text-white/80" style={modernHeadingStyle}>No Standings Recorded Yet</h3>
+                      <p className="text-white/40 text-xs max-w-sm font-sans">Participants and scores will appear on the leaderboard as soon as submissions are made.</p>
                     </div>
                   ) : (
                     <div className="divide-y divide-white/[0.04]">
@@ -874,7 +1078,7 @@ export default function EventDetailPage() {
 
                         return (
                           <div key={i} className={`flex items-center gap-4 px-6 py-4 ${i < 3 ? 'bg-white/[0.01]' : ''}`}>
-                            <span className="text-lg font-black w-8 text-center" style={{ color: i === 0 ? '#FFD700' : i === 1 ? '#C0C0C0' : i === 2 ? '#CD7F32' : '#6b7280' }}>
+                            <span className="text-lg font-black w-8 text-center font-mono" style={{ color: i === 0 ? '#FFD700' : i === 1 ? '#C0C0C0' : i === 2 ? '#CD7F32' : '#6b7280' }}>
                               #{rankNum}
                             </span>
                             <div className="w-8 h-8 rounded-full bg-[#E873C3]/20 border border-[#E873C3]/30 flex items-center justify-center text-xs font-black text-[#E873C3]">
@@ -889,7 +1093,7 @@ export default function EventDetailPage() {
                               )}
                             </div>
                             <div className="text-right">
-                              <span className="text-sm font-black block" style={{ color: i === 0 ? '#FFD700' : '#E873C3' }}>
+                              <span className="text-sm font-black font-mono block" style={{ color: i === 0 ? '#FFD700' : '#E873C3' }}>
                                 {entry.score.toLocaleString()} pts
                               </span>
                             </div>
@@ -904,7 +1108,7 @@ export default function EventDetailPage() {
               {/* TAB 6: FAQS */}
               {activeTab === 'faqs' && (
                 <div className="flex flex-col gap-3">
-                  <h2 className="text-xs font-bold text-white/30 uppercase tracking-widest">Frequently Asked Questions</h2>
+                  <h2 className="text-xs font-bold text-white/40 uppercase tracking-widest" style={modernHeadingStyle}>Frequently Asked Questions</h2>
                   {!event.faqs_json || (event.faqs_json as { question: string; answer: string }[]).length === 0 ? (
                     <p className="text-white/30 text-sm">No specific FAQs added yet.</p>
                   ) : (
@@ -925,12 +1129,12 @@ export default function EventDetailPage() {
             <div className="bg-[#0c0818] border border-white/[0.08] rounded-2xl p-5 flex flex-col gap-4" style={{ boxShadow: '0 8px 32px rgba(0,0,0,0.5)' }}>
               {/* Prize Pool Header */}
               {event.prize_pool && (
-                <div className="flex items-center justify-between pb-3 border-b border-white/[0.06]">
+                <div className="flex items-center justify-between pb-3 border-b border-white/[0.08]">
                   <div className="flex items-center gap-2">
                     <Trophy size={16} className="text-[#FFD700]" />
                     <span className="text-xs font-bold text-white/60">Prize Pool</span>
                   </div>
-                  <span className="text-sm font-black text-[#FFD700]">{event.prize_pool}</span>
+                  <span className="text-sm font-black text-[#FFD700]">{formatPrize(event.prize_pool)}</span>
                 </div>
               )}
 
@@ -940,7 +1144,7 @@ export default function EventDetailPage() {
                   <span className="text-white/60 flex items-center gap-1.5">
                     <Users size={13} className="text-[#E873C3]" /> Registered
                   </span>
-                  <span className="text-white font-bold">
+                  <span className="text-white font-bold font-mono">
                     {slotsUsed}{slotsTotal ? ` / ${slotsTotal}` : ''}
                   </span>
                 </div>
@@ -955,17 +1159,17 @@ export default function EventDetailPage() {
               </div>
 
               {/* Timeline Dates */}
-              <div className="flex flex-col gap-2 pt-3 border-t border-white/[0.06] text-xs">
+              <div className="flex flex-col gap-2.5 pt-3 border-t border-white/[0.08] text-xs">
                 {event.starts_at && (
-                  <div className="flex items-center justify-between text-white/60">
+                  <div className="flex items-center justify-between text-white/70">
                     <span className="flex items-center gap-1.5"><Clock size={13} className="text-[#3DCB7F]" /> Starts</span>
-                    <span className="font-bold text-white/80">{new Date(event.starts_at).toLocaleDateString()}</span>
+                    <span className="font-bold text-white/90 font-mono text-[11px]">{formatDisplayDateTime(event.starts_at)}</span>
                   </div>
                 )}
                 {event.ends_at && (
-                  <div className="flex items-center justify-between text-white/60">
+                  <div className="flex items-center justify-between text-white/70">
                     <span className="flex items-center gap-1.5"><Clock size={13} className="text-[#E873C3]" /> Ends</span>
-                    <span className="font-bold text-white/80">{new Date(event.ends_at).toLocaleDateString()}</span>
+                    <span className="font-bold text-white/90 font-mono text-[11px]">{formatDisplayDateTime(event.ends_at)}</span>
                   </div>
                 )}
               </div>
@@ -995,7 +1199,7 @@ export default function EventDetailPage() {
                       {isOngoing && contestEnterUrl && (
                         <Link
                           href={contestEnterUrl}
-                          className="w-full py-3 rounded-xl font-black text-xs text-white text-center flex items-center justify-center gap-1.5 transition-all shadow-lg hover:scale-[1.02]"
+                          className="w-full py-3.5 rounded-xl font-black text-xs text-white text-center flex items-center justify-center gap-1.5 transition-all shadow-lg hover:scale-[1.02]"
                           style={{ background: 'linear-gradient(135deg,#E873C3,#8D37D6)', boxShadow: '0 4px 20px rgba(232,115,195,0.4)' }}
                         >
                           <Flame size={14} className="animate-pulse" />
@@ -1026,6 +1230,18 @@ export default function EventDetailPage() {
                 <div className="w-full py-3 rounded-xl bg-white/[0.04] border border-white/10 text-white/30 text-xs font-bold text-center">
                   Registration Full ({slotsTotal} max)
                 </div>
+              ) : event.is_private && !isUnlocked ? (
+                <button
+                  onClick={() => setShowUnlockModal(true)}
+                  className="w-full py-3.5 rounded-xl font-black text-sm text-white flex items-center justify-center gap-2.5 transition-all cursor-pointer shadow-lg hover:scale-[1.02] active:scale-[0.98]"
+                  style={{
+                    background: 'linear-gradient(135deg, #F5A623 0%, #D95FD1 50%, #8D37D6 100%)',
+                    boxShadow: '0 4px 25px rgba(245, 166, 35, 0.45)',
+                  }}
+                >
+                  <KeyRound size={16} className="text-amber-200" />
+                  <span>Unlock to Register</span>
+                </button>
               ) : canRegister ? (
                 <button
                   onClick={() => setShowRegModal(true)}
@@ -1049,7 +1265,6 @@ export default function EventDetailPage() {
         </div>
       </div>
 
-
       {/* 🔒 Secret ID & Password Unlock Modal */}
       <AnimatePresence>
         {showUnlockModal && (
@@ -1070,7 +1285,7 @@ export default function EventDetailPage() {
                     <Lock size={20} />
                   </div>
                   <div>
-                    <h3 className="font-black text-lg text-white">Unlock Private Event</h3>
+                    <h3 className="font-black text-lg text-white" style={modernHeadingStyle}>Unlock Private Event</h3>
                     <p className="text-xs text-white/50">{event.title}</p>
                   </div>
                 </div>
@@ -1167,6 +1382,9 @@ export default function EventDetailPage() {
           />
         )}
       </AnimatePresence>
+
+      {/* Footer */}
+      <Footer />
     </div>
   );
 }

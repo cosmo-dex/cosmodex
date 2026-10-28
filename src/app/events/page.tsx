@@ -33,6 +33,7 @@ interface EventCard {
   eligibility: string | null;
   registration_fee: string | null;
   _count: { event_registrations: number };
+  total_registrations?: number;
 }
 
 const TYPE_META: Record<string, { label: string; icon: React.ComponentType<{ size?: number }>; color: string; bg: string }> = {
@@ -156,6 +157,7 @@ function EventCardComponent({ event }: { event: EventCard }) {
   const typeMeta = TYPE_META[event.event_type] ?? TYPE_META.challenge;
   const isLive = event.status === 'ongoing';
   const isUpcoming = event.status === 'published';
+  const regCount = event._count?.event_registrations ?? event.total_registrations ?? 0;
 
   return (
     <Link href={`/events/${event.slug || event.id}`} scroll={false} className="block">
@@ -213,15 +215,26 @@ function EventCardComponent({ event }: { event: EventCard }) {
             </p>
           </div>
 
-          {/* 3. Level Tag Pill style */}
-          <div className="flex items-center justify-between mt-auto">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#131d31] border border-[#22314e] text-[11px] font-sans font-bold tracking-wider text-[#94a3b8]">
-              <span className="w-2 h-2 rounded-full bg-[#38bdf8]" />
-              <span>{isLive ? 'LIVE' : isUpcoming ? 'UPCOMING' : 'ENDED'}</span>
+          {/* 3. Level Tag Pill style & Registration Count */}
+          <div className="flex items-center justify-between mt-auto pt-3 border-t border-white/[0.06]">
+            <div className="flex items-center gap-2">
+              <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#131d31] border border-[#22314e] text-[11px] font-sans font-bold tracking-wider text-[#94a3b8]">
+                <span className={`w-1.5 h-1.5 rounded-full ${isLive ? 'bg-[#E873C3] animate-pulse' : isUpcoming ? 'bg-[#38bdf8]' : 'bg-[#64748b]'}`} />
+                <span>{isLive ? 'LIVE' : isUpcoming ? 'UPCOMING' : 'ENDED'}</span>
+              </div>
+
+              <span className="inline-flex items-center gap-1 text-[11px] font-sans font-semibold text-white/60">
+                <Users size={12} className="text-[#E873C3]" />
+                <span>
+                  {regCount}
+                  {event.max_participants ? ` / ${event.max_participants}` : ''}
+                </span>
+              </span>
             </div>
 
             {event.prize_pool && (
-              <span className="text-[11px] font-sans font-bold tracking-wider text-[#FFD700]">
+              <span className="text-[11px] font-sans font-bold tracking-wider text-[#FFD700] flex items-center gap-1">
+                <Trophy size={12} className="text-[#FFD700]" />
                 {event.prize_pool}
               </span>
             )}

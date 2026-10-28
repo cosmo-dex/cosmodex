@@ -3,7 +3,18 @@
 
 import { useEffect, useState, useRef } from 'react';
 import { ArenaSocket } from '@/lib/arenaWsClient';
-import Editor, { type Monaco } from '@monaco-editor/react';
+import dynamic from 'next/dynamic';
+import type { Monaco } from '@monaco-editor/react';
+
+const Editor = dynamic(() => import('@monaco-editor/react'), {
+  ssr: false,
+  loading: () => (
+    <div className="flex flex-col items-center justify-center h-full w-full bg-[#050508] text-white/50 text-sm gap-2">
+      <div className="w-5 h-5 border-2 border-purple-500 border-t-transparent rounded-full animate-spin" />
+      <span>Loading Code Editor...</span>
+    </div>
+  ),
+});
 import { motion } from 'motion/react';
 import { CheckCircle2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -538,7 +549,7 @@ export default function ActiveMatchView({ socket, matchInfo, userId, username, o
     const won = matchResult.winnerId === userId;
     const draw = !matchResult.winnerId;
     return (
-      <div className="fixed inset-0 z-[9999] bg-[#050508] text-text-primary flex flex-col font-sans antialiased overflow-hidden items-center justify-center p-4">
+      <div className="fixed inset-0 z-[9999] bg-[#050508] text-text-primary flex flex-col font-fira overflow-hidden items-center justify-center p-4">
         <div className={cn(
           "absolute size-[500px] rounded-full blur-[140px] pointer-events-none opacity-40 animate-pulse",
           draw ? "bg-amber-500" : won ? "bg-emerald-500" : "bg-rose-600"
@@ -628,7 +639,7 @@ export default function ActiveMatchView({ socket, matchInfo, userId, username, o
   }
 
   return (
-    <div className="fixed inset-0 z-[9999] w-screen h-screen bg-[#060212] text-text-primary flex flex-col font-sans antialiased overflow-hidden arena-active">
+    <div className="fixed inset-0 z-[9999] w-screen h-screen bg-[#060212] text-text-primary flex flex-col font-fira overflow-hidden arena-active">
       <DashboardBackground />
       <Starfield />
 
@@ -827,7 +838,7 @@ export default function ActiveMatchView({ socket, matchInfo, userId, username, o
                     />
                   </div>
 
-                  <h3 className="text-xl md:text-2xl font-bold text-white mb-8 leading-relaxed tracking-wide font-inter">
+                  <h3 className="text-xl md:text-2xl font-extrabold text-white mb-8 leading-relaxed tracking-normal font-inter">
                     {mcqState.currentQuestion.question}
                   </h3>
 
@@ -1028,7 +1039,7 @@ export default function ActiveMatchView({ socket, matchInfo, userId, username, o
                   </div>
                 </div>
 
-                <h2 className="text-[28px] md:text-[34px] leading-tight font-extrabold font-display text-white tracking-wide uppercase mb-4 drop-shadow-md">
+                <h2 className="text-[36px] leading-none font-black font-lato text-white tracking-wide uppercase mb-4 drop-shadow-md">
                   {String(myStage).padStart(2, "0")}. {activeProblem?.title || `Stage ${myStage}`}
                 </h2>
 
@@ -1046,7 +1057,7 @@ export default function ActiveMatchView({ socket, matchInfo, userId, username, o
                   <span className="ml-3 text-xl">👾</span>
                 </div>
 
-                <div className="text-zinc-200 leading-relaxed text-[15px] space-y-4 mb-8 font-inter">
+                <div className="text-[#A1A1AA] leading-relaxed text-[14px] space-y-4 mb-8">
                   <div style={{ whiteSpace: "pre-wrap" }}>
                     {activeProblem?.description || "Loading problem details..."}
                   </div>
