@@ -505,7 +505,7 @@ export default function MatchmakingCinematic({
                 <div className="portal-pulse" />
 
                 {/* VS Text */}
-                <h2 style={{ fontFamily: 'var(--font-display), sans-serif', fontSize: '6rem', color: 'white', textShadow: '0 0 40px var(--primary-pink)', zIndex: 10 }}>VS</h2>
+                <h2 style={{ fontFamily: 'Hitchcut, sans-serif', fontSize: '6rem', color: 'white', textShadow: '0 0 40px var(--primary-pink)', zIndex: 10 }}>VS</h2>
               </motion.div>
             )}
           </AnimatePresence>

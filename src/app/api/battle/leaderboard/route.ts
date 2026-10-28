@@ -31,11 +31,8 @@ export async function GET(req: NextRequest) {
   if (process.env.DATABASE_URL) {
     try {
       const prisma = (await import('@/lib/prisma')).default;
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
       const stats = await prisma.battle_user_stats.findMany({
         where: {
-          updated_at: { gte: today },
           users: {
             is_active: true,
             role: { notIn: ['bot', 'admin', 'super_admin', 'learning_admin', 'arena_admin'] },
