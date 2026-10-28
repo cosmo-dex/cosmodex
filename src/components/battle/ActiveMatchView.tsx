@@ -838,7 +838,7 @@ export default function ActiveMatchView({ socket, matchInfo, userId, username, o
                     />
                   </div>
 
-                  <h3 className="text-xl md:text-2xl font-bold text-white mb-8 leading-relaxed tracking-wide font-inter">
+                  <h3 className="text-xl md:text-2xl font-bold text-white mb-8 leading-relaxed tracking-wide font-fira-sans">
                     {mcqState.currentQuestion.question}
                   </h3>
 
@@ -1057,7 +1057,7 @@ export default function ActiveMatchView({ socket, matchInfo, userId, username, o
                   <span className="ml-3 text-xl">👾</span>
                 </div>
 
-                <div className="text-zinc-200 leading-relaxed text-[15px] space-y-4 mb-8 font-inter">
+                <div className="text-zinc-200 leading-relaxed text-[15px] space-y-4 mb-8 font-fira-sans">
                   <div style={{ whiteSpace: "pre-wrap" }}>
                     {activeProblem?.description || "Loading problem details..."}
                   </div>
