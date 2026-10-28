@@ -549,7 +549,7 @@ export default function ActiveMatchView({ socket, matchInfo, userId, username, o
     const won = matchResult.winnerId === userId;
     const draw = !matchResult.winnerId;
     return (
-      <div className="fixed inset-0 z-[9999] bg-[#050508] text-text-primary flex flex-col font-sans antialiased overflow-hidden items-center justify-center p-4">
+      <div className="fixed inset-0 z-[9999] bg-[#050508] text-text-primary flex flex-col font-fira overflow-hidden items-center justify-center p-4">
         <div className={cn(
           "absolute size-[500px] rounded-full blur-[140px] pointer-events-none opacity-40 animate-pulse",
           draw ? "bg-amber-500" : won ? "bg-emerald-500" : "bg-rose-600"
@@ -639,7 +639,7 @@ export default function ActiveMatchView({ socket, matchInfo, userId, username, o
   }
 
   return (
-    <div className="fixed inset-0 z-[9999] w-screen h-screen bg-[#060212] text-text-primary flex flex-col font-sans antialiased overflow-hidden arena-active">
+    <div className="fixed inset-0 z-[9999] w-screen h-screen bg-[#060212] text-text-primary flex flex-col font-fira overflow-hidden arena-active">
       <DashboardBackground />
       <Starfield />
 
@@ -1039,7 +1039,7 @@ export default function ActiveMatchView({ socket, matchInfo, userId, username, o
                   </div>
                 </div>
 
-                <h2 className="text-[28px] md:text-[34px] leading-tight font-extrabold font-display text-white tracking-wide uppercase mb-4 drop-shadow-md">
+                <h2 className="text-[36px] leading-none font-black font-lato text-white tracking-wide uppercase mb-4 drop-shadow-md">
                   {String(myStage).padStart(2, "0")}. {activeProblem?.title || `Stage ${myStage}`}
                 </h2>
 
