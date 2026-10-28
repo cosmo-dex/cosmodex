@@ -267,7 +267,7 @@ function McqPanel({
         <div className="h-1 w-28 bg-gradient-to-r from-pink-500 to-fuchsia-600 rounded-full shadow-[0_0_10px_rgba(217,70,239,0.7)] mb-7 relative z-10" />
 
         {/* Question text */}
-        <h2 className="text-xl md:text-2xl font-black text-white mb-3 leading-snug tracking-wide relative z-10">
+        <h2 className="text-xl md:text-2xl font-black text-white mb-3 leading-snug tracking-wide relative z-10 font-inter">
           {questionText}
         </h2>
 
@@ -308,7 +308,7 @@ function McqPanel({
                 )}>
                   {letter}
                 </span>
-                <span className="text-sm md:text-base leading-snug flex-1 z-10 font-medium">{opt.text}</span>
+                <span className="text-sm md:text-base leading-snug flex-1 z-10 font-inter font-medium">{opt.text}</span>
                 {isChosen && <CheckCircle2 size={18} className="text-pink-400 shrink-0 z-10" />}
               </motion.button>
             );
@@ -501,7 +501,7 @@ function CodingPanel({
             {String(questionIndex + 1).padStart(2, '0')}. {question.title}
           </h2>
 
-          <div className="text-sm text-[#A1A1AA] leading-relaxed whitespace-pre-wrap font-sans">
+          <div className="text-sm text-zinc-200 leading-relaxed whitespace-pre-wrap font-inter">
             {problemDesc}
           </div>
 
