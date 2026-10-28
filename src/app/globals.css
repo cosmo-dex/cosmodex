@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Arizonia&family=Inter:wght@400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&family=Orbitron:wght@500;600;700;800;900&family=Outfit:wght@500;600;700;800&family=Rajdhani:wght@600;700&family=Syne:wght@700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Arizonia&family=Inter:wght@400;500;600&family=Space+Grotesk:wght@400;500;700&display=swap');
 @import "tailwindcss";
 
 @font-face {
@@ -53,16 +53,11 @@
 @theme {
   /* ── Fonts ──────────────────────────────────────────────── */
   --font-sans: var(--font-body), ui-sans-serif, system-ui, sans-serif;
-  --font-display: var(--font-display), "Space Grotesk", ui-sans-serif, system-ui, sans-serif;
-  --font-space: "Space Grotesk", sans-serif;
-  --font-orbitron: "Orbitron", sans-serif;
-  --font-outfit: "Outfit", sans-serif;
-  --font-rajdhani: "Rajdhani", sans-serif;
+  --font-display: var(--font-display), ui-sans-serif, system-ui, sans-serif;
   --font-mono: var(--font-mono), ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
   --font-lato: Lato, sans-serif;
   --font-ayaha: var(--font-ayaha), cursive;
-  --font-inter: var(--font-inter), "Plus Jakarta Sans", Inter, ui-sans-serif, system-ui, -apple-system, sans-serif;
-  --font-reading: var(--font-inter), "Plus Jakarta Sans", Inter, ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --font-inter: var(--font-inter), Inter, ui-sans-serif, system-ui, -apple-system, sans-serif;
 
   /* ── Landing / Global Colors ───────────────────────────── */
   --color-cosmo-bg: #090214;
