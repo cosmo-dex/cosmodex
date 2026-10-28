@@ -66,14 +66,12 @@ export default function BattlePage() {
             reconnectionDelay: 1000,
           });
 
-          activeSocket.on('match_found', (payload: MatchInfo) => {
-            console.log('[BattlePage] match_found received:', payload);
-          });
+          activeSocket.on('match_found', () => {});
 
           setSocket(activeSocket);
         }
       })
-      .catch((err) => console.log('Auth check:', err.message))
+      .catch(() => {})
       .finally(() => setLoading(false));
 
     return () => {

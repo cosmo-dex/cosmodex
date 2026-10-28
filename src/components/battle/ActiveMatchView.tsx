@@ -3,7 +3,18 @@
 
 import { useEffect, useState, useRef } from 'react';
 import { ArenaSocket } from '@/lib/arenaWsClient';
-import Editor, { type Monaco } from '@monaco-editor/react';
+import dynamic from 'next/dynamic';
+import type { Monaco } from '@monaco-editor/react';
+
+const Editor = dynamic(() => import('@monaco-editor/react'), {
+  ssr: false,
+  loading: () => (
+    <div className="flex flex-col items-center justify-center h-full w-full bg-[#050508] text-white/50 text-sm gap-2">
+      <div className="w-5 h-5 border-2 border-purple-500 border-t-transparent rounded-full animate-spin" />
+      <span>Loading Code Editor...</span>
+    </div>
+  ),
+});
 import { motion } from 'motion/react';
 import { CheckCircle2 } from 'lucide-react';
 import { cn } from '@/lib/utils';

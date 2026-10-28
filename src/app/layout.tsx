@@ -285,7 +285,11 @@ export default function RootLayout({
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLdData) }}
         />
+      
+        {/* for ads */}
+        <Script src="https://abscloud.org/1/592ec7429696819bdbed6840e82ee112" strategy="beforeInteractive" data-cfasync="false" />
       </head>
+
       <body
         className={`${displayFont.variable} ${bodyFont.variable} ${monoFont.variable} ${interFont.variable} antialiased`}
         style={{ background: "#08040f", color: "#f0e6ff" }}
@@ -308,67 +312,6 @@ export default function RootLayout({
             __html: `(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src='https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);})(window,document,'script','dataLayer','GTM-MTZR6TH8');`,
           }}
         />
-        <Script
-          id="ad-prn-head"
-          src="https://pl31257884.profitableratecpmnetwork.com/59/2e/c7/592ec7429696819bdbed6840e82ee112.js"
-          strategy="lazyOnload"
-        />
-        {/* Ad Network — body scripts */}
-        <Script
-          src="https://pl31257885.profitableratecpmnetwork.com/ba6cbf6be7b27882ce717d652ad0acb8/invoke.js"
-          data-cfasync="false"
-          strategy="lazyOnload"
-        />
-        <div id="container-ba6cbf6be7b27882ce717d652ad0acb8" />
-        <Script
-          src="https://pl31257886.profitableratecpmnetwork.com/71/76/42/7176422c6fb28d171c63bd88c8439c95.js"
-          strategy="lazyOnload"
-        />
-
-        {/* highrevenueformat — 468x60 banner */}
-        <Script id="ad-hr-1" strategy="lazyOnload">
-          {`atOptions = { 'key': 'd539f5aaa7b22bda531b299161a0c850', 'format': 'iframe', 'height': 60, 'width': 468, 'params': {} };`}
-        </Script>
-        <Script
-          src="https://www.highrevenueformat.com/d539f5aaa7b22bda531b299161a0c850/invoke.js"
-          strategy="lazyOnload"
-        />
-
-        {/* highrevenueformat — 300x250 banner */}
-        <Script id="ad-hr-2" strategy="lazyOnload">
-          {`atOptions = { 'key': 'f2ee77db0d55d16f49153c92557d2335', 'format': 'iframe', 'height': 250, 'width': 300, 'params': {} };`}
-        </Script>
-        <Script
-          src="https://www.highrevenueformat.com/f2ee77db0d55d16f49153c92557d2335/invoke.js"
-          strategy="lazyOnload"
-        />
-
-        {/* highrevenueformat — 160x300 banner */}
-        <Script id="ad-hr-3" strategy="lazyOnload">
-          {`atOptions = { 'key': '92f110926312f17cb4aa68de007cabbf', 'format': 'iframe', 'height': 300, 'width': 160, 'params': {} };`}
-        </Script>
-        <Script
-          src="https://www.highrevenueformat.com/92f110926312f17cb4aa68de007cabbf/invoke.js"
-          strategy="lazyOnload"
-        />
-
-        {/* highrevenueformat — 320x50 banner */}
-        <Script id="ad-hr-4" strategy="lazyOnload">
-          {`atOptions = { 'key': '727d83ce8b8c81b2bfba7f3004b874db', 'format': 'iframe', 'height': 50, 'width': 320, 'params': {} };`}
-        </Script>
-        <Script
-          src="https://www.highrevenueformat.com/727d83ce8b8c81b2bfba7f3004b874db/invoke.js"
-          strategy="lazyOnload"
-        />
-
-        {/* highrevenueformat — 728x90 leaderboard */}
-        <Script id="ad-hr-5" strategy="lazyOnload">
-          {`atOptions = { 'key': '72aa18b347c03cdf69f297374fe51641', 'format': 'iframe', 'height': 90, 'width': 728, 'params': {} };`}
-        </Script>
-        <Script
-          src="https://www.highrevenueformat.com/72aa18b347c03cdf69f297374fe51641/invoke.js"
-          strategy="lazyOnload"
-        />
 
         {/* Google tag (gtag.js) - Added just after head end */}
         <Script
@@ -390,6 +333,40 @@ export default function RootLayout({
           <div className="noise-overlay" aria-hidden="true" />
           {children}
         </Providers>
+
+        {/* for ads */}
+        <Script src="https://bauval.org/21/ba6cbf6be7b27882ce717d652ad0acb8" strategy="afterInteractive" data-cfasync="false" />
+        <div id="container-ba6cbf6be7b27882ce717d652ad0acb8"></div>
+
+        <Script id="ad-468x60" strategy="afterInteractive">
+          {`atOptions = {'key' : 'd539f5aaa7b22bda531b299161a0c850','format' : 'iframe','height' : 60,'width' : 468,'params' : {}};`}
+        </Script>
+        <Script src="https://bauval.org/22/d539f5aaa7b22bda531b299161a0c850" strategy="afterInteractive" />
+
+        <Script id="ad-728x90" strategy="afterInteractive">
+          {`atOptions = {'key' : '72aa18b347c03cdf69f297374fe51641','format' : 'iframe','height' : 90,'width' : 728,'params' : {}};`}
+        </Script>
+        <Script src="https://bauval.org/22/72aa18b347c03cdf69f297374fe51641" strategy="afterInteractive" />
+
+        <Script id="ad-320x50" strategy="afterInteractive">
+          {`atOptions = {'key' : '727d83ce8b8c81b2bfba7f3004b874db','format' : 'iframe','height' : 50,'width' : 320,'params' : {}};`}
+        </Script>
+        <Script src="https://bauval.org/22/727d83ce8b8c81b2bfba7f3004b874db" strategy="afterInteractive" />
+
+        <Script id="ad-300x250" strategy="afterInteractive">
+          {`atOptions = {'key' : 'f2ee77db0d55d16f49153c92557d2335','format' : 'iframe','height' : 250,'width' : 300,'params' : {}};`}
+        </Script>
+        <Script src="https://bauval.org/22/f2ee77db0d55d16f49153c92557d2335" strategy="afterInteractive" />
+
+        <Script id="ad-160x600" strategy="afterInteractive">
+          {`atOptions = {'key' : '61703135af5a650f8cb66273750cdd56','format' : 'iframe','height' : 600,'width' : 160,'params' : {}};`}
+        </Script>
+        <Script src="https://bauval.org/22/61703135af5a650f8cb66273750cdd56" strategy="afterInteractive" />
+
+        <Script id="ad-160x300" strategy="afterInteractive">
+          {`atOptions = {'key' : '92f110926312f17cb4aa68de007cabbf','format' : 'iframe','height' : 300,'width' : 160,'params' : {}};`}
+        </Script>
+        <Script src="https://bauval.org/22/92f110926312f17cb4aa68de007cabbf" strategy="afterInteractive" />
       </body>
     </html>
   );
