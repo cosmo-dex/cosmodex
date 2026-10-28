@@ -10,7 +10,7 @@ import { type Player, type Scope, type Timeframe } from "@/data/leaderboard";
 import { AVATARS } from "@/lib/avatar";
 import { cn } from "@/lib/utils";
 
-const IS_LEADERBOARD_LIVE = false;
+const IS_LEADERBOARD_LIVE = true;
 
 interface LeaderboardEntry {
   rank: number;
@@ -59,7 +59,7 @@ export default function Leaderboard() {
   const [scope, setScope] = useState<Scope>("global");
   const [timeframe, setTimeframe] = useState<Timeframe>("weekly");
   const [entries, setEntries] = useState<LeaderboardEntry[]>([]);
-  const [loading, setLoading] = useState(() => !IS_LEADERBOARD_LIVE);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -292,13 +292,31 @@ export default function Leaderboard() {
 
         {/* Leaderboard Podium and Table */}
         <div key={`${scope}-${timeframe}`} className="w-full transition-opacity duration-200 ease-out">
-          <section className="mt-6 w-full md:mt-8" aria-label="Top three">
-            <Podium players={top3} />
-          </section>
+          {players.length > 0 ? (
+            <>
+              <section className="mt-6 w-full md:mt-8" aria-label="Top three">
+                <Podium players={top3} />
+              </section>
 
-          <section className="mt-6 w-full" aria-label="Ranks four and below">
-            <RankTable players={rest} />
-          </section>
+              <section className="mt-6 w-full" aria-label="Ranks four and below">
+                <RankTable players={rest} />
+              </section>
+            </>
+          ) : (
+            <div className="mt-12 text-center p-12 rounded-3xl border border-white/10 bg-white/[0.02] backdrop-blur-md max-w-lg mx-auto">
+              <Trophy className="size-12 mx-auto text-yellow-500/50 mb-3" />
+              <h3 className="text-lg font-bold text-white mb-1">No Battle Rankings Yet</h3>
+              <p className="text-sm text-text-secondary mb-6">
+                Be the first gladiator to enter the arena and claim the #1 spot on the leaderboard!
+              </p>
+              <button
+                onClick={() => router.push('/battle')}
+                className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-purple-600 to-pink-600 text-white font-bold text-xs uppercase tracking-wider hover:opacity-90 transition-opacity cursor-pointer"
+              >
+                Enter Battle Arena
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </main>
