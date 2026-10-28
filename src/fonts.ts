@@ -13,8 +13,8 @@
  *
  * FONT ROLES
  * ──────────
- *  display  →  --font-display  →  hero headings, section titles, feature card titles,
- *                                  achievement titles, decorative game elements ONLY
+ *  display  →  --font-display  →  hero headings, Battle Arena titles, section titles,
+ *                                  feature card titles, achievement titles
  *  body     →  --font-body     →  ALL other text: nav, buttons, descriptions,
  *                                  badges, forms, footer, cards, modals
  *  mono     →  --font-mono     →  code blocks, terminal mockups, XP values
@@ -23,8 +23,11 @@
  *                                  MCQ questions, option labels, paragraphs
  */
 
-import localFont from "next/font/local";
 import {
+  // ── DISPLAY font (Battle Arena headings, hero headings, section titles) ─────
+  // Space Grotesk: Clean, easily readable, modern geometric space-tech font
+  Space_Grotesk as DisplayFont,
+
   // ── BODY font (all UI text — nav, buttons, descriptions, forms, footer) ──────
   // Fira Code: monospace with programming ligatures — developer-centric aesthetic
   Fira_Code as BodyFont,
@@ -33,23 +36,18 @@ import {
   // Same as body — unified Fira Code throughout for a cohesive dev experience
   Fira_Code as MonoFont,
 
-  // ── INTER font (readable sans-serif for MCQ questions, long-form text) ────────
-  Inter as InterFont,
+  // ── READABLE font for Battle Arena questions & long-form text ───────────────
+  // Plus Jakarta Sans: modern geometric sans with wide apertures & high legibility
+  Plus_Jakarta_Sans as InterFont,
 } from "next/font/google";
 
 // ── Display ──────────────────────────────────────────────────────────────────
-// Hitchcut: ONLY for hero headings, section titles, feature card titles,
-// achievement titles, and decorative gaming elements.
-// NOT for nav links, buttons, badges, body text, or UI labels.
-export const displayFont = localFont({
-  src: [
-    {
-      path: "../public/fonts/Hitchcut Font/Hitchcut-typeface/Hitchcut-Regular.otf",
-      weight: "400",
-      style: "normal",
-    },
-  ],
+// Space Grotesk: Crisp, highly legible geometric tech/gaming font for Battle Arena,
+// hero headings, section titles, feature card titles, and tournament gaming elements.
+export const displayFont = DisplayFont({
   variable: "--font-display",
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
   display: "swap",
 });
 
@@ -71,12 +69,11 @@ export const monoFont = MonoFont({
   weight: ["400", "500", "600"],
 });
 
-// ── Inter (Readable Sans-Serif) ──────────────────────────────────────────────
-// Clean proportional sans-serif for MCQ questions, option labels, and any
-// long-form text where monospace Fira Code would hurt readability.
+// ── Readable Sans-Serif (Plus Jakarta Sans) ─────────────────────────────────
+// Clean modern geometric sans-serif for Battle Arena questions, option labels,
+// and long-form text where high readability is essential.
 export const interFont = InterFont({
   variable: "--font-inter",
   subsets: ["latin"],
-  weight: ["400", "500", "600", "700", "800", "900"],
+  weight: ["400", "500", "600", "700", "800"],
 });
-
