@@ -154,7 +154,7 @@ export default function ActiveMatchView({ socket, matchInfo, userId, username, o
       .then((data) => {
         if (data?.avatarUrl) setUserAvatar(data.avatarUrl);
       })
-      .catch(() => {});
+      .catch(() => { });
   }, []);
 
   const [code, setCode] = useState(STARTERS.python);
@@ -452,7 +452,7 @@ export default function ActiveMatchView({ socket, matchInfo, userId, username, o
           setCode(starter);
         }
       })
-      .catch(() => {});
+      .catch(() => { });
 
     return () => {
       ignore = true;
@@ -603,27 +603,27 @@ export default function ActiveMatchView({ socket, matchInfo, userId, username, o
                 </div>
               </div>
 
-            {isMcq && (
-              <>
-                <div className="flex-1 bg-white/[0.05] border border-white/10 p-3 rounded-2xl backdrop-blur-md shadow-inner text-center">
-                  <div className="text-2xl md:text-3xl font-black text-purple-400">
-                    {myPlayerMcq?.score ?? 0}/5
+              {isMcq && (
+                <>
+                  <div className="flex-1 bg-white/[0.05] border border-white/10 p-3 rounded-2xl backdrop-blur-md shadow-inner text-center">
+                    <div className="text-2xl md:text-3xl font-black text-purple-400">
+                      {myPlayerMcq?.score ?? 0}/5
+                    </div>
+                    <div className="text-[10px] text-text-muted mt-1 uppercase tracking-widest font-bold">
+                      Correct
+                    </div>
                   </div>
-                  <div className="text-[10px] text-text-muted mt-1 uppercase tracking-widest font-bold">
-                    Correct
-                  </div>
-                </div>
 
-                <div className="flex-1 bg-white/[0.05] border border-white/10 p-3 rounded-2xl backdrop-blur-md shadow-inner text-center">
-                  <div className="text-2xl md:text-3xl font-black text-cyan-400">
-                    {typeof myPlayerMcq?.totalTimeTaken === 'number' ? `${Number(myPlayerMcq.totalTimeTaken).toFixed(2)}s` : '—'}
+                  <div className="flex-1 bg-white/[0.05] border border-white/10 p-3 rounded-2xl backdrop-blur-md shadow-inner text-center">
+                    <div className="text-2xl md:text-3xl font-black text-cyan-400">
+                      {typeof myPlayerMcq?.totalTimeTaken === 'number' ? `${Number(myPlayerMcq.totalTimeTaken).toFixed(2)}s` : '—'}
+                    </div>
+                    <div className="text-[10px] text-text-muted mt-1 uppercase tracking-widest font-bold">
+                      Total Time
+                    </div>
                   </div>
-                  <div className="text-[10px] text-text-muted mt-1 uppercase tracking-widest font-bold">
-                    Total Time
-                  </div>
-                </div>
-              </>
-            )}
+                </>
+              )}
             </div>
           </div>
 
@@ -788,8 +788,8 @@ export default function ActiveMatchView({ socket, matchInfo, userId, username, o
                       <span className={cn(
                         "px-3.5 py-1 rounded-full text-xs font-mono font-bold uppercase tracking-wider border",
                         mcqState.currentQuestion.difficulty === 'HARD' ? "bg-red-950/60 text-red-400 border-red-500/40" :
-                        mcqState.currentQuestion.difficulty === 'MEDIUM' ? "bg-amber-950/60 text-amber-400 border-amber-500/40" :
-                        "bg-emerald-950/60 text-emerald-400 border-emerald-500/40"
+                          mcqState.currentQuestion.difficulty === 'MEDIUM' ? "bg-amber-950/60 text-amber-400 border-amber-500/40" :
+                            "bg-emerald-950/60 text-emerald-400 border-emerald-500/40"
                       )}>
                         {mcqState.currentQuestion.difficulty}
                       </span>
@@ -882,10 +882,10 @@ export default function ActiveMatchView({ socket, matchInfo, userId, username, o
                           whileHover={
                             selectedAnswer === null && !roundReveal && mcqTimer > 0
                               ? {
-                                  y: -8,
-                                  scale: 1.03,
-                                  transition: { duration: 0.12, ease: "easeOut" }
-                                }
+                                y: -8,
+                                scale: 1.03,
+                                transition: { duration: 0.12, ease: "easeOut" }
+                              }
                               : {}
                           }
                           whileTap={selectedAnswer === null && !roundReveal && mcqTimer > 0 ? { scale: 0.97, y: -2, transition: { duration: 0.05 } } : {}}
@@ -1046,10 +1046,10 @@ export default function ActiveMatchView({ socket, matchInfo, userId, username, o
                 <div className="mb-6 flex items-center">
                   <h3
                     className={`text-xl font-bold ${activeProblem?.difficulty === "EASY"
-                        ? "text-[#3DCB7F]"
-                        : activeProblem?.difficulty === "MEDIUM"
-                          ? "text-[#F5C842]"
-                          : "text-[#E85D5D]"
+                      ? "text-[#3DCB7F]"
+                      : activeProblem?.difficulty === "MEDIUM"
+                        ? "text-[#F5C842]"
+                        : "text-[#E85D5D]"
                       }`}
                   >
                     # {activeProblem?.difficulty || "MEDIUM"}
@@ -1349,14 +1349,14 @@ export default function ActiveMatchView({ socket, matchInfo, userId, username, o
                 </div>
                 <div
                   className={`arena-output-body ${execResult
-                      ? execResult.status === "ACCEPTED"
-                        ? "success"
-                        : "error"
-                      : runResult
-                        ? runResult.timedOut || runResult.stderr
-                          ? "warn"
-                          : "success"
-                        : ""
+                    ? execResult.status === "ACCEPTED"
+                      ? "success"
+                      : "error"
+                    : runResult
+                      ? runResult.timedOut || runResult.stderr
+                        ? "warn"
+                        : "success"
+                      : ""
                     }`}
                 >
                   {execResult
