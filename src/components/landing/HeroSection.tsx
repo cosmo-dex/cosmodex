@@ -246,9 +246,9 @@ export default function HeroSection() {
               MozOsxFontSmoothing: "grayscale",
             }}
           >
-            Start Your Coding
+            Learn to Code.
             <br />
-            Expedition.
+            Practice. Compete.
           </motion.h1>
 
           {/* ── Description ── */}
@@ -268,8 +268,8 @@ export default function HeroSection() {
               fontFamily: "var(--font-body), 'Fira Code', monospace",
             }}
           >
-            Learn to code through interactive courses, battle challenges, and
-            level up your skills —{" "}
+            Learn Python online, practice coding challenges, and compete in
+            real-time coding battles —{" "}
             <span style={{ color: "rgba(240,230,255,0.8)" }}>
               one expedition at a time.
             </span>
