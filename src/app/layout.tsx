@@ -220,7 +220,7 @@ export default function RootLayout({
         />
       
         {/* for ads */}
-        <Script src="https://abscloud.org/1/592ec7429696819bdbed6840e82ee112" strategy="beforeInteractive" data-cfasync="false" />
+        {/* <Script src="https://abscloud.org/1/592ec7429696819bdbed6840e82ee112" strategy="beforeInteractive" data-cfasync="false" /> */}
       </head>
 
       <body
@@ -268,7 +268,7 @@ export default function RootLayout({
         </Providers>
 
         {/* for ads */}
-        <Script src="https://bauval.org/21/ba6cbf6be7b27882ce717d652ad0acb8" strategy="afterInteractive" data-cfasync="false" />
+        {/* <Script src="https://bauval.org/21/ba6cbf6be7b27882ce717d652ad0acb8" strategy="afterInteractive" data-cfasync="false" />
         <div id="container-ba6cbf6be7b27882ce717d652ad0acb8"></div>
 
         <Script id="ad-468x60" strategy="afterInteractive">
@@ -299,7 +299,7 @@ export default function RootLayout({
         <Script id="ad-160x300" strategy="afterInteractive">
           {`atOptions = {'key' : '92f110926312f17cb4aa68de007cabbf','format' : 'iframe','height' : 300,'width' : 160,'params' : {}};`}
         </Script>
-        <Script src="https://bauval.org/22/92f110926312f17cb4aa68de007cabbf" strategy="afterInteractive" />
+        <Script src="https://bauval.org/22/92f110926312f17cb4aa68de007cabbf" strategy="afterInteractive" /> */}
       </body>
     </html>
   );
