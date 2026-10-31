@@ -9,11 +9,12 @@ export const metadata: Metadata = {
     "Need assistance, found an anomaly, or want to partner with us? Transmit your signal to CosmoDex Mission Control and our crew will respond within 24-48 hours.",
   keywords: [
     "cosmodex support",
+    "cosmodex help center",
     "contact cosmodex",
     "coding platform support",
-    "cosmodex help center",
     "report a bug cosmodex",
     "cosmodex contact email",
+    "cosmodex platform assistance"
   ],
   alternates: {
     canonical: `${appUrl}/support`,

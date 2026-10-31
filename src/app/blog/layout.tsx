@@ -8,10 +8,14 @@ export const metadata: Metadata = {
   description:
     "Explore coding guides, Python learning resources, and practical programming tutorials to help you learn coding online and improve your skills.",
   keywords: [
+    "coding tutorials",
     "learn Python online",
     "Python programming for beginners",
     "coding practice platform",
     "coding learning platform",
+    "programming guides",
+    "coding tips and tricks",
+    "coding for beginners"
   ],
   alternates: {
     canonical: `${appUrl}/blog`,

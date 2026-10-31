@@ -13,6 +13,10 @@ export const metadata: Metadata = {
     "online coding platform",
     "coding practice platform",
     "competitive coding platform",
+    "1v1 coding battle",
+    "online programming battles",
+    "game coders",
+    "master programming"
   ],
   alternates: {
     canonical: `${appUrl}/battle`,

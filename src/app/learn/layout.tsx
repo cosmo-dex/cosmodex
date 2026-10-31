@@ -10,9 +10,11 @@ export const metadata: Metadata = {
   keywords: [
     "learn Python online",
     "Python course for beginners",
+    "python language courses",
     "learn HTML online",
     "coding practice platform",
     "coding platform for beginners",
+    "python programming course"
   ],
   alternates: {
     canonical: `${appUrl}/learn`,
