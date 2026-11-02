@@ -69,6 +69,24 @@ interface EventFaqItem {
   description?: string;
 }
 
+interface HackathonTrackItem {
+  title?: string;
+  name?: string;
+  description?: string;
+  desc?: string;
+  prize?: string;
+  reward?: string;
+}
+
+interface HackathonJudgingItem {
+  criteria?: string;
+  name?: string;
+  title?: string;
+  weight?: string;
+  description?: string;
+  desc?: string;
+}
+
 interface EventDetail {
   id: string;
   title: string;
@@ -106,8 +124,8 @@ interface EventDetail {
     required_fields?: string[];
     hackathon_details?: {
       problem_statement?: string;
-      tracks?: { title: string; description: string; prize: string }[];
-      judging_criteria?: { criteria: string; weight?: string; description?: string }[];
+      tracks?: (string | HackathonTrackItem)[];
+      judging_criteria?: (string | HackathonJudgingItem)[];
     };
     assessment_details?: {
       assessment_mode?: string;
@@ -768,7 +786,7 @@ export default function EventDetailPage() {
         {/* Left: Tabs + Details */}
         <div className="flex-1 min-w-0 flex flex-col gap-6">
           {/* Smooth Sliding Tabs Bar */}
-          <div className="flex items-center gap-1 bg-white/[0.03] border border-white/10 rounded-xl p-1.5 overflow-x-auto backdrop-blur-md">
+          <div className="flex items-center gap-1.5 bg-white/[0.03] border border-white/10 rounded-xl p-1.5 overflow-x-auto backdrop-blur-md">
             {TABS.map(({ key, label }) => {
               const isActive = activeTab === key;
               return (
@@ -776,29 +794,20 @@ export default function EventDetailPage() {
                   key={key}
                   type="button"
                   onClick={() => setActiveTab(key)}
-                  className={`relative px-4 py-2.5 rounded-lg text-xs md:text-sm font-bold whitespace-nowrap transition-colors duration-200 flex-1 cursor-pointer select-none ${isActive ? 'text-[#E873C3]' : 'text-white/45 hover:text-white/80'
-                    }`}
+                  className={`relative px-4 py-2.5 rounded-lg text-xs md:text-sm font-bold whitespace-nowrap transition-all duration-150 flex-1 cursor-pointer select-none ${
+                    isActive
+                      ? 'text-[#E873C3] bg-gradient-to-r from-[#E873C3]/20 via-[#8D37D6]/20 to-[#4ECDC4]/15 border border-[#E873C3]/50 shadow-[0_0_20px_rgba(232,115,195,0.3)]'
+                      : 'text-white/70 hover:text-white hover:bg-white/[0.05] border border-transparent'
+                  }`}
                 >
-                  {isActive && (
-                    <motion.div
-                      layoutId="active-event-detail-tab"
-                      className="absolute inset-0 rounded-lg bg-gradient-to-r from-[#E873C3]/20 via-[#8D37D6]/20 to-[#4ECDC4]/15 border border-[#E873C3]/50 shadow-[0_0_20px_rgba(232,115,195,0.3)] pointer-events-none"
-                      transition={{ type: 'spring', stiffness: 450, damping: 32 }}
-                    />
-                  )}
                   <span className="relative z-10">{label}</span>
                 </button>
               );
             })}
           </div>
 
-          {/* Smooth Tab Content Animations */}
-          <motion.div
-            key={activeTab}
-            initial={{ opacity: 0, y: 6 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.15, ease: 'easeOut' }}
-          >
+          {/* Tab Content Container */}
+          <div key={activeTab} className="flex flex-col gap-6">
               {/* TAB 1: ABOUT / OVERVIEW */}
               {activeTab === 'about' && (
                 <div className="flex flex-col gap-6">
@@ -848,41 +857,68 @@ export default function EventDetailPage() {
                   )}
 
                   {/* Hackathon Problem Statements / Tracks */}
-                  {submissionConfig?.hackathon_details?.tracks && submissionConfig.hackathon_details.tracks.length > 0 && (
-                    <div className="bg-white/[0.02] border border-white/[0.06] rounded-2xl p-6 flex flex-col gap-4">
-                      <h2 className="text-xs font-bold text-[#E873C3] uppercase tracking-widest flex items-center gap-2" style={modernHeadingStyle}>
-                        <Sparkles size={14} /> Hackathon Tracks & Challenges
-                      </h2>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {event.submission_config?.hackathon_details?.tracks?.map((tr, i) => (
-                          <div key={i} className="p-4 bg-white/[0.03] border border-white/[0.08] rounded-xl flex flex-col gap-2 relative overflow-hidden">
-                            <div className="flex items-center justify-between">
-                              <span className="font-bold text-sm text-white">{tr.title}</span>
-                              {tr.prize && <span className="text-xs font-black text-[#FFD700] bg-[#FFD700]/10 px-2.5 py-0.5 rounded border border-[#FFD700]/30">{tr.prize}</span>}
-                            </div>
-                            {tr.description && <p className="text-xs text-white/60 leading-relaxed">{tr.description}</p>}
+                  {submissionConfig?.hackathon_details && (
+                    <div className="bg-white/[0.02] border border-white/[0.06] rounded-2xl p-6 flex flex-col gap-5">
+                      {submissionConfig.hackathon_details.problem_statement && (
+                        <div className="flex flex-col gap-1.5 pb-4 border-b border-white/[0.06]">
+                          <span className="text-[10px] font-bold text-[#E873C3] uppercase tracking-widest flex items-center gap-1.5">
+                            <Sparkles size={13} /> Problem Statement
+                          </span>
+                          <p className="text-sm font-bold text-white leading-relaxed">
+                            {submissionConfig.hackathon_details.problem_statement}
+                          </p>
+                        </div>
+                      )}
+
+                      {submissionConfig.hackathon_details.tracks && submissionConfig.hackathon_details.tracks.length > 0 && (
+                        <div className="flex flex-col gap-3">
+                          <h2 className="text-xs font-bold text-[#E873C3] uppercase tracking-widest flex items-center gap-2" style={modernHeadingStyle}>
+                            <Sparkles size={14} /> Hackathon Tracks & Challenges
+                          </h2>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            {submissionConfig.hackathon_details.tracks.map((tr, i) => {
+                              const trackTitle = typeof tr === 'string' ? tr : (tr.title || tr.name || `Track ${i + 1}`);
+                              const trackDesc = typeof tr === 'string' ? null : (tr.description || tr.desc || null);
+                              const trackPrize = typeof tr === 'string' ? null : (tr.prize || tr.reward || null);
+
+                              return (
+                                <div key={i} className="p-4 bg-white/[0.03] border border-white/[0.08] hover:border-white/20 transition-all rounded-xl flex flex-col gap-2 relative overflow-hidden">
+                                  <div className="flex items-center justify-between">
+                                    <span className="font-bold text-sm text-white">{trackTitle}</span>
+                                    {trackPrize && <span className="text-xs font-black text-[#FFD700] bg-[#FFD700]/10 px-2.5 py-0.5 rounded border border-[#FFD700]/30">{trackPrize}</span>}
+                                  </div>
+                                  {trackDesc && <p className="text-xs text-white/60 leading-relaxed">{trackDesc}</p>}
+                                </div>
+                              );
+                            })}
                           </div>
-                        ))}
-                      </div>
+                        </div>
+                      )}
                     </div>
                   )}
 
                   {/* Judging Rubrics */}
-                  {event.submission_config?.hackathon_details?.judging_criteria && event.submission_config.hackathon_details.judging_criteria.length > 0 && (
+                  {submissionConfig?.hackathon_details?.judging_criteria && submissionConfig.hackathon_details.judging_criteria.length > 0 && (
                     <div className="bg-white/[0.02] border border-white/[0.06] rounded-2xl p-6 flex flex-col gap-4">
                       <h3 className="text-xs font-bold text-[#4ECDC4] uppercase tracking-widest flex items-center gap-2" style={modernHeadingStyle}>
                         <Award size={14} /> Judging Rubrics & Criteria
                       </h3>
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                        {event.submission_config.hackathon_details.judging_criteria.map((jc, i) => (
-                          <div key={i} className="p-4 bg-white/[0.03] border border-white/[0.08] rounded-xl flex flex-col gap-1.5">
-                            <div className="flex items-center justify-between">
-                              <span className="font-bold text-xs text-white">{jc.criteria}</span>
-                              {jc.weight && <span className="text-[10px] font-bold text-[#4ECDC4] bg-[#4ECDC4]/10 px-2 py-0.5 rounded">{jc.weight}</span>}
+                        {submissionConfig.hackathon_details.judging_criteria.map((jc, i) => {
+                          const criteriaName = typeof jc === 'string' ? jc : (jc.criteria || jc.name || jc.title || `Criterion ${i + 1}`);
+                          const criteriaWeight = typeof jc === 'string' ? null : (jc.weight || null);
+                          const criteriaDesc = typeof jc === 'string' ? null : (jc.description || jc.desc || null);
+
+                          return (
+                            <div key={i} className="p-4 bg-white/[0.03] border border-white/[0.08] rounded-xl flex flex-col gap-1.5">
+                              <div className="flex items-center justify-between">
+                                <span className="font-bold text-xs text-white">{criteriaName}</span>
+                                {criteriaWeight && <span className="text-[10px] font-bold text-[#4ECDC4] bg-[#4ECDC4]/10 px-2 py-0.5 rounded">{criteriaWeight}</span>}
+                              </div>
+                              {criteriaDesc && <p className="text-xs text-white/50">{criteriaDesc}</p>}
                             </div>
-                            {jc.description && <p className="text-xs text-white/50">{jc.description}</p>}
-                          </div>
-                        ))}
+                          );
+                        })}
                       </div>
                     </div>
                   )}
@@ -1267,7 +1303,7 @@ export default function EventDetailPage() {
                   )}
                 </div>
               )}
-            </motion.div>
+            </div>
         </div>
 
         {/* Right Sticky Sidebar */}
