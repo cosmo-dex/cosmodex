@@ -18,20 +18,55 @@ import RisingStars from '@/components/RisingStar';
 import Footer from '@/components/landing/Footer';
 
 interface EventRound {
-  id: string;
-  title: string;
-  description: string;
-  type: 'quiz' | 'coding' | 'submission' | 'interview' | 'custom';
-  starts_at: string | null;
-  ends_at: string | null;
-  action_url: string | null;
+  id?: string;
+  title?: string;
+  name?: string;
+  description?: string;
+  desc?: string;
+  type?: string;
+  starts_at?: string | null;
+  ends_at?: string | null;
+  action_url?: string | null;
 }
 
 interface EventPrize {
-  rank: string;
-  prize: string;
+  rank?: string | number;
+  title?: string;
+  prize?: string;
+  amount?: string;
+  reward?: string;
   perks?: string;
+  description?: string;
   badge_name?: string;
+}
+
+interface EventTimelineEntry {
+  label?: string;
+  title?: string;
+  name?: string;
+  date?: string;
+  time?: string;
+  datetime?: string;
+  done?: boolean;
+  is_completed?: boolean;
+  completed?: boolean;
+  description?: string;
+  desc?: string;
+}
+
+interface EventRuleItem {
+  text?: string;
+  rule?: string;
+  title?: string;
+}
+
+interface EventFaqItem {
+  question?: string;
+  answer?: string;
+  q?: string;
+  a?: string;
+  title?: string;
+  description?: string;
 }
 
 interface EventDetail {
@@ -48,9 +83,9 @@ interface EventDetail {
   prize_pool: string | null;
   prizes_json: EventPrize[] | null;
   tags_json: string[] | null;
-  rules_json: string[] | null;
-  timeline_json: { label: string; date: string; done: boolean }[] | null;
-  faqs_json: { question: string; answer: string }[] | null;
+  rules_json: (string | EventRuleItem)[] | null;
+  timeline_json: EventTimelineEntry[] | null;
+  faqs_json: EventFaqItem[] | null;
   sponsors_json: { name: string; tier: string; logo_url?: string }[] | null;
   starts_at: string | null;
   ends_at: string | null;
@@ -432,19 +467,24 @@ export default function EventDetailPage() {
 
   const formatPrize = (val: string | null | undefined): string => {
     if (!val) return 'Rewards & Perks';
-    const trimmed = val.trim();
+    const trimmed = String(val).trim();
+    if (!trimmed) return 'Rewards & Perks';
     if (/^\d+$/.test(trimmed)) {
       return '₹' + Number(trimmed).toLocaleString('en-IN');
     }
     return trimmed;
   };
 
-
   const formatDisplayDateTime = (val: string | null | undefined): string => {
     if (!val) return 'TBA';
+    const trimmed = String(val).trim();
+    if (!trimmed) return 'TBA';
+    if (/^\d{1,2}:\d{2}(\s*(AM|PM|am|pm))?$/i.test(trimmed)) {
+      return trimmed;
+    }
     try {
-      const d = new Date(val);
-      if (isNaN(d.getTime())) return val;
+      const d = new Date(trimmed);
+      if (isNaN(d.getTime())) return trimmed;
       const dateStr = d.toLocaleDateString('en-IN', {
         day: 'numeric',
         month: 'short',
@@ -462,7 +502,7 @@ export default function EventDetailPage() {
       }
       return dateStr;
     } catch {
-      return val;
+      return trimmed;
     }
   };
 
@@ -734,6 +774,7 @@ export default function EventDetailPage() {
               return (
                 <button
                   key={key}
+                  type="button"
                   onClick={() => setActiveTab(key)}
                   className={`relative px-4 py-2.5 rounded-lg text-xs md:text-sm font-bold whitespace-nowrap transition-colors duration-200 flex-1 cursor-pointer select-none ${isActive ? 'text-[#E873C3]' : 'text-white/45 hover:text-white/80'
                     }`}
@@ -741,7 +782,7 @@ export default function EventDetailPage() {
                   {isActive && (
                     <motion.div
                       layoutId="active-event-detail-tab"
-                      className="absolute inset-0 rounded-lg bg-gradient-to-r from-[#E873C3]/20 via-[#8D37D6]/20 to-[#4ECDC4]/15 border border-[#E873C3]/50 shadow-[0_0_20px_rgba(232,115,195,0.3)]"
+                      className="absolute inset-0 rounded-lg bg-gradient-to-r from-[#E873C3]/20 via-[#8D37D6]/20 to-[#4ECDC4]/15 border border-[#E873C3]/50 shadow-[0_0_20px_rgba(232,115,195,0.3)] pointer-events-none"
                       transition={{ type: 'spring', stiffness: 450, damping: 32 }}
                     />
                   )}
@@ -752,14 +793,12 @@ export default function EventDetailPage() {
           </div>
 
           {/* Smooth Tab Content Animations */}
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={activeTab}
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -8 }}
-              transition={{ duration: 0.18, ease: 'easeOut' }}
-            >
+          <motion.div
+            key={activeTab}
+            initial={{ opacity: 0, y: 6 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.15, ease: 'easeOut' }}
+          >
               {/* TAB 1: ABOUT / OVERVIEW */}
               {activeTab === 'about' && (
                 <div className="flex flex-col gap-6">
@@ -967,78 +1006,125 @@ export default function EventDetailPage() {
               {/* TAB 2: ROUNDS & TIMELINE */}
               {activeTab === 'rounds' && (
                 <div className="flex flex-col gap-6">
-                  {event.rounds_json && event.rounds_json.length > 0 ? (
+                  {/* Event Rounds (if any) */}
+                  {event.rounds_json && event.rounds_json.length > 0 && (
                     <div className="flex flex-col gap-4">
                       <h2 className="text-xs font-bold text-white/30 uppercase tracking-widest" style={modernHeadingStyle}>Event Rounds</h2>
                       <div className="flex flex-col gap-3">
-                        {event.rounds_json.map((r, i) => (
-                          <div key={r.id || i} className="bg-white/[0.02] border border-white/[0.06] rounded-2xl p-5 flex flex-col md:flex-row md:items-center justify-between gap-4">
-                            <div className="flex items-start gap-4">
-                              <div className="w-10 h-10 rounded-xl bg-[#E873C3]/15 border border-[#E873C3]/30 text-[#E873C3] font-black text-sm flex items-center justify-center shrink-0">
-                                R{i + 1}
+                        {event.rounds_json.map((r, i) => {
+                          const roundTitle = r.title || r.name || `Round ${i + 1}`;
+                          const roundDesc = r.description || r.desc || '';
+                          const roundType = r.type || 'Stage';
+                          return (
+                            <div key={r.id || i} className="bg-white/[0.02] border border-white/[0.06] rounded-2xl p-5 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                              <div className="flex items-start gap-4">
+                                <div className="w-10 h-10 rounded-xl bg-[#E873C3]/15 border border-[#E873C3]/30 text-[#E873C3] font-black text-sm flex items-center justify-center shrink-0">
+                                  R{i + 1}
+                                </div>
+                                <div>
+                                  <h3 className="font-bold text-white text-base" style={modernHeadingStyle}>{roundTitle}</h3>
+                                  {roundDesc && <p className="text-xs text-white/60 mt-0.5 leading-relaxed">{roundDesc}</p>}
+                                  <div className="flex flex-wrap items-center gap-2 mt-2">
+                                    <span className="px-2.5 py-0.5 rounded-md bg-white/[0.04] border border-white/10 text-[10px] uppercase font-bold text-white/50">
+                                      Type: {roundType}
+                                    </span>
+                                    {r.starts_at && (
+                                      <span className="text-[11px] text-white/40 flex items-center gap-1">
+                                        <Clock size={11} className="text-[#4ECDC4]" />
+                                        {formatDisplayDateTime(r.starts_at)}
+                                      </span>
+                                    )}
+                                  </div>
+                                </div>
                               </div>
-                              <div>
-                                <h3 className="font-bold text-white text-base" style={modernHeadingStyle}>{r.title}</h3>
-                                <p className="text-xs text-white/60 mt-0.5">{r.description}</p>
-                                <span className="inline-block mt-2 px-2.5 py-0.5 rounded-md bg-white/[0.04] border border-white/10 text-[10px] uppercase font-bold text-white/50">
-                                  Type: {r.type}
-                                </span>
-                              </div>
-                            </div>
-                            {r.action_url && (
-                              <a
-                                href={r.action_url}
-                                target="_blank"
-                                rel="noreferrer"
-                                className="px-4 py-2 rounded-xl bg-[#E873C3]/20 hover:bg-[#E873C3]/30 text-[#E873C3] text-xs font-bold border border-[#E873C3]/40 flex items-center gap-1.5 self-start md:self-center shrink-0 transition-colors"
-                              >
-                                <span>Go to Round</span>
-                                <ExternalLink size={13} />
-                              </a>
-                            )}
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  ) : event.timeline_json && event.timeline_json.length > 0 ? (
-                    <div className="relative flex flex-col gap-0 pl-4">
-                      <div className="absolute left-6 top-2 bottom-2 w-px bg-gradient-to-b from-[#4ECDC4]/60 via-white/10 to-transparent" />
-                      {event.timeline_json.map((entry, i) => {
-                        const isPast = entry.date ? new Date() >= new Date(entry.date) : entry.done;
-                        return (
-                          <div key={i} className="relative flex gap-4 pl-8 pb-6">
-                            <div
-                              className="absolute left-1.5 top-0.5 w-3.5 h-3.5 rounded-full border-2 flex items-center justify-center"
-                              style={isPast
-                                ? { background: '#4ECDC4', borderColor: '#4ECDC4', boxShadow: '0 0 10px rgba(78,205,196,0.6)' }
-                                : { background: '#06020f', borderColor: 'rgba(255,255,255,0.2)' }
-                              }
-                            />
-                            <div className="flex-1">
-                              <p className={`text-sm font-bold ${isPast ? 'text-white' : 'text-white/50'}`}>{entry.label}</p>
-                              {entry.date && (
-                                <p className="text-xs text-white/35 mt-0.5">
-                                  {new Date(entry.date).toLocaleString('en-IN', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
-                                </p>
+                              {r.action_url && (
+                                <a
+                                  href={r.action_url}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  className="px-4 py-2 rounded-xl bg-[#E873C3]/20 hover:bg-[#E873C3]/30 text-[#E873C3] text-xs font-bold border border-[#E873C3]/40 flex items-center gap-1.5 self-start md:self-center shrink-0 transition-colors"
+                                >
+                                  <span>Go to Round</span>
+                                  <ExternalLink size={13} />
+                                </a>
                               )}
                             </div>
-                          </div>
-                        );
-                      })}
+                          );
+                        })}
+                      </div>
                     </div>
-                  ) : (
+                  )}
+
+                  {/* Schedule & Timeline (if any) */}
+                  {event.timeline_json && event.timeline_json.length > 0 && (
+                    <div className="flex flex-col gap-4">
+                      <h2 className="text-xs font-bold text-white/30 uppercase tracking-widest" style={modernHeadingStyle}>Timeline & Schedule</h2>
+                      <div className="relative flex flex-col gap-0 pl-4 py-2">
+                        <div className="absolute left-6 top-2 bottom-2 w-px bg-gradient-to-b from-[#4ECDC4]/60 via-[#E873C3]/30 to-transparent" />
+                        {event.timeline_json.map((entry, i) => {
+                          const title = entry.title || entry.label || entry.name || `Milestone ${i + 1}`;
+                          const timeVal = entry.time || entry.date || entry.datetime;
+                          const desc = entry.description || entry.desc;
+                          let isPast = false;
+                          if (entry.done !== undefined) {
+                            isPast = Boolean(entry.done);
+                          } else if (entry.completed !== undefined) {
+                            isPast = Boolean(entry.completed);
+                          } else if (timeVal) {
+                            try {
+                              const d = new Date(timeVal);
+                              if (!isNaN(d.getTime())) {
+                                isPast = new Date() >= d;
+                              }
+                            } catch {
+                              isPast = false;
+                            }
+                          }
+
+                          return (
+                            <div key={i} className="relative flex gap-4 pl-8 pb-6 last:pb-2">
+                              <div
+                                className="absolute left-1.5 top-0.5 w-3.5 h-3.5 rounded-full border-2 flex items-center justify-center transition-all"
+                                style={isPast
+                                  ? { background: '#4ECDC4', borderColor: '#4ECDC4', boxShadow: '0 0 10px rgba(78,205,196,0.6)' }
+                                  : { background: '#120d20', borderColor: 'rgba(232,115,195,0.5)', boxShadow: '0 0 6px rgba(232,115,195,0.2)' }
+                                }
+                              />
+                              <div className="flex-1">
+                                <p className={`text-sm font-bold ${isPast ? 'text-white' : 'text-white/90'}`}>{title}</p>
+                                {timeVal && (
+                                  <p className="text-xs text-[#4ECDC4] mt-0.5 font-mono">
+                                    {formatDisplayDateTime(timeVal)}
+                                  </p>
+                                )}
+                                {desc && (
+                                  <p className="text-xs text-white/50 mt-1 leading-relaxed">
+                                    {desc}
+                                  </p>
+                                )}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Fallback milestone cards if both rounds and timeline are empty */}
+                  {(!event.rounds_json || event.rounds_json.length === 0) &&
+                   (!event.timeline_json || event.timeline_json.length === 0) && (
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                       <div className="p-4 bg-white/[0.02] border border-white/[0.06] rounded-xl flex flex-col gap-1">
                         <span className="text-xs font-bold text-white/40 uppercase">Starts At</span>
-                        <span className="text-sm font-bold text-white">{event.starts_at ? new Date(event.starts_at).toLocaleString('en-IN', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'TBA'}</span>
+                        <span className="text-sm font-bold text-white">{formatDisplayDateTime(event.starts_at)}</span>
                       </div>
                       <div className="p-4 bg-white/[0.02] border border-white/[0.06] rounded-xl flex flex-col gap-1">
                         <span className="text-xs font-bold text-white/40 uppercase">Ends At</span>
-                        <span className="text-sm font-bold text-white">{event.ends_at ? new Date(event.ends_at).toLocaleString('en-IN', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'TBA'}</span>
+                        <span className="text-sm font-bold text-white">{formatDisplayDateTime(event.ends_at)}</span>
                       </div>
                       <div className="p-4 bg-white/[0.02] border border-white/[0.06] rounded-xl flex flex-col gap-1">
                         <span className="text-xs font-bold text-white/40 uppercase">Registration Deadline</span>
-                        <span className="text-sm font-bold text-white">{event.registration_deadline ? new Date(event.registration_deadline).toLocaleString('en-IN', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'Open'}</span>
+                        <span className="text-sm font-bold text-white">{formatDisplayDateTime(event.registration_deadline)}</span>
                       </div>
                     </div>
                   )}
@@ -1058,6 +1144,10 @@ export default function EventDetailPage() {
                         ];
                         const meta = colors[idx] ?? colors[2];
                         const Icon = meta.icon;
+                        const rankLabel = prize.rank !== undefined ? (typeof prize.rank === 'number' || !isNaN(Number(prize.rank)) ? `Rank #${prize.rank}` : String(prize.rank)) : `Rank #${idx + 1}`;
+                        const displayTitle = prize.title || rankLabel;
+                        const prizeValue = prize.prize || prize.amount || prize.reward;
+                        const perks = prize.perks || prize.description;
 
                         return (
                           <div key={idx} className={`relative bg-gradient-to-b ${meta.bg} border border-white/10 rounded-2xl p-6 flex flex-col items-center text-center gap-3 overflow-hidden`}
@@ -1065,9 +1155,9 @@ export default function EventDetailPage() {
                             <div className="w-12 h-12 rounded-full flex items-center justify-center" style={{ background: `${meta.border}20`, border: `1px solid ${meta.border}60` }}>
                               <Icon size={24} style={{ color: meta.text }} />
                             </div>
-                            <h3 className="font-black text-lg text-white" style={modernHeadingStyle}>{prize.rank}</h3>
-                            <p className="text-xl font-black font-mono" style={{ color: meta.text }}>{formatPrize(prize.prize)}</p>
-                            {prize.perks && <p className="text-xs text-white/60 border-t border-white/10 pt-2 w-full">{prize.perks}</p>}
+                            <h3 className="font-black text-lg text-white" style={modernHeadingStyle}>{displayTitle}</h3>
+                            <p className="text-xl font-black font-mono" style={{ color: meta.text }}>{formatPrize(prizeValue)}</p>
+                            {perks && <p className="text-xs text-white/60 border-t border-white/10 pt-2 w-full">{perks}</p>}
                             {prize.badge_name && (
                               <span className="text-[10px] font-bold uppercase px-2.5 py-1 rounded-full bg-white/10 text-white/70 border border-white/10">
                                 🎖️ {prize.badge_name} Badge
@@ -1091,21 +1181,25 @@ export default function EventDetailPage() {
               {activeTab === 'rules' && (
                 <div className="bg-white/[0.02] border border-white/[0.06] rounded-2xl p-6">
                   <h2 className="text-xs font-bold text-white/40 uppercase tracking-widest mb-4" style={modernHeadingStyle}>Rules & Guidelines</h2>
-                  {!event.rules_json || (event.rules_json as string[]).length === 0 ? (
+                  {!event.rules_json || event.rules_json.length === 0 ? (
                     <p className="text-white/30 text-sm">Standard CosmoDex competition rules apply.</p>
                   ) : (
                     <ol className="flex flex-col gap-3 font-sans">
-                      {(event.rules_json as string[]).map((rule, i) => (
-                        <li key={i} className="flex gap-3 text-sm text-white/70">
-                          <span className="text-[#E873C3] font-black shrink-0 w-6 text-right font-mono">{i + 1}.</span>
-                          <span className="leading-relaxed">{rule}</span>
-                        </li>
-                      ))}
+                      {event.rules_json.map((rule, i) => {
+                        const ruleText = typeof rule === 'string' ? rule : (rule.text || rule.rule || rule.title || JSON.stringify(rule));
+                        return (
+                          <li key={i} className="flex gap-3 text-sm text-white/70">
+                            <span className="text-[#E873C3] font-black shrink-0 w-6 text-right font-mono">{i + 1}.</span>
+                            <span className="leading-relaxed">{ruleText}</span>
+                          </li>
+                        );
+                      })}
                     </ol>
                   )}
                 </div>
               )}
 
+              {/* TAB 5: LEADERBOARD */}
               {activeTab === 'leaderboard' && (
                 <div className="bg-white/[0.02] border border-white/[0.06] rounded-2xl overflow-hidden">
                   <div className="px-6 py-4 border-b border-white/[0.06] flex items-center justify-between">
@@ -1126,6 +1220,8 @@ export default function EventDetailPage() {
                         const m = totalSec !== undefined ? Math.floor(totalSec / 60) : null;
                         const s = totalSec !== undefined ? totalSec % 60 : null;
                         const timeStr = m !== null && s !== null ? (m > 0 ? `${m}m ${s}s` : `${s}s`) : null;
+                        const displayName = entry.username || 'Anonymous';
+                        const initialChar = (displayName.trim()[0] || 'U').toUpperCase();
 
                         return (
                           <div key={i} className={`flex items-center gap-4 px-6 py-4 ${i < 3 ? 'bg-white/[0.01]' : ''}`}>
@@ -1133,10 +1229,10 @@ export default function EventDetailPage() {
                               #{rankNum}
                             </span>
                             <div className="w-8 h-8 rounded-full bg-[#E873C3]/20 border border-[#E873C3]/30 flex items-center justify-center text-xs font-black text-[#E873C3]">
-                              {entry.username[0].toUpperCase()}
+                              {initialChar}
                             </div>
                             <div className="flex-1 min-w-0">
-                              <span className="text-sm font-bold text-white block truncate">{entry.username}</span>
+                              <span className="text-sm font-bold text-white block truncate">{displayName}</span>
                               {timeStr && (
                                 <span className="text-[11px] font-mono text-cyan-300/80 flex items-center gap-1 mt-0.5">
                                   ⏱️ {timeStr}
@@ -1160,17 +1256,18 @@ export default function EventDetailPage() {
               {activeTab === 'faqs' && (
                 <div className="flex flex-col gap-3">
                   <h2 className="text-xs font-bold text-white/40 uppercase tracking-widest" style={modernHeadingStyle}>Frequently Asked Questions</h2>
-                  {!event.faqs_json || (event.faqs_json as { question: string; answer: string }[]).length === 0 ? (
+                  {!event.faqs_json || event.faqs_json.length === 0 ? (
                     <p className="text-white/30 text-sm">No specific FAQs added yet.</p>
                   ) : (
-                    (event.faqs_json as { question: string; answer: string }[]).map((faq, i) => (
-                      <FaqItem key={i} q={faq.question} a={faq.answer} />
-                    ))
+                    event.faqs_json.map((faq, i) => {
+                      const q = faq.question || faq.q || faq.title || `Question ${i + 1}`;
+                      const a = faq.answer || faq.a || faq.description || '';
+                      return <FaqItem key={i} q={q} a={a} />;
+                    })
                   )}
                 </div>
               )}
             </motion.div>
-          </AnimatePresence>
         </div>
 
         {/* Right Sticky Sidebar */}
