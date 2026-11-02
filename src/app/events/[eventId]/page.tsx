@@ -666,7 +666,7 @@ export default function EventDetailPage() {
 
       {/* 🔴 LIVE CODING CONTEST BANNER */}
       {isOngoing && isRegistered && !hasSubmitted && isCodingContest && contestEnterUrl && (
-        <div className="max-w-6xl mx-auto px-6 sm:px-10 mt-6">
+        <div className="relative z-10 max-w-6xl mx-auto px-6 sm:px-10 mt-6">
           <div
             className="relative overflow-hidden rounded-2xl p-6 border flex flex-col md:flex-row items-center justify-between gap-6"
             style={{
@@ -701,7 +701,7 @@ export default function EventDetailPage() {
 
       {/* 🔒 PRIVATE EVENT LOCKED ACCESS BANNER */}
       {event.is_private && !isRegistered && !isUnlocked && (
-        <div className="max-w-6xl mx-auto px-6 sm:px-10 mt-6">
+        <div className="relative z-10 max-w-6xl mx-auto px-6 sm:px-10 mt-6">
           <div
             className="relative overflow-hidden rounded-3xl p-6 sm:p-7 border flex flex-col md:flex-row items-center justify-between gap-6 backdrop-blur-2xl group transition-all"
             style={{
@@ -766,7 +766,7 @@ export default function EventDetailPage() {
 
       {/* ⏳ UPCOMING REGISTERED EVENT REMINDER */}
       {!isOngoing && !isEnded && isRegistered && !hasSubmitted && (
-        <div className="max-w-6xl mx-auto px-6 sm:px-10 mt-6">
+        <div className="relative z-10 max-w-6xl mx-auto px-6 sm:px-10 mt-6">
           <div className="p-4 bg-[#8D37D6]/10 border border-[#8D37D6]/30 rounded-xl flex items-center justify-between gap-4">
             <span className="text-xs text-white/80 font-medium">
               🎉 You are registered for this event!
@@ -782,7 +782,7 @@ export default function EventDetailPage() {
       )}
 
       {/* Main Content Grid */}
-      <div className="max-w-6xl mx-auto px-6 sm:px-10 py-8 flex flex-col lg:flex-row gap-8">
+      <div className="relative z-10 max-w-6xl mx-auto px-6 sm:px-10 py-8 flex flex-col lg:flex-row gap-8">
         {/* Left: Tabs + Details */}
         <div className="flex-1 min-w-0 flex flex-col gap-6">
           {/* Smooth Sliding Tabs Bar */}
