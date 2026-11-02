@@ -80,6 +80,7 @@ export function NotificationProvider({
   const [isLoading, setIsLoading] = useState(false);
   const [isPulsing, setIsPulsing] = useState(false);
   const pendingFetchRef = useRef<Promise<void> | null>(null);
+  const lastFetchTimeRef = useRef<number>(0);
 
   const setNotifications = useCallback(
     (action: React.SetStateAction<NotificationItem[]>) => {
@@ -106,9 +107,14 @@ export function NotificationProvider({
   const fetchNotifications = useCallback(
     async (force = false) => {
       if (!isAuthenticated) return;
+      const now = Date.now();
+      if (!force && now - lastFetchTimeRef.current < 10000) {
+        return;
+      }
       if (pendingFetchRef.current && !force) {
         return pendingFetchRef.current;
       }
+      lastFetchTimeRef.current = now;
 
       const fetchPromise = (async () => {
         setIsLoading(true);

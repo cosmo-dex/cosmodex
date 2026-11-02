@@ -70,6 +70,33 @@ export async function proxy(request: NextRequest) {
     }
   }
 
+  const isProtectedApi =
+    PROTECTED_API_PREFIXES.some((prefix) => pathname.startsWith(prefix)) &&
+    !pathname.startsWith('/api/battle/leaderboard');
+
+  const matchingAdminEntry = Object.entries(ADMIN_ROLE_ROUTES).find(([prefix]) =>
+    pathname.startsWith(prefix)
+  );
+
+  const isProtectedUserRoute = PROTECTED_USER_ROUTES.some((route) =>
+    pathname.startsWith(route)
+  );
+
+  const isLoginModeOnboarding =
+    pathname.startsWith('/onboarding') &&
+    request.nextUrl.searchParams.get('mode') === 'login';
+
+  const isAuthRoute =
+    pathname.startsWith('/login') ||
+    pathname.startsWith('/signup') ||
+    isLoginModeOnboarding;
+
+  // Fast path: If the route is neither protected nor auth-related (e.g. public APIs, landing, etc.),
+  // avoid reading cookies and calculating cryptographic HMAC verifications.
+  if (!isProtectedApi && !matchingAdminEntry && !isProtectedUserRoute && !isAuthRoute) {
+    return NextResponse.next();
+  }
+
   const sessionCookie = request.cookies.get(SESSION_COOKIE);
   let user: SessionPayload | null = null;
 
@@ -80,10 +107,6 @@ export async function proxy(request: NextRequest) {
       user = null;
     }
   }
-
-  const isProtectedApi =
-    PROTECTED_API_PREFIXES.some((prefix) => pathname.startsWith(prefix)) &&
-    !pathname.startsWith('/api/battle/leaderboard');
 
   if (isProtectedApi) {
     if (!user || !user.userId) {
@@ -100,10 +123,6 @@ export async function proxy(request: NextRequest) {
     return NextResponse.next();
   }
 
-  const matchingAdminEntry = Object.entries(ADMIN_ROLE_ROUTES).find(([prefix]) =>
-    pathname.startsWith(prefix)
-  );
-
   if (matchingAdminEntry) {
     const [, allowedRoles] = matchingAdminEntry;
 
@@ -119,10 +138,6 @@ export async function proxy(request: NextRequest) {
     return NextResponse.next();
   }
 
-  const isProtectedUserRoute = PROTECTED_USER_ROUTES.some((route) =>
-    pathname.startsWith(route)
-  );
-
   if (isProtectedUserRoute) {
     if (!user || !user.userId) {
       const fullPath = pathname + (search || '');
@@ -135,21 +150,10 @@ export async function proxy(request: NextRequest) {
     return NextResponse.next();
   }
 
-  if (user && user.userId) {
-    const isLoginModeOnboarding =
-      pathname.startsWith('/onboarding') &&
-      request.nextUrl.searchParams.get('mode') === 'login';
-
-    const isAuthRoute =
-      pathname.startsWith('/login') ||
-      pathname.startsWith('/signup') ||
-      isLoginModeOnboarding;
-
-    if (isAuthRoute) {
-      const nextParam = request.nextUrl.searchParams.get('next');
-      const destination = getSafeRedirectUrl(nextParam, '/dashboard');
-      return NextResponse.redirect(new URL(destination, request.url));
-    }
+  if (user && user.userId && isAuthRoute) {
+    const nextParam = request.nextUrl.searchParams.get('next');
+    const destination = getSafeRedirectUrl(nextParam, '/dashboard');
+    return NextResponse.redirect(new URL(destination, request.url));
   }
 
   return NextResponse.next();
@@ -157,6 +161,6 @@ export async function proxy(request: NextRequest) {
 
 export const config = {
   matcher: [
-    '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico|mp4|webm|lottie|json|css|js)$).*)',
+    '/((?!_next/static|_next/image|favicon\\.ico|manifest\\.webmanifest|robots\\.txt|sitemap\\.xml|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico|mp4|webm|lottie|json|css|js|woff|woff2|ttf|otf|map|txt|xml|webmanifest)$).*)',
   ],
 };

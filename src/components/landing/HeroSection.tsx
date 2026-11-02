@@ -58,10 +58,21 @@ export default function HeroSection() {
     return () => section.removeEventListener("mousemove", handleMouseMove);
   }, [handleMouseMove]);
 
-  // RAF loop: lerp toward mouse position, apply transforms
+  // RAF loop: lerp toward mouse position, apply transforms only when section is visible
   useEffect(() => {
+    let isVisible = true;
+    const observer = new IntersectionObserver(([entry]) => {
+      isVisible = entry.isIntersecting;
+    }, { threshold: 0 });
+
+    if (sectionRef.current) {
+      observer.observe(sectionRef.current);
+    }
+
     const tick = () => {
       rafRef.current = requestAnimationFrame(tick);
+      if (!isVisible) return;
+
       const target = mouseRef.current;
       const cur = currentRef.current;
 
@@ -93,7 +104,10 @@ export default function HeroSection() {
     };
 
     rafRef.current = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(rafRef.current);
+    return () => {
+      cancelAnimationFrame(rafRef.current);
+      observer.disconnect();
+    };
   }, []);
 
   return (

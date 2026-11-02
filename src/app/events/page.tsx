@@ -267,6 +267,14 @@ export default function EventsPage() {
   const [events, setEvents] = useState<EventCard[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(search);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [search]);
   const [typeFilter, setTypeFilter] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [participationFilter, setParticipationFilter] = useState('');
@@ -288,7 +296,7 @@ export default function EventsPage() {
   const fetchEvents = useCallback(() => {
     setLoading(true);
     const params = new URLSearchParams({ page: String(page) });
-    if (search) params.set('search', search);
+    if (debouncedSearch) params.set('search', debouncedSearch);
     if (typeFilter) params.set('type', typeFilter);
     if (statusFilter) params.set('status', statusFilter);
     if (participationFilter) params.set('participation', participationFilter);
@@ -305,7 +313,7 @@ export default function EventsPage() {
         setTotalPages(1);
       })
       .finally(() => setLoading(false));
-  }, [search, typeFilter, statusFilter, participationFilter, page]);
+  }, [debouncedSearch, typeFilter, statusFilter, participationFilter, page]);
 
   useEffect(() => {
     void (async () => {

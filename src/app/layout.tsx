@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Script from "next/script";
-import { displayFont, bodyFont, monoFont, interFont } from "@/fonts";
+import { displayFont, bodyFont, monoFont, interFont, firaSansFont } from "@/fonts";
 import "./globals.css";
 import SmoothScroll from "@/components/landing/SmoothScroll";
 import Providers from "@/components/providers/Providers";
@@ -228,7 +228,7 @@ export default function RootLayout({
       </head>
 
       <body
-        className={`${displayFont.variable} ${bodyFont.variable} ${monoFont.variable} ${interFont.variable} antialiased`}
+        className={`${displayFont.variable} ${bodyFont.variable} ${monoFont.variable} ${interFont.variable} ${firaSansFont.variable} antialiased`}
         style={{ background: "#08040f", color: "#f0e6ff" }}
         suppressHydrationWarning
       >
