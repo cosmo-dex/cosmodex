@@ -167,7 +167,7 @@ type Tab = 'about' | 'rounds' | 'prizes' | 'rules' | 'leaderboard' | 'faqs';
 function FaqItem({ q, a }: { q: string; a: string }) {
   const [open, setOpen] = useState(false);
   return (
-    <div className="border border-white/[0.08] rounded-xl overflow-hidden bg-white/[0.02]">
+    <div className="border border-white/10 rounded-xl overflow-hidden bg-white/[0.03] backdrop-blur-md">
       <button
         onClick={() => setOpen(!open)}
         className="w-full px-5 py-4 text-left flex items-center justify-between gap-4 font-bold text-sm text-white hover:text-[#E873C3] transition-colors cursor-pointer"
@@ -184,7 +184,7 @@ function FaqItem({ q, a }: { q: string; a: string }) {
             transition={{ duration: 0.2 }}
             className="overflow-hidden"
           >
-            <div className="px-5 pb-4 text-xs text-white/60 leading-relaxed border-t border-white/[0.04] pt-3">
+            <div className="px-5 pb-4 text-xs text-white/70 leading-relaxed border-t border-white/[0.06] pt-3">
               {a}
             </div>
           </motion.div>
@@ -850,17 +850,17 @@ export default function EventDetailPage() {
 
                   {/* Description */}
                   {event.description && (
-                    <div className="bg-white/[0.02] border border-white/[0.06] rounded-2xl p-6 flex flex-col gap-3">
-                      <h2 className="text-xs font-bold text-white/30 uppercase tracking-widest" style={modernHeadingStyle}>About the Event</h2>
-                      <div className="text-sm text-white/80 leading-relaxed whitespace-pre-line">{event.description}</div>
+                    <div className="bg-white/[0.03] border border-white/10 rounded-2xl p-6 flex flex-col gap-3 backdrop-blur-md">
+                      <h2 className="text-xs font-bold text-white/60 uppercase tracking-widest" style={modernHeadingStyle}>About the Event</h2>
+                      <div className="text-sm text-white/90 leading-relaxed whitespace-pre-line">{event.description}</div>
                     </div>
                   )}
 
                   {/* Hackathon Problem Statements / Tracks */}
                   {submissionConfig?.hackathon_details && (
-                    <div className="bg-white/[0.02] border border-white/[0.06] rounded-2xl p-6 flex flex-col gap-5">
+                    <div className="bg-white/[0.03] border border-white/10 rounded-2xl p-6 flex flex-col gap-5 backdrop-blur-md">
                       {submissionConfig.hackathon_details.problem_statement && (
-                        <div className="flex flex-col gap-1.5 pb-4 border-b border-white/[0.06]">
+                        <div className="flex flex-col gap-1.5 pb-4 border-b border-white/10">
                           <span className="text-[10px] font-bold text-[#E873C3] uppercase tracking-widest flex items-center gap-1.5">
                             <Sparkles size={13} /> Problem Statement
                           </span>
@@ -882,12 +882,12 @@ export default function EventDetailPage() {
                               const trackPrize = typeof tr === 'string' ? null : (tr.prize || tr.reward || null);
 
                               return (
-                                <div key={i} className="p-4 bg-white/[0.03] border border-white/[0.08] hover:border-white/20 transition-all rounded-xl flex flex-col gap-2 relative overflow-hidden">
+                                <div key={i} className="p-4 bg-white/[0.04] border border-white/10 hover:border-[#E873C3]/40 transition-all rounded-xl flex flex-col gap-2 relative overflow-hidden">
                                   <div className="flex items-center justify-between">
                                     <span className="font-bold text-sm text-white">{trackTitle}</span>
                                     {trackPrize && <span className="text-xs font-black text-[#FFD700] bg-[#FFD700]/10 px-2.5 py-0.5 rounded border border-[#FFD700]/30">{trackPrize}</span>}
                                   </div>
-                                  {trackDesc && <p className="text-xs text-white/60 leading-relaxed">{trackDesc}</p>}
+                                  {trackDesc && <p className="text-xs text-white/70 leading-relaxed">{trackDesc}</p>}
                                 </div>
                               );
                             })}
@@ -899,7 +899,7 @@ export default function EventDetailPage() {
 
                   {/* Judging Rubrics */}
                   {submissionConfig?.hackathon_details?.judging_criteria && submissionConfig.hackathon_details.judging_criteria.length > 0 && (
-                    <div className="bg-white/[0.02] border border-white/[0.06] rounded-2xl p-6 flex flex-col gap-4">
+                    <div className="bg-white/[0.03] border border-white/10 rounded-2xl p-6 flex flex-col gap-4 backdrop-blur-md">
                       <h3 className="text-xs font-bold text-[#4ECDC4] uppercase tracking-widest flex items-center gap-2" style={modernHeadingStyle}>
                         <Award size={14} /> Judging Rubrics & Criteria
                       </h3>
@@ -910,12 +910,12 @@ export default function EventDetailPage() {
                           const criteriaDesc = typeof jc === 'string' ? null : (jc.description || jc.desc || null);
 
                           return (
-                            <div key={i} className="p-4 bg-white/[0.03] border border-white/[0.08] rounded-xl flex flex-col gap-1.5">
+                            <div key={i} className="p-4 bg-white/[0.04] border border-white/10 rounded-xl flex flex-col gap-1.5">
                               <div className="flex items-center justify-between">
                                 <span className="font-bold text-xs text-white">{criteriaName}</span>
                                 {criteriaWeight && <span className="text-[10px] font-bold text-[#4ECDC4] bg-[#4ECDC4]/10 px-2 py-0.5 rounded">{criteriaWeight}</span>}
                               </div>
-                              {criteriaDesc && <p className="text-xs text-white/50">{criteriaDesc}</p>}
+                              {criteriaDesc && <p className="text-xs text-white/60">{criteriaDesc}</p>}
                             </div>
                           );
                         })}
@@ -1024,11 +1024,11 @@ export default function EventDetailPage() {
 
                   {/* Sponsors */}
                   {event.sponsors_json && (event.sponsors_json as { name: string; tier: string }[]).length > 0 && (
-                    <div className="bg-white/[0.02] border border-white/[0.06] rounded-2xl p-6">
-                      <h2 className="text-xs font-bold text-white/30 uppercase tracking-widest mb-4" style={modernHeadingStyle}>Sponsors & Partners</h2>
+                    <div className="bg-white/[0.03] border border-white/10 rounded-2xl p-6 backdrop-blur-md">
+                      <h2 className="text-xs font-bold text-white/60 uppercase tracking-widest mb-4" style={modernHeadingStyle}>Sponsors & Partners</h2>
                       <div className="flex flex-wrap gap-3">
                         {(event.sponsors_json as { name: string; tier: string }[]).map((sp, i) => (
-                          <div key={i} className="px-4 py-2.5 rounded-xl bg-white/[0.04] border border-white/[0.08] text-sm font-bold text-white/80">
+                          <div key={i} className="px-4 py-2.5 rounded-xl bg-white/[0.04] border border-white/10 text-sm font-bold text-white/90">
                             {sp.name}
                             <span className="ml-2 text-[10px] font-bold text-[#E873C3] uppercase px-2 py-0.5 rounded bg-[#E873C3]/10 border border-[#E873C3]/20">{sp.tier}</span>
                           </div>
@@ -1045,14 +1045,14 @@ export default function EventDetailPage() {
                   {/* Event Rounds (if any) */}
                   {event.rounds_json && event.rounds_json.length > 0 && (
                     <div className="flex flex-col gap-4">
-                      <h2 className="text-xs font-bold text-white/30 uppercase tracking-widest" style={modernHeadingStyle}>Event Rounds</h2>
+                      <h2 className="text-xs font-bold text-white/60 uppercase tracking-widest" style={modernHeadingStyle}>Event Rounds</h2>
                       <div className="flex flex-col gap-3">
                         {event.rounds_json.map((r, i) => {
                           const roundTitle = r.title || r.name || `Round ${i + 1}`;
                           const roundDesc = r.description || r.desc || '';
                           const roundType = r.type || 'Stage';
                           return (
-                            <div key={r.id || i} className="bg-white/[0.02] border border-white/[0.06] rounded-2xl p-5 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                            <div key={r.id || i} className="bg-white/[0.03] border border-white/10 rounded-2xl p-5 flex flex-col md:flex-row md:items-center justify-between gap-4 backdrop-blur-md">
                               <div className="flex items-start gap-4">
                                 <div className="w-10 h-10 rounded-xl bg-[#E873C3]/15 border border-[#E873C3]/30 text-[#E873C3] font-black text-sm flex items-center justify-center shrink-0">
                                   R{i + 1}
@@ -1094,7 +1094,7 @@ export default function EventDetailPage() {
                   {/* Schedule & Timeline (if any) */}
                   {event.timeline_json && event.timeline_json.length > 0 && (
                     <div className="flex flex-col gap-4">
-                      <h2 className="text-xs font-bold text-white/30 uppercase tracking-widest" style={modernHeadingStyle}>Timeline & Schedule</h2>
+                      <h2 className="text-xs font-bold text-white/60 uppercase tracking-widest" style={modernHeadingStyle}>Timeline & Schedule</h2>
                       <div className="relative flex flex-col gap-0 pl-4 py-2">
                         <div className="absolute left-6 top-2 bottom-2 w-px bg-gradient-to-b from-[#4ECDC4]/60 via-[#E873C3]/30 to-transparent" />
                         {event.timeline_json.map((entry, i) => {
@@ -1204,10 +1204,10 @@ export default function EventDetailPage() {
                       })}
                     </div>
                   ) : (
-                    <div className="bg-white/[0.02] border border-white/[0.06] rounded-2xl p-6 text-center flex flex-col items-center gap-3">
+                    <div className="bg-white/[0.03] border border-white/10 rounded-2xl p-6 text-center flex flex-col items-center gap-3 backdrop-blur-md">
                       <Trophy size={40} className="text-[#FFD700]" />
                       <h3 className="font-black text-xl text-white" style={modernHeadingStyle}>Prize Pool: {formatPrize(event.prize_pool)}</h3>
-                      <p className="text-xs text-white/50 max-w-md font-sans">Top performers will receive certificates, CosmoDex XP points, and platform badges upon completion.</p>
+                      <p className="text-xs text-white/60 max-w-md font-sans">Top performers will receive certificates, CosmoDex XP points, and platform badges upon completion.</p>
                     </div>
                   )}
                 </div>
@@ -1215,16 +1215,16 @@ export default function EventDetailPage() {
 
               {/* TAB 4: RULES */}
               {activeTab === 'rules' && (
-                <div className="bg-white/[0.02] border border-white/[0.06] rounded-2xl p-6">
-                  <h2 className="text-xs font-bold text-white/40 uppercase tracking-widest mb-4" style={modernHeadingStyle}>Rules & Guidelines</h2>
+                <div className="bg-white/[0.03] border border-white/10 rounded-2xl p-6 backdrop-blur-md">
+                  <h2 className="text-xs font-bold text-white/60 uppercase tracking-widest mb-4" style={modernHeadingStyle}>Rules & Guidelines</h2>
                   {!event.rules_json || event.rules_json.length === 0 ? (
-                    <p className="text-white/30 text-sm">Standard CosmoDex competition rules apply.</p>
+                    <p className="text-white/40 text-sm">Standard CosmoDex competition rules apply.</p>
                   ) : (
                     <ol className="flex flex-col gap-3 font-sans">
                       {event.rules_json.map((rule, i) => {
                         const ruleText = typeof rule === 'string' ? rule : (rule.text || rule.rule || rule.title || JSON.stringify(rule));
                         return (
-                          <li key={i} className="flex gap-3 text-sm text-white/70">
+                          <li key={i} className="flex gap-3 text-sm text-white/80">
                             <span className="text-[#E873C3] font-black shrink-0 w-6 text-right font-mono">{i + 1}.</span>
                             <span className="leading-relaxed">{ruleText}</span>
                           </li>
@@ -1237,19 +1237,19 @@ export default function EventDetailPage() {
 
               {/* TAB 5: LEADERBOARD */}
               {activeTab === 'leaderboard' && (
-                <div className="bg-white/[0.02] border border-white/[0.06] rounded-2xl overflow-hidden">
-                  <div className="px-6 py-4 border-b border-white/[0.06] flex items-center justify-between">
-                    <h2 className="text-xs font-bold text-white/40 uppercase tracking-widest" style={modernHeadingStyle}>Official Leaderboard</h2>
-                    <span className="text-xs text-white/40">{leaderboard.length > 0 ? `${leaderboard.length} ranked entries` : 'Live Standings'}</span>
+                <div className="bg-white/[0.03] border border-white/10 rounded-2xl overflow-hidden backdrop-blur-md">
+                  <div className="px-6 py-4 border-b border-white/10 flex items-center justify-between">
+                    <h2 className="text-xs font-bold text-white/60 uppercase tracking-widest" style={modernHeadingStyle}>Official Leaderboard</h2>
+                    <span className="text-xs text-white/50">{leaderboard.length > 0 ? `${leaderboard.length} ranked entries` : 'Live Standings'}</span>
                   </div>
                   {leaderboard.length === 0 ? (
                     <div className="py-16 text-center flex flex-col items-center gap-3">
-                      <Trophy size={36} className="text-white/20 mx-auto mb-1" />
-                      <h3 className="text-sm font-bold text-white/80" style={modernHeadingStyle}>No Standings Recorded Yet</h3>
-                      <p className="text-white/40 text-xs max-w-sm font-sans">Participants and scores will appear on the leaderboard as soon as submissions are made.</p>
+                      <Trophy size={36} className="text-white/30 mx-auto mb-1" />
+                      <h3 className="text-sm font-bold text-white/90" style={modernHeadingStyle}>No Standings Recorded Yet</h3>
+                      <p className="text-white/50 text-xs max-w-sm font-sans">Participants and scores will appear on the leaderboard as soon as submissions are made.</p>
                     </div>
                   ) : (
-                    <div className="divide-y divide-white/[0.04]">
+                    <div className="divide-y divide-white/[0.06]">
                       {leaderboard.map((entry, i) => {
                         const rankNum = entry.rank ?? i + 1;
                         const totalSec = entry.totalTimeSeconds;
@@ -1260,7 +1260,7 @@ export default function EventDetailPage() {
                         const initialChar = (displayName.trim()[0] || 'U').toUpperCase();
 
                         return (
-                          <div key={i} className={`flex items-center gap-4 px-6 py-4 ${i < 3 ? 'bg-white/[0.01]' : ''}`}>
+                          <div key={i} className={`flex items-center gap-4 px-6 py-4 ${i < 3 ? 'bg-white/[0.02]' : ''}`}>
                             <span className="text-lg font-black w-8 text-center font-mono" style={{ color: i === 0 ? '#FFD700' : i === 1 ? '#C0C0C0' : i === 2 ? '#CD7F32' : '#6b7280' }}>
                               #{rankNum}
                             </span>
@@ -1291,9 +1291,9 @@ export default function EventDetailPage() {
               {/* TAB 6: FAQS */}
               {activeTab === 'faqs' && (
                 <div className="flex flex-col gap-3">
-                  <h2 className="text-xs font-bold text-white/40 uppercase tracking-widest" style={modernHeadingStyle}>Frequently Asked Questions</h2>
+                  <h2 className="text-xs font-bold text-white/60 uppercase tracking-widest" style={modernHeadingStyle}>Frequently Asked Questions</h2>
                   {!event.faqs_json || event.faqs_json.length === 0 ? (
-                    <p className="text-white/30 text-sm">No specific FAQs added yet.</p>
+                    <p className="text-white/40 text-sm">No specific FAQs added yet.</p>
                   ) : (
                     event.faqs_json.map((faq, i) => {
                       const q = faq.question || faq.q || faq.title || `Question ${i + 1}`;
