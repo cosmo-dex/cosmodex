@@ -1,3 +1,4 @@
+import dynamic from "next/dynamic";
 import Navbar from "@/components/navbar/Navbar";
 import HeroSection from "@/components/landing/HeroSection";
 import CoursesSection from "@/components/landing/CoursesSection";
@@ -7,10 +8,12 @@ import JoinClubSection from "@/components/landing/JoinClubSection";
 import DevsSection from "@/components/landing/DevsSection";
 import Footer from "@/components/landing/Footer";
 import ScrollAnimation from "@/components/landing/ScrollAnimation";
-import SmoothScroll from "@/components/landing/SmoothScroll";
 import ClickParticles from "@/components/landing/ClickParticles";
 import FAQSection from "@/components/faq/FAQSection";
-import WebsiteTour from "@/components/onboarding/WebsiteTour";
+
+const WebsiteTour = dynamic(() => import("@/components/onboarding/WebsiteTour"), {
+  ssr: false,
+});
 
 export default function Home() {
   return (
@@ -22,8 +25,6 @@ export default function Home() {
       }}
     >
       <ScrollAnimation />
-
-      <SmoothScroll />
 
       <Navbar />
       <ClickParticles />

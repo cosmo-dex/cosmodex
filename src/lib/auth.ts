@@ -65,6 +65,11 @@ export const authOptions: NextAuthOptions = {
   session: {
     strategy: 'jwt',
   },
+
+  pages: {
+    signIn: '/onboarding',
+    error: '/onboarding',
+  },
 };
 
 export default NextAuth(authOptions);

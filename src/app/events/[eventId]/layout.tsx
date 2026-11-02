@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import EventSchema from "@/components/seo/EventSchema";
 import BreadcrumbSchema from "@/components/seo/BreadcrumbSchema";
+import prisma from "@/lib/prisma";
 
 interface Props {
   children: React.ReactNode;
@@ -15,14 +16,54 @@ const EVENT_BACKEND_URL =
   process.env.NEXT_PUBLIC_EVENT_BACKEND_URL ||
   "https://event-backend-golang.onrender.com";
 
+const isUuid = (val: string): boolean =>
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(val);
+
 async function getEventData(eventId: string) {
+  // 1. Direct Prisma lookup first (fastest, ~2-5ms in Server Components)
   try {
+    const decoded = decodeURIComponent(eventId).trim();
+    const event = await prisma.events.findFirst({
+      where: {
+        OR: [
+          { slug: { equals: decoded, mode: 'insensitive' } },
+          ...(isUuid(decoded) ? [{ id: decoded }] : []),
+        ],
+      },
+      select: {
+        id: true,
+        title: true,
+        slug: true,
+        tagline: true,
+        description: true,
+        banner_url: true,
+        starts_at: true,
+        ends_at: true,
+      },
+    });
+    if (event) {
+      return {
+        ...event,
+        starts_at: event.starts_at?.toISOString() ?? null,
+        ends_at: event.ends_at?.toISOString() ?? null,
+      };
+    }
+  } catch {
+    // Continue to external fetch fallback if DB lookup fails
+  }
+
+  // 2. Fallback to external event backend with fast timeout
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 1200);
     const res = await fetch(
       `${EVENT_BACKEND_URL}/api/events/${encodeURIComponent(eventId)}`,
       {
+        signal: controller.signal,
         next: { revalidate: 60 },
       }
     );
+    clearTimeout(timeoutId);
     if (!res.ok) return null;
     const data = await res.json();
     return data?.event || null;

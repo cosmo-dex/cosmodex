@@ -1,46 +1,11 @@
-/**
- * ─── Font Configuration ───────────────────────────────────────────────────────
- *
- * This is the ONLY file you need to edit to change fonts site-wide.
- *
- * HOW TO SWAP A FONT
- * ──────────────────
- * 1. Pick a font from https://fonts.google.com
- * 2. Import it below (replace the existing import for that role)
- * 3. Update the font() call — change the function name and adjust weights
- *    if the new font supports different ones
- * 4. Save — the CSS variables update automatically everywhere
- *
- * FONT ROLES
- * ──────────
- *  display  →  --font-display  →  hero headings, section titles, feature card titles,
- *                                  achievement titles, decorative game elements ONLY
- *  body     →  --font-body     →  ALL other text: nav, buttons, descriptions,
- *                                  badges, forms, footer, cards, modals
- *  mono     →  --font-mono     →  code blocks, terminal mockups, XP values
- *                                  (same as body — unified Fira Code)
- *  inter    →  --font-inter    →  readable sans-serif for long-form text,
- *                                  MCQ questions, option labels, paragraphs
- */
-
 import localFont from "next/font/local";
 import {
-  // ── BODY font (all UI text — nav, buttons, descriptions, forms, footer) ──────
-  // Fira Code: monospace with programming ligatures — developer-centric aesthetic
-  Fira_Code as BodyFont,
-
-  // ── MONO font (code blocks, terminal, XP values) ──────────────────────────────
-  // Same as body — unified Fira Code throughout for a cohesive dev experience
-  Fira_Code as MonoFont,
-
-  // ── INTER font (readable sans-serif for MCQ questions, long-form text) ────────
+  Fira_Code as FiraCodeFont,
+  Fira_Sans as FiraSansFont,
   Inter as InterFont,
 } from "next/font/google";
 
 // ── Display ──────────────────────────────────────────────────────────────────
-// Hitchcut: ONLY for hero headings, section titles, feature card titles,
-// achievement titles, and decorative gaming elements.
-// NOT for nav links, buttons, badges, body text, or UI labels.
 export const displayFont = localFont({
   src: [
     {
@@ -53,30 +18,32 @@ export const displayFont = localFont({
   display: "swap",
 });
 
-// ── Body ─────────────────────────────────────────────────────────────────────
-// Fira Code as the primary application font — nav links, buttons, descriptions,
-// form elements, badges, footer content, cards, modals, and ALL UI text.
-export const bodyFont = BodyFont({
+// ── Unified Body & Mono Font (Fira Code) ─────────────────────────────────────
+// Single instantiation avoids duplicate font downloads
+export const bodyFont = FiraCodeFont({
   variable: "--font-body",
   subsets: ["latin"],
   weight: ["400", "500", "600"],
+  display: "swap",
 });
 
-// ── Mono ─────────────────────────────────────────────────────────────────────
-// Fira Code — code blocks, terminal mockups, XP values, stat numbers.
-// Unified with body for a seamless developer experience.
-export const monoFont = MonoFont({
+export const monoFont = {
   variable: "--font-mono",
-  subsets: ["latin"],
-  weight: ["400", "500", "600"],
-});
+  className: bodyFont.className,
+};
 
 // ── Inter (Readable Sans-Serif) ──────────────────────────────────────────────
-// Clean proportional sans-serif for MCQ questions, option labels, and any
-// long-form text where monospace Fira Code would hurt readability.
 export const interFont = InterFont({
   variable: "--font-inter",
   subsets: ["latin"],
-  weight: ["400", "500", "600", "700", "800", "900"],
+  weight: ["400", "500", "600", "700"],
+  display: "swap",
 });
 
+// ── Fira Sans (Used in battle matches) ───────────────────────────────────────
+export const firaSansFont = FiraSansFont({
+  variable: "--font-fira-sans",
+  subsets: ["latin"],
+  weight: ["400", "700"],
+  display: "swap",
+});

@@ -9,7 +9,15 @@ const nextConfig: NextConfig = {
   poweredByHeader: false,
   compress: true,
   experimental: {
-    optimizePackageImports: ['lucide-react', 'framer-motion', '@monaco-editor/react'],
+    optimizePackageImports: [
+      'lucide-react',
+      'framer-motion',
+      'motion',
+      '@monaco-editor/react',
+      'canvas-confetti',
+      'lenis',
+      'zustand',
+    ],
   },
   images: {
     // Serve static files as-is. Avoids Vercel Image Optimization quota
@@ -61,6 +69,24 @@ const nextConfig: NextConfig = {
         ],
       },
       {
+        source: '/fonts/:path*',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'public, max-age=31536000, immutable',
+          },
+        ],
+      },
+      {
+        source: '/:path*.(woff|woff2|ttf|otf)',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'public, max-age=31536000, immutable',
+          },
+        ],
+      },
+      {
         source: '/images/:path*',
         headers: [
           {
@@ -70,7 +96,7 @@ const nextConfig: NextConfig = {
         ],
       },
       {
-        source: '/:path*.(webp|png|jpg|jpeg|gif|svg|lottie)',
+        source: '/:path*.(webp|png|jpg|jpeg|gif|svg|lottie|ico)',
         headers: [
           {
             key: 'Cache-Control',

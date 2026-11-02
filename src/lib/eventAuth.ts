@@ -58,27 +58,33 @@ export async function getEventAuthHeaders(req: NextRequest): Promise<Record<stri
   const authHeader = req.headers.get('authorization');
   if (authHeader) {
     headers['Authorization'] = authHeader;
-    return headers;
   }
 
   // 2. If cosmo_session cookie exists
   const userCookie = req.cookies.get(USER_SESSION_COOKIE);
   if (userCookie?.value) {
     headers['Cookie'] = `${USER_SESSION_COOKIE}=${userCookie.value}`;
-    headers['Authorization'] = `Bearer ${userCookie.value}`;
-    return headers;
+    if (!headers['Authorization']) {
+      headers['Authorization'] = `Bearer ${userCookie.value}`;
+    }
   }
 
-  // 3. Fallback to NextAuth -> sign session
+  // 3. Resolve user identity from cosmo_session or NextAuth to enrich auth headers
   const session = await getEventUserSession(req);
   if (session?.userId) {
-    const token = await signSession({
-      userId: session.userId,
-      username: session.username,
-      email: session.email || '',
-      role: session.role || 'student',
-    });
-    headers['Authorization'] = `Bearer ${token}`;
+    headers['x-user-id'] = session.userId;
+    if (session.email) {
+      headers['x-user-email'] = session.email;
+    }
+    if (!headers['Authorization']) {
+      const token = await signSession({
+        userId: session.userId,
+        username: session.username,
+        email: session.email || '',
+        role: session.role || 'student',
+      });
+      headers['Authorization'] = `Bearer ${token}`;
+    }
   }
 
   return headers;

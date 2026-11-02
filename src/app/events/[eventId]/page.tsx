@@ -231,29 +231,59 @@ export default function EventDetailPage() {
 
   const fetchEvent = useCallback(() => {
     const token = unlockToken || (typeof window !== 'undefined' ? sessionStorage.getItem(`event_unlock_${eventId}`) : '');
-    const headers: Record<string, string> = {};
+    const headers: Record<string, string> = {
+      'Cache-Control': 'no-cache, no-store, must-revalidate',
+      'Pragma': 'no-cache',
+    };
     if (token) {
       headers['x-unlock-token'] = token;
     }
+    const storedEmail = typeof window !== 'undefined' ? (sessionStorage.getItem(`event_reg_email_${eventId}`) || userEmail) : userEmail;
+    if (storedEmail) {
+      headers['x-user-email'] = storedEmail;
+    }
 
-    fetch(`/api/events/${eventId}`, { headers })
+    const query = new URLSearchParams();
+    query.set('t', Date.now().toString());
+    if (storedEmail) {
+      query.set('email', storedEmail);
+    }
+
+    fetch(`/api/events/${eventId}?${query.toString()}`, {
+      headers,
+      cache: 'no-store',
+    })
       .then(r => r.json())
       .then(data => {
         if (data.event) {
           setEvent(data.event);
-          setUserRegistration(data.userRegistration ?? null);
+          if (data.userRegistration && data.userRegistration.status === 'registered') {
+            setUserRegistration(data.userRegistration);
+            try {
+              sessionStorage.setItem(`event_reg_${eventId}`, JSON.stringify(data.userRegistration));
+            } catch { }
+          } else {
+            try {
+              const cached = sessionStorage.getItem(`event_reg_${eventId}`);
+              if (cached) {
+                const parsed = JSON.parse(cached);
+                if (parsed && parsed.status === 'registered') {
+                  setUserRegistration(parsed);
+                  return;
+                }
+              }
+            } catch { }
+            setUserRegistration(null);
+          }
           setLeaderboard(data.leaderboard ?? []);
         }
       })
       .catch(() => { })
       .finally(() => setLoading(false));
-  }, [eventId, unlockToken]);
+  }, [eventId, unlockToken, userEmail]);
 
   useEffect(() => {
     fetchEvent();
-    fetch('/api/notifications')
-      .then(() => { })
-      .catch(() => { });
   }, [fetchEvent]);
 
   useEffect(() => {
@@ -268,7 +298,7 @@ export default function EventDetailPage() {
       .catch(() => { });
   }, []);
 
-  const isRegistered = Boolean(userRegistration);
+  const isRegistered = Boolean(userRegistration && userRegistration.status === 'registered');
   const isOngoing = event?.status === 'ongoing';
   const isEnded = event?.status === 'ended';
 
@@ -299,6 +329,23 @@ export default function EventDetailPage() {
       if (res.ok) {
         setShowRegModal(false);
         setRegMsg('🎉 Registered successfully! You are now enrolled.');
+        if (data.registration) {
+          const newReg: UserRegistration = {
+            status: data.registration.status || 'registered',
+            team_name: data.registration.team_name ?? null,
+            team_code: data.registration.team_code ?? null,
+            team_members_json: data.registration.team_members_json ?? data.registration.team_members ?? null,
+            submission_url: data.registration.submission_url ?? null,
+            submission_details_json: data.registration.submission_details_json ?? null,
+          };
+          setUserRegistration(newReg);
+          try {
+            sessionStorage.setItem(`event_reg_${eventId}`, JSON.stringify(newReg));
+            if (payload.details.email) {
+              sessionStorage.setItem(`event_reg_email_${eventId}`, payload.details.email);
+            }
+          } catch { }
+        }
         fetchEvent();
       } else {
         setRegMsg(data.error ?? 'Failed to complete registration');
@@ -314,6 +361,10 @@ export default function EventDetailPage() {
     setRegistering(true);
     await fetch(`/api/events/${eventId}/register`, { method: 'DELETE' });
     setUserRegistration(null);
+    try {
+      sessionStorage.removeItem(`event_reg_${eventId}`);
+      sessionStorage.removeItem(`event_reg_email_${eventId}`);
+    } catch { }
     setRegMsg('Registration withdrawn.');
     setRegistering(false);
     fetchEvent();
