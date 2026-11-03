@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { Brain, Code2, Globe, Trophy, Sparkles } from "lucide-react";
+import { Brain, Code2, Globe, Trophy } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { Podium } from "./Podium";
 import { RankTable } from "./RankTable";
@@ -9,8 +9,6 @@ import { Starfield } from "./Starfield";
 import { type Player, type Scope, type Timeframe } from "@/data/leaderboard";
 import { AVATARS } from "@/lib/avatar";
 import { cn } from "@/lib/utils";
-
-const IS_LEADERBOARD_LIVE = true;
 
 interface LeaderboardEntry {
   rank: number;
@@ -20,6 +18,8 @@ interface LeaderboardEntry {
   wins: number;
   losses: number;
   draws: number;
+  points?: number;
+  ratingType?: "ELO" | "XP";
 }
 
 const SCOPES: Array<{ id: Scope; label: string; icon: typeof Globe }> = [
@@ -34,6 +34,7 @@ function mapEntryToPlayer(entry: LeaderboardEntry, index: number): Player {
   const tiers: Player["tier"][] = ["diamond", "platinum", "gold", "silver", "bronze"];
 
   const realElo = entry.elo || 1000;
+  const rating = entry.ratingType === "XP" ? (entry.points ?? entry.elo) : realElo;
   const battles = entry.wins + entry.losses + entry.draws;
   const wins = entry.wins;
   const losses = entry.losses;
@@ -45,12 +46,13 @@ function mapEntryToPlayer(entry: LeaderboardEntry, index: number): Player {
     handle: entry.userId.slice(0, 8),
     avatar: AVATARS[index % AVATARS.length].image,
     tier,
-    xp: realElo,
+    xp: rating,
     battles,
     wins,
     losses,
-    mmr: realElo,
+    mmr: rating,
     streak: Math.max(wins - losses, 0),
+    ratingLabel: entry.ratingType ?? "ELO",
   };
 }
 
@@ -150,7 +152,9 @@ export default function Leaderboard() {
           Leader<span className="text-gradient-accent">board</span>
         </h1>
         <p className="mt-1.5 max-w-lg text-center text-xs font-light text-text-secondary md:text-sm">
-          The quadrant&apos;s elite battle gladiators, ranked by competitive ELO rating and combat victories.
+          {scope === "global"
+            ? "The quadrant&apos;s most accomplished explorers, ranked by XP, referrals, and learning progress."
+            : "The quadrant&apos;s elite battle gladiators, ranked by competitive ELO rating and combat victories."}
         </p>
 
         <div className="relative mt-5 flex rounded-pill border border-border-subtle bg-bg-surface p-1">

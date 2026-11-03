@@ -7,7 +7,9 @@ import CourseSuggestions from "@/components/dashboard/CourseSuggestions";
 import Achievements from "@/components/dashboard/Achievements";
 import ProfileCard from "@/components/dashboard/ProfileCard";
 import Footer from "@/components/dashboard/Footer";
+import ReferralCard from "@/components/dashboard/ReferralCard";
 import { verifySession, SESSION_COOKIE } from '@/lib/session';
+import { getReferralSummary } from '@/lib/referrals';
 
 export default async function DashboardPage() {
   const cookieStore = await cookies();
@@ -44,6 +46,7 @@ export default async function DashboardPage() {
     totalModules: number;
     completedModules: number;
   }> = [];
+  let referral = { link: 'https://cosmodex.in/join', count: 0, points: 0 };
 
   if (userId) {
     try {
@@ -61,7 +64,7 @@ export default async function DashboardPage() {
       const languageIds = userEnrollments.map((e) => e.language_id);
 
       // Then fetch other data in parallel
-      const [dbUser, arenaStats, battleStats, userBadges, languageModules, userModuleCompletions] = await Promise.all([
+      const [dbUser, arenaStats, battleStats, userBadges, languageModules, userModuleCompletions, referralSummary] = await Promise.all([
         prisma.users.findUnique({
           where: { id: userId! },
           select: { avatar_url: true, username: true, experience_level: true, level: true, xp_total: true },
@@ -100,7 +103,14 @@ export default async function DashboardPage() {
           },
           select: { module_id: true, modules: { select: { language_id: true } } },
         }),
+        getReferralSummary(userId!, process.env.NEXT_PUBLIC_APP_URL || 'https://cosmodex.in'),
       ]);
+
+      referral = {
+        link: referralSummary.link,
+        count: referralSummary.count,
+        points: referralSummary.points,
+      };
 
       if (dbUser) {
         avatarId = dbUser!.avatar_url || avatarId;
@@ -176,6 +186,7 @@ export default async function DashboardPage() {
               badgeCount={badgeCount}
               codeElo={codeElo}
             />
+            <ReferralCard {...referral} />
           </div>
 
         </div>

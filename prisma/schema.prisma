@@ -53,8 +53,45 @@ model users {
   notifications_created                          notifications[]         @relation("NotificationsCreatedBy")
   notifications_received                         notifications[]         @relation("NotificationsTargetUser")
   user_notification_states                       user_notification_states[]
+  referrals_sent                                 referrals[]              @relation("ReferralReferrer")
+  referrals_received                             referrals[]              @relation("ReferralReferredUser")
+  referral_point_events                          referral_point_events[]  @relation("ReferralPointUser")
+
+  referral_code                                  String?                 @unique
 
   @@index([username])
+}
+
+model referrals {
+  id                String                  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  referrer_id       String                  @db.Uuid
+  referred_user_id  String                  @unique @db.Uuid
+  referral_code     String
+  points_awarded    Int                     @default(0)
+  status            String                  @default("credited")
+  created_at        DateTime                @default(now()) @db.Timestamptz(6)
+
+  referrer          users                   @relation("ReferralReferrer", fields: [referrer_id], references: [id], onDelete: Cascade)
+  referred_user     users                   @relation("ReferralReferredUser", fields: [referred_user_id], references: [id], onDelete: Cascade)
+  point_events      referral_point_events[]
+
+  @@index([referrer_id])
+  @@index([referral_code])
+}
+
+model referral_point_events {
+  id          String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  referral_id String    @db.Uuid
+  user_id     String    @db.Uuid
+  points      Int
+  reason      String
+  created_at  DateTime  @default(now()) @db.Timestamptz(6)
+
+  referral    referrals @relation(fields: [referral_id], references: [id], onDelete: Cascade)
+  user        users     @relation("ReferralPointUser", fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@unique([referral_id, reason])
+  @@index([user_id])
 }
 
 model languages {
