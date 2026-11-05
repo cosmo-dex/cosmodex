@@ -8,6 +8,8 @@ interface LeaderboardEntry {
   wins: number;
   losses: number;
   draws: number;
+  points?: number;
+  ratingType?: 'ELO' | 'XP';
 }
 
 const memoryCache = new Map<string, { timestamp: number; data: LeaderboardEntry[] }>();
@@ -49,9 +51,11 @@ export async function GET(req: NextRequest) {
             ],
           },
         },
-        orderBy: mode === 'mcq' 
-          ? [{ mcq_elo_rating: 'desc' }, { wins: 'desc' }]
-          : [{ elo_rating: 'desc' }, { mcq_elo_rating: 'desc' }, { wins: 'desc' }],
+        orderBy: mode === 'global'
+          ? [{ users: { xp_total: 'desc' } }, { wins: 'desc' }]
+          : mode === 'mcq'
+            ? [{ mcq_elo_rating: 'desc' }, { wins: 'desc' }]
+            : [{ elo_rating: 'desc' }, { mcq_elo_rating: 'desc' }, { wins: 'desc' }],
         take: 500,
         select: {
           user_id: true,
@@ -63,6 +67,7 @@ export async function GET(req: NextRequest) {
           users: {
             select: {
               username: true,
+              xp_total: true,
             },
           },
         },
@@ -76,11 +81,12 @@ export async function GET(req: NextRequest) {
         const mapped = filtered.map((item) => {
           const codeElo = item.elo_rating ?? 1000;
           const mcqElo = item.mcq_elo_rating ?? 1000;
+          const points = item.users?.xp_total ?? 0;
           let effectiveElo = codeElo;
           if (mode === 'mcq') {
             effectiveElo = mcqElo;
           } else if (mode === 'global') {
-            effectiveElo = Math.max(codeElo, mcqElo);
+            effectiveElo = points;
           }
           return {
             userId: item.user_id,
@@ -91,6 +97,8 @@ export async function GET(req: NextRequest) {
             wins: item.wins ?? 0,
             losses: item.losses ?? 0,
             draws: item.draws ?? 0,
+            points,
+            ratingType: mode === 'global' ? 'XP' as const : 'ELO' as const,
           };
         });
 

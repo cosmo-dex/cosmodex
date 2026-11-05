@@ -14,6 +14,7 @@ export type Player = {
   losses: number;
   mmr: number;
   streak: number;
+  ratingLabel: "ELO" | "XP";
 };
 
 export const TIER_STYLES: Record<Tier, { label: string; className: string }> = {

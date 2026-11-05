@@ -3,6 +3,7 @@ import { hash } from 'bcryptjs';
 import prisma from '@/lib/prisma';
 import { cookies } from 'next/headers';
 import { signSession, SESSION_COOKIE, SESSION_COOKIE_OPTIONS } from '@/lib/session';
+import { creditReferralForNewUser, ensureReferralCode, REFERRAL_COOKIE } from '@/lib/referrals';
 
 const SALT_ROUNDS = 12;
 
@@ -50,34 +51,44 @@ export async function POST(req: NextRequest) {
     const passwordHash = isOAuth ? null : await hash(password!, SALT_ROUNDS);
     const providerStr = authMethod ? authMethod.toLowerCase() : 'email';
 
-    const newUser = await prisma.users.create({
-      data: {
-        email: normalizedEmail,
-        username: normalizedUsername,
-        password_hash: passwordHash,
-        auth_provider: providerStr,
-        role: 'student',
-        avatar_url: avatarId ?? null,
-        experience_level: 'Beginner',
-        interests: interests ?? [],
-        xp_total: 0,
-        level: 1,
-        is_active: true,
-        last_login_at: new Date(),
-      },
-      select: {
-        id: true,
-        username: true,
-        email: true,
-        avatar_url: true,
-        experience_level: true,
-        interests: true,
-        level: true,
-        xp_total: true,
-        role: true,
-        created_at: true,
-      },
+    const cookieStore = await cookies();
+    const referralCode = cookieStore.get(REFERRAL_COOKIE)?.value ?? null;
+
+    const newUser = await prisma.$transaction(async (tx) => {
+      const createdUser = await tx.users.create({
+        data: {
+          email: normalizedEmail,
+          username: normalizedUsername,
+          password_hash: passwordHash,
+          auth_provider: providerStr,
+          role: 'student',
+          avatar_url: avatarId ?? null,
+          experience_level: 'Beginner',
+          interests: interests ?? [],
+          xp_total: 0,
+          level: 1,
+          is_active: true,
+          last_login_at: new Date(),
+        },
+        select: {
+          id: true,
+          username: true,
+          email: true,
+          avatar_url: true,
+          experience_level: true,
+          interests: true,
+          level: true,
+          xp_total: true,
+          role: true,
+          created_at: true,
+        },
+      });
+
+      await creditReferralForNewUser(tx, createdUser.id, referralCode);
+      return createdUser;
     });
+
+    await ensureReferralCode(newUser.id);
 
     const signedToken = await signSession({
       userId: newUser.id,
@@ -92,10 +103,8 @@ export async function POST(req: NextRequest) {
       createdAt: newUser.created_at?.toISOString() ?? new Date().toISOString(),
     });
 
-    const cookieStore = await cookies();
     cookieStore.set(SESSION_COOKIE, signedToken, SESSION_COOKIE_OPTIONS);
-
-    return NextResponse.json({
+    const response = NextResponse.json({
       success: true,
       user: {
         id: newUser.id,
@@ -109,6 +118,8 @@ export async function POST(req: NextRequest) {
         role: newUser.role,
       },
     });
+    response.cookies.delete(REFERRAL_COOKIE);
+    return response;
   } catch (err) {
     console.error('[register] Error:', err);
     return NextResponse.json({ error: 'Internal server error.' }, { status: 500 });
