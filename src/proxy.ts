@@ -11,11 +11,7 @@ const ADMIN_ROLE_ROUTES: Record<string, string[]> = {
 
 const PROTECTED_USER_ROUTES = [
   '/dashboard',
-  '/learn',
-  '/battle',
   '/coding',
-  '/events',
-  '/leaderboard',
   '/profile',
   '/victory',
 ];
