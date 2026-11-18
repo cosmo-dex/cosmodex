@@ -1,9 +1,8 @@
 'use client';
 
-import { useEffect, useState, useMemo, useCallback } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useEffect, useState, useMemo } from 'react';
+import { useParams } from 'next/navigation';
 import Link from 'next/link';
-import { motion, AnimatePresence } from 'motion/react';
 import Navbar from '@/components/navbar/Navbar';
 import Footer from '@/components/landing/Footer';
 import RisingStars from '@/components/RisingStar';
@@ -14,7 +13,6 @@ import {
   Swords,
   ChevronRight,
   ArrowLeft,
-  Shield,
   ShieldCheck,
   Terminal,
   ListChecks,
@@ -25,7 +23,6 @@ import {
   Trophy,
   ExternalLink,
   Users,
-  CheckCircle2,
 } from 'lucide-react';
 
 interface EventDetail {
@@ -61,7 +58,6 @@ interface UserRegistration {
 
 export default function EventBattlePage() {
   const params = useParams();
-  const router = useRouter();
   const rawEventId = params?.eventId as string;
 
   const eventBattleContext = useEventBattleContext();
@@ -86,51 +82,57 @@ export default function EventBattlePage() {
   const [secretPassInput, setSecretPassInput] = useState('');
   const [unlockError, setUnlockError] = useState('');
   const [unlockLoading, setUnlockLoading] = useState(false);
+  const [dataRefreshKey, setDataRefreshKey] = useState(0);
 
   // 1. Fetch Event and Registration Data
-  const fetchEventData = useCallback(async () => {
-    if (!rawEventId) return;
-    try {
-      const token = unlockToken || (typeof window !== 'undefined' ? sessionStorage.getItem(`event_unlock_${rawEventId}`) : '');
-      const headers: Record<string, string> = {
-        'Cache-Control': 'no-cache, no-store, must-revalidate',
-      };
-      if (token) {
-        headers['x-unlock-token'] = token;
-      }
-
-      const res = await fetch(`/api/events/${encodeURIComponent(rawEventId)}?t=${Date.now()}`, {
-        headers,
-        cache: 'no-store',
-      });
-      const data = await res.json();
-      if (data.event) {
-        setEvent(data.event);
-        if (data.userRegistration && data.userRegistration.status === 'registered') {
-          setUserRegistration(data.userRegistration);
-        } else {
-          // Check session storage cached registration
-          try {
-            const cached = sessionStorage.getItem(`event_reg_${rawEventId}`);
-            if (cached) {
-              const parsed = JSON.parse(cached);
-              if (parsed?.status === 'registered') {
-                setUserRegistration(parsed);
-              }
-            }
-          } catch {}
-        }
-      }
-    } catch {
-      // Fetch error handled gracefully
-    } finally {
-      setLoading(false);
-    }
-  }, [rawEventId, unlockToken]);
-
   useEffect(() => {
-    fetchEventData();
-  }, [fetchEventData]);
+    let isMounted = true;
+    if (!rawEventId) return;
+
+    const token = unlockToken || (typeof window !== 'undefined' ? sessionStorage.getItem(`event_unlock_${rawEventId}`) : '');
+    const headers: Record<string, string> = {
+      'Cache-Control': 'no-cache, no-store, must-revalidate',
+    };
+    if (token) {
+      headers['x-unlock-token'] = token;
+    }
+
+    fetch(`/api/events/${encodeURIComponent(rawEventId)}?t=${Date.now()}`, {
+      headers,
+      cache: 'no-store',
+    })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (!isMounted || !data) return;
+        if (data.event) {
+          setEvent(data.event);
+          if (data.userRegistration && data.userRegistration.status === 'registered') {
+            setUserRegistration(data.userRegistration);
+          } else {
+            // Check session storage cached registration
+            try {
+              const cached = sessionStorage.getItem(`event_reg_${rawEventId}`);
+              if (cached) {
+                const parsed = JSON.parse(cached);
+                if (parsed?.status === 'registered') {
+                  setUserRegistration(parsed);
+                }
+              }
+            } catch {}
+          }
+        }
+      })
+      .catch(() => {})
+      .finally(() => {
+        if (isMounted) {
+          setLoading(false);
+        }
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [rawEventId, unlockToken, dataRefreshKey]);
 
   // 2. Ensure Battle Socket connects when entering the battle page
   useEffect(() => {
@@ -146,13 +148,13 @@ export default function EventBattlePage() {
     Array.isArray(battleConfig?.allowed_modes) &&
     battleConfig.allowed_modes.length > 0
   );
-  const allowedModes: ('code' | 'mcq')[] = isBattleEnabled ? battleConfig!.allowed_modes : [];
+  const allowedModes = useMemo<('code' | 'mcq')[]>(() => {
+    return isBattleEnabled && battleConfig?.allowed_modes ? battleConfig.allowed_modes : [];
+  }, [isBattleEnabled, battleConfig]);
 
-  useEffect(() => {
-    if (allowedModes.length > 0 && !allowedModes.includes(selectedMode)) {
-      setSelectedMode(allowedModes[0]);
-    }
-  }, [allowedModes, selectedMode]);
+  const effectiveSelectedMode = allowedModes.length > 0 && !allowedModes.includes(selectedMode)
+    ? allowedModes[0]
+    : selectedMode;
 
   // 4. Unlock Private Event handler
   const handleUnlock = async (e: React.FormEvent) => {
@@ -183,7 +185,7 @@ export default function EventBattlePage() {
             sessionStorage.setItem(`event_unlock_${data.event_id}`, data.unlock_token);
           }
         }
-        await fetchEventData();
+        setDataRefreshKey((k) => k + 1);
       } else {
         setUnlockError(data.error || 'Invalid secret password');
       }
@@ -405,7 +407,7 @@ export default function EventBattlePage() {
                   <div
                     onClick={() => setSelectedMode('code')}
                     className={`relative p-5 rounded-2xl border transition-all cursor-pointer backdrop-blur-md ${
-                      selectedMode === 'code'
+                      effectiveSelectedMode === 'code'
                         ? 'bg-gradient-to-br from-[#FF416C]/15 to-[#8A2387]/15 border-[#FF416C]/60 shadow-[0_0_25px_rgba(255,65,108,0.25)]'
                         : 'bg-white/[0.03] border-white/10 hover:bg-white/[0.05] hover:border-white/20'
                     }`}
@@ -422,7 +424,7 @@ export default function EventBattlePage() {
                           </span>
                         </div>
                       </div>
-                      {selectedMode === 'code' && (
+                      {effectiveSelectedMode === 'code' && (
                         <span className="px-2 py-0.5 rounded-full text-[10px] font-black uppercase bg-[#FF416C] text-white">
                           Selected
                         </span>
@@ -439,7 +441,7 @@ export default function EventBattlePage() {
                   <div
                     onClick={() => setSelectedMode('mcq')}
                     className={`relative p-5 rounded-2xl border transition-all cursor-pointer backdrop-blur-md ${
-                      selectedMode === 'mcq'
+                      effectiveSelectedMode === 'mcq'
                         ? 'bg-gradient-to-br from-[#FF416C]/15 to-[#8A2387]/15 border-[#FF416C]/60 shadow-[0_0_25px_rgba(255,65,108,0.25)]'
                         : 'bg-white/[0.03] border-white/10 hover:bg-white/[0.05] hover:border-white/20'
                     }`}
@@ -456,7 +458,7 @@ export default function EventBattlePage() {
                           </span>
                         </div>
                       </div>
-                      {selectedMode === 'mcq' && (
+                      {effectiveSelectedMode === 'mcq' && (
                         <span className="px-2 py-0.5 rounded-full text-[10px] font-black uppercase bg-[#FF416C] text-white">
                           Selected
                         </span>
@@ -473,7 +475,7 @@ export default function EventBattlePage() {
             {/* Reusable MatchmakingPanel with Event Scoping */}
             <div className="pt-2">
               <MatchmakingPanel
-                key={`${eventBattleContext?.queueRefreshKey}-${selectedMode}`}
+                key={`${eventBattleContext?.queueRefreshKey}-${effectiveSelectedMode}`}
                 socket={socket}
                 userId={user?.userId || ''}
                 username={user?.username || ''}

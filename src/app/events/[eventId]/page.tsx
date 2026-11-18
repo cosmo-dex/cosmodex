@@ -425,29 +425,33 @@ export default function EventDetailPage() {
     fetchEvent();
   }, [fetchEvent]);
 
-  const fetchBattleLeaderboard = useCallback(() => {
-    if (eventBattle?.refreshLeaderboard) {
-      eventBattle.refreshLeaderboard();
-      return;
-    }
-    if (!eventId) return;
-    setLocalBattleLeaderboardLoading(true);
-    fetch(`/api/events/${eventId}/battle-leaderboard`, { cache: 'no-store' })
-      .then((r) => (r.ok ? r.json() : null))
-      .then((data) => {
-        if (data && Array.isArray(data.leaderboard)) {
-          setLocalBattleLeaderboardData(data);
-        }
-      })
-      .catch(() => {})
-      .finally(() => setLocalBattleLeaderboardLoading(false));
-  }, [eventId, eventBattle?.refreshLeaderboard]);
+  const refreshEventLeaderboard = eventBattle?.refreshLeaderboard;
 
   useEffect(() => {
+    let ignore = false;
     if (activeTab === 'leaderboard') {
-      fetchBattleLeaderboard();
+      if (refreshEventLeaderboard) {
+        refreshEventLeaderboard();
+      } else if (eventId) {
+        fetch(`/api/events/${eventId}/battle-leaderboard`, { cache: 'no-store' })
+          .then((r) => (r.ok ? r.json() : null))
+          .then((data) => {
+            if (!ignore && data && Array.isArray(data.leaderboard)) {
+              setLocalBattleLeaderboardData(data);
+            }
+          })
+          .catch(() => {})
+          .finally(() => {
+            if (!ignore) {
+              setLocalBattleLeaderboardLoading(false);
+            }
+          });
+      }
     }
-  }, [activeTab, fetchBattleLeaderboard]);
+    return () => {
+      ignore = true;
+    };
+  }, [activeTab, eventId, refreshEventLeaderboard]);
 
   useEffect(() => {
     fetch('/api/user/profile')
@@ -589,15 +593,6 @@ export default function EventDetailPage() {
   const allowedBattleModes = isBattleArenaEnabled
     ? (battleArenaConfig?.allowed_modes || eventBattle?.allowedModes || ['code', 'mcq'])
     : [];
-
-  const activeMatchInfo = eventBattle?.matchInfo || null;
-  const battleSocket = eventBattle?.socket || null;
-  const battleUser = eventBattle?.user || null;
-  const battleAuthLoading = eventBattle?.authLoading || false;
-  const queueRefreshKey = eventBattle?.queueRefreshKey || 0;
-  const handleMatchFound = eventBattle?.handleMatchFound || (() => {});
-  const handleMatchCompleted = eventBattle?.handleMatchCompleted || (() => {});
-  const handleLeaveMatch = eventBattle?.handleLeaveMatch || (() => {});
 
   const TABS: { key: Tab; label: string }[] = [
     { key: 'about', label: 'Overview' },

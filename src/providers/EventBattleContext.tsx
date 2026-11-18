@@ -79,10 +79,21 @@ export function EventBattleProvider({
 
   // Initial leaderboard synchronization on mount
   useEffect(() => {
+    let ignore = false;
     if (isBattleArenaEnabled && canonicalId) {
-      refreshLeaderboard();
+      fetch(`/api/events/${canonicalId}/battle-leaderboard`, { cache: 'no-store' })
+        .then((r) => (r.ok ? r.json() : null))
+        .then((data) => {
+          if (!ignore && data && Array.isArray(data.leaderboard)) {
+            setBattleLeaderboardData(data);
+          }
+        })
+        .catch(() => {});
     }
-  }, [isBattleArenaEnabled, canonicalId, refreshLeaderboard]);
+    return () => {
+      ignore = true;
+    };
+  }, [isBattleArenaEnabled, canonicalId]);
 
   // Hook into the persistent battle manager with lazy connection enabled
   const battleManager = useEventBattleManager({

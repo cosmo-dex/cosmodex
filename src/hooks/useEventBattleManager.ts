@@ -48,26 +48,51 @@ function getArenaUrl(): string {
 export function useEventBattleManager({
   eventId,
   isBattleArenaEnabled,
-  allowedModes,
   onLeaderboardRefresh,
   lazy = false,
 }: EventBattleManagerOptions) {
   const [socket, setSocket] = useState<ArenaSocket | null>(null);
   const [user, setUser] = useState<BattleUserSession | null>(null);
-  const [authLoading, setAuthLoading] = useState(false);
-  const [matchInfo, setMatchInfo] = useState<MatchInfo | null>(null);
+  const [authLoading, setAuthLoading] = useState<boolean>(() => {
+    if (!isBattleArenaEnabled) return false;
+    if (lazy) {
+      const stored = getStoredActiveMatch();
+      const canonicalEventId = parseEventId(eventId);
+      return Boolean(stored && canonicalEventId && stored.eventId === canonicalEventId);
+    }
+    return true;
+  });
+  const [matchInfo, setMatchInfo] = useState<MatchInfo | null>(() => {
+    const stored = getStoredActiveMatch();
+    const canonicalEventId = parseEventId(eventId);
+    if (stored && canonicalEventId && stored.eventId === canonicalEventId) {
+      return {
+        roomId: stored.roomId,
+        opponentId: stored.opponentId,
+        opponentUsername: stored.opponentUsername,
+        opponentElo: stored.opponentElo,
+        opponentAvatar: stored.opponentAvatar,
+        mode: stored.mode,
+        eventId: stored.eventId,
+      };
+    }
+    return null;
+  });
   const [queueRefreshKey, setQueueRefreshKey] = useState(0);
 
   // Queue state tracking
   const [isQueued, setIsQueued] = useState(false);
   const [queuedMode, setQueuedMode] = useState<'code' | 'mcq' | null>(null);
   const [queueJoinedAt, setQueueJoinedAt] = useState<number | null>(null);
-  const [hasRequestedConnect, setHasRequestedConnect] = useState(false);
+  const [hasRequestedConnect, setHasRequestedConnect] = useState<boolean>(() => {
+    const stored = getStoredActiveMatch();
+    const canonicalEventId = parseEventId(eventId);
+    return Boolean(stored && canonicalEventId && stored.eventId === canonicalEventId);
+  });
 
   const socketRef = useRef<ArenaSocket | null>(null);
   const isQueuedRef = useRef(isQueued);
   const queuedModeRef = useRef(queuedMode);
-  const hasRestoredRef = useRef(false);
   const hasReportedCompletionRef = useRef<Record<string, boolean>>({});
   const onLeaderboardRefreshRef = useRef(onLeaderboardRefresh);
 
@@ -84,35 +109,39 @@ export function useEventBattleManager({
   }, [onLeaderboardRefresh]);
 
   const ensureConnected = useCallback(() => {
+    setAuthLoading(true);
     setHasRequestedConnect(true);
   }, []);
 
-  // 1. Restore active match for this specific event on mount
-  useEffect(() => {
-    if (hasRestoredRef.current) return;
-    hasRestoredRef.current = true;
-
-    const stored = getStoredActiveMatch();
-    const canonicalEventId = parseEventId(eventId);
-    if (stored && canonicalEventId && stored.eventId === canonicalEventId) {
-      setMatchInfo({
-        roomId: stored.roomId,
-        opponentId: stored.opponentId,
-        opponentUsername: stored.opponentUsername,
-        opponentElo: stored.opponentElo,
-        opponentAvatar: stored.opponentAvatar,
-        mode: stored.mode,
-        eventId: stored.eventId,
+  // 1. Callback when matchmaking succeeds and match begins (declared before socket lifecycle)
+  const handleMatchFound = useCallback(
+    (info: MatchInfo) => {
+      const canonicalEventId = parseEventId(eventId);
+      const enriched: MatchInfo = {
+        ...info,
+        eventId: canonicalEventId || info.eventId || null,
+      };
+      setMatchInfo(enriched);
+      setStoredActiveMatch({
+        roomId: enriched.roomId,
+        opponentId: enriched.opponentId,
+        opponentUsername: enriched.opponentUsername,
+        opponentElo: enriched.opponentElo,
+        opponentAvatar: enriched.opponentAvatar,
+        mode: enriched.mode,
+        eventId: enriched.eventId,
       });
-      // Active match present -> request socket connection immediately to recover
-      setHasRequestedConnect(true);
-    }
-  }, [eventId]);
+    },
+    [eventId]
+  );
+  const handleMatchFoundRef = useRef(handleMatchFound);
+  useEffect(() => {
+    handleMatchFoundRef.current = handleMatchFound;
+  }, [handleMatchFound]);
 
   // 2. Persistent Event Arena Socket lifecycle (Lazy or Eager)
   useEffect(() => {
     if (!isBattleArenaEnabled) {
-      setAuthLoading(false);
       return;
     }
 
@@ -128,7 +157,6 @@ export function useEventBattleManager({
     let isMounted = true;
     let activeSocket: ArenaSocket | null = null;
     const arenaUrl = getArenaUrl();
-    setAuthLoading(true);
 
     fetch('/api/battle/token')
       .then((res) => {
@@ -171,7 +199,7 @@ export function useEventBattleManager({
             setIsQueued(false);
             setQueuedMode(null);
             setQueueJoinedAt(null);
-            handleMatchFound(info);
+            handleMatchFoundRef.current(info);
           });
 
           // Safe recovery validation: Handle expired or unrecoverable rooms
@@ -216,31 +244,9 @@ export function useEventBattleManager({
       }
       setSocket(null);
     };
-  }, [eventId, isBattleArenaEnabled, lazy, hasRequestedConnect]);
+  }, [eventId, isBattleArenaEnabled, lazy, hasRequestedConnect, matchInfo]);
 
-  // 3. Callback when matchmaking succeeds and match begins
-  const handleMatchFound = useCallback(
-    (info: MatchInfo) => {
-      const canonicalEventId = parseEventId(eventId);
-      const enriched: MatchInfo = {
-        ...info,
-        eventId: canonicalEventId || info.eventId || null,
-      };
-      setMatchInfo(enriched);
-      setStoredActiveMatch({
-        roomId: enriched.roomId,
-        opponentId: enriched.opponentId,
-        opponentUsername: enriched.opponentUsername,
-        opponentElo: enriched.opponentElo,
-        opponentAvatar: enriched.opponentAvatar,
-        mode: enriched.mode,
-        eventId: enriched.eventId,
-      });
-    },
-    [eventId]
-  );
-
-  // 4. Server-confirmed match completion (called as soon as match_ended / mcq_match_ended is received)
+  // 3. Server-confirmed match completion (called as soon as match_ended / mcq_match_ended is received)
   const handleMatchCompleted = useCallback((completionPayload?: { roomId?: string }) => {
     const roomId = completionPayload?.roomId || matchInfo?.roomId;
     if (!roomId) return;

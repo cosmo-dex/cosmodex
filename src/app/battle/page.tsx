@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState, Suspense } from 'react';
+import { useEffect, useRef, useState, useMemo, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { motion } from 'motion/react';
@@ -46,23 +46,15 @@ function getArenaUrl(): string {
 function BattlePageContent() {
   const searchParams = useSearchParams();
   const rawEventId = searchParams.get('eventId');
-  const { eventId: initialEventId, isInvalid: initialIsInvalid } = resolveBattleEventId(rawEventId);
-
-  const [eventId, setEventId] = useState<string | null>(initialEventId);
-  const [invalidEventWarning, setInvalidEventWarning] = useState<string | null>(() =>
-    initialIsInvalid ? `Invalid event ID format "${rawEventId}". Normal Battle Arena loaded.` : null
-  );
+  const { eventId, isInvalid } = useMemo(() => resolveBattleEventId(rawEventId), [rawEventId]);
+  const [dismissedWarningFor, setDismissedWarningFor] = useState<string | null>(null);
+  const invalidEventWarning = isInvalid && dismissedWarningFor !== rawEventId
+    ? `Invalid event ID format "${rawEventId}". Normal Battle Arena loaded.`
+    : null;
 
   useEffect(() => {
-    const { eventId: parsed, isInvalid } = resolveBattleEventId(rawEventId);
-    setEventId(parsed);
-    setStoredEventId(parsed);
-    if (isInvalid) {
-      setInvalidEventWarning(`Invalid event ID format "${rawEventId}". Normal Battle Arena loaded.`);
-    } else {
-      setInvalidEventWarning(null);
-    }
-  }, [rawEventId]);
+    setStoredEventId(eventId);
+  }, [eventId]);
 
   const [user, setUser] = useState<UserSession | null>(null);
   const [loading, setLoading] = useState(true);
@@ -217,7 +209,7 @@ function BattlePageContent() {
                 <span>{invalidEventWarning}</span>
               </div>
               <button
-                onClick={() => setInvalidEventWarning(null)}
+                onClick={() => setDismissedWarningFor(rawEventId)}
                 className="p-1 hover:text-white transition-colors cursor-pointer"
                 title="Dismiss warning"
               >

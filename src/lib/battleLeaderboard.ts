@@ -130,7 +130,6 @@ export async function getEventBattleLeaderboard(
   }
 
   const isTeamEvent = event.participation_type === 'team';
-  const rankingType: RankingType = isTeamEvent ? 'team' : 'individual';
 
   const [registrations, codingMatches, mcqMatches] = await Promise.all([
     prisma.event_registrations.findMany({

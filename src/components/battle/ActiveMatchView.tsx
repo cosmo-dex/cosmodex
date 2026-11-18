@@ -399,7 +399,7 @@ export default function ActiveMatchView({ socket, matchInfo, userId, username, o
       socket.off('match_ended');
       socket.off('error', handleRoomError);
     };
-  }, [socket, isMcq, matchInfo.roomId, matchInfo.opponentUsername, userId, username, onLeave]);
+  }, [socket, isMcq, matchInfo.roomId, matchInfo.opponentUsername, matchInfo.eventId, isEventMatch, onMatchCompleted, userId, username, onLeave]);
 
   useEffect(() => {
     if (waitTimer <= 0) return;

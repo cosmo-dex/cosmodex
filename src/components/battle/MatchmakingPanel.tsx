@@ -111,12 +111,14 @@ export default function MatchmakingPanel({
 }: Props) {
   const initialMode: Mode = allowedModes.includes('mcq') ? 'mcq' : (allowedModes[0] || 'code');
   const [mode, setMode] = useState<Mode>(initialMode);
+  const [prevAllowedModes, setPrevAllowedModes] = useState(allowedModes);
 
-  useEffect(() => {
+  if (prevAllowedModes !== allowedModes) {
+    setPrevAllowedModes(allowedModes);
     if (allowedModes.length > 0 && !allowedModes.includes(mode)) {
       setMode(allowedModes[0]);
     }
-  }, [allowedModes, mode]);
+  }
   const [queueState, setQueueState] = useState<QueueState>("idle");
   const [phase, setPhase] = useState<CinematicPhase>("SEARCHING");
   const [opponent, setOpponent] = useState<{ username: string; elo: number; avatar?: string } | null>(null);
