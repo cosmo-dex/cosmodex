@@ -275,6 +275,14 @@ async function handleDatabaseRegistration(
     };
   }
 
+  // Team Membership Lock (Section 7): team membership is immutable once event starts
+  if (isTeamEvent && event.starts_at && new Date() >= new Date(event.starts_at)) {
+    return {
+      status: 403,
+      data: { error: 'Team rosters are locked. Team creation and joining are not permitted after the event starts.' },
+    };
+  }
+
   let finalTeamName: string | null = null;
   let finalTeamCode: string | null = null;
   let finalTeamMembers: TeamMember[] = [];
@@ -457,6 +465,14 @@ async function handleDatabaseWithdrawal(req: NextRequest, identifier: string) {
 
   if (!event) {
     return { status: 404, data: { error: 'Event not found' } };
+  }
+
+  // Team Membership Lock (Section 7): team membership is immutable once event starts
+  if (event.participation_type === 'team' && event.starts_at && new Date() >= new Date(event.starts_at)) {
+    return {
+      status: 403,
+      data: { error: 'Team rosters are locked. Registration withdrawal is not permitted after the event starts.' },
+    };
   }
 
   const updated = await prisma.$transaction(async (tx) => {

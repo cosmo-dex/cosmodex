@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import EventSchema from "@/components/seo/EventSchema";
 import BreadcrumbSchema from "@/components/seo/BreadcrumbSchema";
 import prisma from "@/lib/prisma";
+import { EventBattleProvider } from "@/providers/EventBattleContext";
 
 interface Props {
   children: React.ReactNode;
@@ -39,6 +40,8 @@ async function getEventData(eventId: string) {
         banner_url: true,
         starts_at: true,
         ends_at: true,
+        status: true,
+        submission_config: true,
       },
     });
     if (event) {
@@ -46,6 +49,8 @@ async function getEventData(eventId: string) {
         ...event,
         starts_at: event.starts_at?.toISOString() ?? null,
         ends_at: event.ends_at?.toISOString() ?? null,
+        status: event.status,
+        submission_config: event.submission_config as Record<string, unknown> | null,
       };
     }
   } catch {
@@ -123,6 +128,17 @@ export default async function EventDetailLayout({ children, params }: Props) {
   const { eventId } = await params;
   const event = await getEventData(eventId);
 
+  const subConfig = (event?.submission_config || {}) as Record<string, unknown>;
+  const battleConfig = subConfig.battle_arena as { enabled?: boolean; allowed_modes?: ('code' | 'mcq')[] } | undefined;
+  const isBattleArenaEnabled = Boolean(
+    battleConfig?.enabled &&
+    Array.isArray(battleConfig?.allowed_modes) &&
+    battleConfig.allowed_modes.length > 0
+  );
+  const allowedModes = isBattleArenaEnabled
+    ? battleConfig!.allowed_modes!
+    : (['code', 'mcq'] as ('code' | 'mcq')[]);
+
   return (
     <>
       <BreadcrumbSchema
@@ -145,7 +161,16 @@ export default async function EventDetailLayout({ children, params }: Props) {
           imageUrl={event.banner_url}
         />
       )}
-      {children}
+      <EventBattleProvider
+        eventId={eventId}
+        canonicalEventId={event?.id}
+        eventTitle={event?.title}
+        eventStatus={event?.status}
+        isBattleArenaEnabled={isBattleArenaEnabled}
+        allowedModes={allowedModes}
+      >
+        {children}
+      </EventBattleProvider>
     </>
   );
 }

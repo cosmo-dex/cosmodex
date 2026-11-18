@@ -1,3 +1,27 @@
+export interface SanitizedBattleArenaConfig {
+  enabled: boolean;
+  allowed_modes: ('code' | 'mcq')[];
+}
+
+export function sanitizeBattleArenaConfig(raw: unknown): SanitizedBattleArenaConfig | undefined {
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return undefined;
+  const ba = raw as Record<string, unknown>;
+  if (ba.enabled !== true) return undefined;
+  if (!Array.isArray(ba.allowed_modes) || ba.allowed_modes.length === 0) return undefined;
+
+  for (const mode of ba.allowed_modes) {
+    if (mode !== 'code' && mode !== 'mcq') {
+      return undefined; // Reject malformed arrays entirely; do not silently sanitize
+    }
+  }
+
+  const uniqueModes = Array.from(new Set(ba.allowed_modes)) as ('code' | 'mcq')[];
+  return {
+    enabled: true,
+    allowed_modes: uniqueModes,
+  };
+}
+
 export const PUBLIC_EVENT_STATUSES = ['published', 'ongoing', 'ended'] as const;
 export type PublicEventStatus = (typeof PUBLIC_EVENT_STATUSES)[number];
 
@@ -297,6 +321,8 @@ export function sanitizePublicEventDetail(event: {
   const faqsList = Array.isArray(event.faqs_json) ? event.faqs_json : [];
   const sponsorsList = Array.isArray(event.sponsors_json) ? event.sponsors_json : [];
 
+  const battleArenaConfig = sanitizeBattleArenaConfig(subConfig.battle_arena);
+
   // Safe sanitized submission_config without private_access
   const safeSubmissionConfig = {
     mode: submissionMode as 'platform' | 'google_form' | 'external_link',
@@ -306,6 +332,7 @@ export function sanitizePublicEventDetail(event: {
     hackathon_details: hackathonDetails,
     assessment_details: assessmentDetails,
     registration_fields_config: summary.registration_fields_config,
+    battle_arena: battleArenaConfig,
   };
 
   return {
@@ -319,6 +346,7 @@ export function sanitizePublicEventDetail(event: {
     faqs_json: faqsList,
     sponsors_json: sponsorsList,
     submission_config: safeSubmissionConfig,
+    battle_arena: battleArenaConfig,
 
     // Backward-compatible aliases
     rounds: roundsList,

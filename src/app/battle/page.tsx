@@ -1,6 +1,8 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, Suspense } from 'react';
+import { useSearchParams } from 'next/navigation';
+import Link from 'next/link';
 import { motion } from 'motion/react';
 import Navbar from '@/components/navbar/Navbar';
 import BattleArenaHero from '@/components/battle/BattleArenaHero';
@@ -9,6 +11,8 @@ import ActiveMatchView from '@/components/battle/ActiveMatchView';
 import BattleTour from '@/components/battle/BattleTour';
 import { createArenaSocket, ArenaSocket } from '@/lib/arenaWsClient';
 import RisingStars from '@/components/RisingStar';
+import { resolveBattleEventId, setStoredEventId, getStoredActiveMatch, setStoredActiveMatch } from '@/lib/battleEvent';
+import { Swords, AlertTriangle, X } from 'lucide-react';
 
 interface UserSession {
   userId: string;
@@ -20,7 +24,9 @@ interface MatchInfo {
   opponentId: string;
   opponentUsername: string;
   opponentElo: number;
+  opponentAvatar?: string | null;
   mode: 'code' | 'mcq';
+  eventId?: string | null;
 }
 
 function getArenaUrl(): string {
@@ -30,13 +36,37 @@ function getArenaUrl(): string {
       return 'https://battle-arena-golang.onrender.com';
     }
   }
-  return process.env.NEXT_PUBLIC_BATTLE_ARENA_URL || 'http://localhost:3001';
+  return (
+    process.env.NEXT_PUBLIC_BATTLE_ARENA_WS_URL ||
+    process.env.NEXT_PUBLIC_BATTLE_ARENA_URL ||
+    'http://localhost:3001'
+  );
 }
 
-export default function BattlePage() {
+function BattlePageContent() {
+  const searchParams = useSearchParams();
+  const rawEventId = searchParams.get('eventId');
+  const { eventId: initialEventId, isInvalid: initialIsInvalid } = resolveBattleEventId(rawEventId);
+
+  const [eventId, setEventId] = useState<string | null>(initialEventId);
+  const [invalidEventWarning, setInvalidEventWarning] = useState<string | null>(() =>
+    initialIsInvalid ? `Invalid event ID format "${rawEventId}". Normal Battle Arena loaded.` : null
+  );
+
+  useEffect(() => {
+    const { eventId: parsed, isInvalid } = resolveBattleEventId(rawEventId);
+    setEventId(parsed);
+    setStoredEventId(parsed);
+    if (isInvalid) {
+      setInvalidEventWarning(`Invalid event ID format "${rawEventId}". Normal Battle Arena loaded.`);
+    } else {
+      setInvalidEventWarning(null);
+    }
+  }, [rawEventId]);
+
   const [user, setUser] = useState<UserSession | null>(null);
   const [loading, setLoading] = useState(true);
-  const [matchInfo, setMatchInfo] = useState<MatchInfo | null>(null);
+  const [matchInfo, setMatchInfo] = useState<MatchInfo | null>(() => getStoredActiveMatch());
   const [socket, setSocket] = useState<ArenaSocket | null>(null);
   const [refreshKey, setRefreshKey] = useState(0);
   const matchInfoRef = useRef<MatchInfo | null>(null);
@@ -93,6 +123,7 @@ export default function BattlePage() {
           username={user.username}
           onLeave={() => {
             setMatchInfo(null);
+            setStoredActiveMatch(null);
             setRefreshKey((k) => k + 1);
           }}
         />
@@ -178,6 +209,41 @@ export default function BattlePage() {
         <BattleArenaHero />
 
         <section className="w-full max-w-[1360px] mx-auto flex-1 flex flex-col items-center justify-center px-4 sm:px-6 pt-1 pb-3 overflow-hidden">
+          {/* Invalid Event ID Warning Banner */}
+          {invalidEventWarning && (
+            <div className="w-full max-w-2xl mb-4 px-4 py-2.5 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-between text-xs text-amber-200 backdrop-blur-md">
+              <div className="flex items-center gap-2">
+                <AlertTriangle size={15} className="text-amber-400 shrink-0" />
+                <span>{invalidEventWarning}</span>
+              </div>
+              <button
+                onClick={() => setInvalidEventWarning(null)}
+                className="p-1 hover:text-white transition-colors cursor-pointer"
+                title="Dismiss warning"
+              >
+                <X size={14} />
+              </button>
+            </div>
+          )}
+
+          {/* Active Event Arena Context Banner */}
+          {eventId && (
+            <div className="w-full max-w-2xl mb-4 px-4 py-2.5 rounded-xl bg-[#8D37D6]/15 border border-[#8D37D6]/35 flex items-center justify-between text-xs text-purple-200 backdrop-blur-md">
+              <div className="flex items-center gap-2">
+                <Swords size={16} className="text-[#FF416C] shrink-0" />
+                <span>
+                  <strong className="text-white font-semibold">Event Battle Arena Active</strong> &bull; Match results will be recorded for this event.
+                </span>
+              </div>
+              <Link
+                href={`/events/${eventId}`}
+                className="text-[#E873C3] hover:text-white font-semibold transition-colors underline shrink-0 ml-3"
+              >
+                View Event Details &rarr;
+              </Link>
+            </div>
+          )}
+
           {loading ? (
             <div className="text-center p-10 text-white/50 flex flex-col items-center gap-3">
               <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-[#D95FD1]"></div>
@@ -197,12 +263,11 @@ export default function BattlePage() {
                 </p>
                 <div className="flex flex-col gap-3">
                   <a
-                    href="/onboarding?mode=login&next=/battle"
+                    href={`/onboarding?mode=login&next=${encodeURIComponent(eventId ? `/battle?eventId=${eventId}` : '/battle')}`}
                     className="cosmo-btn-primary w-full py-3 text-sm h-11 flex items-center justify-center"
                   >
                     Sign In
                   </a>
-
                 </div>
               </div>
             </div>
@@ -214,7 +279,11 @@ export default function BattlePage() {
                   socket={socket}
                   userId={user.userId}
                   username={user.username}
-                  onMatchFound={(info) => setMatchInfo(info)}
+                  eventId={eventId}
+                  onMatchFound={(info) => {
+                    setMatchInfo(info);
+                    setStoredActiveMatch(info);
+                  }}
                 />
               </div>
               <BattleTour />
@@ -223,5 +292,19 @@ export default function BattlePage() {
         </section>
       </div>
     </div>
+  );
+}
+
+export default function BattlePage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="relative min-h-screen bg-[#050508] text-white flex items-center justify-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-[#D95FD1]" />
+        </div>
+      }
+    >
+      <BattlePageContent />
+    </Suspense>
   );
 }

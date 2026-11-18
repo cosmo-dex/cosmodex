@@ -131,6 +131,7 @@ interface MatchInfo {
   opponentElo: number;
   opponentAvatar?: string | null;
   mode: 'code' | 'mcq';
+  eventId?: string | null;
 }
 
 interface Props {
@@ -139,10 +140,13 @@ interface Props {
   userId: string;
   username: string;
   onLeave: () => void;
+  onMatchCompleted?: (data: { roomId: string; winnerId: string | null; reason: string }) => void;
 }
 
-export default function ActiveMatchView({ socket, matchInfo, userId, username, onLeave }: Props) {
+export default function ActiveMatchView({ socket, matchInfo, userId, username, onLeave, onMatchCompleted }: Props) {
   const isMcq = matchInfo.mode === 'mcq';
+  const isEventMatch = Boolean(matchInfo.eventId);
+  const hasTriggeredCompletionRef = useRef(false);
 
   const [userAvatar, setUserAvatar] = useState<string | null>(null);
   const [codeState, setCodeState] = useState<CodeMatchState | null>(null);
@@ -215,6 +219,13 @@ export default function ActiveMatchView({ socket, matchInfo, userId, username, o
   useEffect(() => {
     if (!socket) return;
 
+    const handleRoomError = (err: { message?: string }) => {
+      if (err?.message && /room does not exist|expired|not a participant/i.test(err.message)) {
+        onLeave();
+      }
+    };
+    socket.on('error', handleRoomError);
+
     if (isMcq) {
       socket.emit('mcq_join_room', { roomId: matchInfo.roomId, userId });
 
@@ -258,6 +269,14 @@ export default function ActiveMatchView({ socket, matchInfo, userId, username, o
         totalTimes?: Record<string, number>;
       }) => {
         setMatchResult(data);
+        if (!hasTriggeredCompletionRef.current) {
+          hasTriggeredCompletionRef.current = true;
+          onMatchCompleted?.({
+            roomId: matchInfo.roomId,
+            winnerId: data.winnerId,
+            reason: data.reason,
+          });
+        }
 
         setMcqState((latest) => {
           try {
@@ -272,11 +291,12 @@ export default function ActiveMatchView({ socket, matchInfo, userId, username, o
               timeTaken: myPlayer?.totalTimeTaken ?? 0,
               opponentName: matchInfo.opponentUsername,
               myName: username,
-              eloDelta: myEloUpdate?.delta ?? null,
-              oldElo: myEloUpdate?.oldElo ?? null,
-              newElo: myEloUpdate?.newElo ?? null,
+              eloDelta: isEventMatch ? null : (myEloUpdate?.delta ?? null),
+              oldElo: isEventMatch ? null : (myEloUpdate?.oldElo ?? null),
+              newElo: isEventMatch ? null : (myEloUpdate?.newElo ?? null),
               matchId: matchInfo.roomId,
               isWinner: isWinner,
+              eventId: matchInfo.eventId ?? null,
             }));
           } catch {
             // Ignored
@@ -330,6 +350,14 @@ export default function ActiveMatchView({ socket, matchInfo, userId, username, o
         eloUpdates?: Record<string, EloUpdateData>;
       }) => {
         setMatchResult(data);
+        if (!hasTriggeredCompletionRef.current) {
+          hasTriggeredCompletionRef.current = true;
+          onMatchCompleted?.({
+            roomId: matchInfo.roomId,
+            winnerId: data.winnerId,
+            reason: data.reason,
+          });
+        }
 
         setCodeState((latest) => {
           const myPlayer = latest?.players?.[userId];
@@ -341,11 +369,12 @@ export default function ActiveMatchView({ socket, matchInfo, userId, username, o
               submissions: myPlayer?.submissionsCount ?? 0,
               opponentName: matchInfo.opponentUsername,
               myName: username,
-              eloDelta: myEloUpdate?.delta ?? null,
-              oldElo: myEloUpdate?.oldElo ?? null,
-              newElo: myEloUpdate?.newElo ?? null,
+              eloDelta: isEventMatch ? null : (myEloUpdate?.delta ?? null),
+              oldElo: isEventMatch ? null : (myEloUpdate?.oldElo ?? null),
+              newElo: isEventMatch ? null : (myEloUpdate?.newElo ?? null),
               matchId: latest?.roomId ?? null,
               isWinner: data.winnerId === userId,
+              eventId: matchInfo.eventId ?? null,
             }));
             localStorage.setItem('cosmodex_last_room_state', JSON.stringify(latest));
             if (latest?.roomId) localStorage.setItem('cosmodex_last_match_id', latest.roomId);
@@ -368,8 +397,9 @@ export default function ActiveMatchView({ socket, matchInfo, userId, username, o
       socket.off('opponent_completed_stage');
       socket.off('waiting_for_opponent');
       socket.off('match_ended');
+      socket.off('error', handleRoomError);
     };
-  }, [socket, isMcq, matchInfo.roomId, matchInfo.opponentUsername, userId, username]);
+  }, [socket, isMcq, matchInfo.roomId, matchInfo.opponentUsername, userId, username, onLeave]);
 
   useEffect(() => {
     if (waitTimer <= 0) return;
@@ -576,22 +606,45 @@ export default function ActiveMatchView({ socket, matchInfo, userId, username, o
 
           <p className="text-sm text-text-muted mb-6 leading-relaxed max-w-xs">
             {draw
-              ? "Both fighters competed hard. The battle ends in a draw."
+              ? isEventMatch
+                ? "Both fighters competed hard. Event points have been recorded."
+                : "Both fighters competed hard. The battle ends in a draw."
               : won
                 ? matchResult.reason === 'opponent_disconnect' || matchResult.reason === 'opponent_forfeit'
-                  ? `${matchInfo.opponentUsername} disconnected. You won by forfeit (+100 pts)!`
-                  : "You defeated your opponent! Your ELO has been updated."
+                  ? isEventMatch
+                    ? `${matchInfo.opponentUsername} disconnected. You won by forfeit (+100 event pts)!`
+                    : `${matchInfo.opponentUsername} disconnected. You won by forfeit (+100 pts)!`
+                  : isEventMatch
+                    ? "You defeated your opponent! Event points recorded."
+                    : "You defeated your opponent! Your ELO has been updated."
                 : matchResult.reason === 'opponent_disconnect' || matchResult.reason === 'opponent_forfeit'
                   ? "You left the match and forfeited."
                   : `${matchInfo.opponentUsername} won this battle. Keep practicing!`}
           </p>
 
           <div className="flex flex-col gap-3 w-full mb-6">
-            <AnimatedEloCard
-              eloUpdate={matchResult.eloUpdates?.[userId]}
-              won={won}
-              draw={draw}
-            />
+            {isEventMatch ? (
+              <div className="flex-1 bg-[#8D37D6]/10 border border-[#8D37D6]/35 p-4 rounded-2xl backdrop-blur-md shadow-inner text-center relative overflow-hidden">
+                <div className="flex flex-col items-center justify-center py-1">
+                  <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-mono font-bold bg-[#8D37D6]/25 text-purple-200 border border-[#8D37D6]/40 uppercase tracking-wider mb-1.5 shadow-[0_0_10px_rgba(141,55,214,0.3)]">
+                    <span className="w-1.5 h-1.5 rounded-full bg-[#E873C3] animate-pulse" />
+                    Event Battle Match
+                  </div>
+                  <span className="text-xl md:text-2xl font-black text-white font-mono tracking-tight">
+                    Global ELO Protected
+                  </span>
+                  <span className="text-[11px] text-text-muted mt-1 leading-snug">
+                    Match results recorded for event standings without altering global Arena ratings.
+                  </span>
+                </div>
+              </div>
+            ) : (
+              <AnimatedEloCard
+                eloUpdate={matchResult.eloUpdates?.[userId]}
+                won={won}
+                draw={draw}
+              />
+            )}
 
             <div className="flex gap-3 w-full justify-center">
               <div className="flex-1 bg-white/[0.05] border border-white/10 p-3 rounded-2xl backdrop-blur-md shadow-inner text-center">
@@ -631,7 +684,7 @@ export default function ActiveMatchView({ socket, matchInfo, userId, username, o
             className="w-full py-4 rounded-2xl bg-gradient-to-r from-purple-600 via-fuchsia-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white font-black tracking-wider uppercase text-sm shadow-[0_0_25px_rgba(192,38,211,0.5)] transition-all duration-300 hover:scale-[1.02] cursor-pointer"
             onClick={onLeave}
           >
-            Back to Arena
+            {isEventMatch ? "Back to Event Arena" : "Back to Arena"}
           </button>
         </div>
       </div>
@@ -659,11 +712,25 @@ export default function ActiveMatchView({ socket, matchInfo, userId, username, o
             <span className="px-3 py-1 rounded-full text-xs font-mono font-bold bg-white/5 border border-white/10 text-white/70">
               ⏱ {Math.floor(matchElapsedSeconds / 60).toString().padStart(2, "0")}:{(matchElapsedSeconds % 60).toString().padStart(2, "0")}
             </span>
+            {isEventMatch && (
+              <span className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-mono font-bold bg-[#8D37D6]/20 border border-[#8D37D6]/40 text-purple-300 shadow-[0_0_10px_rgba(141,55,214,0.3)]">
+                <span className="w-1.5 h-1.5 rounded-full bg-[#E873C3] animate-pulse" />
+                EVENT BATTLE
+              </span>
+            )}
           </div>
 
           <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center justify-center">
             <span className="font-display text-xl md:text-3xl text-white uppercase tracking-[0.08em]">
-              MCQ <span style={{ background: 'linear-gradient(135deg, #E873C3 0%, #D95FD1 35%, #C453D6 65%, #8D37D6 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>SPEED</span> BATTLE
+              {isEventMatch ? (
+                <>
+                  EVENT <span style={{ background: 'linear-gradient(135deg, #E873C3 0%, #D95FD1 35%, #C453D6 65%, #8D37D6 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>{isMcq ? 'MCQ SPEED' : 'CODE ARENA'}</span> BATTLE
+                </>
+              ) : (
+                <>
+                  {isMcq ? 'MCQ' : '1V1'} <span style={{ background: 'linear-gradient(135deg, #E873C3 0%, #D95FD1 35%, #C453D6 65%, #8D37D6 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>{isMcq ? 'SPEED' : 'ARENA'}</span> BATTLE
+                </>
+              )}
             </span>
           </div>
 

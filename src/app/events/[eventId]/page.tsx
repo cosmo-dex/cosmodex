@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 import Navbar from '@/components/navbar/Navbar';
@@ -11,11 +11,13 @@ import {
   Zap, Star, Hammer, BookOpen, CheckCircle, AlertCircle,
   UserCheck, ArrowLeft, ExternalLink,
   Flame, Award, ShieldCheck, Copy, Check, Send, Sparkles,
-  UsersRound, Globe, Medal, CheckCircle2, Lock, Eye, EyeOff, ShieldAlert, KeyRound, Code2
+  UsersRound, Globe, Medal, CheckCircle2, Lock, Eye, EyeOff, ShieldAlert, KeyRound, Code2, Swords, ArrowRight
 } from 'lucide-react';
 import CosmoDexRegistrationModal, { CosmoDexRegistrationDetails, CosmoDexRegistrationFieldsConfig } from '@/components/events/CosmoDexRegistrationModal';
+import { SanitizedBattleArenaConfig } from '@/lib/publicEvents';
 import RisingStars from '@/components/RisingStar';
 import Footer from '@/components/landing/Footer';
+import { useEventBattleContext } from '@/providers/EventBattleContext';
 
 interface EventRound {
   id?: string;
@@ -122,6 +124,7 @@ interface EventDetail {
     google_form_url?: string;
     external_link_url?: string;
     required_fields?: string[];
+    battle_arena?: SanitizedBattleArenaConfig;
     hackathon_details?: {
       problem_statement?: string;
       tracks?: (string | HackathonTrackItem)[];
@@ -133,6 +136,7 @@ interface EventDetail {
       duration_minutes?: number;
     };
   };
+  battle_arena?: SanitizedBattleArenaConfig;
   is_private?: boolean;
   secret_id?: string;
   _count: { event_registrations: number };
@@ -142,9 +146,48 @@ interface LeaderboardEntry {
   rank: number | null;
   score: number;
   username: string;
+  avatarUrl?: string | null;
   avatar_url: string | null;
   totalTimeSeconds?: number;
   correctCount?: number;
+}
+
+interface BattleParticipantStats {
+  wins: number;
+  draws: number;
+  losses: number;
+}
+
+interface BattleLeaderboardItem {
+  rank: number;
+  userId?: string;
+  teamId?: string;
+  username?: string;
+  teamName?: string;
+  avatarUrl?: string | null;
+  memberCount?: number;
+  wins: number;
+  draws: number;
+  losses: number;
+  completedMatches: number;
+  winRate: number;
+  coding: BattleParticipantStats;
+  mcq: BattleParticipantStats;
+  members?: Array<{
+    userId: string;
+    username: string;
+    avatarUrl?: string | null;
+    wins: number;
+    draws: number;
+    losses: number;
+    completedMatches: number;
+  }>;
+}
+
+interface BattleLeaderboardData {
+  eventId: string;
+  rankingType: 'individual' | 'team';
+  leaderboard: BattleLeaderboardItem[];
 }
 interface UserRegistration {
   status: string;
@@ -162,7 +205,7 @@ const TYPE_META: Record<string, { label: string; icon: React.ComponentType<{ siz
   challenge: { label: 'Challenge', icon: Star, color: '#8D37D6', glow: 'rgba(141,55,214,0.4)' },
 };
 
-type Tab = 'about' | 'rounds' | 'prizes' | 'rules' | 'leaderboard' | 'faqs';
+type Tab = 'about' | 'rounds' | 'battle' | 'prizes' | 'rules' | 'leaderboard' | 'faqs';
 
 function FaqItem({ q, a }: { q: string; a: string }) {
   const [open, setOpen] = useState(false);
@@ -197,14 +240,58 @@ function FaqItem({ q, a }: { q: string; a: string }) {
 export default function EventDetailPage() {
   const params = useParams();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const eventId = params.eventId as string;
 
+  const eventBattle = useEventBattleContext();
   const [event, setEvent] = useState<EventDetail | null>(null);
   const [userRegistration, setUserRegistration] = useState<UserRegistration | null>(null);
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const [activeTab, setActiveTab] = useState<Tab>('about');
+  // Battle Arena Leaderboard State (Synchronized with EventBattleContext)
+  const [localBattleLeaderboardData, setLocalBattleLeaderboardData] = useState<BattleLeaderboardData | null>(null);
+  const [localBattleLeaderboardLoading, setLocalBattleLeaderboardLoading] = useState(false);
+  const battleLeaderboardData = eventBattle?.battleLeaderboardData ?? localBattleLeaderboardData;
+  const battleLeaderboardLoading = eventBattle?.battleLeaderboardLoading ?? localBattleLeaderboardLoading;
+  const [leaderboardSubTab, setLeaderboardSubTab] = useState<'battle' | 'assessment'>('battle');
+  const [expandedTeamId, setExpandedTeamId] = useState<string | null>(null);
+
+  const [activeTab, setActiveTab] = useState<Tab>(() => {
+    const tabParam = searchParams?.get('tab');
+    if (tabParam && ['about', 'rounds', 'battle', 'prizes', 'rules', 'leaderboard', 'faqs'].includes(tabParam)) {
+      return tabParam as Tab;
+    }
+    return 'about';
+  });
+
+  const handleTabChange = useCallback((newTab: Tab) => {
+    setActiveTab(newTab);
+    if (typeof window !== 'undefined') {
+      const url = new URL(window.location.href);
+      if (newTab === 'about') {
+        url.searchParams.delete('tab');
+      } else {
+        url.searchParams.set('tab', newTab);
+      }
+      window.history.pushState({ tab: newTab }, '', url.toString());
+    }
+  }, []);
+
+  useEffect(() => {
+    const handlePopState = () => {
+      if (typeof window === 'undefined') return;
+      const params = new URLSearchParams(window.location.search);
+      const tabParam = params.get('tab') as Tab;
+      if (tabParam && ['about', 'rounds', 'battle', 'prizes', 'rules', 'leaderboard', 'faqs'].includes(tabParam)) {
+        setActiveTab(tabParam);
+      } else {
+        setActiveTab('about');
+      }
+    };
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, []);
   const [showRegModal, setShowRegModal] = useState(false);
   const [registering, setRegistering] = useState(false);
   const [regMsg, setRegMsg] = useState('');
@@ -322,7 +409,6 @@ export default function EventDetailPage() {
                 const parsed = JSON.parse(cached);
                 if (parsed && parsed.status === 'registered') {
                   setUserRegistration(parsed);
-                  return;
                 }
               }
             } catch { }
@@ -338,6 +424,30 @@ export default function EventDetailPage() {
   useEffect(() => {
     fetchEvent();
   }, [fetchEvent]);
+
+  const fetchBattleLeaderboard = useCallback(() => {
+    if (eventBattle?.refreshLeaderboard) {
+      eventBattle.refreshLeaderboard();
+      return;
+    }
+    if (!eventId) return;
+    setLocalBattleLeaderboardLoading(true);
+    fetch(`/api/events/${eventId}/battle-leaderboard`, { cache: 'no-store' })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        if (data && Array.isArray(data.leaderboard)) {
+          setLocalBattleLeaderboardData(data);
+        }
+      })
+      .catch(() => {})
+      .finally(() => setLocalBattleLeaderboardLoading(false));
+  }, [eventId, eventBattle?.refreshLeaderboard]);
+
+  useEffect(() => {
+    if (activeTab === 'leaderboard') {
+      fetchBattleLeaderboard();
+    }
+  }, [activeTab, fetchBattleLeaderboard]);
 
   useEffect(() => {
     fetch('/api/user/profile')
@@ -462,6 +572,33 @@ export default function EventDetailPage() {
   const isCodingContest = event.event_type === 'coding_contest';
   const contestEnterUrl = event.enter_event_url || (isCodingContest ? `/events/${event.slug || event.id}/submit` : submissionUrl);
 
+  const battleArenaConfig =
+    event?.submission_config?.battle_arena ||
+    event?.battle_arena ||
+    (eventBattle?.isBattleArenaEnabled
+      ? { enabled: true, allowed_modes: eventBattle.allowedModes }
+      : undefined);
+  const isBattleArenaEnabled = Boolean(
+    eventBattle?.isBattleArenaEnabled || (
+      battleArenaConfig?.enabled === true &&
+      Array.isArray(battleArenaConfig?.allowed_modes) &&
+      battleArenaConfig.allowed_modes.length > 0 &&
+      battleArenaConfig.allowed_modes.every(m => m === 'code' || m === 'mcq')
+    )
+  );
+  const allowedBattleModes = isBattleArenaEnabled
+    ? (battleArenaConfig?.allowed_modes || eventBattle?.allowedModes || ['code', 'mcq'])
+    : [];
+
+  const activeMatchInfo = eventBattle?.matchInfo || null;
+  const battleSocket = eventBattle?.socket || null;
+  const battleUser = eventBattle?.user || null;
+  const battleAuthLoading = eventBattle?.authLoading || false;
+  const queueRefreshKey = eventBattle?.queueRefreshKey || 0;
+  const handleMatchFound = eventBattle?.handleMatchFound || (() => {});
+  const handleMatchCompleted = eventBattle?.handleMatchCompleted || (() => {});
+  const handleLeaveMatch = eventBattle?.handleLeaveMatch || (() => {});
+
   const TABS: { key: Tab; label: string }[] = [
     { key: 'about', label: 'Overview' },
     {
@@ -470,6 +607,7 @@ export default function EventDetailPage() {
         ? 'Timeline & Schedule'
         : `Rounds & Timeline ${event.rounds_json?.length ? `(${event.rounds_json.length})` : ''}`,
     },
+    ...(isBattleArenaEnabled ? [{ key: 'battle' as Tab, label: 'Battle Arena' }] : []),
     { key: 'prizes', label: 'Prizes & Rewards' },
     { key: 'rules', label: 'Rules' },
     { key: 'leaderboard', label: 'Leaderboard' },
@@ -699,6 +837,155 @@ export default function EventDetailPage() {
         </div>
       )}
 
+      {/* ⚔️ EVENT BATTLE ARENA BANNER */}
+      {isBattleArenaEnabled && (!event.is_private || isRegistered || isUnlocked) && (
+        <div className="relative z-10 max-w-6xl mx-auto px-6 sm:px-10 mt-6">
+          <div
+            className="relative overflow-hidden rounded-2xl p-6 border flex flex-col md:flex-row items-center justify-between gap-6"
+            style={{
+              background: isOngoing
+                ? 'linear-gradient(135deg, rgba(255,65,108,0.15), rgba(138,35,135,0.12))'
+                : 'linear-gradient(135deg, rgba(255,255,255,0.04), rgba(255,255,255,0.02))',
+              borderColor: isOngoing ? 'rgba(255,65,108,0.45)' : 'rgba(255,255,255,0.12)',
+              boxShadow: isOngoing ? '0 0 35px rgba(255,65,108,0.22)' : 'none',
+            }}
+          >
+            <div className="flex items-center gap-4">
+              <div
+                className="w-14 h-14 rounded-2xl flex items-center justify-center shrink-0 border"
+                style={{
+                  background: isOngoing ? 'rgba(255,65,108,0.2)' : 'rgba(255,255,255,0.05)',
+                  borderColor: isOngoing ? 'rgba(255,65,108,0.4)' : 'rgba(255,255,255,0.15)',
+                }}
+              >
+                <Swords
+                  size={28}
+                  className={isOngoing ? 'text-[#FF416C] animate-pulse' : 'text-white/60'}
+                />
+              </div>
+              <div>
+                <div className="flex items-center gap-2 mb-1 flex-wrap">
+                  {isOngoing && <span className="w-2.5 h-2.5 rounded-full bg-[#FF416C] animate-pulse" />}
+                  <h3 className="font-black text-xl text-white" style={modernHeadingStyle}>
+                    {isOngoing
+                      ? '1v1 Battle Arena is Live!'
+                      : isEnded
+                        ? 'Event Battle Arena Concluded'
+                        : '1v1 Battle Arena Scheduled'}
+                  </h3>
+                  <div className="flex items-center gap-1.5 ml-1">
+                    {allowedBattleModes.map((mode) => (
+                      <span
+                        key={mode}
+                        className="px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-[#FF416C]/15 text-[#FF758C] border border-[#FF416C]/30"
+                      >
+                        {mode === 'code' ? 'Coding (1v1)' : 'MCQ (1v1)'}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+                <p className="text-sm text-white/80">
+                  {isOngoing
+                    ? isRegistered
+                      ? 'Compete in head-to-head live 1v1 battles scored specifically for this event.'
+                      : 'Registration is required to compete in real-time 1v1 battle arena matches for this event.'
+                    : isEnded
+                      ? 'Matches for this event have concluded. Thank you for competing!'
+                      : `Opens when event starts at ${formatDisplayDateTime(event.starts_at)}. Get ready to battle!`}
+                </p>
+              </div>
+            </div>
+
+            {/* Battle Arena Action / Status Button */}
+            {isOngoing ? (
+              isRegistered ? (
+                <Link
+                  href={`/events/${event?.slug || event?.id || eventId}/battle`}
+                  className="px-6 py-3 rounded-xl font-black text-sm text-white flex items-center gap-2 shrink-0 transition-all shadow-lg hover:scale-105 cursor-pointer"
+                  style={{
+                    background: 'linear-gradient(135deg, #FF416C, #8A2387)',
+                    boxShadow: '0 4px 20px rgba(255,65,108,0.4)',
+                  }}
+                >
+                  <Swords size={16} />
+                  <span>Enter Battle Arena</span>
+                </Link>
+              ) : canRegister ? (
+                <button
+                  onClick={() => setShowRegModal(true)}
+                  className="px-6 py-3 rounded-xl font-black text-sm text-white flex items-center gap-2 shrink-0 transition-all shadow-lg hover:scale-105 cursor-pointer"
+                  style={{
+                    background: 'linear-gradient(135deg, #FF416C, #8A2387)',
+                    boxShadow: '0 4px 20px rgba(255,65,108,0.4)',
+                  }}
+                >
+                  <Sparkles size={16} />
+                  <span>Register to Join Battle Arena</span>
+                </button>
+              ) : (
+                <div className="px-5 py-2.5 rounded-xl bg-white/[0.04] border border-white/10 text-white/40 text-xs font-bold shrink-0">
+                  Registration Closed
+                </div>
+              )
+            ) : isEnded ? (
+              <div className="px-5 py-2.5 rounded-xl bg-white/[0.04] border border-white/10 text-white/40 text-xs font-bold shrink-0">
+                Battle Arena Concluded
+              </div>
+            ) : (
+              <div className="px-5 py-2.5 rounded-xl bg-white/[0.06] border border-white/15 text-white/60 text-xs font-bold shrink-0 flex items-center gap-2">
+                <Clock size={14} className="text-[#FF758C]" />
+                <span>Battle Arena Opens When Event Starts</span>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* ⚡ ACTIVE MATCH IN PROGRESS RECOVERY BANNER */}
+      {eventBattle?.matchInfo && (
+        <div className="relative z-10 max-w-6xl mx-auto px-6 sm:px-10 mt-4">
+          <div className="p-4 rounded-xl bg-gradient-to-r from-red-500/20 via-purple-500/20 to-pink-500/20 border border-red-500/50 flex items-center justify-between gap-4 backdrop-blur-md">
+            <div className="flex items-center gap-3">
+              <Swords size={20} className="text-[#FF416C] animate-pulse" />
+              <div>
+                <span className="text-sm font-black text-white">Active 1v1 Battle Match in Progress!</span>
+                <p className="text-xs text-white/70">
+                  You have an active match against {eventBattle.matchInfo.opponentUsername}.
+                </p>
+              </div>
+            </div>
+            <Link
+              href={`/events/${event?.slug || event?.id || eventId}/battle`}
+              className="px-5 py-2.5 rounded-xl text-xs font-bold bg-[#FF416C] text-white hover:opacity-90 transition-all flex items-center gap-1.5 shadow-lg hover:scale-105"
+            >
+              <span>Resume Battle</span>
+              <ArrowRight size={14} />
+            </Link>
+          </div>
+        </div>
+      )}
+
+      {/* ⚔️ ACTIVE QUEUE IN PROGRESS BANNER */}
+      {eventBattle?.isQueued && !eventBattle?.matchInfo && (
+        <div className="relative z-10 max-w-6xl mx-auto px-6 sm:px-10 mt-4">
+          <div className="p-4 rounded-xl bg-purple-500/20 border border-purple-500/40 flex items-center justify-between gap-4 backdrop-blur-md">
+            <div className="flex items-center gap-3">
+              <div className="w-2.5 h-2.5 rounded-full bg-[#FF416C] animate-ping" />
+              <span className="text-sm font-bold text-white">
+                Queued for {eventBattle.queuedMode === 'mcq' ? 'MCQ (1v1)' : 'Coding (1v1)'} Matchmaking...
+              </span>
+            </div>
+            <Link
+              href={`/events/${event?.slug || event?.id || eventId}/battle`}
+              className="px-4 py-2 rounded-lg text-xs font-bold bg-white/10 hover:bg-white/20 border border-white/20 text-white transition-all flex items-center gap-1.5"
+            >
+              <span>Return to Arena</span>
+              <ArrowRight size={14} />
+            </Link>
+          </div>
+        </div>
+      )}
+
       {/* 🔒 PRIVATE EVENT LOCKED ACCESS BANNER */}
       {event.is_private && !isRegistered && !isUnlocked && (
         <div className="relative z-10 max-w-6xl mx-auto px-6 sm:px-10 mt-6">
@@ -793,7 +1080,7 @@ export default function EventDetailPage() {
                 <button
                   key={key}
                   type="button"
-                  onClick={() => setActiveTab(key)}
+                  onClick={() => handleTabChange(key)}
                   className={`relative px-4 py-2.5 rounded-lg text-xs md:text-sm font-bold whitespace-nowrap transition-all duration-150 flex-1 cursor-pointer select-none ${
                     isActive
                       ? 'text-[#E873C3] bg-gradient-to-r from-[#E873C3]/20 via-[#8D37D6]/20 to-[#4ECDC4]/15 border border-[#E873C3]/50 shadow-[0_0_20px_rgba(232,115,195,0.3)]'
@@ -1167,6 +1454,60 @@ export default function EventDetailPage() {
                 </div>
               )}
 
+              {/* TAB 2.5: BATTLE ARENA LAUNCH PORTAL */}
+              {activeTab === 'battle' && (
+                <div className="bg-white/[0.03] border border-white/10 rounded-2xl p-6 sm:p-8 backdrop-blur-md space-y-6">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/10 pb-6">
+                    <div className="flex items-center gap-3">
+                      <div className="p-3 rounded-xl bg-[#FF416C]/20 border border-[#FF416C]/40 text-[#FF416C]">
+                        <Swords size={24} />
+                      </div>
+                      <div>
+                        <h2 className="text-xl font-black text-white" style={modernHeadingStyle}>
+                          Event Battle Arena
+                        </h2>
+                        <p className="text-xs text-white/60">
+                          1v1 live competitive matchmaking scoped exclusively for this event.
+                        </p>
+                      </div>
+                    </div>
+
+                    <Link
+                      href={`/events/${event?.slug || event?.id || eventId}/battle`}
+                      className="px-6 py-3 rounded-xl text-xs font-black text-white bg-gradient-to-r from-[#FF416C] to-[#8A2387] hover:scale-105 transition-all shadow-lg flex items-center gap-2 self-start sm:self-center"
+                    >
+                      <Swords size={14} />
+                      <span>Launch Battle Arena &rarr;</span>
+                    </Link>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {allowedBattleModes.includes('code') && (
+                      <div className="p-5 rounded-xl bg-white/[0.02] border border-white/[0.08]">
+                        <div className="flex items-center gap-2.5 mb-2 text-[#FF758C] font-bold text-sm">
+                          <Code2 size={18} />
+                          <span>Coding Battle (1v1)</span>
+                        </div>
+                        <p className="text-xs text-white/60">
+                          Fast-paced algorithmic challenge with live execution and progressive scoring.
+                        </p>
+                      </div>
+                    )}
+                    {allowedBattleModes.includes('mcq') && (
+                      <div className="p-5 rounded-xl bg-white/[0.02] border border-white/[0.08]">
+                        <div className="flex items-center gap-2.5 mb-2 text-purple-400 font-bold text-sm">
+                          <CheckCircle size={18} />
+                          <span>MCQ Battle (1v1)</span>
+                        </div>
+                        <p className="text-xs text-white/60">
+                          Multi-round technical questions with time-based score bonuses and streaks.
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
               {/* TAB 3: PRIZES & REWARDS */}
               {activeTab === 'prizes' && (
                 <div className="flex flex-col gap-6">
@@ -1238,51 +1579,271 @@ export default function EventDetailPage() {
               {/* TAB 5: LEADERBOARD */}
               {activeTab === 'leaderboard' && (
                 <div className="bg-white/[0.03] border border-white/10 rounded-2xl overflow-hidden backdrop-blur-md">
-                  <div className="px-6 py-4 border-b border-white/10 flex items-center justify-between">
-                    <h2 className="text-xs font-bold text-white/60 uppercase tracking-widest" style={modernHeadingStyle}>Official Leaderboard</h2>
-                    <span className="text-xs text-white/50">{leaderboard.length > 0 ? `${leaderboard.length} ranked entries` : 'Live Standings'}</span>
-                  </div>
-                  {leaderboard.length === 0 ? (
-                    <div className="py-16 text-center flex flex-col items-center gap-3">
-                      <Trophy size={36} className="text-white/30 mx-auto mb-1" />
-                      <h3 className="text-sm font-bold text-white/90" style={modernHeadingStyle}>No Standings Recorded Yet</h3>
-                      <p className="text-white/50 text-xs max-w-sm font-sans">Participants and scores will appear on the leaderboard as soon as submissions are made.</p>
+                  {/* Sub-tab Navigation if Battle Arena is enabled */}
+                  {isBattleArenaEnabled && (
+                    <div className="px-6 pt-4 pb-0 border-b border-white/10 flex items-center gap-3">
+                      <button
+                        onClick={() => setLeaderboardSubTab('battle')}
+                        className={`pb-3 px-2 text-xs font-bold transition-all flex items-center gap-2 border-b-2 cursor-pointer ${
+                          leaderboardSubTab === 'battle'
+                            ? 'border-[#FF416C] text-white'
+                            : 'border-transparent text-white/50 hover:text-white/80'
+                        }`}
+                      >
+                        <Swords size={14} className={leaderboardSubTab === 'battle' ? 'text-[#FF416C]' : ''} />
+                        <span>Battle Arena Standings</span>
+                      </button>
+                      <button
+                        onClick={() => setLeaderboardSubTab('assessment')}
+                        className={`pb-3 px-2 text-xs font-bold transition-all flex items-center gap-2 border-b-2 cursor-pointer ${
+                          leaderboardSubTab === 'assessment'
+                            ? 'border-[#E873C3] text-white'
+                            : 'border-transparent text-white/50 hover:text-white/80'
+                        }`}
+                      >
+                        <Trophy size={14} className={leaderboardSubTab === 'assessment' ? 'text-[#FFD700]' : ''} />
+                        <span>Assessment Standings</span>
+                      </button>
+                    </div>
+                  )}
+
+                  {/* Battle Arena Standings View */}
+                  {isBattleArenaEnabled && leaderboardSubTab === 'battle' ? (
+                    <div>
+                      <div className="px-6 py-4 border-b border-white/10 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                        <div>
+                          <h2 className="text-xs font-bold text-white/60 uppercase tracking-widest" style={modernHeadingStyle}>
+                            {battleLeaderboardData?.rankingType === 'team'
+                              ? 'Team Battle Arena Standings'
+                              : 'Individual Battle Arena Standings'}
+                          </h2>
+                          <p className="text-[11px] text-white/40 mt-0.5">
+                            Ranked by Total Wins &rarr; Total Draws &rarr; Exact Win Rate
+                          </p>
+                        </div>
+                        <span className="text-xs text-white/50 font-mono">
+                          {battleLeaderboardData?.leaderboard?.length ?? 0}{' '}
+                          {battleLeaderboardData?.rankingType === 'team' ? 'teams ranked' : 'participants ranked'}
+                        </span>
+                      </div>
+
+                      {/* Option C Notice for Team Events */}
+                      {battleLeaderboardData?.rankingType === 'team' && (
+                        <div className="mx-6 my-3 p-3 rounded-xl bg-purple-500/10 border border-purple-500/20 text-xs text-purple-200/90 leading-relaxed">
+                          <strong className="text-white font-semibold">Team Raw Aggregation (Option C):</strong> Team standings represent the raw cumulative outcomes of all registered members. Teams with more members accumulate outcomes across more matches.
+                        </div>
+                      )}
+
+                      {battleLeaderboardLoading ? (
+                        <div className="py-16 text-center flex flex-col items-center gap-3">
+                          <div className="w-8 h-8 rounded-full border-2 border-[#FF416C] border-t-transparent animate-spin" />
+                          <p className="text-xs text-white/50">Aggregating live Battle Arena match results...</p>
+                        </div>
+                      ) : !battleLeaderboardData || battleLeaderboardData.leaderboard.length === 0 ? (
+                        <div className="py-16 text-center flex flex-col items-center gap-3">
+                          <Swords size={36} className="text-white/30 mx-auto mb-1" />
+                          <h3 className="text-sm font-bold text-white/90" style={modernHeadingStyle}>
+                            No Battle Matches Completed Yet
+                          </h3>
+                          <p className="text-white/50 text-xs max-w-sm font-sans">
+                            Enter the 1v1 Battle Arena to compete and establish standings on the live leaderboard.
+                          </p>
+                        </div>
+                      ) : (
+                        <div className="divide-y divide-white/[0.06]">
+                          {battleLeaderboardData.leaderboard.map((entry, i) => {
+                            const isTeam = battleLeaderboardData.rankingType === 'team';
+                            const displayName = isTeam
+                              ? (entry.teamName || entry.teamId || 'Team')
+                              : (entry.username || 'Anonymous');
+                            const initialChar = (displayName.trim()[0] || 'T').toUpperCase();
+                            const isExpanded = expandedTeamId === entry.teamId;
+
+                            return (
+                              <div key={entry.teamId || entry.userId || i} className="flex flex-col">
+                                <div
+                                  className={`flex items-center gap-4 px-6 py-4 transition-colors ${
+                                    entry.rank <= 3 ? 'bg-white/[0.02]' : ''
+                                  } ${isTeam && entry.members && entry.members.length > 0 ? 'cursor-pointer hover:bg-white/[0.04]' : ''}`}
+                                  onClick={() => {
+                                    if (isTeam && entry.teamId) {
+                                      setExpandedTeamId(isExpanded ? null : entry.teamId);
+                                    }
+                                  }}
+                                >
+                                  <span
+                                    className="text-lg font-black w-8 text-center font-mono"
+                                    style={{
+                                      color:
+                                        entry.rank === 1
+                                          ? '#FFD700'
+                                          : entry.rank === 2
+                                          ? '#C0C0C0'
+                                          : entry.rank === 3
+                                          ? '#CD7F32'
+                                          : '#6b7280',
+                                    }}
+                                  >
+                                    #{entry.rank}
+                                  </span>
+                                  <div className="w-9 h-9 rounded-full bg-gradient-to-br from-[#FF416C]/20 to-[#8A2387]/20 border border-[#FF416C]/30 flex items-center justify-center text-xs font-black text-white shrink-0">
+                                    {initialChar}
+                                  </div>
+                                  <div className="flex-1 min-w-0">
+                                    <div className="flex items-center gap-2 flex-wrap">
+                                      <span className="text-sm font-bold text-white truncate">{displayName}</span>
+                                      {isTeam && typeof entry.memberCount === 'number' && (
+                                        <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-white/10 text-white/70 border border-white/10">
+                                          {entry.memberCount} member{entry.memberCount > 1 ? 's' : ''}
+                                        </span>
+                                      )}
+                                    </div>
+                                    <div className="flex items-center gap-2 mt-1 text-[11px] text-white/50 flex-wrap">
+                                      <span className="text-emerald-400 font-semibold font-mono">
+                                        {entry.wins}W
+                                      </span>
+                                      <span>&bull;</span>
+                                      <span className="text-amber-300 font-semibold font-mono">
+                                        {entry.draws}D
+                                      </span>
+                                      <span>&bull;</span>
+                                      <span className="text-rose-400 font-semibold font-mono">
+                                        {entry.losses}L
+                                      </span>
+                                      <span>&bull;</span>
+                                      <span className="font-mono text-cyan-300">
+                                        {entry.winRate}% win rate
+                                      </span>
+                                      <span className="text-white/30 font-mono">
+                                        ({entry.completedMatches} match{entry.completedMatches === 1 ? '' : 'es'})
+                                      </span>
+                                    </div>
+                                  </div>
+                                  <div className="text-right shrink-0 flex flex-col items-end gap-1">
+                                    <div className="flex items-center gap-1.5 text-[10px] font-mono">
+                                      <span className="px-2 py-0.5 rounded bg-blue-500/10 text-blue-300 border border-blue-500/20">
+                                        Code: {entry.coding?.wins ?? entry.wins}W/{entry.coding?.draws ?? entry.draws}D/{entry.coding?.losses ?? entry.losses}L
+                                      </span>
+                                      <span className="px-2 py-0.5 rounded bg-purple-500/10 text-purple-300 border border-purple-500/20">
+                                        MCQ: {entry.mcq?.wins ?? 0}W/{entry.mcq?.draws ?? 0}D/{entry.mcq?.losses ?? 0}L
+                                      </span>
+                                    </div>
+                                    {isTeam && entry.members && entry.members.length > 0 && (
+                                      <span className="text-[10px] text-white/40 flex items-center gap-1 hover:text-white/70 transition-colors">
+                                        {isExpanded ? 'Hide members' : 'View members'}
+                                        {isExpanded ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
+                                      </span>
+                                    )}
+                                  </div>
+                                </div>
+
+                                {/* Expanded Member Breakdown for Team Events */}
+                                {isTeam && isExpanded && entry.members && (
+                                  <div className="bg-black/30 border-t border-white/[0.04] px-14 py-3 flex flex-col gap-2">
+                                    <span className="text-[10px] font-bold text-white/40 uppercase tracking-widest">
+                                      Member Match Contributions:
+                                    </span>
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                      {entry.members.map((m) => (
+                                        <div
+                                          key={m.userId}
+                                          className="p-2.5 rounded-lg bg-white/[0.03] border border-white/[0.06] flex items-center justify-between text-xs"
+                                        >
+                                          <span className="font-semibold text-white/90 truncate">
+                                            {m.username || 'Member'}
+                                          </span>
+                                          <span className="font-mono text-[11px] text-white/60">
+                                            <strong className="text-emerald-400">{m.wins}W</strong> -{' '}
+                                            <strong className="text-amber-300">{m.draws}D</strong> -{' '}
+                                            <strong className="text-rose-400">{m.losses}L</strong> ({m.completedMatches}m)
+                                          </span>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
                     </div>
                   ) : (
-                    <div className="divide-y divide-white/[0.06]">
-                      {leaderboard.map((entry, i) => {
-                        const rankNum = entry.rank ?? i + 1;
-                        const totalSec = entry.totalTimeSeconds;
-                        const m = totalSec !== undefined ? Math.floor(totalSec / 60) : null;
-                        const s = totalSec !== undefined ? totalSec % 60 : null;
-                        const timeStr = m !== null && s !== null ? (m > 0 ? `${m}m ${s}s` : `${s}s`) : null;
-                        const displayName = entry.username || 'Anonymous';
-                        const initialChar = (displayName.trim()[0] || 'U').toUpperCase();
+                    /* Assessment Standings View */
+                    <div>
+                      <div className="px-6 py-4 border-b border-white/10 flex items-center justify-between">
+                        <h2 className="text-xs font-bold text-white/60 uppercase tracking-widest" style={modernHeadingStyle}>
+                          Official Assessment Leaderboard
+                        </h2>
+                        <span className="text-xs text-white/50">
+                          {leaderboard.length > 0 ? `${leaderboard.length} ranked entries` : 'Live Standings'}
+                        </span>
+                      </div>
+                      {leaderboard.length === 0 ? (
+                        <div className="py-16 text-center flex flex-col items-center gap-3">
+                          <Trophy size={36} className="text-white/30 mx-auto mb-1" />
+                          <h3 className="text-sm font-bold text-white/90" style={modernHeadingStyle}>
+                            No Standings Recorded Yet
+                          </h3>
+                          <p className="text-white/50 text-xs max-w-sm font-sans">
+                            Participants and scores will appear on the leaderboard as soon as submissions are made.
+                          </p>
+                        </div>
+                      ) : (
+                        <div className="divide-y divide-white/[0.06]">
+                          {leaderboard.map((entry, i) => {
+                            const rankNum = entry.rank ?? i + 1;
+                            const totalSec = entry.totalTimeSeconds;
+                            const m = totalSec !== undefined ? Math.floor(totalSec / 60) : null;
+                            const s = totalSec !== undefined ? totalSec % 60 : null;
+                            const timeStr = m !== null && s !== null ? (m > 0 ? `${m}m ${s}s` : `${s}s`) : null;
+                            const displayName = entry.username || 'Anonymous';
+                            const initialChar = (displayName.trim()[0] || 'U').toUpperCase();
 
-                        return (
-                          <div key={i} className={`flex items-center gap-4 px-6 py-4 ${i < 3 ? 'bg-white/[0.02]' : ''}`}>
-                            <span className="text-lg font-black w-8 text-center font-mono" style={{ color: i === 0 ? '#FFD700' : i === 1 ? '#C0C0C0' : i === 2 ? '#CD7F32' : '#6b7280' }}>
-                              #{rankNum}
-                            </span>
-                            <div className="w-8 h-8 rounded-full bg-[#E873C3]/20 border border-[#E873C3]/30 flex items-center justify-center text-xs font-black text-[#E873C3]">
-                              {initialChar}
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <span className="text-sm font-bold text-white block truncate">{displayName}</span>
-                              {timeStr && (
-                                <span className="text-[11px] font-mono text-cyan-300/80 flex items-center gap-1 mt-0.5">
-                                  ⏱️ {timeStr}
+                            return (
+                              <div
+                                key={i}
+                                className={`flex items-center gap-4 px-6 py-4 ${i < 3 ? 'bg-white/[0.02]' : ''}`}
+                              >
+                                <span
+                                  className="text-lg font-black w-8 text-center font-mono"
+                                  style={{
+                                    color:
+                                      i === 0
+                                        ? '#FFD700'
+                                        : i === 1
+                                        ? '#C0C0C0'
+                                        : i === 2
+                                        ? '#CD7F32'
+                                        : '#6b7280',
+                                  }}
+                                >
+                                  #{rankNum}
                                 </span>
-                              )}
-                            </div>
-                            <div className="text-right">
-                              <span className="text-sm font-black font-mono block" style={{ color: i === 0 ? '#FFD700' : '#E873C3' }}>
-                                {entry.score.toLocaleString()} pts
-                              </span>
-                            </div>
-                          </div>
-                        );
-                      })}
+                                <div className="w-8 h-8 rounded-full bg-[#E873C3]/20 border border-[#E873C3]/30 flex items-center justify-center text-xs font-black text-[#E873C3]">
+                                  {initialChar}
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <span className="text-sm font-bold text-white block truncate">{displayName}</span>
+                                  {timeStr && (
+                                    <span className="text-[11px] font-mono text-cyan-300/80 flex items-center gap-1 mt-0.5">
+                                      ⏱️ {timeStr}
+                                    </span>
+                                  )}
+                                </div>
+                                <div className="text-right">
+                                  <span
+                                    className="text-sm font-black font-mono block"
+                                    style={{ color: i === 0 ? '#FFD700' : '#E873C3' }}
+                                  >
+                                    {entry.score.toLocaleString()} pts
+                                  </span>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>
@@ -1388,6 +1949,20 @@ export default function EventDetailPage() {
                         >
                           <Flame size={14} className="animate-pulse" />
                           <span>{isCodingContest ? 'Enter Contest Arena' : 'Submit Project'}</span>
+                        </Link>
+                      )}
+                      {/* Enter Battle Arena Button when LIVE and enabled */}
+                      {isOngoing && isBattleArenaEnabled && (
+                        <Link
+                          href={`/events/${event?.slug || event?.id || eventId}/battle`}
+                          className="w-full py-3.5 rounded-xl font-black text-xs text-white text-center flex items-center justify-center gap-1.5 transition-all shadow-lg hover:scale-[1.02] cursor-pointer"
+                          style={{
+                            background: 'linear-gradient(135deg, #FF416C, #8A2387)',
+                            boxShadow: '0 4px 20px rgba(255,65,108,0.4)',
+                          }}
+                        >
+                          <Swords size={14} className="animate-pulse" />
+                          <span>Join Battle Arena</span>
                         </Link>
                       )}
                       {canRegister && (

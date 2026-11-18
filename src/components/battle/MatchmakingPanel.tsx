@@ -19,6 +19,7 @@ interface MatchInfo {
   opponentElo: number;
   opponentAvatar?: string | null;
   mode: Mode;
+  eventId?: string | null;
 }
 
 interface ModeStats {
@@ -85,6 +86,9 @@ interface Props {
   userId: string;
   username: string;
   onMatchFound: (info: MatchInfo) => void;
+  eventId?: string | null;
+  allowedModes?: ('code' | 'mcq')[];
+  isEventContext?: boolean;
 }
 
 function getRankLabel(experienceLevel: string | null | undefined): string {
@@ -96,8 +100,23 @@ function getRankLabel(experienceLevel: string | null | undefined): string {
 const IS_BATTLE_LEADERBOARD_LIVE = true;
 const IS_CODE_BATTLE_LIVE = true;
 
-export default function MatchmakingPanel({ socket, userId, username, onMatchFound }: Props) {
-  const [mode, setMode] = useState<Mode>("mcq");
+export default function MatchmakingPanel({
+  socket,
+  userId,
+  username,
+  onMatchFound,
+  eventId,
+  allowedModes = ['code', 'mcq'],
+  isEventContext = false,
+}: Props) {
+  const initialMode: Mode = allowedModes.includes('mcq') ? 'mcq' : (allowedModes[0] || 'code');
+  const [mode, setMode] = useState<Mode>(initialMode);
+
+  useEffect(() => {
+    if (allowedModes.length > 0 && !allowedModes.includes(mode)) {
+      setMode(allowedModes[0]);
+    }
+  }, [allowedModes, mode]);
   const [queueState, setQueueState] = useState<QueueState>("idle");
   const [phase, setPhase] = useState<CinematicPhase>("SEARCHING");
   const [opponent, setOpponent] = useState<{ username: string; elo: number; avatar?: string } | null>(null);
@@ -175,24 +194,28 @@ export default function MatchmakingPanel({ socket, userId, username, onMatchFoun
 
   useEffect(() => {
     if (!socket?.connected) return;
-    socket.emit("queue_status", {});
+    const statusPayload = eventId ? { eventId } : {};
+    socket.emit("queue_status", statusPayload);
     const interval = setInterval(() => {
       if (socket?.connected) {
-        socket.emit("queue_status", {});
+        socket.emit("queue_status", statusPayload);
       }
     }, 4000);
     return () => clearInterval(interval);
-  }, [socket, socket?.connected]);
+  }, [socket, socket?.connected, eventId]);
 
   useEffect(() => {
     const handleBeforeUnload = () => {
       if (socket?.connected && userId) {
-        socket.emit("leave_queue", { userId });
+        socket.emit("leave_queue", {
+          mode,
+          eventId: eventId ?? null,
+        });
       }
     };
     window.addEventListener("beforeunload", handleBeforeUnload);
     return () => window.removeEventListener("beforeunload", handleBeforeUnload);
-  }, [socket, userId]);
+  }, [socket, userId, mode, eventId]);
 
   useEffect(() => {
     if (!socket) return;
@@ -326,6 +349,11 @@ export default function MatchmakingPanel({ socket, userId, username, onMatchFoun
 
 
   const joinQueue = () => {
+    // Guard against duplicate queue submissions
+    if (queueState === "queuing" || queueState === "matched") {
+      return;
+    }
+
     if (cancelTimeoutRef.current) {
       clearTimeout(cancelTimeoutRef.current);
       cancelTimeoutRef.current = null;
@@ -350,7 +378,11 @@ export default function MatchmakingPanel({ socket, userId, username, onMatchFoun
     setQueueState("queuing");
     setPhase("SEARCHING");
 
-    socket.emit("join_queue", { userId, mode });
+    // Security: never send spoofable client userId; backend derives identity strictly from socket.data.userId
+    socket.emit("join_queue", {
+      mode,
+      ...(eventId ? { eventId } : {}),
+    });
   };
 
   const leaveQueue = () => {
@@ -372,18 +404,24 @@ export default function MatchmakingPanel({ socket, userId, username, onMatchFoun
     setCancelledByOpponent(false);
     hasTransitionedRef.current = false;
     if (socket) {
-      socket.emit("leave_queue", { userId });
+      socket.emit("leave_queue", {
+        mode,
+        eventId: eventId ?? null,
+      });
     }
   };
 
   const handleEnterBattle = () => {
     if (matchPayload) {
       setIsReady(true);
-      socket?.emit("match_ready", { roomId: matchPayload.roomId, userId });
+      // Security: roomId only; backend derives userId strictly from socket.data.userId
+      socket?.emit("match_ready", { roomId: matchPayload.roomId });
     }
   };
 
   const isCode = mode === "code";
+  const isMcqAllowed = allowedModes.includes("mcq");
+  const isCodeAllowed = allowedModes.includes("code");
   const activeModeStats = isCode ? stats?.codeStats : stats?.mcqStats;
   const currentElo = activeModeStats?.elo ?? (isCode ? (stats?.elo ?? 1000) : (stats?.mcqElo ?? 1000));
 
@@ -631,39 +669,43 @@ export default function MatchmakingPanel({ socket, userId, username, onMatchFoun
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 mb-4 relative z-10 flex-1 items-stretch">
               <button
                 id="battle-mode-mcq"
-                onClick={() => setMode("mcq")}
-                disabled={queueState === "queuing"}
-                className={`relative flex flex-col items-start justify-between p-4 rounded-2xl border text-left transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed group overflow-hidden ${!isCode
+                onClick={() => {
+                  if (isMcqAllowed) setMode("mcq");
+                }}
+                disabled={queueState === "queuing" || !isMcqAllowed}
+                className={`relative flex flex-col items-start justify-between p-4 rounded-2xl border text-left transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed group overflow-hidden ${!isCode && isMcqAllowed
                   ? "bg-gradient-to-br from-[#E873C3]/25 via-[#C453D6]/20 to-[#8D37D6]/30 border-[#E873C3]/50 shadow-[0_0_18px_rgba(232,115,195,0.3)]"
                   : "border-white/15 bg-white/5 hover:border-white/30 hover:bg-white/10"
                   }`}
               >
                 <div className="w-full flex items-center justify-between">
-                  <div className={`p-2.5 rounded-xl border transition-all ${!isCode
+                  <div className={`p-2.5 rounded-xl border transition-all ${!isCode && isMcqAllowed
                     ? "bg-[#E873C3]/20 border-[#E873C3]/40 text-white"
                     : "bg-white/10 border-white/10 text-white/70 group-hover:text-white"
                     }`}>
                     <ListChecks size={24} />
                   </div>
 
-                  <span className={`text-[11px] font-bold px-2.5 py-0.5 rounded-full border transition-all ${!isCode
+                  <span className={`text-[11px] font-bold px-2.5 py-0.5 rounded-full border transition-all ${!isMcqAllowed
+                    ? "bg-white/5 text-white/40 border-white/10"
+                    : !isCode
                     ? "bg-[#E873C3]/30 text-white border-[#E873C3]/50 shadow-[0_0_8px_rgba(232,115,195,0.5)]"
                     : "bg-white/10 text-white/60 border-white/15"
                     }`}>
-                    {!isCode ? "Quiz Arena" : "Quiz"}
+                    {!isMcqAllowed ? "NOT ALLOWED" : !isCode ? "Quiz Arena" : "Quiz"}
                   </span>
                 </div>
 
                 <div className="mt-3 w-full relative z-10">
-                  <p className={`text-base sm:text-lg font-display font-bold tracking-wide ${!isCode ? "text-white" : "text-white/90 group-hover:text-white"}`}>
+                  <p className={`text-base sm:text-lg font-display font-bold tracking-wide ${!isCode && isMcqAllowed ? "text-white" : "text-white/90 group-hover:text-white"}`}>
                     MCQ Battle
                   </p>
-                  <p className={`text-[11px] sm:text-xs mt-0.5 font-medium leading-snug ${!isCode ? "text-white/80" : "text-white/60 group-hover:text-white/80"}`}>
+                  <p className={`text-[11px] sm:text-xs mt-0.5 font-medium leading-snug ${!isCode && isMcqAllowed ? "text-white/80" : "text-white/60 group-hover:text-white/80"}`}>
                     Rapid 5-round multiple-choice quiz arena
                   </p>
                   <div className="flex items-center gap-1.5 mt-2 text-[10px] font-mono text-cyan-300">
                     <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse" />
-                    <span>{queueCounts.mcq > 0 ? `${queueCounts.mcq} in queue` : 'Queue open'}</span>
+                    <span>{!isMcqAllowed ? "Mode disabled in this event" : (queueCounts.mcq > 0 ? `${queueCounts.mcq} in queue` : 'Queue open')}</span>
                   </div>
                 </div>
               </button>
@@ -671,12 +713,14 @@ export default function MatchmakingPanel({ socket, userId, username, onMatchFoun
               <button
                 id="battle-mode-code"
                 onClick={() => {
-                  if (IS_CODE_BATTLE_LIVE) {
+                  if (IS_CODE_BATTLE_LIVE && isCodeAllowed) {
                     setMode("code");
                   }
                 }}
-                disabled={queueState === "queuing"}
-                className={`relative flex flex-col items-start justify-between p-4 rounded-2xl border text-left transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed group overflow-hidden ${!IS_CODE_BATTLE_LIVE
+                disabled={queueState === "queuing" || !isCodeAllowed}
+                className={`relative flex flex-col items-start justify-between p-4 rounded-2xl border text-left transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed group overflow-hidden ${!isCodeAllowed
+                  ? "border-white/10 bg-white/5 opacity-50 cursor-not-allowed"
+                  : !IS_CODE_BATTLE_LIVE
                   ? "border-white/15 bg-white/5 hover:border-amber-400/40"
                   : isCode
                     ? "bg-gradient-to-br from-[#E873C3]/25 via-[#C453D6]/20 to-[#8D37D6]/30 border-[#E873C3]/50 shadow-[0_0_18px_rgba(232,115,195,0.3)]"
@@ -685,7 +729,9 @@ export default function MatchmakingPanel({ socket, userId, username, onMatchFoun
               >
                 <div className="w-full flex items-center justify-between">
                   <div
-                    className={`p-2.5 rounded-xl border transition-all ${!IS_CODE_BATTLE_LIVE
+                    className={`p-2.5 rounded-xl border transition-all ${!isCodeAllowed
+                      ? "bg-white/5 border-white/10 text-white/40"
+                      : !IS_CODE_BATTLE_LIVE
                       ? "bg-white/10 border-white/10 text-white/70 group-hover:text-white"
                       : isCode
                         ? "bg-[#E873C3]/20 border-[#E873C3]/40 text-white"
@@ -696,33 +742,35 @@ export default function MatchmakingPanel({ socket, userId, username, onMatchFoun
                   </div>
 
                   <span
-                    className={`text-[10px] font-mono font-bold px-2.5 py-0.5 rounded-full border transition-all ${!IS_CODE_BATTLE_LIVE
+                    className={`text-[10px] font-mono font-bold px-2.5 py-0.5 rounded-full border transition-all ${!isCodeAllowed
+                      ? "bg-white/5 text-white/40 border-white/10"
+                      : !IS_CODE_BATTLE_LIVE
                       ? "bg-amber-500/15 text-amber-300 border-amber-500/30 shadow-[0_0_8px_rgba(245,158,11,0.2)]"
                       : isCode
                         ? "bg-[#E873C3]/30 text-white border-[#E873C3]/50 shadow-[0_0_8px_rgba(232,115,195,0.5)]"
                         : "bg-white/10 text-white/60 border-white/15"
                       }`}
                   >
-                    {!IS_CODE_BATTLE_LIVE ? "LIVE SOON" : isCode ? "1v1 Duel" : "1v1"}
+                    {!isCodeAllowed ? "NOT ALLOWED" : !IS_CODE_BATTLE_LIVE ? "LIVE SOON" : isCode ? "1v1 Duel" : "1v1"}
                   </span>
                 </div>
 
                 <div className="mt-3 w-full relative z-10">
                   <p
-                    className={`text-base sm:text-lg font-display font-bold tracking-wide ${isCode && IS_CODE_BATTLE_LIVE ? "text-white" : "text-white/90 group-hover:text-white"
+                    className={`text-base sm:text-lg font-display font-bold tracking-wide ${isCode && isCodeAllowed && IS_CODE_BATTLE_LIVE ? "text-white" : "text-white/90 group-hover:text-white"
                       }`}
                   >
                     Code Battle
                   </p>
                   <p
-                    className={`text-[11px] sm:text-xs mt-0.5 font-medium leading-snug ${isCode && IS_CODE_BATTLE_LIVE ? "text-white/80" : "text-white/60 group-hover:text-white/80"
+                    className={`text-[11px] sm:text-xs mt-0.5 font-medium leading-snug ${isCode && isCodeAllowed && IS_CODE_BATTLE_LIVE ? "text-white/80" : "text-white/60 group-hover:text-white/80"
                       }`}
                   >
                     1v1 Speed algorithmic coding duel
                   </p>
                   <div className="flex items-center gap-1.5 mt-2 text-[10px] font-mono text-amber-300">
                     <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
-                    <span>{!IS_CODE_BATTLE_LIVE ? "Live Soon • Season 2 Launch" : (queueCounts.code > 0 ? `${queueCounts.code} in queue` : 'Queue open')}</span>
+                    <span>{!isCodeAllowed ? "Mode disabled in this event" : !IS_CODE_BATTLE_LIVE ? "Live Soon • Season 2 Launch" : (queueCounts.code > 0 ? `${queueCounts.code} in queue` : 'Queue open')}</span>
                   </div>
                 </div>
               </button>
@@ -738,11 +786,11 @@ export default function MatchmakingPanel({ socket, userId, username, onMatchFoun
               <div className="relative z-10 mb-3 bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 flex items-center justify-around text-xs text-white/80 font-mono">
                 <div className="relative flex items-center gap-1.5 cursor-pointer group/tip">
                   <Zap size={14} className="text-amber-400 fill-amber-400 shrink-0 group-hover/tip:scale-110 transition-transform" />
-                  <span className="font-bold text-amber-300">±ELO</span>
+                  <span className="font-bold text-amber-300">{isEventContext || Boolean(eventId) ? "Event Pts" : "±ELO"}</span>
 
                   <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover/tip:flex flex-col items-center pointer-events-none z-30 whitespace-nowrap">
                     <span className="bg-[#120a26] text-amber-300 font-sans text-[10px] font-bold px-2.5 py-1 rounded-lg border border-amber-400/30 shadow-[0_0_15px_rgba(251,191,36,0.3)]">
-                      Rating Stake: Dynamic ELO (K=32)
+                      {isEventContext || Boolean(eventId) ? "Rating Stake: Event Standings (Global ELO Protected)" : "Rating Stake: Dynamic ELO (K=32)"}
                     </span>
                     <div className="w-1.5 h-1.5 bg-[#120a26] border-r border-b border-amber-400/30 rotate-45 -mt-1" />
                   </div>
@@ -766,11 +814,11 @@ export default function MatchmakingPanel({ socket, userId, username, onMatchFoun
 
                 <div className="relative flex items-center gap-1.5 cursor-pointer group/tip">
                   <Award size={14} className="text-emerald-400 fill-emerald-400 shrink-0 group-hover/tip:scale-110 transition-transform" />
-                  <span className="font-bold text-emerald-300">+ELO</span>
+                  <span className="font-bold text-emerald-300">{isEventContext || Boolean(eventId) ? "+Rank" : "+ELO"}</span>
 
                   <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover/tip:flex flex-col items-center pointer-events-none z-30 whitespace-nowrap">
                     <span className="bg-[#120a26] text-emerald-300 font-sans text-[10px] font-bold px-2.5 py-1 rounded-lg border border-emerald-400/30 shadow-[0_0_15px_rgba(52,211,153,0.3)]">
-                      Victory Reward: Dynamic ELO Rating Gain
+                      {isEventContext || Boolean(eventId) ? "Victory Reward: Event Win & Standings Points" : "Victory Reward: Dynamic ELO Rating Gain"}
                     </span>
                     <div className="w-1.5 h-1.5 bg-[#120a26] border-r border-b border-emerald-400/30 rotate-45 -mt-1" />
                   </div>

@@ -314,6 +314,7 @@ model battle_test_cases {
 
 model battle_matches {
   id                 String               @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  event_id           String?              @db.Uuid
   player1_id         String               @db.Uuid
   player2_id         String               @db.Uuid
   winner_id          String?              @db.Uuid
@@ -322,14 +323,14 @@ model battle_matches {
   status             String
   player1_score      Int                  @default(0)
   player2_score      Int                  @default(0)
-  player1_elo_delta  Int?                 @default(0)
-  player2_elo_delta  Int?                 @default(0)
 
+  event              events?              @relation(fields: [event_id], references: [id], onDelete: SetNull)
   player1            users                @relation("BattlePlayer1Relation", fields: [player1_id], references: [id])
   player2            users                @relation("BattlePlayer2Relation", fields: [player2_id], references: [id])
   winner             users?               @relation("BattleWinnerRelation", fields: [winner_id], references: [id])
   battle_submissions battle_submissions[]
 
+  @@index([event_id])
   @@index([player1_id])
   @@index([player2_id])
   @@index([winner_id])
@@ -358,6 +359,7 @@ model battle_submissions {
 
 model battle_mcq_matches {
   id            String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  event_id      String?   @db.Uuid
   player1_id    String    @db.Uuid
   player2_id    String    @db.Uuid
   winner_id     String?   @db.Uuid
@@ -366,14 +368,14 @@ model battle_mcq_matches {
   status        String
   player1_score Int       @default(0)
   player2_score Int       @default(0)
-  player1_elo_delta Int?  @default(0)
-  player2_elo_delta Int?  @default(0)
   total_rounds  Int       @default(5)
 
-  player1       users     @relation("BattleMcqPlayer1Relation", fields: [player1_id], references: [id])
-  player2       users     @relation("BattleMcqPlayer2Relation", fields: [player2_id], references: [id])
-  winner        users?    @relation("BattleMcqWinnerRelation", fields: [winner_id], references: [id])
+  event         events?   @relation(fields: [event_id], references: [id], onDelete: SetNull)
+  player1           users     @relation("BattleMcqPlayer1Relation", fields: [player1_id], references: [id])
+  player2           users     @relation("BattleMcqPlayer2Relation", fields: [player2_id], references: [id])
+  winner            users?    @relation("BattleMcqWinnerRelation", fields: [winner_id], references: [id])
 
+  @@index([event_id])
   @@index([player1_id])
   @@index([player2_id])
   @@index([winner_id])
@@ -470,6 +472,8 @@ model events {
   submission_config     Json?                  @default("{}")
   results_published     Boolean?               @default(false)
 
+  battle_matches        battle_matches[]
+  battle_mcq_matches    battle_mcq_matches[]
   event_leaderboard     event_leaderboard[]
   event_questions       event_questions[]
   event_registrations   event_registrations[]
