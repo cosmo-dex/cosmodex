@@ -70,3 +70,19 @@ test-prisma.ts
 test-signup.js
 
 /debug-recordings
+
+# Next.js generated files
+.next/
+.next-preview/
+out/
+
+# Dependencies
+node_modules/
+
+# Build outputs
+build/
+dist/
+
+# Environment variables
+.env
+.env.local
