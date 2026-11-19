@@ -20,7 +20,6 @@ const PROTECTED_API_PREFIXES = [
   '/api/user',
   '/api/battle',
   '/api/admin',
-  '/api/learning',
 ];
 
 const BOT_USER_AGENTS =
@@ -42,12 +41,9 @@ function getSafeRedirectUrl(target: string | null, fallback: string): string {
 export async function proxy(request: NextRequest) {
   const { pathname, search } = request.nextUrl;
   const userAgent = request.headers.get('user-agent');
-  const isProtectedCourseRoute = pathname.startsWith('/learn/');
-  const isProtectedCourseApi = pathname.startsWith('/api/learning/');
 
   // Never redirect search engine crawlers (Googlebot, Bingbot, etc.)
-  // Protected course pages and APIs still require a session, even for bot user agents.
-  if (isSearchEngineBot(userAgent) && !isProtectedCourseRoute && !isProtectedCourseApi) {
+  if (isSearchEngineBot(userAgent)) {
     return NextResponse.next();
   }
 
@@ -80,7 +76,7 @@ export async function proxy(request: NextRequest) {
 
   const isProtectedUserRoute = PROTECTED_USER_ROUTES.some((route) =>
     pathname.startsWith(route)
-  ) || isProtectedCourseRoute;
+  );
 
   const isLoginModeOnboarding =
     pathname.startsWith('/onboarding') &&

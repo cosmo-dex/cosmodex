@@ -36,7 +36,7 @@ const navItems = [
   {
     label: "Battle",
     icon: Hammer,
-    href: "/battle/preview",
+    href: "/battle",
   },
   {
     label: "Events",
