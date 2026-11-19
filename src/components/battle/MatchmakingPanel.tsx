@@ -100,21 +100,24 @@ function getRankLabel(experienceLevel: string | null | undefined): string {
 const IS_BATTLE_LEADERBOARD_LIVE = true;
 const IS_CODE_BATTLE_LIVE = true;
 
+const DEFAULT_ALLOWED_MODES: ('code' | 'mcq')[] = ['code', 'mcq'];
+
 export default function MatchmakingPanel({
   socket,
   userId,
   username,
   onMatchFound,
   eventId,
-  allowedModes = ['code', 'mcq'],
+  allowedModes = DEFAULT_ALLOWED_MODES,
   isEventContext = false,
 }: Props) {
   const initialMode: Mode = allowedModes.includes('mcq') ? 'mcq' : (allowedModes[0] || 'code');
   const [mode, setMode] = useState<Mode>(initialMode);
-  const [prevAllowedModes, setPrevAllowedModes] = useState(allowedModes);
+  const allowedModesKey = allowedModes.join(',');
+  const [prevAllowedModesKey, setPrevAllowedModesKey] = useState(allowedModesKey);
 
-  if (prevAllowedModes !== allowedModes) {
-    setPrevAllowedModes(allowedModes);
+  if (prevAllowedModesKey !== allowedModesKey) {
+    setPrevAllowedModesKey(allowedModesKey);
     if (allowedModes.length > 0 && !allowedModes.includes(mode)) {
       setMode(allowedModes[0]);
     }

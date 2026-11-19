@@ -33,13 +33,13 @@ function getArenaUrl(): string {
   if (typeof window !== 'undefined') {
     const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
     if (!isLocal && process.env.NEXT_PUBLIC_BATTLE_ARENA_URL?.includes('localhost')) {
-      return 'https://battle-arena-golang.onrender.com';
+      return 'https://battle-arena-golang-316713590727.us-central1.run.app';
     }
   }
   return (
     process.env.NEXT_PUBLIC_BATTLE_ARENA_WS_URL ||
     process.env.NEXT_PUBLIC_BATTLE_ARENA_URL ||
-    'http://localhost:3001'
+    'https://battle-arena-golang-316713590727.us-central1.run.app'
   );
 }
 
