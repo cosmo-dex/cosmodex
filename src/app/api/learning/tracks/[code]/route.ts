@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getCourseCurriculum } from '@/lib/learningService';
+import { verifySession, SESSION_COOKIE } from '@/lib/session';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
@@ -9,6 +10,14 @@ interface RouteContext {
 }
 
 export async function GET(req: NextRequest, { params }: RouteContext) {
+  const session = await verifySession(req.cookies.get(SESSION_COOKIE)?.value);
+  if (!session?.userId) {
+    return NextResponse.json(
+      { error: 'Unauthorized' },
+      { status: 401, headers: { 'Cache-Control': 'private, no-store' } }
+    );
+  }
+
   const { code } = await params;
   const courseCode = code?.toLowerCase() || 'python';
   const bypassCache = req.nextUrl.searchParams.get('fresh') === 'true';
@@ -33,7 +42,7 @@ export async function GET(req: NextRequest, { params }: RouteContext) {
       },
       {
         headers: {
-          'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=600',
+          'Cache-Control': 'private, no-store',
         },
       }
     );

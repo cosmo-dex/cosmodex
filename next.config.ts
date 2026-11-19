@@ -1,6 +1,7 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  distDir: ".next-preview",
   env: {
     NEXT_PUBLIC_BATTLE_ARENA_URL: 'https://battle-arena-golang-316713590727.us-central1.run.app',
   },
