@@ -122,14 +122,6 @@ export default function AuthStep({ onNext, updateData }: AuthStepProps) {
     setOauthLoading(provider);
 
     try {
-      const nextParam = new URLSearchParams(window.location.search).get('next');
-      const safeNext = nextParam && nextParam.startsWith('/') && !nextParam.startsWith('//') && !nextParam.includes('\\')
-        ? nextParam
-        : null;
-      const callbackParams = new URLSearchParams({ step: 'USERNAME' });
-      if (safeNext) callbackParams.set('next', safeNext);
-      const callbackUrl = `/onboarding?${callbackParams.toString()}`;
-
       let token = csrfToken;
       if (!token) {
         token = (await getCsrfToken()) || '';
@@ -149,7 +141,7 @@ export default function AuthStep({ onNext, updateData }: AuthStepProps) {
         const callbackInput = document.createElement('input');
         callbackInput.type = 'hidden';
         callbackInput.name = 'callbackUrl';
-        callbackInput.value = callbackUrl;
+        callbackInput.value = '/onboarding?step=USERNAME';
         form.appendChild(callbackInput);
 
         document.body.appendChild(form);
@@ -158,7 +150,7 @@ export default function AuthStep({ onNext, updateData }: AuthStepProps) {
       }
 
       // Fallback if token unavailable
-      await signIn(provider.toLowerCase(), { callbackUrl });
+      await signIn(provider.toLowerCase(), { callbackUrl: '/onboarding?step=USERNAME' });
     } catch (err) {
       console.error('OAuth sign in error:', err);
       setError('Failed to initiate login. Please try again.');
