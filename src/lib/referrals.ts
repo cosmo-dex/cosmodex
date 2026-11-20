@@ -40,7 +40,7 @@ export async function creditReferralForNewUser(tx: Prisma.TransactionClient, ref
   const cleanCode = referralCode.trim().toUpperCase();
   const referrer = await tx.users.findUnique({
     where: { referral_code: cleanCode },
-    select: { id: true },
+    select: { id: true, xp_total: true },
   });
   if (!referrer || referrer.id === referredUserId) return null;
 
@@ -72,7 +72,9 @@ export async function creditReferralForNewUser(tx: Prisma.TransactionClient, ref
 
   await tx.users.update({
     where: { id: referrer.id },
-    data: { xp_total: { increment: REFERRAL_REWARD_POINTS } },
+    data: {
+      xp_total: referrer.xp_total === null ? REFERRAL_REWARD_POINTS : { increment: REFERRAL_REWARD_POINTS },
+    },
   });
 
   await tx.referral_point_events.create({
@@ -84,9 +86,16 @@ export async function creditReferralForNewUser(tx: Prisma.TransactionClient, ref
     },
   });
 
+  const referredUser = await tx.users.findUnique({
+    where: { id: referredUserId },
+    select: { xp_total: true },
+  });
+
   await tx.users.update({
     where: { id: referredUserId },
-    data: { xp_total: { increment: REFERRED_USER_REWARD_POINTS } },
+    data: {
+      xp_total: referredUser?.xp_total === null ? REFERRED_USER_REWARD_POINTS : { increment: REFERRED_USER_REWARD_POINTS },
+    },
   });
 
   return referral;

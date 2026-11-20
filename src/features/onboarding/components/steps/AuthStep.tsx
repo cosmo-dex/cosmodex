@@ -135,11 +135,21 @@ export default function AuthStep({ onNext, updateData, data }: AuthStepProps) {
     setError('');
     setOauthLoading(provider);
 
+    const cleanRef = referralCode.trim().toUpperCase();
+    if (cleanRef) {
+      updateData({ referralCode: cleanRef });
+      if (typeof document !== 'undefined' && /^[A-Z0-9]{6,20}$/.test(cleanRef)) {
+        document.cookie = `cosmo_referral=${cleanRef}; path=/; max-age=2592000; SameSite=Lax${window.location.protocol === 'https:' ? '; Secure' : ''}`;
+      }
+    }
+
     try {
       let token = csrfToken;
       if (!token) {
         token = (await getCsrfToken()) || '';
       }
+
+      const callbackUrl = `/onboarding?step=USERNAME${cleanRef ? `&ref=${encodeURIComponent(cleanRef)}` : ''}`;
 
       if (token && typeof document !== 'undefined') {
         const form = document.createElement('form');
@@ -155,7 +165,7 @@ export default function AuthStep({ onNext, updateData, data }: AuthStepProps) {
         const callbackInput = document.createElement('input');
         callbackInput.type = 'hidden';
         callbackInput.name = 'callbackUrl';
-        callbackInput.value = '/onboarding?step=USERNAME';
+        callbackInput.value = callbackUrl;
         form.appendChild(callbackInput);
 
         document.body.appendChild(form);
@@ -164,7 +174,7 @@ export default function AuthStep({ onNext, updateData, data }: AuthStepProps) {
       }
 
       // Fallback if token unavailable
-      await signIn(provider.toLowerCase(), { callbackUrl: '/onboarding?step=USERNAME' });
+      await signIn(provider.toLowerCase(), { callbackUrl });
     } catch (err) {
       console.error('OAuth sign in error:', err);
       setError('Failed to initiate login. Please try again.');
@@ -237,7 +247,11 @@ export default function AuthStep({ onNext, updateData, data }: AuthStepProps) {
               <input
                 type="text"
                 value={referralCode}
-                onChange={(e) => setReferralCode(e.target.value.toUpperCase())}
+                onChange={(e) => {
+                  const code = e.target.value.toUpperCase();
+                  setReferralCode(code);
+                  updateData({ referralCode: code.trim() || undefined });
+                }}
                 placeholder="Referral code (optional)"
                 className="cosmo-input text-sm uppercase tracking-wider"
                 maxLength={20}
