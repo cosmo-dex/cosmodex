@@ -37,6 +37,7 @@ export default function OnboardingFlow() {
     avatarId: null,
     experienceLevel: 'Beginner',
     interests: [],
+    referralCode: searchParams.get('ref')?.trim().toUpperCase() || undefined,
   });
 
   useEffect(() => {
@@ -397,7 +398,7 @@ export default function OnboardingFlow() {
               className="absolute w-full max-w-lg"
             >
               {currentStep === 'START' && <StartStep onNext={goNext} />}
-              {currentStep === 'AUTH' && <AuthStep onNext={goNext} updateData={updateData} />}
+              {currentStep === 'AUTH' && <AuthStep onNext={goNext} updateData={updateData} data={data} />}
               {currentStep === 'USERNAME' && <UsernameStep onNext={goNext} onBack={goBack} updateData={updateData} data={data} />}
               {currentStep === 'AVATAR' && <AvatarStep onNext={goNext} onBack={goBack} updateData={updateData} data={data} />}
               {currentStep === 'INTERESTS' && <InterestsStep onNext={goNext} onBack={goBack} updateData={updateData} data={data} />}

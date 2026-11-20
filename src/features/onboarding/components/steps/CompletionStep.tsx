@@ -40,6 +40,7 @@ export default function CompletionStep({ data }: CompletionStepProps) {
             experienceLevel: data.experienceLevel,
             interests: data.interests,
             authMethod: data.authMethod,
+            referralCode: data.referralCode,
           }),
         });
 

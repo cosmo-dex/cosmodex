@@ -57,10 +57,11 @@ export async function POST(req: NextRequest) {
     const providerStr = authMethod ? authMethod.toLowerCase() : 'email';
 
     const cookieStore = await cookies();
-    const referralCode =
+    const rawCode =
       (typeof body.referralCode === 'string' && body.referralCode.trim()) ||
-      cookieStore.get(REFERRAL_COOKIE)?.value ||
+      cookieStore.get(REFERRAL_COOKIE)?.value?.trim() ||
       null;
+    const referralCode = rawCode ? rawCode.toUpperCase() : null;
 
     const registration = await prisma.$transaction(async (tx) => {
       const createdUser = await tx.users.create({

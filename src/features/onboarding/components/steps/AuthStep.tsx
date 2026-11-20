@@ -9,9 +9,10 @@ import { useAuth } from '@/context/AuthContext';
 interface AuthStepProps {
   onNext: () => void;
   updateData: (data: Partial<OnboardingData>) => void;
+  data?: OnboardingData;
 }
 
-export default function AuthStep({ onNext, updateData }: AuthStepProps) {
+export default function AuthStep({ onNext, updateData, data }: AuthStepProps) {
   const router = useRouter();
   const { refreshSession } = useAuth();
   const [authMode, setAuthMode] = useState<'login' | 'signup'>(() => {
@@ -24,6 +25,14 @@ export default function AuthStep({ onNext, updateData }: AuthStepProps) {
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [referralCode, setReferralCode] = useState(() => {
+    if (data?.referralCode) return data.referralCode;
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      return params.get('ref')?.trim().toUpperCase() || '';
+    }
+    return '';
+  });
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState(() => {
     if (typeof window !== 'undefined') {
@@ -107,7 +116,12 @@ export default function AuthStep({ onNext, updateData }: AuthStepProps) {
         return;
       }
 
-      updateData({ authMethod: 'Email', email, password });
+      updateData({
+        authMethod: 'Email',
+        email,
+        password,
+        referralCode: referralCode.trim().toUpperCase() || undefined,
+      });
       onNext();
     } catch {
       setError('An error occurred. Please try again.');
@@ -217,6 +231,19 @@ export default function AuthStep({ onNext, updateData }: AuthStepProps) {
               {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
             </button>
           </div>
+
+          {!isLogin && (
+            <div>
+              <input
+                type="text"
+                value={referralCode}
+                onChange={(e) => setReferralCode(e.target.value.toUpperCase())}
+                placeholder="Referral code (optional)"
+                className="cosmo-input text-sm uppercase tracking-wider"
+                maxLength={20}
+              />
+            </div>
+          )}
 
           {error && (
             <div className="text-rose-500 text-xs font-mono text-center mt-2">
