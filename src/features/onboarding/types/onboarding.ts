@@ -8,6 +8,7 @@ export interface OnboardingData {
   avatarId: string | null;
   experienceLevel: ExperienceLevel | null;
   interests: string[];
+  referralCode?: string;
 }
 
 export type OnboardingStepId = 

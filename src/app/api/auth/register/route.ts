@@ -3,7 +3,12 @@ import { hash } from 'bcryptjs';
 import prisma from '@/lib/prisma';
 import { cookies } from 'next/headers';
 import { signSession, SESSION_COOKIE, SESSION_COOKIE_OPTIONS } from '@/lib/session';
-import { creditReferralForNewUser, ensureReferralCode, REFERRAL_COOKIE } from '@/lib/referrals';
+import {
+  creditReferralForNewUser,
+  ensureReferralCode,
+  REFERRAL_COOKIE,
+  REFERRED_USER_REWARD_POINTS,
+} from '@/lib/referrals';
 
 const SALT_ROUNDS = 12;
 
@@ -52,9 +57,13 @@ export async function POST(req: NextRequest) {
     const providerStr = authMethod ? authMethod.toLowerCase() : 'email';
 
     const cookieStore = await cookies();
-    const referralCode = cookieStore.get(REFERRAL_COOKIE)?.value ?? null;
+    const rawCode =
+      (typeof body.referralCode === 'string' && body.referralCode.trim()) ||
+      cookieStore.get(REFERRAL_COOKIE)?.value?.trim() ||
+      null;
+    const referralCode = rawCode ? rawCode.toUpperCase() : null;
 
-    const newUser = await prisma.$transaction(async (tx) => {
+    const registration = await prisma.$transaction(async (tx) => {
       const createdUser = await tx.users.create({
         data: {
           email: normalizedEmail,
@@ -84,11 +93,18 @@ export async function POST(req: NextRequest) {
         },
       });
 
-      await creditReferralForNewUser(tx, createdUser.id, referralCode);
-      return createdUser;
+      const referral = await creditReferralForNewUser(tx, createdUser.id, referralCode);
+      return { user: createdUser, referral };
     });
 
-    await ensureReferralCode(newUser.id);
+    const newUser = registration.user;
+    const xpTotal = (newUser.xp_total ?? 0) + (registration.referral ? REFERRED_USER_REWARD_POINTS : 0);
+
+    try {
+      await ensureReferralCode(newUser.id);
+    } catch (err) {
+      console.warn('[register] Failed to ensure referral code for new user:', err);
+    }
 
     const signedToken = await signSession({
       userId: newUser.id,
@@ -97,7 +113,7 @@ export async function POST(req: NextRequest) {
       avatarId: avatarId ?? null,
       experienceLevel: newUser.experience_level ?? null,
       interests: newUser.interests ?? [],
-      xpTotal: newUser.xp_total ?? 0,
+      xpTotal,
       level: newUser.level ?? 1,
       role: newUser.role ?? 'student',
       createdAt: newUser.created_at?.toISOString() ?? new Date().toISOString(),
@@ -113,7 +129,7 @@ export async function POST(req: NextRequest) {
         avatarId,
         experienceLevel,
         interests,
-        xpTotal: newUser.xp_total,
+        xpTotal,
         level: newUser.level,
         role: newUser.role,
       },

@@ -41,7 +41,7 @@ export default function ReferralCard({ link, count, points }: ReferralCardProps)
         <div>
           <p className="text-[10px] uppercase tracking-[0.18em] text-white/50 font-semibold">Grow the crew</p>
           <h2 className="mt-1 text-lg font-bold text-white">Invite friends</h2>
-          <p className="mt-1 text-xs leading-relaxed text-white/55">Earn 100 points for every new member who joins through your link.</p>
+          <p className="mt-1 text-xs leading-relaxed text-white/55">You and your friend each earn 100 points when they create an account with your link.</p>
         </div>
         <Link2 size={20} className="shrink-0 text-[#E873C3]" />
       </div>
