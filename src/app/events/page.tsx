@@ -293,21 +293,30 @@ export default function EventsPage() {
     setOpenDropdown(null);
   };
 
+  const eventsAbortControllerRef = useRef<AbortController | null>(null);
+
   const fetchEvents = useCallback(() => {
+    if (eventsAbortControllerRef.current) {
+      eventsAbortControllerRef.current.abort();
+    }
+    const controller = new AbortController();
+    eventsAbortControllerRef.current = controller;
+
     setLoading(true);
     const params = new URLSearchParams({ page: String(page) });
     if (debouncedSearch) params.set('search', debouncedSearch);
     if (typeFilter) params.set('type', typeFilter);
     if (statusFilter) params.set('status', statusFilter);
     if (participationFilter) params.set('participation', participationFilter);
-    fetch(`/api/events?${params}`)
+    fetch(`/api/events?${params}`, { signal: controller.signal })
       .then(r => r.json())
       .then(data => {
         setEvents(data.events ?? []);
         setTotal(data.total ?? 0);
         setTotalPages(data.totalPages ?? 1);
       })
-      .catch(() => {
+      .catch(err => {
+        if (err?.name === 'AbortError') return;
         setEvents([]);
         setTotal(0);
         setTotalPages(1);
@@ -319,6 +328,11 @@ export default function EventsPage() {
     void (async () => {
       await fetchEvents();
     })();
+    return () => {
+      if (eventsAbortControllerRef.current) {
+        eventsAbortControllerRef.current.abort();
+      }
+    };
   }, [fetchEvents]);
 
   const hasActiveFilters = Boolean(typeFilter || statusFilter || participationFilter || search);

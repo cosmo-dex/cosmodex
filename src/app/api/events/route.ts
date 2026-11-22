@@ -106,8 +106,20 @@ async function queryEventsFromDatabase(req: NextRequest) {
 }
 
 export async function GET(req: NextRequest) {
-  // If backend service is configured, attempt proxy with a fast timeout (1500ms)
-  // to avoid hanging user requests when the service is offline or unreachable.
+  // 1. Direct Prisma DB query first (fastest, ~5-15ms)
+  try {
+    const dbData = await queryEventsFromDatabase(req);
+    return NextResponse.json(dbData, {
+      status: 200,
+      headers: {
+        'Cache-Control': 'public, s-maxage=15, stale-while-revalidate=60',
+      },
+    });
+  } catch (dbErr) {
+    console.error('[GET /api/events DB first] Error:', dbErr);
+  }
+
+  // 2. Fallback to external backend if DB lookup failed
   const searchParams = req.nextUrl.searchParams.toString();
   const targetUrl = `${EVENT_BACKEND_URL}/api/events${searchParams ? `?${searchParams}` : ''}`;
 
@@ -134,29 +146,18 @@ export async function GET(req: NextRequest) {
       });
     }
   } catch {
-    // Backend service unreachable, timed out, or connection refused -> gracefully fallback to local Prisma DB
+    // Backend service unreachable, timed out, or connection refused
   }
 
-  try {
-    const fallbackData = await queryEventsFromDatabase(req);
-    return NextResponse.json(fallbackData, {
-      status: 200,
-      headers: {
-        'Cache-Control': 'public, s-maxage=15, stale-while-revalidate=60',
-      },
-    });
-  } catch (dbErr) {
-    console.error('[GET /api/events DB fallback] Error:', dbErr);
-    return NextResponse.json(
-      {
-        events: [],
-        total: 0,
-        page: 1,
-        pageSize: 12,
-        totalPages: 1,
-        error: 'Failed to retrieve events',
-      },
-      { status: 500 }
-    );
-  }
+  return NextResponse.json(
+    {
+      events: [],
+      total: 0,
+      page: 1,
+      pageSize: 12,
+      totalPages: 1,
+      error: 'Failed to retrieve events',
+    },
+    { status: 500 }
+  );
 }

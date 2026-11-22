@@ -89,6 +89,7 @@ export default function EventBattlePage() {
     let isMounted = true;
     if (!rawEventId) return;
 
+    const controller = new AbortController();
     const token = unlockToken || (typeof window !== 'undefined' ? sessionStorage.getItem(`event_unlock_${rawEventId}`) : '');
     const headers: Record<string, string> = {
       'Cache-Control': 'no-cache, no-store, must-revalidate',
@@ -97,9 +98,9 @@ export default function EventBattlePage() {
       headers['x-unlock-token'] = token;
     }
 
-    fetch(`/api/events/${encodeURIComponent(rawEventId)}?t=${Date.now()}`, {
+    fetch(`/api/events/${encodeURIComponent(rawEventId)}`, {
+      signal: controller.signal,
       headers,
-      cache: 'no-store',
     })
       .then((res) => (res.ok ? res.json() : null))
       .then((data) => {
@@ -122,7 +123,9 @@ export default function EventBattlePage() {
           }
         }
       })
-      .catch(() => {})
+      .catch((err) => {
+        if (err?.name === 'AbortError') return;
+      })
       .finally(() => {
         if (isMounted) {
           setLoading(false);
@@ -131,6 +134,7 @@ export default function EventBattlePage() {
 
     return () => {
       isMounted = false;
+      controller.abort();
     };
   }, [rawEventId, unlockToken, dataRefreshKey]);
 

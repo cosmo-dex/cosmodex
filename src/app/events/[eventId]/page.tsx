@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -295,8 +295,14 @@ export default function EventDetailPage() {
   const [showRegModal, setShowRegModal] = useState(false);
   const [registering, setRegistering] = useState(false);
   const [regMsg, setRegMsg] = useState('');
-  const [userEmail, setUserEmail] = useState('');
+  const [userEmail, setUserEmail] = useState<string>(() => {
+    if (typeof window !== 'undefined' && eventId) {
+      return sessionStorage.getItem(`event_reg_email_${eventId}`) || '';
+    }
+    return '';
+  });
   const [userName, setUserName] = useState('');
+  const abortControllerRef = useRef<AbortController | null>(null);
   const [copiedCode, setCopiedCode] = useState(false);
   const [unlockToken, setUnlockToken] = useState<string>(() => {
     if (typeof window !== 'undefined' && eventId) {
@@ -370,6 +376,12 @@ export default function EventDetailPage() {
   };
 
   const fetchEvent = useCallback(() => {
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+    const controller = new AbortController();
+    abortControllerRef.current = controller;
+
     const token = unlockToken || (typeof window !== 'undefined' ? sessionStorage.getItem(`event_unlock_${eventId}`) : '');
     const headers: Record<string, string> = {
       'Cache-Control': 'no-cache, no-store, must-revalidate',
@@ -384,14 +396,14 @@ export default function EventDetailPage() {
     }
 
     const query = new URLSearchParams();
-    query.set('t', Date.now().toString());
     if (storedEmail) {
       query.set('email', storedEmail);
     }
+    const queryString = query.toString() ? `?${query.toString()}` : '';
 
-    fetch(`/api/events/${eventId}?${query.toString()}`, {
+    fetch(`/api/events/${eventId}${queryString}`, {
+      signal: controller.signal,
       headers,
-      cache: 'no-store',
     })
       .then(r => r.json())
       .then(data => {
@@ -417,12 +429,19 @@ export default function EventDetailPage() {
           setLeaderboard(data.leaderboard ?? []);
         }
       })
-      .catch(() => { })
+      .catch((err) => {
+        if (err?.name === 'AbortError') return;
+      })
       .finally(() => setLoading(false));
   }, [eventId, unlockToken, userEmail]);
 
   useEffect(() => {
     fetchEvent();
+    return () => {
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+    };
   }, [fetchEvent]);
 
   const refreshEventLeaderboard = eventBattle?.refreshLeaderboard;
@@ -430,10 +449,14 @@ export default function EventDetailPage() {
   useEffect(() => {
     let ignore = false;
     if (activeTab === 'leaderboard') {
+      if (battleLeaderboardData) {
+        // Data already loaded from EventBattleContext, avoid duplicate request
+        return;
+      }
       if (refreshEventLeaderboard) {
         refreshEventLeaderboard();
       } else if (eventId) {
-        fetch(`/api/events/${eventId}/battle-leaderboard`, { cache: 'no-store' })
+        fetch(`/api/events/${eventId}/battle-leaderboard`)
           .then((r) => (r.ok ? r.json() : null))
           .then((data) => {
             if (!ignore && data && Array.isArray(data.leaderboard)) {
@@ -451,15 +474,17 @@ export default function EventDetailPage() {
     return () => {
       ignore = true;
     };
-  }, [activeTab, eventId, refreshEventLeaderboard]);
+  }, [activeTab, battleLeaderboardData, eventId, refreshEventLeaderboard]);
 
   useEffect(() => {
     fetch('/api/user/profile')
       .then(r => r.ok ? r.json() : null)
       .then(data => {
         if (data?.user) {
-          setUserEmail(data.user.email || '');
-          setUserName(data.user.username || data.user.full_name || '');
+          const email = data.user.email || '';
+          const name = data.user.username || data.user.full_name || '';
+          setUserEmail(prev => (prev === email ? prev : email));
+          setUserName(prev => (prev === name ? prev : name));
         }
       })
       .catch(() => { });

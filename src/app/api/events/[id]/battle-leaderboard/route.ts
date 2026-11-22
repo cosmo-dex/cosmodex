@@ -65,7 +65,7 @@ export async function GET(
     return NextResponse.json(leaderboardData, {
       status: 200,
       headers: {
-        'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
+        'Cache-Control': 'public, s-maxage=10, stale-while-revalidate=30',
       },
     });
   } catch (err) {

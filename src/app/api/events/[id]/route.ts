@@ -128,6 +128,28 @@ export async function GET(
   const { id } = await params;
   const decodedId = decodeURIComponent(id).trim();
 
+  // 1. Direct Prisma DB query first (fastest, ~5-15ms)
+  try {
+    const dbResult = await queryEventDetailFromDatabase(req, decodedId);
+    if (dbResult.status === 200) {
+      const isPersonalized = Boolean(
+        (dbResult.data as { userRegistration?: unknown })?.userRegistration ||
+        (dbResult.data as { event?: { is_private?: boolean } })?.event?.is_private
+      );
+      return NextResponse.json(dbResult.data, {
+        status: 200,
+        headers: {
+          'Cache-Control': isPersonalized
+            ? 'private, no-cache, no-store, must-revalidate'
+            : 'public, s-maxage=15, stale-while-revalidate=60',
+        },
+      });
+    }
+  } catch (dbErr) {
+    console.error(`[GET /api/events/${id} DB first] Error:`, dbErr);
+  }
+
+  // 2. Fallback to external event backend if DB returned non-200 or threw
   try {
     const authHeaders = await getEventAuthHeaders(req);
     const unlockToken = req.headers.get('x-unlock-token');
@@ -167,19 +189,8 @@ export async function GET(
       });
     }
   } catch {
-    // Backend service unreachable, timed out, or connection refused -> fallback to Prisma DB
+    // Backend service unreachable, timed out, or connection refused
   }
 
-  try {
-    const fallback = await queryEventDetailFromDatabase(req, decodedId);
-    return NextResponse.json(fallback.data, {
-      status: fallback.status,
-      headers: {
-        'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
-      },
-    });
-  } catch (dbErr) {
-    console.error(`[GET /api/events/${id} DB fallback] Error:`, dbErr);
-    return NextResponse.json({ error: 'Failed to retrieve event details' }, { status: 500 });
-  }
+  return NextResponse.json({ error: 'Event not found' }, { status: 404 });
 }

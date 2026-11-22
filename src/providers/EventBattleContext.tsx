@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import {
   useEventBattleManager,
   MatchInfo,
@@ -62,11 +62,14 @@ export function EventBattleProvider({
   // Leaderboard state
   const [battleLeaderboardData, setBattleLeaderboardData] = useState<BattleLeaderboardData | null>(null);
   const [battleLeaderboardLoading, setBattleLeaderboardLoading] = useState(false);
+  const inFlightLeaderboardRef = useRef<Promise<void> | null>(null);
 
-  const refreshLeaderboard = useCallback(() => {
+  const fetchLeaderboard = useCallback((force = false) => {
     if (!canonicalId) return;
+    if (!force && inFlightLeaderboardRef.current) return;
+
     setBattleLeaderboardLoading(true);
-    fetch(`/api/events/${canonicalId}/battle-leaderboard`, { cache: 'no-store' })
+    const p = fetch(`/api/events/${canonicalId}/battle-leaderboard`)
       .then((r) => (r.ok ? r.json() : null))
       .then((data) => {
         if (data && Array.isArray(data.leaderboard)) {
@@ -74,26 +77,23 @@ export function EventBattleProvider({
         }
       })
       .catch(() => {})
-      .finally(() => setBattleLeaderboardLoading(false));
+      .finally(() => {
+        setBattleLeaderboardLoading(false);
+        inFlightLeaderboardRef.current = null;
+      });
+    inFlightLeaderboardRef.current = p;
   }, [canonicalId]);
+
+  const refreshLeaderboard = useCallback(() => {
+    fetchLeaderboard(true);
+  }, [fetchLeaderboard]);
 
   // Initial leaderboard synchronization on mount
   useEffect(() => {
-    let ignore = false;
     if (isBattleArenaEnabled && canonicalId) {
-      fetch(`/api/events/${canonicalId}/battle-leaderboard`, { cache: 'no-store' })
-        .then((r) => (r.ok ? r.json() : null))
-        .then((data) => {
-          if (!ignore && data && Array.isArray(data.leaderboard)) {
-            setBattleLeaderboardData(data);
-          }
-        })
-        .catch(() => {});
+      fetchLeaderboard(false);
     }
-    return () => {
-      ignore = true;
-    };
-  }, [isBattleArenaEnabled, canonicalId]);
+  }, [isBattleArenaEnabled, canonicalId, fetchLeaderboard]);
 
   // Hook into the persistent battle manager with lazy connection enabled
   const battleManager = useEventBattleManager({
